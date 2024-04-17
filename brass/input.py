@@ -133,7 +133,7 @@ class Input:
         return res
 
     @classmethod
-    def get_button(this, key: str) -> bool or int:
+    def get_button(this, key: str) -> bool | int:
         """Checks if the `key` button is down
 
         Args:

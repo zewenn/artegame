@@ -9,10 +9,10 @@ import time
 import inspect
 
 
-SETTINGS: ApplicationSettings or None
+SETTINGS: ApplicationSettings | None
 RUN: bool = True
-SCREEN: pygame.Surface or None
-CLOCK: pygame.time.Clock or None
+SCREEN: pygame.Surface | None
+CLOCK: pygame.time.Clock | None
 TIME: Time = Time(0.016)
 CAMERA: Camera = Camera(Vector2(), 1)
 CONTROLLERS: list[pycontroller.Controller] = []

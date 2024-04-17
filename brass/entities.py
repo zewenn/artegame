@@ -4,7 +4,7 @@ import copy
 import time
 
 class Entities:
-    selector_map: dict[str, Entity or Bone or None] = {}
+    selector_map: dict[str, Entity | Bone | None] = {}
     entities: list[Entity] = []
 
     @classmethod
@@ -12,12 +12,12 @@ class Entities:
         this.entities.append(_entity)
 
     @classmethod    
-    def add_to_selector_map(this, selector: str, entity: Entity or None):
+    def add_to_selector_map(this, selector: str, entity: Entity | None):
         if entity is not None:
             this.selector_map[selector] = entity
     
     @classmethod
-    def __inner_get__(this, id: str or None = None, tags: list[str] = None) -> Entity or None:
+    def __inner_get__(this, id: str | None = None, tags: list[str] = None) -> Entity | None:
         """Query an entity by its id or tags
 
         Args:
@@ -44,7 +44,7 @@ class Entities:
                 return entity
     
     @classmethod
-    def get(this, selector: str) -> Entity or Bone or None:
+    def get(this, selector: str) -> Entity | Bone | None:
         """Selector based entity query\n
         `"player" - Entity` \n
         `"player|entity" - Entity` \n
@@ -67,9 +67,9 @@ class Entities:
         entity_and_bone: list[str] = selector.split("->")
         enity_selector_list: list[str] = entity_and_bone[0].split("|")
 
-        entity_id: str or None = ""
-        entity_tags: list[str] or None = []
-        bone_id: str or None = None
+        entity_id: str | None = ""
+        entity_tags: list[str] | None = []
+        bone_id: str | None = None
 
         if len(entity_and_bone) > 2:
             raise ValueError(
@@ -84,7 +84,7 @@ class Entities:
         else:
             entity_tags = enity_selector_list
         
-        entity: Entity or None = this.__inner_get__(id=entity_id, tags=entity_tags)
+        entity: Entity | None = this.__inner_get__(id=entity_id, tags=entity_tags)
 
         if bone_id is None:
             this.add_to_selector_map(selector, entity)
