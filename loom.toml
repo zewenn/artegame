@@ -1,0 +1,24 @@
+
+[loom]
+project-type = "python"
+version = "0.0.5"
+
+[loom.types.chore]
+increment = "0.0.0"
+symbol = "🔨"
+
+[loom.types.patch]
+increment = "0.0.1"
+symbol = "📜"
+
+[loom.types.bugfix]
+increment = "0.0.1"
+symbol = "🎉"
+
+[loom.types.minor]
+increment = "0.1.0"
+symbol = "✅"
+
+[loom.types.major]
+increment = "1.0.0"
+symbol = "📦"
