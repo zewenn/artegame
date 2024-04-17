@@ -10,7 +10,7 @@ import pgapi
 from entities import *
 from classes import *
 from animator import Animator
-from inputh import Input
+from input import Input
 import pygame, keyboard
 import pygame._sdl2.controller as pycontroller
 import os
