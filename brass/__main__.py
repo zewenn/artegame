@@ -3,17 +3,14 @@ from events import Events
 # Importing scripts, so they can run
 from src.script_import import *
 
-from zenyx import printf
 import img, render
-import load
 import pgapi
 from entities import *
 from classes import *
 from animator import Animator
 from input import Input
-import pygame, keyboard
+import pygame
 import pygame._sdl2.controller as pycontroller
-import os
 from saves import Loader
 
 
