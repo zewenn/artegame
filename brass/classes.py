@@ -29,6 +29,7 @@ class Transform:
     rotation: Vector3
     scale: Vector2
 
+
 @dataclass
 class Crop:
     start: Vector2
@@ -183,3 +184,11 @@ class CompleteMathVector:
 class Event:
     id: str
     callback: callable
+
+
+# --------------------------- Saves ---------------------------
+
+
+@dataclass
+class Moment:
+    entities: list[Entity]

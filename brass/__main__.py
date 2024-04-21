@@ -14,7 +14,8 @@ from input import Input
 import pygame, keyboard
 import pygame._sdl2.controller as pycontroller
 import os
-from scripts.saveloader import Loader
+from saves import Loader
+
 
 def init():
     # Setting up pygame
@@ -33,9 +34,7 @@ def init():
         )
     )
     Input.init_controllers()
-    Input.bind_buttons(
-        "exit", ["escape", "x@ctrl#0"]
-    )
+    Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
 
     pgapi.Debugger.start()
     # Currently loading objects from test_load.py
