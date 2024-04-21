@@ -34,12 +34,20 @@ class Loader:
     @classmethod
     def load(this):
         this.make_url()
-        if (not os.path.exists(this.SAVE_FILE)):
+
+        failed: bool = False
+
+        try:
+            loaded: Moment = pyon.load(this.SAVE_FILE)
+            Entities.entities = loaded.entities
+        except Exception as e:
+            Debugger.print(f"Error during loading: {e}")
+            failed = True
+
+        if (not os.path.exists(this.SAVE_FILE) or failed):
             Debugger.print("No savefile found")
             load()
             return
-        loaded: Moment = pyon.load(this.SAVE_FILE)
-        Entities.entities = loaded.entities
 
 @awake
 def awake():
