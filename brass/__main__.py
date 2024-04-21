@@ -14,7 +14,7 @@ from input import Input
 import pygame, keyboard
 import pygame._sdl2.controller as pycontroller
 import os
-
+from scripts.saveloader import Loader
 
 def init():
     # Setting up pygame
@@ -41,16 +41,19 @@ def init():
     # Currently loading objects from test_load.py
     # zenyx implementation coming later
 
-    load.load()
+    # load.load()
+    Events.awake()
     Events.init()
 
     while pgapi.RUN:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                Loader.save()
                 pgapi.RUN = False
 
         # Demo exit
         if Input.active_bind("exit"):
+            Loader.save()
             pgapi.RUN = False
 
         pgapi.SCREEN.fill("black")

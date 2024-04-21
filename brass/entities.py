@@ -98,7 +98,7 @@ class Entities:
 
 class Transformer:
     def set_position(entity: Entity, pos: Vector2):
-        entity.transform.position = pos
+        entity.transform.position = pos 
     
     def set_rotation(entity: Entity, rot: Vector3):
         entity.transform.rotation = rot

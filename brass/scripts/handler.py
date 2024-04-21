@@ -10,13 +10,12 @@ player: Entity
 def start():
     global player
 
-    print("Hello world")
     query_res = Entities.get("test_card");
     if (query_res):
         player = query_res
+
 
 @update
 def update():    
     if Input.get_button("d@kb"):
         Transformer.set_position(player, Vector2(0, 1))
-    pass

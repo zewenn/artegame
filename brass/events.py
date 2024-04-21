@@ -6,7 +6,7 @@ class Events:
     __events_dict: dict[str, list[Event]] = {}
 
     @classmethod
-    def script(this, init: callable or None = None, update: callable or None = None):
+    def script(this, init: callable = None, update: callable = None):
         if init is not None:
             this.subscribe("init", init)
         if update is not None:
@@ -19,21 +19,30 @@ class Events:
         this.__events_dict[event_name].append(Event(callable.__name__, callback))
 
     @classmethod
-    def trigger(this, event_name: str):
+    def call(this, event_name: str):
+        if not this.__events_dict.get(event_name):
+            return
         for event in this.__events_dict.get(event_name):
             event.callback()
 
     @classmethod
+    def awake(this):
+        this.call("awake")
+
+    @classmethod
     def init(this):
-        this.trigger("init")
+        this.call("init")
 
     @classmethod
     def update(this):
-        this.trigger("update")
+        this.call("update")
 
 
-def init(func: callable) -> callable:
+def awake(func: callable) -> None:
+    Events.subscribe("awake", func)
+
+def init(func: callable) -> None:
     Events.subscribe("init", func)
 
-def update(func: callable) -> callable:
+def update(func: callable) -> None:
     Events.subscribe("update", func)
