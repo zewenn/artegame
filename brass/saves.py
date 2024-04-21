@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from classes import Entity, Moment
 from copy import deepcopy
 from entities import Entities
-from load import load
+from load import default_load
 from pgapi import Debugger
 import os
 
@@ -28,12 +28,14 @@ class Loader:
         Debugger.print("Saving...")
 
     @classmethod
-    def load(this):
+    def load(this, use_load_file: bool = True):
         this.make_url()
 
         failed: bool = False
 
         try:
+            if not use_load_file: 
+                raise Exception("Not using save file")
             loaded: Moment = pyon.load(this.SAVE_FILE)
             Entities.entities = loaded.entities
         except Exception as e:
@@ -41,6 +43,6 @@ class Loader:
             failed = True
 
         if (not os.path.exists(this.SAVE_FILE) or failed):
-            Debugger.print("No savefile found")
-            load()
+            Debugger.print("No save file found...")
+            default_load()
             return

@@ -4,6 +4,6 @@ from events import awake, init, update
 
 @awake
 def awake():
-    Loader.load()
+    Loader.load(False)
 
 

@@ -29,11 +29,11 @@ class MathVectorToolkit:
             return Vector2(x=v.x, y=v.y)
 
     def new(
-        end: Vector2 or None = None,
-        start: Vector2 or None = None,
-        delta: Vector2 or None = None,
-        direction: float or None = None,
-        magnitude: float or None = None,
+        end: Vector2 | None = None,
+        start: Vector2 | None = None,
+        delta: Vector2 | None = None,
+        direction: float | None = None,
+        magnitude: float | None = None,
     ) -> CompleteMathVector:
         """
         You do not need to give every argument.
@@ -121,7 +121,8 @@ class MathVectorToolkit:
         calc_direction: float = math.degrees(math.atan2(mv.delta.y, mv.delta.x))
         if mv.direction is None:
             mv.direction = calc_direction
-        elif mv.direction != calc_direction:
+        elif round(mv.direction, 5) != round(calc_direction, 5):
+            print(round(mv.direction, 5), round(calc_direction, 5))
             MathVectorToolkit.__raise_incorrect_error("Direction")
 
         return CompleteMathVector(

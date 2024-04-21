@@ -1,64 +1,38 @@
 
 from entities import *
 
-def load():
-
-    Entities.create(Entity(
-        id="test_card",
-        tags=["card"],
-        transform=Transform(
-            Vector2(100, -100),
-            Vector3(0, 0, 0),
-            Vector2(256, 256)
-        ),
-        crop=Crop(
-            Vector2(47, 0),
-            Vector2(162, 256)
-        ),
-        sprite="character.png",
-        bones={
-            "border": Bone(
-                transform=Transform(
-                    Vector2(-2, -2),
-                    Vector3(),
-                    Vector2(166, 260)
-                ),
-                anchor=Vector2(83, 131),
-                sprite="border.png"
-            )
-        }
-    ))
-
+def default_load():
     Entities.create(
         Entity(
             id="player",
             tags=["player", "entity"],
             transform=Transform(
-                Vector2(0, (250 - 128)),
+                Vector2(-32, -32),
                 Vector3(0, 0, 0),
-                Vector2(64, 128)
+                Vector2(64, 64)
             ),
-            fill_color=[20, 20, 20],
+            # fill_color=[20, 20, 20],
+            sprite="test.png",
             can_move=True, 
             movement_speed=300,
             bones={
                 "leg_left": Bone(
                     transform=Transform(
-                        Vector2(0, 96),
-                        Vector3(0, 0, 0),
+                        Vector2(-48, 48),
+                        Vector3(0, 0, 20),
                         Vector2(32, 32)
                     ),
-                    anchor=Vector2(16, 16),
-                    fill_color=[255, 255, 255]
-                    # sprite="test.png"
+                    anchor=Vector2(0, 0),
+                    # fill_color=[255, 255, 255]
+                    sprite="test.png"
                 ),
                 "leg_right": Bone(
                     transform=Transform(
-                        Vector2(32, 96),
-                        Vector3(0, 0, 0),
+                        Vector2(48, 48),
+                        Vector3(0, 0, -20),
                         Vector2(32, 32)
                     ),
-                    anchor=Vector2(16, 16),
+                    anchor=Vector2(0, 0),
                     sprite="test.png"
                 )
             }

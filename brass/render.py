@@ -2,6 +2,7 @@ import pgapi
 from img import surface_ref_table
 from entities import *
 import pygame
+from vectormath import MathVectorToolkit, Vector2, CompleteMathVector
 
 
 def render_entity(entity: Entity):
@@ -40,7 +41,7 @@ def render_entity(entity: Entity):
     rotated_rect = rotated_image.get_rect()
 
     # Set the position of the rotated image
-    rotated_rect.topleft = (
+    rotated_rect.center = (
         pgapi.SETTINGS.screen_size[0] / 2
         + (pgapi.CAMERA.position.x * -1 + entity.transform.position.x)
         * pgapi.CAMERA.pixel_unit_ratio,
@@ -82,6 +83,12 @@ def render_bone(bone: Bone, parent: Entity):
     else:
         return
 
+    # vec: CompleteMathVector = MathVectorToolkit.normalise(
+    #     MathVectorToolkit.new(
+    #         start=Vector2(0, 0), magnitude=1, direction=parent.transform.rotation.z
+    #     )
+    # )
+
     # Scale the image
     scaled_image = pygame.transform.scale(
         image,
@@ -92,16 +99,27 @@ def render_bone(bone: Bone, parent: Entity):
     )
 
     # Rotate the image
-    rotated_image = pygame.transform.rotate(scaled_image, bone.transform.rotation.z)
+    rotated_image = pygame.transform.rotate(
+        scaled_image,
+        bone.transform.rotation.z
+        + (parent.transform.rotation.z - bone.transform.rotation.z),
+    )
 
     # Get the rect of the rotated image
+    # math.cos(theta) * cx - math.sin(theta) * cy + px
+
     rotated_rect = rotated_image.get_rect(
         center=(
             pgapi.SETTINGS.screen_size[0] / 2
             + (
                 pgapi.CAMERA.position.x * -1
                 + parent.transform.position.x
-                + bone.transform.position.x
+                + (
+                    (bone.transform.position.x)
+                    * math.cos(math.radians(-parent.transform.rotation.z))
+                    - math.sin(math.radians(-parent.transform.rotation.z))
+                    * (bone.transform.position.y)
+                )
                 + bone.anchor.x
             )
             * pgapi.CAMERA.pixel_unit_ratio,
@@ -109,7 +127,12 @@ def render_bone(bone: Bone, parent: Entity):
             + (
                 pgapi.CAMERA.position.y * -1
                 + parent.transform.position.y
-                + bone.transform.position.y
+                + (
+                    (bone.transform.position.x)
+                    * math.sin(math.radians(-parent.transform.rotation.z))
+                    + math.cos(math.radians(-parent.transform.rotation.z))
+                    * (bone.transform.position.y)
+                )
                 + bone.anchor.y
             )
             * pgapi.CAMERA.pixel_unit_ratio,

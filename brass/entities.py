@@ -101,6 +101,8 @@ class Transformer:
         entity.transform.position = pos 
     
     def set_rotation(entity: Entity, rot: Vector3):
+        if (rot.z > 180):
+            rot.z -= 180 + 180 * (rot.z % 180)
         entity.transform.rotation = rot
 
     def set_scale(entity: Entity, scale: Vector2):
