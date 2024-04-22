@@ -200,7 +200,7 @@ class Animator:
 
     @staticmethod
     def render_keyframe(target: str, keyframe: Keyframe):
-        target_obj: Entity or Bone = Entities.get(target)
+        target_obj: Item or Bone = Items.get(target)
 
         if target_obj is None:
             print("Bad query")

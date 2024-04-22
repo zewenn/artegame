@@ -2,40 +2,39 @@ import pgapi
 from img import surface_ref_table
 from entities import *
 import pygame
-from vectormath import MathVectorToolkit, Vector2, CompleteMathVector
 
 
-def render_entity(entity: Entity):
-    if entity.transform is None or (
-        entity.sprite is None and entity.fill_color is None
+def render_item(item: Item):
+    if item.transform is None or (
+        item.sprite is None and item.fill_color is None
     ):
         return
 
     image: pygame.Surface
 
-    if entity.sprite is not None:
-        image = surface_ref_table[entity.sprite]
-    elif entity.fill_color is not None:
-        image = pygame.Surface((entity.transform.scale.x, entity.transform.scale.y))
-        image.fill(tuple(entity.fill_color))
+    if item.sprite is not None:
+        image = surface_ref_table[item.sprite]
+    elif item.fill_color is not None:
+        image = pygame.Surface((item.transform.scale.x, item.transform.scale.y))
+        image.fill(tuple(item.fill_color))
     else:
         return
 
     # Scale the image
-    scaled_image = pygame.transform.smoothscale(
+    scaled_image = pygame.transform.scale(
         image,
         (
-            int(entity.transform.scale.x * pgapi.CAMERA.pixel_unit_ratio),
-            int(entity.transform.scale.y * pgapi.CAMERA.pixel_unit_ratio),
+            int(item.transform.scale.x * pgapi.CAMERA.pixel_unit_ratio),
+            int(item.transform.scale.y * pgapi.CAMERA.pixel_unit_ratio),
         ),
     )
 
     # scaled_image = pygame.transform.smoothscale(
-    #     scaled_image, (entity.transform.scale.x, entity.transform.scale.y)
+    #     scaled_image, (item.transform.scale.x, item.transform.scale.y)
     # )
 
     # Rotate the image
-    rotated_image = pygame.transform.rotate(scaled_image, entity.transform.rotation.z)
+    rotated_image = pygame.transform.rotate(scaled_image, item.transform.rotation.z)
 
     # Get the rect of the rotated image
     rotated_rect = rotated_image.get_rect()
@@ -43,15 +42,15 @@ def render_entity(entity: Entity):
     # Set the position of the rotated image
     rotated_rect.center = (
         pgapi.SETTINGS.screen_size[0] / 2
-        + (pgapi.CAMERA.position.x * -1 + entity.transform.position.x)
+        + (pgapi.CAMERA.position.x * -1 + item.transform.position.x)
         * pgapi.CAMERA.pixel_unit_ratio,
         pgapi.SETTINGS.screen_size[1] / 2
-        + (pgapi.CAMERA.position.y * -1 + entity.transform.position.y)
+        + (pgapi.CAMERA.position.y * -1 + item.transform.position.y)
         * pgapi.CAMERA.pixel_unit_ratio,
     )
 
     # Blit the rotated image onto the screen
-    if entity.crop is None:
+    if item.crop is None:
         pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
         return
 
@@ -59,15 +58,15 @@ def render_entity(entity: Entity):
         rotated_image,
         rotated_rect.topleft,
         (
-            entity.crop.start.x * pgapi.CAMERA.pixel_unit_ratio,
-            entity.crop.start.y * pgapi.CAMERA.pixel_unit_ratio,
-            entity.crop.end.x * pgapi.CAMERA.pixel_unit_ratio,
-            entity.crop.end.y * pgapi.CAMERA.pixel_unit_ratio,
+            item.crop.start.x * pgapi.CAMERA.pixel_unit_ratio,
+            item.crop.start.y * pgapi.CAMERA.pixel_unit_ratio,
+            item.crop.end.x * pgapi.CAMERA.pixel_unit_ratio,
+            item.crop.end.y * pgapi.CAMERA.pixel_unit_ratio,
         ),
     )
 
 
-def render_bone(bone: Bone, parent: Entity):
+def render_bone(bone: Bone, parent: Item):
     if bone.transform is None or (bone.sprite is None and bone.fill_color is None):
         return
 
@@ -101,7 +100,7 @@ def render_bone(bone: Bone, parent: Entity):
     # Rotate the image
     rotated_image = pygame.transform.rotate(
         scaled_image,
-        bone.transform.rotation.z
+        2 * bone.transform.rotation.z
         + (parent.transform.rotation.z - bone.transform.rotation.z),
     )
 
@@ -150,17 +149,17 @@ def render_bone(bone: Bone, parent: Entity):
 
 
 def render():
-    for entity in Entities.entities:
+    for item in Items.in_scene:
         # render_thread = threading.Thread(
         #     target=render_one,
-        #     args=(entity,)
+        #     args=(item,)
         # )
         # render_thread.setDaemon(True)
 
         # render_thread.start()
 
-        render_entity(entity=entity)
+        render_item(item=item)
 
-        if entity.bones is not None:
-            for bone in entity.bones.values():
-                render_bone(bone=bone, parent=entity)
+        if item.bones is not None:
+            for bone in item.bones.values():
+                render_bone(bone=bone, parent=item)

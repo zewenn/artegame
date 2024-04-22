@@ -45,8 +45,8 @@ class Bone:
 
 
 @dataclass
-class Entity:
-    # Entity identty
+class Item:
+    # Item identty
     id: str
     tags: list[str] | None = None
 
@@ -191,4 +191,4 @@ class Event:
 
 @dataclass
 class Moment:
-    entities: list[Entity]
+    items: list[Item]
