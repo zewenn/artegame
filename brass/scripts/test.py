@@ -19,7 +19,7 @@ def start():
 
 @update
 def update():
-    if Input.get_button("w"):
+    if Input.get_button("a"):
         player.transform.rotation.z -= 500 * TIME.deltatime
-    if Input.get_button("s"):
+    if Input.get_button("d"):
         player.transform.rotation.z += 500 * TIME.deltatime

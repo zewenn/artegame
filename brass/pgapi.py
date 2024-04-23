@@ -1,13 +1,12 @@
-
 from img import surface_ref_table
 from zenyx import printf
 from classes import *
+from typing import Optional
 
 import pygame
 import pygame._sdl2.controller as pycontroller
 import time
 import inspect
-
 
 SETTINGS: ApplicationSettings | None
 RUN: bool = True
@@ -16,6 +15,9 @@ CLOCK: pygame.time.Clock | None
 TIME: Time = Time(0.016)
 CAMERA: Camera = Camera(Vector2(), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
+
+fps_list = []
+last_fps = time.perf_counter()
 
 
 def use(settings: ApplicationSettings):
@@ -28,12 +30,12 @@ def use(settings: ApplicationSettings):
         vsync=SETTINGS.vsync,
     )
     CLOCK = pygame.time.Clock()
-    Application.set_caption(settings.application_name)
+    pygame.display.set_caption(settings.application_name)
 
     pygame.transform.set_smoothscale_backend(settings.scaling)
 
     if settings.icon is not None:
-        Application.set_icon(settings.icon)
+        pygame.display.set_icon(surface_ref_table[settings.icon])
 
     if settings.camera is not None:
         CAMERA = settings.camera
@@ -44,23 +46,10 @@ def use(settings: ApplicationSettings):
     pygame.key.set_repeat(SETTINGS.key_repeat)
 
 
-class Application:
-    fps_list = []
-    last_fps = time.perf_counter()
-
-    @staticmethod
-    def get_fps():
-        if len(Application.fps_list) < 2:
-            return
-        return sum(Application.fps_list) / len(Application.fps_list)
-
-    @staticmethod
-    def set_icon(img_name: str):
-        pygame.display.set_icon(surface_ref_table[img_name])
-
-    @staticmethod
-    def set_caption(window_name: str):
-        pygame.display.set_caption(window_name)
+def get_fps() -> Optional[float]:
+    if len(fps_list) < 2:
+        return
+    return sum(fps_list) / len(fps_list)
 
 
 class Debugger:
@@ -72,7 +61,7 @@ class Debugger:
     last_end = "\n"
 
     @classmethod
-    def print(this, *args, **kwargs):
+    def print(this, *args, **kwargs) -> None:
         if not this.is_enabled:
             return
 
@@ -100,7 +89,7 @@ class Debugger:
         printf.full_line(f"  ", *args, **kwargs)
 
     @classmethod
-    def print_resoult(this, func: callable):
+    def print_resoult(this, func: callable) -> callable:
         def wrap(*args, **kwargs):
             res = func(*args, **kwargs)
             this.print(f"{func.__qualname__}: {res}")
@@ -109,7 +98,7 @@ class Debugger:
         return wrap
 
     @classmethod
-    def time_this(this, func: callable):
+    def time_this(this, func: callable) -> callable:
         def wrap(*args, **kwargs):
             start = time.perf_counter()
             res = func(*args, **kwargs)
@@ -126,31 +115,30 @@ class Debugger:
         printf("@!")
         printf.title("Debug Console", "┉")
         printf("$&")
-        printf(
-            "The debug console has 3 phases (Initalisation, Update Sequence, Program End), all based on runtime."
-        )
 
         printf("@~")
-        printf.title("@!Initalisation$&@~", "╴")
+        printf.title("@!Setup$&@~", "╴")
         printf("$&")
 
         this.print(f"Detected {len(CONTROLLERS)} controller(s)")
         printf("\n")
 
         printf("@~")
-        printf.title("@!Update Sequence$&@~", "╴")
+        printf.title("@!Runtime$&@~", "╴")
         printf("$&")
 
     @classmethod
     def update(this):
+        global fps_list, last_fps
+
         if not this.is_enabled:
             return
 
         fps = 1 / TIME.deltatime
-        Application.fps_list.append(fps)
+        fps_list.append(fps)
 
         render_fps: int = 60
-        q_fps: int = Application.get_fps()
+        q_fps: int = get_fps()
         if q_fps is not None:
             render_fps = int(q_fps)
 
@@ -167,12 +155,12 @@ class Debugger:
             if render_fps > this.fps_info[2]:
                 this.fps_info[2] = render_fps
 
-        if time.perf_counter() - Application.last_fps > 1:
+        if time.perf_counter() - last_fps > 1:
             this.print(
                 f"FPS: {render_fps} | DeltaTime: {TIME.deltatime}     ", end="\r"
             )
-            Application.fps_list = []
-            Application.last_fps = time.perf_counter()
+            fps_list = []
+            last_fps = time.perf_counter()
 
     @classmethod
     def quit(this):
@@ -180,7 +168,7 @@ class Debugger:
             return
 
         printf("@~")
-        printf.title("@!Program End$&@~", "╴")
+        printf.title("@!Run Information$&@~", "╴")
         printf("$&")
 
         printf(
@@ -191,4 +179,3 @@ class Debugger:
             "\n",
             sep="\n",
         )
-

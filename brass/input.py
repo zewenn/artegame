@@ -2,6 +2,7 @@
 import pygame
 import pygame._sdl2.controller as pycontroller
 import pgapi
+from typing import Literal
 
 class Input:
     controller_codes: dict[str, int] = {
@@ -54,10 +55,9 @@ class Input:
 
     @classmethod
     def init_controllers(this):
-        global CONTROLLERS
-        CONTROLLERS = []
+        pgapi.CONTROLLERS = []
         for i in range(pycontroller.get_count()):
-            CONTROLLERS.append(pycontroller.Controller(i))
+            pgapi.CONTROLLERS.append(pycontroller.Controller(i))
 
     @classmethod
     def __inner_get__(this, key: str) -> tuple[float, int]:
@@ -108,7 +108,7 @@ class Input:
             "jstick",
         ]:
             controller_index: int = int(filter_list[1].split("#")[1])
-            if controller_index < 0 or controller_index >= len(CONTROLLERS):
+            if controller_index < 0 or controller_index >= len(pgapi.CONTROLLERS):
                 raise ValueError("Invalid controller")
 
             if query in this.controller_codes:
@@ -172,7 +172,7 @@ class Input:
         # controller
         if device[0] in ["2", "3"]:
             controller_id = int(device[2:])
-            controller = CONTROLLERS[controller_id]
+            controller = pgapi.CONTROLLERS[controller_id]
 
             if device[0] == "2":
                 return resolve(controller.get_button(event))
@@ -262,7 +262,7 @@ class Input:
         return False
 
     @classmethod
-    def Horizontal(this, controller: int = 0):
+    def horizontal(this, controller: int = 0) -> Literal[1, 0, -1]:
         movement = 0
         ctrl_movement = this.get_button(f"left-x@ctrl#{controller}")
 
@@ -276,7 +276,7 @@ class Input:
         return movement
 
     @classmethod
-    def Vertical(this, controller: int = 0):
+    def vertical(this, controller: int = 0) -> Literal[1, 0, -1]:
         movement = 0
         ctrl_movement = this.get_button(f"left-y@ctrl#{controller}")
 
@@ -294,7 +294,7 @@ class Input:
         this,
         name: str,
         key_set_list: list[set[str]],
-    ):
+    ) -> None:
         if this.bind_cache.get(name): 
             return
 
