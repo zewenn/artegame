@@ -225,8 +225,8 @@ class MathVectorToolkit:
         Returns:
             CompleteMathVector: the updated vector
         """
-        if mv.magnitude <= 0:
-            raise ValueError("Cannot normalise vector with a negative length")
+        if mv.magnitude == 0:
+            return MathVectorToolkit.new(Vector2(0, 0))
 
         return MathVectorToolkit.divide(mv, mv.magnitude)
 

@@ -2,7 +2,7 @@
 import pygame
 import pygame._sdl2.controller as pycontroller
 import pgapi
-from typing import Literal
+from typing import Literal, Optional
 
 class Input:
     controller_codes: dict[str, int] = {
@@ -109,9 +109,11 @@ class Input:
         ]:
             controller_index: int = int(filter_list[1].split("#")[1])
             if controller_index < 0 or controller_index >= len(pgapi.CONTROLLERS):
-                raise ValueError("Invalid controller")
+                pgapi.Debugger.print("Invalid controller")
+                device = 5
+                event = 0
 
-            if query in this.controller_codes:
+            elif query in this.controller_codes:
                 # 2.1 -> 2.33 -> 2.330321123
                 device = 2 + (controller_index * 0.1)
                 event = this.controller_codes[query]

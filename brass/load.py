@@ -2,20 +2,20 @@
 from entities import *
 
 def load_game_scene():
-    Items.create(
-        Item(
-            id="displ",
-            tags=["displ", "item"],
-            transform=Transform(
-                Vector2(-32, -32),
-                Vector3(0, 0, 0),
-                Vector2(64, 64)
-            ),
-            # fill_color=[20, 20, 20],
-            sprite="test.png",
-            can_move=False
-        )
-    )
+    # Items.create(
+    #     Item(
+    #         id="displ",
+    #         tags=["displ", "item"],
+    #         transform=Transform(
+    #             Vector2(-32, -32),
+    #             Vector3(0, 0, 0),
+    #             Vector2(64, 64)
+    #         ),
+    #         fill_color=[20, 20, 20],
+    #         # sprite="test.png",
+    #         can_move=False
+    #     )
+    # )
     Items.create(
         Item(
             id="player",
@@ -26,7 +26,7 @@ def load_game_scene():
                 Vector2(64, 64)
             ),
             # fill_color=[20, 20, 20],
-            # sprite="test.png",
+            sprite="test.png",
             can_move=False, 
             movement_speed=300,
             bones={

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import math
+from typing import Optional
 
 
 @dataclass
@@ -48,7 +49,7 @@ class Bone:
 class Item:
     # Item identty
     id: str
-    tags: list[str] | None = None
+    tags: Optional[list[str]] = None
 
     # Transforms
     transform: Transform | None = None
