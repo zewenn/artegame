@@ -3,5 +3,12 @@
     "editor.cursorSmoothCaretAnimation": "on",
     "editor.cursorBlinking": "smooth",
     "editor.cursorStyle": "block",
-    "editor.lineNumbers": "relative"
+    "editor.lineNumbers": "relative",
+    "files.exclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.hg/store/**": true,
+        "**/__pycache__": true
+    }
 }
