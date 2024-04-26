@@ -10,7 +10,7 @@ import os
 
 
 class Loader:
-    SAVE_URL = [os.path.expanduser("~"), "Arte-Game"]
+    SAVE_URL = [os.path.realpath("./"), "[DEMO]Arte-Game-Saves"]
     SAVE_PATH: str = os.path.join(*SAVE_URL)
     SAVE_FILE = os.path.join(SAVE_PATH, "save.json")
 

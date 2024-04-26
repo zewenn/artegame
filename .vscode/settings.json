@@ -1,0 +1,7 @@
+{
+    "editor.smoothScrolling": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.cursorBlinking": "smooth",
+    "editor.cursorStyle": "block",
+    "editor.lineNumbers": "relative"
+}

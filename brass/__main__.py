@@ -44,12 +44,10 @@ def init():
     while pgapi.RUN:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                Loader.save()
                 pgapi.RUN = False
 
         # Demo exit
         if Input.active_bind("exit"):
-            Loader.save()
             pgapi.RUN = False
 
         pgapi.SCREEN.fill("black")
@@ -65,6 +63,7 @@ def init():
 
     pygame.quit()
     pgapi.Debugger.quit()
+    Loader.save()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,117 @@
+{
+    "items": [
+        {
+            "id": "player",
+            "tags": [
+                "player",
+                "item"
+            ],
+            "transform": {
+                "position": {
+                    "x": -104.2289680818848,
+                    "y": -80.76554800834359,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "rotation": {
+                    "x": 0,
+                    "y": 0,
+                    "z": -102.0,
+                    "direction": 0,
+                    "pyon_converted": true,
+                    "@class": "Vector3"
+                },
+                "scale": {
+                    "x": 64,
+                    "y": 64,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "pyon_converted": true,
+                "@class": "Transform"
+            },
+            "bones": {
+                "leg_left": {
+                    "transform": {
+                        "position": {
+                            "x": -32,
+                            "y": 32,
+                            "pyon_converted": true,
+                            "@class": "Vector2"
+                        },
+                        "rotation": {
+                            "x": 0,
+                            "y": 0,
+                            "z": 20,
+                            "direction": 0,
+                            "pyon_converted": true,
+                            "@class": "Vector3"
+                        },
+                        "scale": {
+                            "x": 32,
+                            "y": 32,
+                            "pyon_converted": true,
+                            "@class": "Vector2"
+                        },
+                        "pyon_converted": true,
+                        "@class": "Transform"
+                    },
+                    "anchor": {
+                        "x": 0,
+                        "y": 0,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "sprite": "test.png",
+                    "fill_color": null,
+                    "pyon_converted": true,
+                    "@class": "Bone"
+                },
+                "leg_right": {
+                    "transform": {
+                        "position": {
+                            "x": 32,
+                            "y": 32,
+                            "pyon_converted": true,
+                            "@class": "Vector2"
+                        },
+                        "rotation": {
+                            "x": 0,
+                            "y": 0,
+                            "z": -20,
+                            "direction": 0,
+                            "pyon_converted": true,
+                            "@class": "Vector3"
+                        },
+                        "scale": {
+                            "x": 32,
+                            "y": 32,
+                            "pyon_converted": true,
+                            "@class": "Vector2"
+                        },
+                        "pyon_converted": true,
+                        "@class": "Transform"
+                    },
+                    "anchor": {
+                        "x": 0,
+                        "y": 0,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "sprite": "test.png",
+                    "fill_color": null,
+                    "pyon_converted": true,
+                    "@class": "Bone"
+                }
+            },
+            "sprite": "test.png",
+            "crop": null,
+            "fill_color": null,
+            "can_move": false,
+            "movement_speed": 300,
+            "pyon_converted": true,
+            "@class": "Item"
+        }
+    ],
+    "@class": "Moment"
+}

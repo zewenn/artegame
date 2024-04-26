@@ -34,6 +34,12 @@ def update():
     if Input.get_button("d@kb"):
         move_vec.x = 1
 
+    if Input.get_button("q@kb"):
+        player.transform.rotation.z -= 500 * TIME.deltatime
+    if Input.get_button("e@kb"):
+        player.transform.rotation.z += 500 * TIME.deltatime
+
+
     move_math_vec: CompleteMathVector = MathVectorToolkit.new(move_vec)
     # Debugger.print(move_math_vec)
     # return
