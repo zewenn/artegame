@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-import math
-from typing import Optional
+from typing import Optional, Callable
 
 
 @dataclass
@@ -39,10 +38,10 @@ class Crop:
 
 @dataclass
 class Bone:
-    transform: Transform | None = None
-    anchor: Vector2 | None = None
-    sprite: str | None = None
-    fill_color: list[int] | tuple[int] | None = None
+    transform: Optional[Transform] = None
+    anchor: Optional[Vector2] = None
+    sprite: Optional[str] = None
+    fill_color: Optional[list[int] | tuple[int]] = None
 
 
 @dataclass
@@ -52,17 +51,17 @@ class Item:
     tags: Optional[list[str]] = None
 
     # Transforms
-    transform: Transform | None = None
-    bones: dict[str, Bone] | None = None
+    transform: Optional[Transform] = None
+    bones: Optional[dict[str, Bone]] = None
 
     # Shiny render
-    sprite: str | None = None
-    crop: Crop | None = None
-    fill_color: list[int] | tuple[int] | None = None
+    sprite: Optional[str] = None
+    crop: Optional[Crop] = None
+    fill_color: Optional[list[int] | tuple[int]] = None
 
     # Movement
-    can_move: bool | None = None
-    movement_speed: int | None = None
+    can_move: Optional[bool] = None
+    movement_speed: Optional[int | float] = None
 
 
 # ------------------------- Camera System -------------------------
@@ -70,8 +69,8 @@ class Item:
 
 @dataclass
 class Camera:
-    position: Vector2 | None = None
-    pixel_unit_ratio: int | None = None
+    position: Optional[Vector2] = None
+    pixel_unit_ratio: Optional[int] = None
 
 
 # ---------------------------- Api Data ---------------------------
@@ -83,9 +82,9 @@ class ApplicationSettings:
     max_fps: int
     vsync: int = 0
     application_name: str = "fyne"
-    icon: str | None = None
-    camera: Camera | None = None
-    axis_rounding: int | None = 500
+    icon: Optional[str] = None
+    camera: Optional[Camera] = None
+    axis_rounding: Optional[int] = 500
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
     scaling: str = "GENERIC"
@@ -102,24 +101,24 @@ class Time:
 @dataclass
 class Keyframe:
     # Transform
-    position_x: float | None = None
-    position_y: float | None = None
-    rotation_x: float | None = None
-    rotation_y: float | None = None
-    rotation_z: float | None = None
-    width: float | None = None
-    height: float | None = None
-    anchor_x: float | None = None
-    anchor_y: float | None = None
-
-    sprite: str | None = None
-    fill_color: list[int] | tuple[int] | None = None
+    position_x: Optional[float] = None
+    position_y: Optional[float] = None
+    rotation_x: Optional[float] = None
+    rotation_y: Optional[float] = None
+    rotation_z: Optional[float] = None
+    width: Optional[float] = None
+    height: Optional[float] = None
+    anchor_x: Optional[float] = None
+    anchor_y: Optional[float] = None
+    
+    sprite: Optional[str] = None
+    fill_color: Optional[list[int] | tuple[int]] = None
 
 
 @dataclass
 class Animation:
     target: str
-    keyframes: dict[int, Keyframe] | None = None
+    keyframes: Optional[dict[int, Keyframe]] = None
     length: int = 1000
 
 
@@ -134,7 +133,7 @@ class AnimationGroup:
     lenght: float = 1
     mode: int = 0
     timing_function: int = 0
-    animations: list[Animation] | None = None
+    animations: Optional[list[Animation]] = None
 
 
 @dataclass
@@ -158,11 +157,11 @@ class IncompleteMathVector:
     Make sure to covert it into a `CompleteMathVector`!
     """
 
-    start: Vector2 | None = None
-    end: Vector2 | None = None
-    delta: Vector2 | None = None
-    direction: float | None = None
-    magnitude: float | None = None
+    start: Optional[Vector2] = None
+    end: Optional[Vector2] = None
+    delta: Optional[Vector2] = None
+    direction: Optional[float] = None
+    magnitude: Optional[float] = None
 
 
 @dataclass

@@ -4,7 +4,7 @@ import pygame
 
 from src.image_b64 import REFERENCE_TABLE as b64_ref_table
 
-def load(base64_string):
+def load(base64_string: str):
     # Convert the Base64 string to bytes
     binary_data = base64.b64decode(base64_string)
 

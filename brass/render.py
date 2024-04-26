@@ -2,6 +2,7 @@ import pgapi
 from img import surface_ref_table
 from entities import *
 import pygame
+import math
 
 
 def render_item(item: Item):

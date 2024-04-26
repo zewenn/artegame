@@ -4,20 +4,20 @@ import copy
 import time
 
 class Items:
-    selector_map: dict[str, Item | Bone | None] = {}
+    selector_map: dict[str, Optional[Item | Bone]] = {}
     in_scene: list[Item] = []
 
     @classmethod
-    def create(this, item: Item):
+    def create(this, item: Item) -> None:
         this.in_scene.append(item)
 
     @classmethod    
-    def add_to_selector_map(this, selector: str, item: Item | None):
+    def add_to_selector_map(this, selector: str, item: Optional[Item]) -> None:
         if item is not None:
             this.selector_map[selector] = item
     
     @classmethod
-    def __inner_get__(this, id: str | None = None, tags: list[str] = None) -> Item | None:
+    def __inner_get__(this, id: Optional[str] = None, tags: Optional[list[str]] = None) -> Optional[Item]:
         """Query an item by its id or tags
 
         Args:
@@ -44,7 +44,7 @@ class Items:
                 return item
     
     @classmethod
-    def get(this, selector: str) -> Item | Bone | None:
+    def get(this, selector: str) -> Optional[Item | Bone]:
         """Selector based item query\n
         `"player" - Item` \n
         `"player|item" - Item` \n
@@ -67,9 +67,9 @@ class Items:
         item_and_bone: list[str] = selector.split("->")
         enity_selector_list: list[str] = item_and_bone[0].split("|")
 
-        item_id: str | None = ""
-        item_tags: list[str] | None = []
-        bone_id: str | None = None
+        item_id: Optional[str] = ""
+        item_tags: list[str] = []
+        bone_id: Optional[str] = None
 
         if len(item_and_bone) > 2:
             raise ValueError(
@@ -84,7 +84,7 @@ class Items:
         else:
             item_tags = enity_selector_list
         
-        item: Item | None = this.__inner_get__(id=item_id, tags=item_tags)
+        item: Optional[Item] = this.__inner_get__(id=item_id, tags=item_tags)
 
         if bone_id is None:
             this.add_to_selector_map(selector, item)
@@ -94,15 +94,3 @@ class Items:
             this.add_to_selector_map(selector, item.bones.get(bone_id))
             return item.bones.get(bone_id)
         
-        
-
-class Transformer:
-    def set_position(item: Item, pos: Vector2):
-        item.transform.position = pos 
-    
-    def set_rotation(item: Item, rot: Vector3):
-        item.transform.rotation = rot
-
-    def set_scale(item: Item, scale: Vector2):
-        item.transform.scale = scale
-

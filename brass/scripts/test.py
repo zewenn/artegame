@@ -1,6 +1,6 @@
 from events import Events, init, update
 from classes import Item, Vector2, Vector3
-from entities import Items, Transformer
+from entities import Items
 from pgapi import TIME, Debugger
 from vectormath import MathVectorToolkit, CompleteMathVector
 
@@ -41,9 +41,7 @@ def update():
 
 
     move_math_vec: CompleteMathVector = MathVectorToolkit.new(move_vec)
-    # Debugger.print(move_math_vec)
-    # return
     normalised: CompleteMathVector = MathVectorToolkit.normalise(move_math_vec)
 
-    player.transform.position.y += 500 * TIME.deltatime * (normalised.end.y)
-    player.transform.position.x += 500 * TIME.deltatime * (normalised.end.x)
+    player.transform.position.y += 500 * TIME.deltatime * normalised.end.y
+    player.transform.position.x += 500 * TIME.deltatime * normalised.end.x

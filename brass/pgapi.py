@@ -8,10 +8,10 @@ import pygame._sdl2.controller as pycontroller
 import time
 import inspect
 
-SETTINGS: ApplicationSettings | None
+SETTINGS: Optional[ApplicationSettings]
 RUN: bool = True
-SCREEN: pygame.Surface | None
-CLOCK: pygame.time.Clock | None
+SCREEN: Optional[pygame.Surface]
+CLOCK: Optional[pygame.time.Clock]
 TIME: Time = Time(0.016)
 CAMERA: Camera = Camera(Vector2(), 1)
 CONTROLLERS: list[pycontroller.Controller] = []

@@ -8,15 +8,15 @@
             ],
             "transform": {
                 "position": {
-                    "x": -104.2289680818848,
-                    "y": -80.76554800834359,
+                    "x": -200.12950903902112,
+                    "y": -187.39758236430828,
                     "pyon_converted": true,
                     "@class": "Vector2"
                 },
                 "rotation": {
                     "x": 0,
                     "y": 0,
-                    "z": -102.0,
+                    "z": 2047.0,
                     "direction": 0,
                     "pyon_converted": true,
                     "@class": "Vector3"

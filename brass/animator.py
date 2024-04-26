@@ -1,7 +1,7 @@
 from entities import *
 from classes import *
 import copy
-
+from result import Result, Ok, Err
 
 class PlayObject:
     def __init__(self, id: str):
@@ -78,22 +78,22 @@ class PlayObject:
 
 class Interpolation:
     @classmethod
-    def lerp(this, start, end, t):
+    def lerp(this, start: float | int, end: float | int, t: float | int) -> int | float:
         """Linear interpolation function."""
         return start + t * (end - start)
 
     @classmethod
-    def ease_in(this, start, end, t):
+    def ease_in(this, start: int | float, end: int | float, t: int | float) -> int | float:
         """Ease-in timing function."""
         return this.lerp(start, end, t * t)
 
     @classmethod
-    def ease_out(this, start, end, t):
+    def ease_out(this, start: int | float, end: int | float, t: int | float) -> int | float:
         """Ease-out timing function."""
         return this.lerp(start, end, (1 - (1 - t) * (1 - t)))
 
     @classmethod
-    def ease_in_out(this, start, end, t):
+    def ease_in_out(this, start: int | float, end: int | float, t: int | float) -> int | float:
         """Ease-in-out timing function."""
         return this.lerp(
             start,
@@ -106,7 +106,7 @@ class Interpolation:
         )
 
     @classmethod
-    def interpolate_keyframes(this, timing: int, keyframe1, keyframe2, t):
+    def interpolate_keyframes(this, timing: int, keyframe1, keyframe2, t) -> Keyframe:
         """Interpolate between two KeyframeT objects."""
         interpolated_keyframe = Keyframe()
         timing_f = Animator.Timing.timing_table[timing]
@@ -128,12 +128,12 @@ class Interpolation:
 
 class Animator:
     @classmethod
-    def __handle_normal_stop(this, anims: list[Animation]):
+    def __handle_normal_stop(this, anims: list[Animation]) -> None:
         for anim in anims:
             this.render_keyframe(anim.target, list(anim.keyframes.values())[-1])
 
     @classmethod
-    def __update_play_object(this, name: str):
+    def __update_play_object(this, name: str) -> None:
         this.play_objects[name] = PlayObject(name)
 
     # --------------------------- Public ---------------------------
@@ -160,7 +160,7 @@ class Animator:
     playing_groups: dict[str, PlayObject] = {}
 
     @classmethod
-    def tick_anims(this):
+    def tick_anims(this) -> None:
         for playing_animation in list(this.playing_groups.values()):
             if playing_animation is None:
                 continue
@@ -168,7 +168,7 @@ class Animator:
             playing_animation.tick()
 
     @classmethod
-    def play(this, name: str):
+    def play(this, name: str) -> None:
         if name in this.playing_groups:
             return
 
@@ -178,7 +178,7 @@ class Animator:
         this.playing_groups[name] = copy.deepcopy(this.play_objects[name])
 
     @classmethod
-    def stop(this, name: str):
+    def stop(this, name: str) -> None:
         if name not in this.playing_groups:
             return
         if this.playing_groups[name].group.mode == this.Modes.NORMAL:
@@ -188,7 +188,7 @@ class Animator:
         del this.playing_groups[name]
 
     @classmethod
-    def set_mode(this, name: str, mode: int):
+    def set_mode(this, name: str, mode: int) -> None:
         if mode not in this.Modes.mode_list:
             raise ValueError(f"Cannot set mode to {mode}")
         if name in this.animation_groups:
@@ -199,7 +199,7 @@ class Animator:
         this.__update_play_object(name)
 
     @staticmethod
-    def render_keyframe(target: str, keyframe: Keyframe):
+    def render_keyframe(target: str, keyframe: Keyframe) -> None:
         target_obj: Item | Bone = Items.get(target)
 
         if target_obj is None:
@@ -247,12 +247,12 @@ class Animator:
         mode: int,
         timing_function: int,
         anim_list: list[Animation],
-    ):
+    ) -> Optional[ValueError]:
         if mode not in this.Modes.mode_list:
-            raise ValueError("Incorrect animation mode")
+            return ValueError("Incorrect animation mode")
 
         if timing_function not in this.Timing.timing_table:
-            raise ValueError("Incorrect timing function")
+            return ValueError("Incorrect timing function")
 
         for anim in anim_list:
             first_frame = anim.keyframes[list(anim.keyframes)[0]]
