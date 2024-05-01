@@ -21,6 +21,11 @@ last_fps = time.perf_counter()
 
 
 def use(settings: ApplicationSettings):
+
+    if settings.max_fps > 240:
+        Debugger.print("Max fps limited to 240")
+        settings.max_fps = 240
+
     global SETTINGS, SCREEN, CLOCK, CAMERA, CONTROLLERS
     SETTINGS = settings
 
@@ -134,7 +139,10 @@ class Debugger:
         if not this.is_enabled:
             return
 
-        fps = 1 / TIME.deltatime
+        dt = TIME.deltatime
+        if dt == 0:
+            dt = 0.001
+        fps = 1 / dt
         fps_list.append(fps)
 
         render_fps: int = 60

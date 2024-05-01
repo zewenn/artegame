@@ -24,7 +24,7 @@ def init():
     pgapi.use(
         ApplicationSettings(
             screen_size=(1600, 720),
-            max_fps=3000,
+            max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
             camera=Camera(Vector2(0, 0), 1.05),
