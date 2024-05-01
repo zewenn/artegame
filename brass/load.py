@@ -30,7 +30,7 @@ def load_game_scene():
             can_move=False, 
             movement_speed=300,
             bones={
-                "leg_left": Bone(
+                "left_hand": Bone(
                     transform=Transform(
                         Vector2(-32, 32),
                         Vector3(0, 0, 20),

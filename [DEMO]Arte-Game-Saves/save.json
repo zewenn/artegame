@@ -8,8 +8,8 @@
             ],
             "transform": {
                 "position": {
-                    "x": 31.5,
-                    "y": 57.5,
+                    "x": -2.131727983645291,
+                    "y": -37.37436867076458,
                     "@class": "Vector2"
                 },
                 "rotation": {
@@ -27,7 +27,7 @@
                 "@class": "Transform"
             },
             "bones": {
-                "leg_left": {
+                "left_hand": {
                     "transform": {
                         "position": {
                             "x": -32,
