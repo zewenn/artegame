@@ -23,6 +23,7 @@ def init():
 
     pgapi.use(
         ApplicationSettings(
+            application_name="Artegame - v1.1",
             screen_size=(1600, 720),
             max_fps=240,
             vsync=0,
@@ -36,10 +37,10 @@ def init():
     pgapi.Debugger.start()
     # Currently loading objects from test_load.py
     # zenyx implementation coming later
-
     # load.load()
     events.call(events.ids.awake)
     events.call(events.ids.initalise)
+
 
     while pgapi.RUN:
         for event in pygame.event.get():

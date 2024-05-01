@@ -45,6 +45,12 @@ class Bone:
 
 
 @dataclass
+class Weapon:
+    damage: int
+    damage_area: Vector2
+
+
+@dataclass
 class Item:
     # Item identty
     id: str
@@ -62,6 +68,9 @@ class Item:
     # Movement
     can_move: Optional[bool] = None
     movement_speed: Optional[int | float] = None
+
+    # Inventory
+    inventory: Optional[dict[str, Weapon | int]] = None
 
 
 # ------------------------- Camera System -------------------------
@@ -110,7 +119,7 @@ class Keyframe:
     height: Optional[float] = None
     anchor_x: Optional[float] = None
     anchor_y: Optional[float] = None
-    
+
     sprite: Optional[str] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 

@@ -40,7 +40,7 @@ def load_game_scene():
                     # fill_color=[255, 255, 255]
                     sprite="test.png"
                 ),
-                "leg_right": Bone(
+                "right_hand": Bone(
                     transform=Transform(
                         Vector2(32, 32),
                         Vector3(0, 0, -20),
@@ -49,6 +49,25 @@ def load_game_scene():
                     anchor=Vector2(0, 0),
                     sprite="test.png"
                 )
+            },
+            inventory={
+                "box_gloves": Weapon(
+                    damage=3,
+                    damage_area=Vector2(
+                        50,
+                        150
+                    )
+                ),
+                "weight_plate": Weapon(
+                    damage=10,
+                    damage_area=Vector2(
+                        100,
+                        50
+                    )
+                ),
+                "banana": 0,
+                "strawberry": 0,
+                "blueberry": 0
             }
         )
     )

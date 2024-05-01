@@ -8,8 +8,8 @@
             ],
             "transform": {
                 "position": {
-                    "x": -2.131727983645291,
-                    "y": -37.37436867076458,
+                    "x": -32.0,
+                    "y": -32.0,
                     "@class": "Vector2"
                 },
                 "rotation": {
@@ -57,7 +57,7 @@
                     "fill_color": null,
                     "@class": "Bone"
                 },
-                "leg_right": {
+                "right_hand": {
                     "transform": {
                         "position": {
                             "x": 32,
@@ -93,6 +93,29 @@
             "fill_color": null,
             "can_move": false,
             "movement_speed": 300,
+            "inventory": {
+                "box_gloves": {
+                    "damage": 3,
+                    "damage_area": {
+                        "x": 50,
+                        "y": 150,
+                        "@class": "Vector2"
+                    },
+                    "@class": "Weapon"
+                },
+                "weight_plate": {
+                    "damage": 10,
+                    "damage_area": {
+                        "x": 100,
+                        "y": 50,
+                        "@class": "Vector2"
+                    },
+                    "@class": "Weapon"
+                },
+                "banana": 0,
+                "strawberry": 0,
+                "blueberry": 0
+            },
             "@class": "Item"
         }
     ],
