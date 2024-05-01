@@ -1,4 +1,4 @@
-from events import Events, init, update
+from events import events
 from classes import Item, Vector2, Vector3
 from entities import Items
 from pgapi import TIME, Debugger
@@ -9,7 +9,7 @@ from input import Input
 player: Item
 
 
-@init
+@events.init
 def start():
     global player
 
@@ -17,10 +17,10 @@ def start():
     if query_res:
         player = query_res
 
-    Debugger.print(player.transform)
+    # Debugger.print("player.transform:", player.transform)
 
 
-@update
+@events.update
 def update():
 
     move_vec: Vector2 = Vector2()

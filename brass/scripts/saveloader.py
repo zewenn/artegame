@@ -1,10 +1,10 @@
 
 from saves import Loader
-from events import awake, init, update
+from events import events
 
-@awake
+@events.awake
 def awake():
-    # Loader.load(False)
-    Loader.load()
+    Loader.load(False)
+    # Loader.load()
 
 

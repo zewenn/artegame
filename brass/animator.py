@@ -3,10 +3,10 @@ from classes import *
 import copy
 from result import Result, Ok, Err
 
-class PlayObject:
+class play_object:
     def __init__(self, id: str):
         self.id = id
-        self.group = Animator.animation_groups.get(id)
+        self.group = animator.animation_groups.get(id)
         self.anims: list[ExpandedAnim] = []
         self.finished: bool = False
         start_t: float = time.perf_counter()
@@ -42,14 +42,14 @@ class PlayObject:
     def tick(self):
         finished_count: int = 0
         if self.finished:
-            del Animator.playing_groups[self.id]
+            del animator.playing_groups[self.id]
             del self
             return
 
         for anim in self.anims:
             if anim.finished:
                 finished_count += 1
-                Animator.render_keyframe(anim.anim.target, anim.keyframe_list[-1])
+                animator.render_keyframe(anim.anim.target, anim.keyframe_list[-1])
                 continue
 
             if time.perf_counter() > anim.end_time:
@@ -63,20 +63,20 @@ class PlayObject:
             )
             t = max(0, min(1, t))
 
-            interpolated_keyframe = Interpolation.interpolate_keyframes(
+            interpolated_keyframe = interpolation.interpolate_keyframes(
                 self.group.timing_function,
                 anim.keyframe_list[anim.current_keyframe],
                 anim.keyframe_list[anim.current_keyframe + 1],
                 t,
             )
 
-            Animator.render_keyframe(anim.anim.target, interpolated_keyframe)
+            animator.render_keyframe(anim.anim.target, interpolated_keyframe)
 
         if len(self.anims) == finished_count:
             self.finished = True
 
 
-class Interpolation:
+class interpolation:
     @classmethod
     def lerp(this, start: float | int, end: float | int, t: float | int) -> int | float:
         """Linear interpolation function."""
@@ -109,7 +109,7 @@ class Interpolation:
     def interpolate_keyframes(this, timing: int, keyframe1, keyframe2, t) -> Keyframe:
         """Interpolate between two KeyframeT objects."""
         interpolated_keyframe = Keyframe()
-        timing_f = Animator.Timing.timing_table[timing]
+        timing_f = animator.Timing.timing_table[timing]
 
         for field in keyframe1.__annotations__:
             value1 = getattr(keyframe1, field)
@@ -126,7 +126,7 @@ class Interpolation:
         return interpolated_keyframe
 
 
-class Animator:
+class animator:
     @classmethod
     def __handle_normal_stop(this, anims: list[Animation]) -> None:
         for anim in anims:
@@ -134,7 +134,7 @@ class Animator:
 
     @classmethod
     def __update_play_object(this, name: str) -> None:
-        this.play_objects[name] = PlayObject(name)
+        this.play_objects[name] = play_object(name)
 
     # --------------------------- Public ---------------------------
 
@@ -145,10 +145,10 @@ class Animator:
 
     class Timing:
         timing_table: dict[int, callable] = {
-            0: Interpolation.lerp,
-            1: Interpolation.ease_in,
-            2: Interpolation.ease_out,
-            3: Interpolation.ease_in_out,
+            0: interpolation.lerp,
+            1: interpolation.ease_in,
+            2: interpolation.ease_out,
+            3: interpolation.ease_in_out,
         }
         LINEAR = 0
         EASE_IN = 1
@@ -157,7 +157,7 @@ class Animator:
 
     animation_groups: dict[str, AnimationGroup] = {}
     play_objects: dict[str, ExpandedAnim] = {}
-    playing_groups: dict[str, PlayObject] = {}
+    playing_groups: dict[str, play_object] = {}
 
     @classmethod
     def tick_anims(this) -> None:

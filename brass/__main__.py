@@ -1,4 +1,4 @@
-from events import Events
+from events import events
 
 # Importing scripts, so they can run
 from src.script_import import *
@@ -7,7 +7,7 @@ import img, render
 import pgapi
 from entities import *
 from classes import *
-from animator import Animator
+from animator import animator
 from input import Input
 import pygame
 import pygame._sdl2.controller as pycontroller
@@ -38,8 +38,8 @@ def init():
     # zenyx implementation coming later
 
     # load.load()
-    Events.awake()
-    Events.init()
+    events.call(events.ids.awake)
+    events.call(events.ids.initalise)
 
     while pgapi.RUN:
         for event in pygame.event.get():
@@ -52,8 +52,8 @@ def init():
 
         pgapi.SCREEN.fill("black")
 
-        Events.update()
-        Animator.tick_anims()
+        events.call(events.ids.update)
+        animator.tick_anims()
 
         render.render()
         pygame.display.flip()
