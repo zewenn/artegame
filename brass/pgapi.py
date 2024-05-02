@@ -120,20 +120,11 @@ class Debugger:
         this.is_enabled = True
         printf.clear_screen()
 
-        printf("@!")
-        printf.title("Debug Console", "┉")
-        printf("$&")
-
-        printf("@~")
-        printf.title("@!Setup$&@~", "╴")
-        printf("$&")
-
-        this.print(f"Detected {len(CONTROLLERS)} controller(s)")
-        printf("\n")
-
         printf("@~")
         printf.title("@!Runtime$&@~", "╴")
         printf("$&")
+        this.print(f"Detected {len(CONTROLLERS)} controller(s)")
+        printf("\n")
 
     @classmethod
     def update(this):
