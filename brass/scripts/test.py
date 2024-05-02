@@ -1,4 +1,4 @@
-from events import events
+from events import Events
 from classes import Item, Vector2, Vector3
 from entities import *
 from pgapi import TIME, Debugger
@@ -13,7 +13,7 @@ move_vec: Vector2 = Vector2()
 move_math_vec: CompleteMathVector
 
 
-@events.init
+@Events.init
 def start():
     global player, hand
 
@@ -27,7 +27,7 @@ def start():
     # Debugger.print("player.transform:", player.transform)
 
 
-@events.update
+@Events.update
 def update():
     move_vec.y = Input.vertical()
     move_vec.x = Input.horizontal()

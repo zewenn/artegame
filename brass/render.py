@@ -150,7 +150,7 @@ def render_bone(bone: Bone, parent: Item):
 
 
 def render():
-    for item in Items.in_scene:
+    for item in Items.rendering:
         # render_thread = threading.Thread(
         #     target=render_one,
         #     args=(item,)

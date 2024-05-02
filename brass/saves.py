@@ -23,7 +23,7 @@ class Loader:
     @classmethod
     def save(this):
         this.make_url()
-        for_save = Moment(deepcopy(Items.in_scene))
+        for_save = Moment(deepcopy(Items.rendering))
         pyon.dump(for_save, this.SAVE_FILE, 4)
         Debugger.print("Saving...")
 
@@ -37,7 +37,7 @@ class Loader:
             if not use_load_file: 
                 raise Exception("Not using save file")
             loaded: Moment = pyon.load(this.SAVE_FILE)
-            Items.in_scene = loaded.items
+            Items.rendering = loaded.items
         except Exception as e:
             Debugger.print(f"Error during loading: {e}")
             failed = True

@@ -1,4 +1,4 @@
-from events import events
+from events import Events
 
 # Importing scripts, so they can run
 from src.script_import import *
@@ -38,8 +38,8 @@ def init():
     # Currently loading objects from test_load.py
     # zenyx implementation coming later
     # load.load()
-    events.call(events.ids.awake)
-    events.call(events.ids.initalise)
+    Events.call(Events.ids.awake)
+    Events.call(Events.ids.initalise)
 
 
     while pgapi.RUN:
@@ -53,7 +53,7 @@ def init():
 
         pgapi.SCREEN.fill("black")
 
-        events.call(events.ids.update)
+        Events.call(Events.ids.update)
         animator.tick_anims()
 
         render.render()

@@ -2,6 +2,7 @@ from img import surface_ref_table
 from zenyx import printf
 from classes import *
 from typing import Optional
+from events import Scene, Events
 
 import pygame
 import pygame._sdl2.controller as pycontroller
@@ -19,9 +20,11 @@ CONTROLLERS: list[pycontroller.Controller] = []
 fps_list = []
 last_fps = time.perf_counter()
 
+class SCENES:
+    default: Scene = Scene("default")
+
 
 def use(settings: ApplicationSettings):
-
     if settings.max_fps > 240:
         Debugger.print("Max fps limited to 240")
         settings.max_fps = 240

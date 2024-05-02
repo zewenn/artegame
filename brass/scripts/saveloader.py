@@ -1,10 +1,16 @@
 
 from saves import Loader
-from events import events
+from events import Events
+from pgapi import SCENES
 
-@events.awake
+@SCENES.default.spawn
+def spawn():
+    Loader.load()
+
+@Events.awake
 def awake():
-    Loader.load(False)
-    # Loader.load()
+    SCENES.default.load()
+
+
 
 

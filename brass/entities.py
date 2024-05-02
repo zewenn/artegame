@@ -5,11 +5,11 @@ import time
 
 class Items:
     selector_map: dict[str, Optional[Item | Bone]] = {}
-    in_scene: list[Item] = []
+    rendering: list[Item] = []
 
     @classmethod
     def create(this, item: Item) -> None:
-        this.in_scene.append(item)
+        this.rendering.append(item)
 
     @classmethod    
     def add_to_selector_map(this, selector: str, item: Optional[Item]) -> None:
@@ -36,7 +36,7 @@ class Items:
 
         tag_set: set = set(tags)
 
-        for item in this.in_scene:
+        for item in this.rendering:
             if item.tags is None:
                 item.tags = []
 

@@ -192,7 +192,7 @@ class CompleteMathVector:
 @dataclass
 class Event:
     id: str
-    callback: callable
+    callback: Callable
 
 
 # --------------------------- Saves ---------------------------
