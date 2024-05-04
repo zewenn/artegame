@@ -37,7 +37,9 @@ def use(settings: ApplicationSettings):
         flags=(pygame.SCALED),
         vsync=SETTINGS.vsync,
     )
+
     CLOCK = pygame.time.Clock()
+    
     pygame.display.set_caption(settings.application_name)
 
     pygame.transform.set_smoothscale_backend(settings.scaling)
@@ -81,7 +83,6 @@ class Debugger:
             caller_class = f"<unknown>.{stack.function}"
         else:
             caller_class = __cls.__name__
-
         if caller_class != this.last_printed_cls:
             if this.last_end == "\r":
                 printf("\n", end="")
@@ -97,7 +98,7 @@ class Debugger:
         printf.full_line(f"  ", *args, **kwargs)
 
     @classmethod
-    def print_resoult(this, func: callable) -> callable:
+    def print_resoult(this, func: Callable) -> Callable:
         def wrap(*args, **kwargs):
             res = func(*args, **kwargs)
             this.print(f"{func.__qualname__}: {res}")
@@ -106,7 +107,7 @@ class Debugger:
         return wrap
 
     @classmethod
-    def time_this(this, func: callable) -> callable:
+    def time_this(this, func: Callable) -> Callable:
         def wrap(*args, **kwargs):
             start = time.perf_counter()
             res = func(*args, **kwargs)
