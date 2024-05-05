@@ -5,10 +5,25 @@ import pygame
 import math
 
 
-def render_item(item: Item):
-    if item.transform is None or (
-        item.sprite is None and item.fill_color is None
+def is_on_screen(item: Item) -> bool:
+    if (
+        item.transform.position.x >= 0
+        and (
+            item.transform.position.x + item.transform.scale.x
+            <= pgapi.SETTINGS.screen_size[0]
+        )
+        and item.transform.position.y >= 0
+        and (
+            item.transform.position.y + item.transform.scale.y
+            <= pgapi.SETTINGS.screen_size[1]
+        )
     ):
+        return True
+    return False
+
+
+def render_item(item: Item):
+    if item.transform is None or (item.sprite is None and item.fill_color is None):
         return
 
     image: pygame.Surface
@@ -159,8 +174,13 @@ def render():
 
         # render_thread.start()
 
+        if not item.render and is_on_screen(item):
+            return
+
         render_item(item=item)
 
-        if item.bones is not None:
-            for bone in item.bones.values():
-                render_bone(bone=bone, parent=item)
+        if item.bones is None:
+            return
+
+        for bone in item.bones.values():
+            render_bone(bone=bone, parent=item)
