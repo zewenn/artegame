@@ -1,4 +1,4 @@
-from img import surface_ref_table
+from files import ASSETS
 from zenyx import printf
 from classes import *
 from typing import Optional
@@ -20,6 +20,7 @@ CONTROLLERS: list[pycontroller.Controller] = []
 fps_list = []
 last_fps = time.perf_counter()
 
+
 class SCENES:
     default: Scene = Scene("default")
 
@@ -39,13 +40,13 @@ def use(settings: ApplicationSettings):
     )
 
     CLOCK = pygame.time.Clock()
-    
+
     pygame.display.set_caption(settings.application_name)
 
     pygame.transform.set_smoothscale_backend(settings.scaling)
 
     if settings.icon is not None:
-        pygame.display.set_icon(surface_ref_table[settings.icon])
+        pygame.display.set_icon(ASSETS[settings.icon])
 
     if settings.camera is not None:
         CAMERA = settings.camera
@@ -107,7 +108,7 @@ class Debugger:
         return wrap
 
     @classmethod
-    def time_this(this, func: Callable) -> Callable:
+    def time_this(this, func: Callable[[any], None]) -> Callable:
         def wrap(*args, **kwargs):
             start = time.perf_counter()
             res = func(*args, **kwargs)

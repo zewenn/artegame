@@ -3,7 +3,7 @@ from events import Events
 # Importing scripts, so they can run
 from src.script_import import *
 
-import img, render
+import files as files, render
 import pgapi
 from entities import *
 from classes import *
@@ -18,8 +18,9 @@ def init():
     # Setting up pygame
     pygame.init()
     pycontroller.init()
+    pygame.mixer.init()
 
-    img.init()
+    files.init()
 
     pgapi.use(
         ApplicationSettings(

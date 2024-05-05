@@ -1,4 +1,5 @@
 import base64, os
+import __config__ as CONFIG
 
 def get_files_in_directory(directory):
     # Get the list of files in the directory
@@ -34,7 +35,7 @@ def serialize_image_to_string(image_path):
 #     wf.write(serialized_image)
 
 def init():
-    images: list = get_files_in_directory("brass\\assets")
+    images: list = get_files_in_directory(os.path.join("brass", "assets"))
     img_dict: dict = {}
 
     for index, image in enumerate(images):
@@ -44,7 +45,7 @@ def init():
     print("")    
     # print(f"REFERENCE_TABLE: dict = {img_dict}")
 
-    with open("brass\\src\\image_b64.py", "w") as wf:
+    with open(os.path.join("brass", "src", f"{CONFIG.ASSETS_FILE_NAME}.py"), "w") as wf:
         wf.write(f"REFERENCE_TABLE: dict = {img_dict}")
 
 if __name__ == "__main__":

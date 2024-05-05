@@ -1,5 +1,5 @@
 import pgapi
-from img import surface_ref_table
+from files import ASSETS
 from entities import *
 import pygame
 import math
@@ -14,7 +14,7 @@ def render_item(item: Item):
     image: pygame.Surface
 
     if item.sprite is not None:
-        image = surface_ref_table[item.sprite]
+        image = ASSETS[item.sprite]
     elif item.fill_color is not None:
         image = pygame.Surface((item.transform.scale.x, item.transform.scale.y))
         image.fill(tuple(item.fill_color))
@@ -74,7 +74,7 @@ def render_bone(bone: Bone, parent: Item):
     image: pygame.Surface
 
     if bone.sprite is not None:
-        image = surface_ref_table[bone.sprite]
+        image = ASSETS[bone.sprite]
 
     elif bone.fill_color is not None:
         image = pygame.Surface((bone.transform.scale.x, bone.transform.scale.y))
