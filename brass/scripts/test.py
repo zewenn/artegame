@@ -1,7 +1,7 @@
 from events import Events
 from classes import Item, Vector2, Vector3
 from entities import *
-from pgapi import TIME, Debugger
+from pgapi import TIME, Debugger, SCENES
 from vectormath import MathVectorToolkit, CompleteMathVector
 from files import asset
 from audio_helper import Audio, SoundBuffer
@@ -21,7 +21,7 @@ move_vec: Vector2 = Vector2()
 move_math_vec: CompleteMathVector
 
 
-@Events.init
+@SCENES.default.initalise
 def start():
     global player, hand, audio, walk
 
@@ -46,7 +46,7 @@ def start():
     # Debugger.print("player.transform:", player.transform)
 
 
-@Events.update
+@SCENES.default.update
 def update():
     global audio, walk, walkbuffer
 

@@ -54,7 +54,7 @@ def init():
 
         pgapi.SCREEN.fill("black")
 
-        Events.call(Events.ids.update)
+        Events.system_update()
         animator.tick_anims()
 
         render.render()

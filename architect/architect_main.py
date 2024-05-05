@@ -40,7 +40,6 @@ def brass(args):
     add_scripts.init()
 
     if len(args) < 3:
-        print(args)
         args.append("--run")
 
     if args[2] in ["--build", "--b"]:

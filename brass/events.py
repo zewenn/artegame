@@ -10,7 +10,7 @@ class Events:
         update: str = "evn::update"
     
     current_scene: Optional[any] = None
-    update_name: Optional[str] = ""
+    update_name: Optional[str] = "NONE"
     event_map: dict[str, list[Event]] = {}
 
     @classmethod
@@ -30,11 +30,11 @@ class Events:
     def system_update(this) -> None:
         this.call(this.ids.update)
         
-        if this.update_name:
+        if this.update_name != "NONE":
             this.call(this.update_name)
 
     @classmethod
-    def set_update_name(this, to: Callable) -> None:
+    def set_update_name(this, to: str) -> None:
         this.update_name = to
 
     @classmethod
