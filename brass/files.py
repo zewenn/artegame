@@ -11,7 +11,7 @@ def load(name: str, base64_string: str):
     # Create a BytesIO object from the binary data
     data_buffer = BytesIO(binary_data)
 
-    res: pygame.Surface | pygame.Sound
+    res: pygame.Surface | pygame.mixer.Sound
 
     # Open the data using Pygame
     if (not name.endswith(".mp3")):
@@ -22,8 +22,10 @@ def load(name: str, base64_string: str):
     return res
 
 
-ASSETS = {}
+ASSETS: dict[str, pygame.Surface | pygame.mixer.Sound] = {}
 
+def asset(filename: str) -> pygame.Surface | pygame.mixer.Sound:
+    return ASSETS[filename]
 
 def init():
     for filename, b64_value in b64_ref_table.items():
