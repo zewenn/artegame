@@ -25,6 +25,9 @@ move_math_vec: CompleteMathVector
 def start():
     global player, hand, audio, walk
 
+    Input.bind_buttons("music-off", ["1", "dpad-down@ctrl#0"])
+    Input.bind_buttons("music-on", ["2", "dpad-up@ctrl#0"])
+
     walk = Audio(asset("walking.mp3"))
     walk.set_volume(0.1)
 
@@ -57,10 +60,10 @@ def update():
             walk.fade_out(200)
     
 
-    if Input.get_button("dpad-up@ctrl#0"):
+    if Input.active_bind("music-on"):
         audio.fade_in(1000)
 
-    if Input.get_button("dpad-down@ctrl#0"):
+    if Input.active_bind("music-off"):
         audio.fade_out(1000)
 
     move_math_vec = MathVectorToolkit.normalise(MathVectorToolkit.new(move_vec))
