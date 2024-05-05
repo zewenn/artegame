@@ -30,6 +30,7 @@ def load_game_scene():
             can_move=False, 
             can_collide=True,
             can_repulse=True,
+            lightness=1,
             movement_speed=300,
             bones={
                 "left_hand": Bone(
@@ -84,7 +85,8 @@ def load_game_scene():
                 scale=Vector2(64, 64)
             ),
             can_collide=True,
-            # can_repulse=True,
+            can_repulse=True,
+            lightness=2,
             fill_color=[20, 20, 20]
         )
     )

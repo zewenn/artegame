@@ -11,6 +11,10 @@ class Collision:
             return False
 
     @classmethod
+    def get_smallest(this, dists: Distances) -> float:
+        return min([dists.left, dists.right, dists.top, dists.bottom])
+
+    @classmethod
     def collides(this, a: Collider, b: Collider) -> bool:
         # print(a.transform, b.transform)
         if (
@@ -66,46 +70,6 @@ class Collision:
                 + 1 * multiplier
             )
 
-        # if collision.is_smaller_than(
-        #     distances["left"],
-        #     [distances["right"], distances["bottom"], distances["top"]],
-        # ):
-        #     slt["position"]["x"] -= (
-        #         (slt["position"]["x"] + slt["scale"]["width"])
-        #         - elt["position"]["x"]
-        #         + 1
-        #     )
-
-        # elif collision.is_smaller_than(
-        #     distances["right"],
-        #     [distances["left"], distances["bottom"], distances["top"]],
-        # ):
-        #     slt["position"]["x"] += (
-        #         (elt["position"]["x"] + elt["scale"]["width"])
-        #         - slt["position"]["x"]
-        #         + 1
-        #     )
-
-        # elif collision.is_smaller_than(
-        #     distances["bottom"],
-        #     [distances["left"], distances["right"], distances["top"]],
-        # ):
-        #     slt["position"]["y"] -= (
-        #         (slt["position"]["y"] + slt["scale"]["height"])
-        #         - elt["position"]["y"]
-        #         + 1
-        #     )
-
-        # elif collision.is_smaller_than(
-        #     distances["top"],
-        #     [distances["left"], distances["right"], distances["bottom"]],
-        # ):
-        #     slt["position"]["y"] += (
-        #         (elt["position"]["y"] + elt["scale"]["height"])
-        #         - slt["position"]["y"]
-        #         + 1
-        #     )
-
     @classmethod
     def repulse(this) -> None:
         collide_items: list[Item] = []
@@ -125,35 +89,75 @@ class Collision:
                 if not this.collides(rei, other):
                     continue
 
+                rei_dist = Distances()
+
+                rei_dist.left = (
+                    rei.transform.position.x
+                    + rei.transform.scale.x
+                    - other.transform.position.x
+                    + 1
+                )
+
+                rei_dist.right = (
+                    other.transform.position.x
+                    + other.transform.scale.x
+                    - rei.transform.position.x
+                    + 1
+                )
+
+                rei_dist.bottom = (
+                    rei.transform.position.y
+                    + rei.transform.scale.y
+                    - other.transform.position.y
+                    + 1
+                )
+
+                rei_dist.top = (
+                    other.transform.position.y
+                    + other.transform.scale.y
+                    - rei.transform.position.y
+                    + 1
+                )
+
                 if other not in repulse_items:
-                    dist = Distances()
+                    this.move_back(rei_dist, rei, other, 1)
+                    continue
 
-                    dist.left = (
-                        rei.transform.position.x
-                        + rei.transform.scale.x
-                        - other.transform.position.x
-                        + 1
-                    )
+                other_dist = Distances()
 
-                    dist.right = (
-                        other.transform.position.x
-                        + other.transform.scale.x
-                        - rei.transform.position.x
-                        + 1
-                    )
+                # Other dist
 
-                    dist.bottom = (
-                        rei.transform.position.y
-                        + rei.transform.scale.y
-                        - other.transform.position.y
-                        + 1
-                    )
+                other_dist.left = (
+                    other.transform.position.x
+                    + other.transform.scale.x
+                    - rei.transform.position.x
+                    + 1
+                )
 
-                    dist.top = (
-                        other.transform.position.y
-                        + other.transform.scale.y
-                        - rei.transform.position.y
-                        + 1
-                    )
+                other_dist.right = (
+                    rei.transform.position.x
+                    + rei.transform.scale.x
+                    - other.transform.position.x
+                    + 1
+                )
 
-                    this.move_back(dist, rei, other, 1)
+                other_dist.bottom = (
+                    other.transform.position.y
+                    + other.transform.scale.y
+                    - rei.transform.position.y
+                    + 1
+                )
+
+                other_dist.top = (
+                    rei.transform.position.y
+                    + rei.transform.scale.y
+                    - other.transform.position.y
+                    + 1
+                )
+
+                full_mass = rei.lightness + other.lightness
+                rei_multiplier = rei.lightness / full_mass
+                other_multiplier = other.lightness / full_mass
+
+                this.move_back(rei_dist, rei, other, rei_multiplier)
+                this.move_back(other_dist, other, rei, other_multiplier)

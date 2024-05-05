@@ -88,7 +88,7 @@ class Item:
     # Collision
     can_collide: bool = False
     can_repulse: bool = False
-    mass: int = 1
+    lightness: int = 1
     trigger_collider: bool = False
     # colliders: Optional[list[Collider]] = None
 
