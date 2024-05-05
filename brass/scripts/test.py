@@ -50,13 +50,17 @@ def update():
     move_vec.y = Input.vertical()
     move_vec.x = Input.horizontal()
 
-    if move_vec.y != 0 or move_vec.x != 0:
-        walkbuffer.play(walk)
+    match move_vec.y != 0 or move_vec.x != 0:
+        case True:
+            walk.play(1)
+        case False:
+            walk.fade_out(200)
+    
 
-    if Input.get_button("y@ctrl#0"):
+    if Input.get_button("dpad-up@ctrl#0"):
         audio.fade_in(1000)
 
-    if Input.get_button("b@ctrl#0"):
+    if Input.get_button("dpad-down@ctrl#0"):
         audio.fade_out(1000)
 
     move_math_vec = MathVectorToolkit.normalise(MathVectorToolkit.new(move_vec))

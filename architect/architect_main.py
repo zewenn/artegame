@@ -3,7 +3,7 @@ import b64encoder, add_scripts
 import os, sys
 import subprocess, time
 from termcolor import colored, cprint
-
+from __config__ import *
 
 def run_command(command_list: list[str]):
     try:
@@ -55,6 +55,8 @@ def brass(args):
                 "--onefile",
                 "--noconsole",
                 os.path.join(f"{main_file_dir}", "__main__.py"),
+                "-n",
+                f"{PROJECT_NAME}-{VERSION}"
             ]
         )
         printf.title("Build Report")
