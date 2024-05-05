@@ -5,6 +5,7 @@ from src.script_import import *
 
 import files as files, render
 import pgapi
+from repulse import Collision
 from entities import *
 from classes import *
 from animator import animator
@@ -56,6 +57,7 @@ def init():
 
         Events.system_update()
         animator.tick_anims()
+        Collision.repulse()
 
         render.render()
         pygame.display.flip()

@@ -5,7 +5,7 @@ from pgapi import SCENES
 
 @SCENES.default.spawn
 def game_scene_spawn():
-    Loader.load()
+    Loader.load(False)
 
 @Events.awake
 def awake():

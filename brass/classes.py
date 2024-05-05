@@ -51,6 +51,18 @@ class Weapon:
 
 
 @dataclass
+class Collider:
+    transform: Transform
+    trigger: bool = False
+
+@dataclass
+class Distances:
+    left: float = 0
+    right: float = 0
+    top: float = 0
+    bottom: float = 0
+
+@dataclass
 class Item:
     # Item identty
     id: str
@@ -61,6 +73,7 @@ class Item:
     bones: Optional[dict[str, Bone]] = None
 
     # Shiny render
+    render: bool = True
     sprite: Optional[str] = None
     crop: Optional[Crop] = None
     fill_color: Optional[list[int] | tuple[int]] = None
@@ -71,6 +84,13 @@ class Item:
 
     # Inventory
     inventory: Optional[dict[str, Weapon | int]] = None
+
+    # Collision
+    can_collide: bool = False
+    can_repulse: bool = False
+    mass: int = 1
+    trigger_collider: bool = False
+    # colliders: Optional[list[Collider]] = None
 
 
 # ------------------------- Camera System -------------------------

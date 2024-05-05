@@ -28,6 +28,8 @@ def load_game_scene():
             # fill_color=[20, 20, 20],
             sprite="test.png",
             can_move=False, 
+            can_collide=True,
+            can_repulse=True,
             movement_speed=300,
             bones={
                 "left_hand": Bone(
@@ -69,5 +71,20 @@ def load_game_scene():
                 "strawberry": 0,
                 "blueberry": 0
             }
+        )
+    )
+
+    Items.create(
+        Item(
+            id="box",
+            tags=["box", "item"],
+            transform=Transform(
+                position=Vector2(64, 0),
+                rotation=Vector3(),
+                scale=Vector2(64, 64)
+            ),
+            can_collide=True,
+            # can_repulse=True,
+            fill_color=[20, 20, 20]
         )
     )
