@@ -1,7 +1,7 @@
 
 import os, time
 
-def __get_py_files_in_directory(directory):
+def get_py_files_in_dir(directory: str):
     # Get the list of files in the directory
     file_list: list[str] = []
     for index, filename in enumerate(os.listdir(directory)):
@@ -14,11 +14,11 @@ def __get_py_files_in_directory(directory):
     return file_list
 
 def init():
-    with open(os.path.join(r"brass\\src\\script_import.py"), "w", encoding="utf8") as wf:
+    with open(os.path.join("brass", "src", "script_import.py"), "w", encoding="utf8") as wf:
         content: list[str] = []
 
         help_line: str = f"# Importing scripts, so they can run"
-        import_line: str = ' '.join(__get_py_files_in_directory('brass\\scripts'))
+        import_line: str = ' '.join(get_py_files_in_dir(os.path.join("brass", "scripts")))
         
         if len(content) < 4:
             for i in range(4):
