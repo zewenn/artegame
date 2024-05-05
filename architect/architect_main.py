@@ -33,13 +33,14 @@ def test():
 def brass(args):
     printf.title("Building brass")
 
-    main_file: str = "brass"
+    main_file_dir: str = "brass"
 
     # Base tasks
     b64encoder.init()
     add_scripts.init()
 
     if len(args) < 3:
+        print(args)
         args.append("--run")
 
     if args[2] in ["--build", "--b"]:
@@ -53,7 +54,7 @@ def brass(args):
                 "PyInstaller",
                 "--onefile",
                 "--noconsole",
-                f"{main_file}\\__main__.py",
+                os.path.join(f"{main_file_dir}", "__main__.py"),
             ]
         )
         printf.title("Build Report")
@@ -73,14 +74,14 @@ def brass(args):
                 print("\n\n")
     elif args[2] in ["--run", "--r"]:
         printf.title("Running Python File")
-        os.system(f"python {main_file}")
+        os.system(f"python {main_file_dir}")
 
 
 def main(args):
     printf.clear_screen()
 
     if args[0] != "architect":
-        args = ["architect"]
+        args[0] = "architect"
 
     if len(args) == 0:
         args = ["architect", "-a", "-r"]

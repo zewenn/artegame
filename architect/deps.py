@@ -21,7 +21,7 @@ def title(content: str, line_char: chr = "─") -> None:
 class DummyFile(object):
     def write(self, x):
         pass
-    def flush(seld, x): 
+    def flush(self, x): 
         pass
 
 
