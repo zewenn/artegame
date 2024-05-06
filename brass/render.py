@@ -174,13 +174,17 @@ def render():
 
         # render_thread.start()
 
-        if not item.render and is_on_screen(item):
-            return
+
+        if (
+            not item.render
+            # and is_on_screen(item)
+        ):
+            continue
 
         render_item(item=item)
 
         if item.bones is None:
-            return
+            continue
 
         for bone in item.bones.values():
             render_bone(bone=bone, parent=item)

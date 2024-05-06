@@ -90,3 +90,22 @@ def load_game_scene():
             fill_color=[20, 20, 20]
         )
     )
+
+    Items.create(
+        Item(
+            id="asd",
+            tags=["asd", "item"],
+            transform=Transform(
+                position=Vector2(200, 0),
+                rotation=Vector3(),
+                scale=Vector2(64, 64)
+            ),
+            sprite="test.png",
+            render=True,
+            can_collide=True,
+            can_repulse=False,
+            lightness=10,
+        )
+    )
+
+    # print(Items.rendering)
