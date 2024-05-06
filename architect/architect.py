@@ -22,7 +22,7 @@ T = TypeVar("T")
 
 def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Exception]:
     try:
-        return Ok(func(args))
+        return Ok(func(*args))
     except Exception as e:
         return Err(e)
 

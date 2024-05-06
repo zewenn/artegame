@@ -7,11 +7,13 @@ import __config__ as conf
 def main() -> None:
     title("Dependency check")
 
-    dep_stack(conf.DEPENDENCIES)
-    # print([sys.executable, os.path.join(os.path.dirname(__file__), "architect_main.py"), *sys.argv[1:]])
+    res = handle_dep_stack(conf.DEPENDENCIES)
+    if isinstance(res, Exception):
+        print("\n\nERROR: Critical dependency not found!")
+        return
 
     success, err = run_python_command(
-        [os.path.join(os.path.dirname(__file__), "architect_main.py"), *sys.argv[1:]]
+        [os.path.join(os.path.dirname(__file__), "architect.py"), *sys.argv[1:]]
     )
 
     if not success:

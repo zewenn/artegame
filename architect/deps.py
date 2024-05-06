@@ -3,6 +3,13 @@ from typing import *
 import subprocess
 import sys, os, io, time
 
+T = TypeVar("T")
+
+def attempt(func: Callable[..., T], args: Tuple = ()) -> Tuple[Optional[T], Optional[str]]:
+    try: 
+        return (func(*args), None)
+    except Exception as e:
+        return (None, " ".join(e.args))
 
 def title(content: str, line_char: chr = "─") -> None:
     width: int = os.get_terminal_size().columns
@@ -22,16 +29,24 @@ class DummyFile(object):
     def write(self, x):
         pass
 
-    def flush(self, x):
+    def flush(self, x = None):
         pass
 
 
 def silence(func: Callable):
     def wrap(*args, **kwargs):
+        res, exc = None, None
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
-        func(*args, **kwargs)
+        try: 
+            res = func(*args, **kwargs)
+        except Exception as e:
+            exc = e
         sys.stdout = save_stdout
+        if exc:
+            raise exc
+        return res
+
 
     return wrap
 
@@ -52,9 +67,9 @@ def is_installed(name: str) -> bool:
         return False
 
 
-def install(name: str) -> bool | Exception:
+def install(name: str) -> bool:
     if is_installed(name):
-        return False
+        return True
 
     try:
         with open(os.devnull, "wb") as shutup:
@@ -65,8 +80,8 @@ def install(name: str) -> bool | Exception:
                 stdin=shutup,
             )
         return True
-    except Exception as e:
-        return e
+    except Exception:
+        return False
 
 
 def is_stack_installed(deps: list[str]) -> bool:
@@ -76,26 +91,27 @@ def is_stack_installed(deps: list[str]) -> bool:
     return True
 
 
-def dep_stack(deps: list[str]) -> list[Optional[Exception]]:
+def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
+    failed: bool = False
 
     for index, dep in enumerate(deps):
         start = time.perf_counter()
-        res = install(dep)
+        install_res = install(dep)
 
-        symbol = "✘"
-        addon_text = ""
+        symbol = "✔"
 
-        if not isinstance(res, Exception):
-            symbol = "+"
-
-        if not res:
-            symbol = "✔"
+        if not install_res:
+            symbol = "✘"
+            failed = True
 
         print(
             f"[{index + 1}/{len(deps)}] {symbol} {dep}",
             f"\tin {round(time.perf_counter() - start, 5)}s",
             sep="    ",
         )
+    
+    if failed:
+        return Exception("deps was unable to install some packag(es).")
 
 
 def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
