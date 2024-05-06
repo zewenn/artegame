@@ -1,7 +1,7 @@
 from events import Events
 
 # Importing scripts, so they can run
-from src.script_import import *
+from src.imports import *
 
 import files as files, render
 import pgapi
@@ -9,7 +9,7 @@ from repulse import Collision
 from entities import *
 from classes import *
 from animator import animator
-from input import Input
+from input_handler import Input
 import pygame
 import pygame._sdl2.controller as pycontroller
 from saves import Loader

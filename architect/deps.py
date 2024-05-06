@@ -1,5 +1,5 @@
 # Dependency manager
-from typing import Optional, Callable
+from typing import *
 import subprocess
 import sys, os, io, time
 
@@ -91,3 +91,12 @@ def dep_stack(deps: list[str]) -> list[Optional[Exception]]:
             symbol = "✔"
 
         print(f"{symbol} {dep}  \t[{round(time.perf_counter() - start, 5)}s]")
+
+def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
+    try:
+        subprocess.call([
+            sys.executable, *cmd
+        ])
+        return True, None
+    except Exception as e:
+        return False, e

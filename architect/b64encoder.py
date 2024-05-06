@@ -1,7 +1,8 @@
 import base64, os
 import __config__ as CONFIG
+from zenyx import printf
 
-def get_files_in_directory(directory):
+def get_files_in_directory(directory) -> list[str]:
     # Get the list of files in the directory
     file_list = []
     for filename in os.listdir(directory):
@@ -11,8 +12,8 @@ def get_files_in_directory(directory):
     return file_list
 
 
-def serialize_image_to_string(image_path):
-    with open(image_path, "rb") as image_file:
+def serialize_file_to_b64string(filepath) -> str:
+    with open(filepath, "rb") as image_file:
         # Read the binary data of the image file
         binary_data = image_file.read()
         
@@ -34,19 +35,20 @@ def serialize_image_to_string(image_path):
 # with open("res.txt", "w") as wf:
 #     wf.write(serialized_image)
 
-def init():
+def serialise():
     images: list = get_files_in_directory(os.path.join("brass", "assets"))
     img_dict: dict = {}
 
     for index, image in enumerate(images):
         basename: str = os.path.basename(image)
-        img_dict[basename] = serialize_image_to_string(image)
-        print(f"Compiling Images: {basename} | {index + 1}/{len(images)}        ", end='\r')
-    print("")    
+        img_dict[basename] = serialize_file_to_b64string(image)
+        printf.full_line(f"[{index + 1}/{len(images)}] Serialising Assets: {basename}", end='\r')
+    print("")
+        # time.sleep(1)
     # print(f"REFERENCE_TABLE: dict = {img_dict}")
 
-    with open(os.path.join("brass", "src", f"{CONFIG.ASSETS_FILE_NAME}.py"), "w") as wf:
+    with open(os.path.join("brass", "src", f"{CONFIG.ASSETS_FILE_NAME}"), "w") as wf:
         wf.write(f"REFERENCE_TABLE: dict = {img_dict}")
 
 if __name__ == "__main__":
-    init()
+    serialise()

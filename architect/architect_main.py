@@ -1,9 +1,11 @@
 from zenyx import printf
-import b64encoder, add_scripts
+import b64encoder, import_generator
 import os, sys
+import deps
 import subprocess, time
 from termcolor import colored, cprint
-from __config__ import *
+import __config__ as conf
+
 
 def run_command(command_list: list[str]):
     try:
@@ -31,35 +33,33 @@ def test():
 
 
 def brass(args):
-    printf.title("Building brass")
+    printf.title(f"Building Brass Project : {conf.PROJECT_NAME}")
 
-    main_file_dir: str = "brass"
-
-    # Base tasks
-    b64encoder.init()
-    add_scripts.init()
+    # Need to serialise these, so that the game can use the files
+    # Mostly auto import
+    b64encoder.serialise()
+    import_generator.serialise_imports()
 
     if len(args) < 3:
         args.append("--run")
 
-    if args[2] in ["--build", "--b"]:
+    if args[2] in ["--build", "-b"]:
         printf.title("Building Executable")
         # os.system(f"python -m PyInstaller --onefile --noconsole {main_file}")
         start_t: float = time.perf_counter()
-        run_test, error = run_command(
+        build_success, build_error = deps.run_python_command(
             [
-                "python",
                 "-m",
                 "PyInstaller",
                 "--onefile",
                 "--noconsole",
-                os.path.join(f"{main_file_dir}", "__main__.py"),
+                os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
                 "-n",
-                f"{PROJECT_NAME}-{VERSION}"
+                f"{conf.PROJECT_NAME}-{conf.VERSION}",
             ]
         )
         printf.title("Build Report")
-        match run_test:
+        match build_success:
             case True:
                 tickmark = colored("✔", "green", attrs=["bold"])
 
@@ -71,11 +71,12 @@ def brass(args):
             case False:
                 crossmark = colored("✕", "red", attrs=["bold"])
                 print(f"{crossmark} Failed to build executeable!")
-                print(f"{crossmark} Error: \n{error}")
+                print(f"{crossmark} Error: \n{build_error}")
                 print("\n\n")
-    elif args[2] in ["--run", "--r"]:
+    elif args[2] in ["--run", "-r"]:
         printf.title("Running Python File")
-        os.system(f"python {main_file_dir}")
+        # os.system(f"python {main_file_dir}")
+        deps.run_python_command([f"{conf.MAIN_FILE_DIR}", "__main__.py"])
 
 
 def main(args):

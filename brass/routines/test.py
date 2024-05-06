@@ -9,7 +9,7 @@ from repulse import Collision
 
 import pygame
 
-from input import Input
+from input_handler import Input
 
 player: Item
 box: Item
