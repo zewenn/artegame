@@ -3,8 +3,9 @@ from zenyx import printf
 from result import Result, Ok, Err
 import __config__ as conf
 
+
 def generate_imports_from_directory(directory: str) -> Result[list[str], ValueError]:
-    if (not directory.endswith("routines")):
+    if not directory.endswith("routines"):
         return Err(ValueError("Incorrect path to scripts."))
 
     # Get the list of files in the directory
@@ -20,26 +21,26 @@ def generate_imports_from_directory(directory: str) -> Result[list[str], ValueEr
 
 def serialise_imports():
     """
-    Binding a script adds it to the `script_import.py` file as an import, 
+    Binding a script adds it to the `script_import.py` file as an import,
     thus the script runs when the file is loaded.\n
     This is needed with the use event decorators, which - on load - bind functions to events.
     """
 
     with open(
-        os.path.join("brass", "src", conf.ROUTINE_IMPORT_FILE_NAME), "w", encoding="utf8"
+        os.path.join(*conf.SERIALISED_OUTPUT_DIR, conf.ROUTINE_IMPORT_FILE_NAME),
+        "w",
+        encoding="utf8",
     ) as wf:
         content: list[str] = []
 
         help_line: str = f"# Importing scripts, so they can run"
-        
+
         import_list = generate_imports_from_directory(os.path.join(*conf.ROUTINE_PATH))
-        if (import_list.is_err()):
+        if import_list.is_err():
             printf("Failed to import scripts: Wrong path")
             return
-        
-        import_line: str = " ".join(
-            import_list.ok()
-        )
+
+        import_line: str = " ".join(import_list.ok())
 
         if len(content) < 4:
             for i in range(4):

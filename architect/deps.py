@@ -13,7 +13,7 @@ def title(content: str, line_char: chr = "─") -> None:
         raise ValueError("line char is not a char")
 
     sep_text = line_char * side_width
-    print("\n"*5)
+    print("\n" * 5)
     print(f"{sep_text}{mid_text}{sep_text}")
     print("\n")
 
@@ -21,7 +21,8 @@ def title(content: str, line_char: chr = "─") -> None:
 class DummyFile(object):
     def write(self, x):
         pass
-    def flush(self, x): 
+
+    def flush(self, x):
         pass
 
 
@@ -77,7 +78,7 @@ def is_stack_installed(deps: list[str]) -> bool:
 
 def dep_stack(deps: list[str]) -> list[Optional[Exception]]:
 
-    for dep in deps:
+    for index, dep in enumerate(deps):
         start = time.perf_counter()
         res = install(dep)
 
@@ -90,13 +91,16 @@ def dep_stack(deps: list[str]) -> list[Optional[Exception]]:
         if not res:
             symbol = "✔"
 
-        print(f"{symbol} {dep}  \t[{round(time.perf_counter() - start, 5)}s]")
+        print(
+            f"[{index + 1}/{len(deps)}] {symbol} {dep}",
+            f"\tin {round(time.perf_counter() - start, 5)}s",
+            sep="    ",
+        )
+
 
 def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
     try:
-        subprocess.call([
-            sys.executable, *cmd
-        ])
+        subprocess.call([sys.executable, *cmd])
         return True, None
     except Exception as e:
         return False, e
