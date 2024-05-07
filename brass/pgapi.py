@@ -68,6 +68,7 @@ def set_screen_size(to: Vector2):
         vsync=SETTINGS.vsync,
     )
 
+
 def get_screen_size() -> Vector2:
     global SCREEN
     return Vector2(SCREEN.get_width(), SCREEN.get_height())
@@ -84,10 +85,11 @@ def get_fps() -> Optional[float]:
 
 
 def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, str]:
-    try: 
+    try:
         return Ok(func(*args))
     except Exception as e:
         return Err(" ".join(e.args))
+
 
 class Debugger:
     # [min, [avg, count], max]

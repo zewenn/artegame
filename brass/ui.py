@@ -1,6 +1,6 @@
 from classes import *
 from pgapi import *
-
+from enums import *
 
 def unit(u: str) -> float:
     """
@@ -46,17 +46,6 @@ def unit(u: str) -> float:
             return num * 16
 
 
-class POSITION:
-    ABSOLUTE = "absolute"
-    RELATIVE = "relative"
-
-
-class FONT_SIZE:
-    EXTRA_SMALL = 12
-    SMALL = 16
-    MEDIUM = 24
-    LARGE = 32
-    EXTRA_LARGE = 48
 
 
 @dataclass
@@ -72,11 +61,11 @@ class StyleSheet:
     height: str = "0x"
 
     bg_color: Tuple[int, int, int, float] = (0, 0, 0, 0)
-    bg_image: str = ""
+    bg_image: str = None
     bg_size: Tuple[float, float] = (0, 0)
 
     color: Tuple[int, int, int, float] = (0, 0, 0, 1)
-    font: str = "press_play"
+    font: str = "press_play.ttf"
     font_size: str = FONT_SIZE.EXTRA_SMALL
 
 

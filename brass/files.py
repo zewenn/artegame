@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 import pygame
+from enums import FONT_SIZE
 
 from src.b64_asset_ref_table import REFERENCE_TABLE as b64_ref_table
 
@@ -35,9 +36,10 @@ def init():
             ASSETS[filename] = load(filename, b64_value)
             continue
 
-        ASSETS[f"font-12-{filename[:-4]}"] = load(filename, b64_value)
-        ASSETS[f"font-16-{filename[:-4]}"] = load(filename, b64_value, 16)
-        ASSETS[f"font-24-{filename[:-4]}"] = load(filename, b64_value, 24)
-        ASSETS[f"font-32-{filename[:-4]}"] = load(filename, b64_value, 32)
-        ASSETS[f"font-48-{filename[:-4]}"] = load(filename, b64_value, 48)
+        ASSETS[f"font-{FONT_SIZE.EXTRA_SMALL}-{filename}"] = load(filename, b64_value, FONT_SIZE.EXTRA_SMALL)
+        ASSETS[f"font-{FONT_SIZE.SMALL}-{filename}"] = load(filename, b64_value, FONT_SIZE.SMALL)
+        ASSETS[f"font-{FONT_SIZE.MEDIUM}-{filename}"] = load(filename, b64_value, FONT_SIZE.MEDIUM)
+        ASSETS[f"font-{FONT_SIZE.BIG}-{filename}"] = load(filename, b64_value, FONT_SIZE.BIG)
+        ASSETS[f"font-{FONT_SIZE.LARGE}-{filename}"] = load(filename, b64_value, FONT_SIZE.LARGE)
+        ASSETS[f"font-{FONT_SIZE.EXTRA_LARGE}-{filename}"] = load(filename, b64_value, FONT_SIZE.EXTRA_LARGE)
 

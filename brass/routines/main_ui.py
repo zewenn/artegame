@@ -24,8 +24,9 @@ DOM(
             left="50w",
             width="150x",
             height="50x",
-            bg_color=(20, 120, 240, 1),
-            font_size=FONT_SIZE.EXTRA_LARGE
+            bg_color=(245, 255, 255, 1),
+            font_size=FONT_SIZE.LARGE,
+            color=(255, 0, 0, 1)
         )
     )
 )
