@@ -49,7 +49,7 @@ def update_read_build_counter() -> str:
 
 
 def main(args):
-    printf.clear_screen()
+    # printf.clear_screen()
 
     if args[0] != "architect":
         args[0] = "architect"
@@ -57,7 +57,7 @@ def main(args):
     if len(args) == 0:
         args = ["architect", "-r"]
 
-    printf.title(f"Building Brass Project : {conf.PROJECT_NAME}")
+    printf.title(f"Build")
 
     # Need to serialise these, so that the game can use the files
     # Mostly auto import
@@ -89,46 +89,53 @@ def main(args):
         return
 
     if args[1] in ["--run", "-r"]:
-        printf.title("Running Python File")
+        printf.title(f"Run")
         # os.system(f"python {main_file_dir}")
         deps.run_python_command([f"{conf.MAIN_FILE_DIR}", "__main__.py"])
         return
 
-    # Build case
-    printf.title("Building Executable")
+    if args[1] in ["--build", "-b"]:
 
-    build_start_time: float = time.perf_counter()
-    build_success, build_error = deps.run_python_command(
-        [
-            "-m",
-            "PyInstaller",
-            "--onefile",
-            "--noconsole",
-            os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
-            "-n",
-            (
+        # Build case
+        printf.title("Building Executable")
+
+        APP_NAME = (
+            f"{conf.PROJECT_NAME}-{conf.VERSION}"
+            + (f".b{build_count_res.ok()}" if build_count_res.is_ok() else "")
+        )
+
+        build_start_time: float = time.perf_counter()
+        build_success, build_error = deps.run_python_command(
+            [
+                "-m",
+                "PyInstaller",
+                "--onefile",
+                "--noconsole",
+                os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
+                "-n",
+                APP_NAME
+            ]
+        )
+
+        printf.title("Build Report")
+
+        match build_success:
+            case True:
+                printf(f"[{round(time.perf_counter() - build_start_time, 5)}s] ✔ Executeable built @!successfully$&!")
+                printf(f"Output: {os.path.realpath(os.path.join('dist'))}")
+                print("\n\n")
+            case False:
+                printf(f"✘ @!Failed$& to build executeable!")
+                printf(f"Error: \n{build_error}")
+                print("\n\n")
+
+        os.remove(
+            os.path.join(
                 f"{conf.PROJECT_NAME}-{conf.VERSION}"
                 + (f".b{build_count_res.ok()}" if build_count_res.is_ok() else "")
-            ),
-        ]
-    )
-
-    printf.title("Build Report")
-
-    match build_success:
-        case True:
-            tickmark = colored("✔", "green", attrs=["bold"])
-
-            print(f"{tickmark} Executeable built successfully")
-            print(
-                f"{tickmark} Build time: {int((time.perf_counter() - build_start_time) * 1000) / 1000}s"
+                + ".spec"
             )
-            print("\n\n")
-        case False:
-            crossmark = colored("✕", "red", attrs=["bold"])
-            print(f"{crossmark} Failed to build executeable!")
-            print(f"{crossmark} Error: \n{build_error}")
-            print("\n\n")
+        )
 
 
 if __name__ == "__main__":
