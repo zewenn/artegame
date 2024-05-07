@@ -1,6 +1,6 @@
 # For PyInstaller
 PROJECT_NAME = "Artegame"
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 
 # For the installer, to install...
 DEPENDENCIES = ["pygame", "termcolor", "recordclass", "zenyx", "result", "PyInstaller"]

@@ -1,34 +1,23 @@
 from ui import *
+from pgapi import SCENES
 
 
-DOM(
-    Element(
-        "asd",
-        "asd",
-        "asd",
-        "asd",
-        "asd",
+@SCENES.default.awake
+def awk():
+    DOM(
         Element(
+            "TestElement",
+            Text("HELLO MOTHERF*CKER!!!"),
             style=StyleSheet(
-                position=POSITION.RELATIVE,
-                top="50x",
-                left="-30x",
-                width="50x",
-                height="60x",
-                bg_color=(255, 0, 0, 1)
-            )
+                position=POSITION.ABSOLUTE,
+                top="50h",
+                left="10w",
+                width="150x",
+                height="50x",
+                # bg_color=(245, 255, 255, 0),
+                bg_image="neunyx32x32.png",
+                font_size=FONT_SIZE.EXTRA_LARGE,
+                color=(255, 0, 0, 1),
+            ),
         ),
-        style=StyleSheet(
-            position=POSITION.ABSOLUTE,
-            top="50h",
-            left="50w",
-            width="150x",
-            height="50x",
-            bg_color=(245, 255, 255, 1),
-            font_size=FONT_SIZE.LARGE,
-            color=(255, 0, 0, 1)
-        )
     )
-)
-
-print(DOM_El)

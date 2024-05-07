@@ -36,10 +36,12 @@ def init():
             ASSETS[filename] = load(filename, b64_value)
             continue
 
+        # Handling font size, since the pygame can't
+
         ASSETS[f"font-{FONT_SIZE.EXTRA_SMALL}-{filename}"] = load(filename, b64_value, FONT_SIZE.EXTRA_SMALL)
         ASSETS[f"font-{FONT_SIZE.SMALL}-{filename}"] = load(filename, b64_value, FONT_SIZE.SMALL)
         ASSETS[f"font-{FONT_SIZE.MEDIUM}-{filename}"] = load(filename, b64_value, FONT_SIZE.MEDIUM)
         ASSETS[f"font-{FONT_SIZE.BIG}-{filename}"] = load(filename, b64_value, FONT_SIZE.BIG)
         ASSETS[f"font-{FONT_SIZE.LARGE}-{filename}"] = load(filename, b64_value, FONT_SIZE.LARGE)
         ASSETS[f"font-{FONT_SIZE.EXTRA_LARGE}-{filename}"] = load(filename, b64_value, FONT_SIZE.EXTRA_LARGE)
-
+    

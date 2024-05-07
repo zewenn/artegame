@@ -2,6 +2,7 @@ from classes import *
 from pgapi import *
 from enums import *
 
+
 def unit(u: str) -> float:
     """
     ## Units
@@ -46,8 +47,6 @@ def unit(u: str) -> float:
             return num * 16
 
 
-
-
 @dataclass
 class StyleSheet:
     position: str = POSITION.ABSOLUTE
@@ -60,24 +59,42 @@ class StyleSheet:
     width: str = "0x"
     height: str = "0x"
 
-    bg_color: Tuple[int, int, int, float] = (0, 0, 0, 0)
+    bg_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
     bg_image: str = None
-    bg_size: Tuple[float, float] = (0, 0)
 
-    color: Tuple[int, int, int, float] = (0, 0, 0, 1)
+    color: Tuple[int, int, int, int] = (0, 0, 0, 1)
     font: str = "press_play.ttf"
     font_size: str = FONT_SIZE.EXTRA_SMALL
 
 
+ELEMENTS: list["Element"] = []
+
+
+def get_element(id: str) -> "Element":
+    for el in ELEMENTS:
+        if el.id == id:
+            return el
+
+
 class Element:
     def __init__(
-        self, *children: type["Element"] | str, style: Optional[StyleSheet] = None
+        self,
+        id: str,
+        *children: type["Element"] | str,
+        style: Optional[StyleSheet] = None,
     ) -> None:
-        self.children = children
+        self.id = id
+        self.children = list(children)
         self.style = style if style else StyleSheet()
 
+        ELEMENTS.append(self)
 
-DOM_El: Optional[Element] = Element()
+
+DOM_El: Optional[Element] = Element("DOM")
+
+
+def Text(t: str) -> str:
+    return t
 
 
 def DOM(*children: Element | str, style: Optional[StyleSheet] = None) -> None:

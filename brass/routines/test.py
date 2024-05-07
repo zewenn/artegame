@@ -5,7 +5,7 @@ from files import asset
 from audio_helper import Audio
 from input_handler import Input
 from pgapi import TIME, SCENES
-
+import ui
 import pgapi
 
 
@@ -20,10 +20,11 @@ walk: Audio
 move_vec: Vector2 = Vector2()
 move_math_vec: CompleteMathVector
 
+text_elem: ui.Element
 
 @SCENES.default.initalise
 def start():
-    global player, hand, music, walk, box, camera
+    global player, hand, music, walk, box, camera, text_elem
 
     camera = pgapi.get_camera()
 
@@ -40,6 +41,9 @@ def start():
     player_res = Items.get("player")
     box_res = Items.get("box")
     hand_res = Items.get("player->left_hand")
+
+    text_elem = ui.get_element("TestElement")
+
     if player_res:
         player = player_res
     if box_res:
@@ -65,6 +69,7 @@ def update():
 
     if Input.get_button("k"):
         pgapi.set_screen_size(Vector2(1600, 900))
+        text_elem.children[0] = ui.Text("Wakey Wakey!!!")
 
     if Input.active_bind("music-on"):
         music.fade_in(1000)

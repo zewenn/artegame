@@ -206,12 +206,21 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
                 )
             )
 
-    bg_color = (
-        pygame.Color(*elstl.bg_color) if elstl.bg_color else pygame.Color(0, 0, 0, 0)
-    )
+    bg_color = elstl.bg_color
 
-    image = pygame.Surface((w, h))
-    image.fill(bg_color)
+    image: pygame.Surface
+
+    if (not elstl.bg_image):
+        image = pygame.Surface((w, h))
+        image.fill(bg_color)
+    else:
+        image = pygame.transform.scale(
+            ASSETS[elstl.bg_image],
+            (
+                w,
+                h
+            )
+        )
 
     positioned_rect = image.get_rect(topleft=(x, y))
 
@@ -224,7 +233,7 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
             font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
             # font.size = unit(element.style.font_size)
             text_surf = font.render(
-                child, True, element.style.color, element.style.bg_color
+                child, True, element.style.color, element.style.bg_color if not elstl.bg_image else None
             )
 
             pgapi.SCREEN.blit(
