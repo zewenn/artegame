@@ -272,7 +272,7 @@ class Input:
             movement -= 1
         if this.get_button(f"{pgapi.SETTINGS.move_keys[0][1]}@keyboard"):
             movement += 1
-        if abs(ctrl_movement) > pgapi.SETTINGS.axis_rounding:
+        if ctrl_movement and abs(ctrl_movement) > pgapi.SETTINGS.axis_rounding:
             movement = ctrl_movement / 32768
 
         return movement
@@ -286,7 +286,8 @@ class Input:
             movement -= 1
         if this.get_button(f"{pgapi.SETTINGS.move_keys[1][1]}@keyboard"):
             movement += 1
-        if abs(ctrl_movement) > pgapi.SETTINGS.axis_rounding:
+
+        if ctrl_movement and abs(ctrl_movement) > pgapi.SETTINGS.axis_rounding:
             movement = ctrl_movement / 32768
 
         return movement
