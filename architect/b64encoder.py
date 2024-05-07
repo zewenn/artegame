@@ -44,7 +44,7 @@ def serialise() -> None:
     with open(
         os.path.join(*conf.SERIALISED_OUTPUT_DIR, f"{conf.ASSETS_FILE_NAME}"), "w"
     ) as wf:
-        wf.write(f"REFERENCE_TABLE: dict = {img_dict}")
+        wf.write(f"REFERENCE_TABLE: dict[str, str] = {img_dict}")
 
 
 if __name__ == "__main__":

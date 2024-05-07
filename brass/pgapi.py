@@ -1,7 +1,8 @@
 from files import ASSETS
 from zenyx import printf
 from classes import *
-from typing import Optional
+from typing import *
+from result import *
 from events import Scene, Events
 
 import pygame
@@ -9,12 +10,14 @@ import pygame._sdl2.controller as pycontroller
 import time
 import inspect
 
+T = TypeVar("T")
+
 SETTINGS: Optional[ApplicationSettings]
 RUN: bool = True
 SCREEN: Optional[pygame.Surface]
 CLOCK: Optional[pygame.time.Clock]
 TIME: Time = Time(0.016)
-CAMERA: Camera = Camera(Vector2(), 1)
+CAMERA: Camera = Camera(Vector2(1000), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
 
 fps_list = []
@@ -57,11 +60,34 @@ def use(settings: ApplicationSettings):
     pygame.key.set_repeat(SETTINGS.key_repeat)
 
 
+def set_screen_size(to: Vector2):
+    global SCREEN
+    SCREEN = pygame.display.set_mode(
+        size=(to.x, to.y),
+        flags=(pygame.SCALED),
+        vsync=SETTINGS.vsync,
+    )
+
+def get_screen_size() -> Vector2:
+    global SCREEN
+    return Vector2(SCREEN.get_width(), SCREEN.get_height())
+
+
+def get_camera() -> Camera:
+    return CAMERA if not SETTINGS.camera else SETTINGS.camera
+
+
 def get_fps() -> Optional[float]:
     if len(fps_list) < 2:
         return
     return sum(fps_list) / len(fps_list)
 
+
+def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, str]:
+    try: 
+        return Ok(func(*args))
+    except Exception as e:
+        return Err(" ".join(e.args))
 
 class Debugger:
     # [min, [avg, count], max]
