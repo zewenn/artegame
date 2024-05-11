@@ -14,7 +14,7 @@ def main() -> None:
         return
 
     success, err = run_python_command(
-        [os.path.join(os.path.dirname(__file__), "architect.py"), *sys.argv[1:]]
+        [os.path.join(os.path.dirname(__file__), "cli.py"), *sys.argv[1:]]
     )
 
     if not success:

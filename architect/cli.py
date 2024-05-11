@@ -17,6 +17,11 @@ def parse_int(string: str) -> Result[int, str]:
         return Err(" ".join(ve.args))
 
 
+def make_file(path: str, content: str = "") -> None:
+    with open(path, "w") as wf:
+        wf.write(content)
+
+
 T = TypeVar("T")
 
 
@@ -48,6 +53,38 @@ def update_read_build_counter() -> str:
         return str(res)
 
 
+def new_routine(ui: bool) -> str:
+    match ui:
+        case True:
+            return "\n".join(
+                [
+                    "from events import *",
+                    "from enums import *",
+                    "from gui import *",
+                    "\n\n\n@awake",
+                    "def _awake():",
+                    "    pass",
+                ]
+            )
+        case False:
+            return "\n".join(
+                [
+                    "from audio_helper import Audio",
+                    "from input_handler import Input",
+                    "from entities import *",
+                    "from classes import *",
+                    "from events import *",
+                    "import pgapi",
+                    "\n\n\n@init",
+                    "def _init():",
+                    "    pass",
+                    "\n\n@update",
+                    "def _update():",
+                    "    pass",
+                ]
+            )
+
+
 def main(args):
     # printf.clear_screen()
 
@@ -56,6 +93,29 @@ def main(args):
 
     if len(args) == 0:
         args = ["architect", "-r"]
+
+    if args[1] in ["--new-scene", "-ns"]:
+        printf.title("Creating New Scene")
+
+        usr_input = input("Scene name: ")
+        if usr_input == "":
+            printf("@!Aborted$& Scene creation!")
+            return
+
+        new_scene_path = os.path.join(*conf.SCENES_PATH, usr_input)
+        new_scene_routines = os.path.join(new_scene_path, "routines")
+        new_scene_ui = os.path.join(new_scene_path, "ui")
+
+        if os.path.isdir(new_scene_path):
+            printf("@!Aborted$& Scene creation, since the scene already exists!")
+            return
+
+        os.mkdir(new_scene_path)
+        os.mkdir(new_scene_routines)
+        os.mkdir(new_scene_ui)
+
+        make_file(os.path.join(new_scene_routines, "main.py"), new_routine(False))
+        make_file(os.path.join(new_scene_ui, "index.py"), new_routine(True))
 
     printf.title(f"Build")
 
@@ -86,6 +146,10 @@ def main(args):
         printf("       ./architect -h")
         printf("       ./architect --help")
 
+        printf("\n    - @!Create a new scene:$&")
+        printf("       ./architect -ns")
+        printf("       ./architect --new-scene")
+
         return
 
     if args[1] in ["--run", "-r"]:
@@ -99,9 +163,8 @@ def main(args):
         # Build case
         printf.title("Building Executable")
 
-        APP_NAME = (
-            f"{conf.PROJECT_NAME}-{conf.VERSION}"
-            + (f".b{build_count_res.ok()}" if build_count_res.is_ok() else "")
+        APP_NAME = f"{conf.PROJECT_NAME}-{conf.VERSION}" + (
+            f".b{build_count_res.ok()}" if build_count_res.is_ok() else ""
         )
 
         build_start_time: float = time.perf_counter()
@@ -113,7 +176,7 @@ def main(args):
                 "--noconsole",
                 os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
                 "-n",
-                APP_NAME
+                APP_NAME,
             ]
         )
 
@@ -121,7 +184,9 @@ def main(args):
 
         match build_success:
             case True:
-                printf(f"[{round(time.perf_counter() - build_start_time, 5)}s] ✔ Executeable built @!successfully$&!")
+                printf(
+                    f"[{round(time.perf_counter() - build_start_time, 5)}s] ✔ Executeable built @!successfully$&!"
+                )
                 printf(f"Output: {os.path.realpath(os.path.join('dist'))}")
                 print("\n\n")
             case False:
