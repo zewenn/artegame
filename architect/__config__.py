@@ -15,5 +15,10 @@ SERIALISED_OUTPUT_DIR = ["brass", "src"]
 ASSETS_FILE_NAME = "b64_asset_ref_table.py"
 
 # Used to generate script imports
-ROUTINE_PATH = ["brass", "routines"]
+ROUTINE_PATH = ["brass", "routines"] # Old version DONT USE
+"""
+## DEPRECATED
+Use `SCENES_PATH` instead.
+"""
+SCENES_PATH = ["brass", "scenes"]
 ROUTINE_IMPORT_FILE_NAME = "imports.py"
