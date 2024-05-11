@@ -56,7 +56,7 @@ def start():
 
 @SCENES.default.update
 def update():
-    global music, walk, walkbuffer, camera
+    global music, walk, walkbuffer, camera, move_math_vec
 
     move_vec.y = Input.vertical()
     move_vec.x = Input.horizontal()
@@ -82,7 +82,6 @@ def update():
     player.transform.position.y += 500 * TIME.deltatime * move_math_vec.end.y
     player.transform.position.x += 500 * TIME.deltatime * move_math_vec.end.x
 
-    camera.position.x = player.transform.position.x
-    camera.position.y = player.transform.position.y
+    pgapi.move_camera(player.transform.position)
 
     # print(CAMERA)

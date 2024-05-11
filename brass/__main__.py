@@ -30,7 +30,7 @@ def init():
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
-            camera=Camera(Vector2(1000, 0), 1.05),
+            camera=Camera(Vector2(0, 0), 1.05),
         )
     )
     Input.init_controllers()
@@ -58,6 +58,8 @@ def init():
         Events.system_update()
         animator.tick_anims()
         Collision.repulse()
+
+        pgapi.system_update_camera()
 
         render.render()
         pygame.display.flip()

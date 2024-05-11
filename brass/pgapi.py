@@ -19,6 +19,8 @@ CLOCK: Optional[pygame.time.Clock]
 TIME: Time = Time(0.016)
 CAMERA: Camera = Camera(Vector2(1000), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
+NEXT_CAMERA_POS: Optional[Vector2] = None
+
 
 fps_list = []
 last_fps = time.perf_counter()
@@ -76,6 +78,21 @@ def get_screen_size() -> Vector2:
 
 def get_camera() -> Camera:
     return CAMERA if not SETTINGS.camera else SETTINGS.camera
+
+
+def system_update_camera() -> None:
+    global NEXT_CAMERA_POS
+    
+    if NEXT_CAMERA_POS is None:
+        return
+    
+    CAMERA.position.x = NEXT_CAMERA_POS.x
+    CAMERA.position.y = NEXT_CAMERA_POS.y
+
+
+def move_camera(to: Vector2) -> None:
+    global NEXT_CAMERA_POS
+    NEXT_CAMERA_POS = to
 
 
 def get_fps() -> Optional[float]:
