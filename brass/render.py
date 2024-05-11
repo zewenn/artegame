@@ -1,7 +1,7 @@
 import pgapi
 from files import ASSETS
 from entities import *
-from ui import *
+from gui import *
 import pygame
 import math
 

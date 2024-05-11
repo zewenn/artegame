@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 # For PyInstaller
 PROJECT_NAME = "Artegame"
 VERSION = "1.2.2"
@@ -15,10 +17,14 @@ SERIALISED_OUTPUT_DIR = ["brass", "src"]
 ASSETS_FILE_NAME = "b64_asset_ref_table.py"
 
 # Used to generate script imports
-ROUTINE_PATH = ["brass", "routines"] # Old version DONT USE
-"""
-## DEPRECATED
-Use `SCENES_PATH` instead.
-"""
+ROUTINE_PATH = ["brass", "src", "temp"]
 SCENES_PATH = ["brass", "scenes"]
+SCENES_FILE = ["brass", "scenenum.py"]
+@dataclass
+class ROUTINE_EVENTS:
+    spawn = "@spawn"
+    awake = "@awake"
+    init = "@init"
+    update = "@update"
+TEMP_DIR_PATH = ["brass", "src", "temp"]
 ROUTINE_IMPORT_FILE_NAME = "imports.py"

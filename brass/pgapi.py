@@ -26,10 +26,6 @@ fps_list = []
 last_fps = time.perf_counter()
 
 
-class SCENES:
-    default: Scene = Scene("default")
-
-
 def use(settings: ApplicationSettings):
     if settings.max_fps > 240:
         Debugger.print("Max fps limited to 240")
@@ -82,10 +78,10 @@ def get_camera() -> Camera:
 
 def system_update_camera() -> None:
     global NEXT_CAMERA_POS
-    
+
     if NEXT_CAMERA_POS is None:
         return
-    
+
     CAMERA.position.x = NEXT_CAMERA_POS.x
     CAMERA.position.y = NEXT_CAMERA_POS.y
 

@@ -13,7 +13,7 @@ from input_handler import Input
 import pygame
 import pygame._sdl2.controller as pycontroller
 from saves import Loader
-
+from scenenum import SCENES
 
 def init():
     # Setting up pygame
@@ -40,6 +40,7 @@ def init():
     # Currently loading objects from test_load.py
     # zenyx implementation coming later
     # load.load()
+    SCENES.DEFAULT.load()
     Events.call(Events.ids.awake)
     Events.call(Events.ids.initalise)
 
