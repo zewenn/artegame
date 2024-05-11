@@ -94,6 +94,9 @@ def main(args):
     if len(args) == 0:
         args = ["architect", "-r"]
 
+    if len(args) < 2:
+        args.append("-h")
+
     if args[1] in ["--new-scene", "-ns"]:
         printf.title("Creating New Scene")
 
@@ -117,6 +120,42 @@ def main(args):
         make_file(os.path.join(new_scene_routines, "main.py"), new_routine(False))
         make_file(os.path.join(new_scene_ui, "index.py"), new_routine(True))
 
+    if args[1] in ["--new-routine", "-nr"]:
+        printf.title("Creating New Routine")
+
+        usr_input = input("Scene name: ")
+        if usr_input == "":
+            printf("@!Aborted$& Routine creation!")
+            return
+
+        new_scene_path = os.path.join(*conf.SCENES_PATH, usr_input)
+        new_scene_routines = os.path.join(new_scene_path, "routines")
+        new_scene_ui = os.path.join(new_scene_path, "ui")
+
+        if not os.path.isdir(new_scene_path):
+            printf("@!Aborted$& Routine creation, since the scene does not exist!")
+            return
+
+        usr_input = input("UI routine? (No by default) [Yes/No]: ")
+        ui: bool = False
+
+        if usr_input.lower() in ["y", "yes"]:
+            ui = True
+
+        filename: str = input("Routine Name: ")
+        if filename == "":
+            printf("@!Aborted$& Routine creation!")
+            return
+
+        if not filename.endswith(".py"):
+            filename += ".py"
+
+        if ui:
+            make_file(os.path.join(new_scene_ui, filename), new_routine(True))
+            return
+
+        make_file(os.path.join(new_scene_routines, filename), new_routine(False))
+
     printf.title(f"Build")
 
     # Need to serialise these, so that the game can use the files
@@ -125,9 +164,6 @@ def main(args):
     import_generator.serialise_imports()
 
     build_count_res = attempt(update_read_build_counter, ())
-
-    if len(args) < 2:
-        args.append("-h")
 
     if args[1] in ["--help", "-h"]:
         printf.title("Architect Help Menu")
@@ -149,6 +185,10 @@ def main(args):
         printf("\n    - @!Create a new scene:$&")
         printf("       ./architect -ns")
         printf("       ./architect --new-scene")
+
+        printf("\n    - @!Create a new routine:$&")
+        printf("       ./architect -nr")
+        printf("       ./architect --new-routine")
 
         return
 
