@@ -1,4 +1,3 @@
-
 from enums import *
 from gui import *
 from events import *
@@ -8,32 +7,19 @@ from events import *
 def awk():
     DOM(
         Element(
-            "TestElement",
-            
-            Element(
-                "fasz",
+            "PlayerVitals",
 
-                style=StyleSheet(
-                    position=POSITION.RELATIVE,
-                    top="1u",
-                    left="-2u",
-                    width="3u",
-                    height="3u",
-                    bg_color=(20, 120, 220, 1)
-                )
-            ),
+            Text("Helth: 100"),
+            Text("Mana: 50"),
             
-
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
-                top="50h",
-                left="50w",
-                width="5u",
-                height="5u",
-                bg_color=(245, 0, 0, 0),
-                # bg_image="neunyx32x32.png",
-                font_size=FONT_SIZE.SMALL,
-                color=(255, 255, 255, 1),
+                top="0.5u",
+                left="0.5u",
+                # width="3u",
+                # height="3u",
+                # bg_color=(20, 120, 220, 1),
+                color=(255, 80, 50, 255)
             ),
-        ),
+        )
     )
