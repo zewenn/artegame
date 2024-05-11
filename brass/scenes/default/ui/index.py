@@ -1,8 +1,10 @@
-from ui import *
-from pgapi import SCENES
+
+from enums import *
+from gui import *
+from events import *
 
 
-@SCENES.default.awake
+@awake
 def awk():
     DOM(
         Element(

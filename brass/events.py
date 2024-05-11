@@ -86,3 +86,16 @@ class Scene:
         Items.rendering = []
 
         Events.call(f"{self.id}::quit")
+
+def spawn(fn: Callable[[], None]):
+    return None
+
+def awake(fn: Callable[[], None]):
+    return None
+
+def init(fn: Callable[[], None]):
+    return None
+
+def update(fn: Callable[[], None]):
+    return None
+
