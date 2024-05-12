@@ -33,13 +33,10 @@ def init():
             camera=Camera(Vector2(0, 0), 1),
         )
     )
+    
     Input.init_controllers()
     Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
 
-    # pgapi.Debugger.start()
-    # Currently loading objects from test_load.py
-    # zenyx implementation coming later
-    # load.load()
     SCENES.DEFAULT.load()
     Events.call(Events.ids.awake)
     Events.call(Events.ids.initalise)
@@ -66,10 +63,7 @@ def init():
         pygame.display.flip()
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
 
-        # pgapi.Debugger.update()
-
     pygame.quit()
-    # pgapi.Debugger.quit()
     Loader.save()
 
 

@@ -115,7 +115,7 @@ def get_routines_and_scenes(from_dir: list[str]) -> Tuple[list[Routine], list[st
 
 
 def build_scenes_file(scenes: list[str]) -> None:
-    with open(os.path.join(*conf.SCENES_FILE), "w", encoding="utf-8") as wf:
+    with open(os.path.join(*conf.SCENES_ENUM_FILE), "w", encoding="utf-8") as wf:
         wf.write("# Generating scenes enum\n\n")
         wf.write("from events import Scene\n\n")
         wf.write("class SCENES:\n\n")

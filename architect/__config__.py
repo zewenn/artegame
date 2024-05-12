@@ -20,7 +20,7 @@ ASSETS_FILE_NAME = "b64_asset_ref_table.py"
 # Used to generate script imports
 ROUTINE_PATH = ["brass", "src", "temp"]
 SCENES_PATH = ["brass", "scenes"]
-SCENES_FILE = ["brass", "scenenum.py"]
+SCENES_ENUM_FILE = ["brass", "scenenum.py"]
 
 
 @dataclass
