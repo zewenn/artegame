@@ -211,12 +211,14 @@ def main(args):
         build_success, build_error = deps.run_python_command(
             [
                 "-m",
-                "PyInstaller",
-                "--onefile",
-                "--noconsole",
+                "nuitka",
                 os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
-                "-n",
-                APP_NAME,
+                "--standalone",
+                "--windows-disable-console",
+                f"--output-dir={os.path.realpath(os.path.join(*conf.BUILD_OUTPUT_DIR))}",
+                "--remove-output",
+                # "-n",
+                # APP_NAME,
             ]
         )
 
@@ -234,13 +236,13 @@ def main(args):
                 printf(f"Error: \n{build_error}")
                 print("\n\n")
 
-        os.remove(
-            os.path.join(
-                f"{conf.PROJECT_NAME}-{conf.VERSION}"
-                + (f".b{build_count_res.ok()}" if build_count_res.is_ok() else "")
-                + ".spec"
-            )
-        )
+        # os.remove(
+        #     os.path.join(
+        #         f"{conf.PROJECT_NAME}-{conf.VERSION}"
+        #         + (f".b{build_count_res.ok()}" if build_count_res.is_ok() else "")
+        #         + ".spec"
+        #     )
+        # )
 
 
 if __name__ == "__main__":

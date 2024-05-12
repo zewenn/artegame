@@ -5,11 +5,15 @@ import sys, os, io, time
 
 T = TypeVar("T")
 
-def attempt(func: Callable[..., T], args: Tuple = ()) -> Tuple[Optional[T], Optional[str]]:
-    try: 
+
+def attempt(
+    func: Callable[..., T], args: Tuple = ()
+) -> Tuple[Optional[T], Optional[str]]:
+    try:
         return (func(*args), None)
     except Exception as e:
         return (None, " ".join(e.args))
+
 
 def title(content: str, line_char: chr = "─") -> None:
     width: int = os.get_terminal_size().columns
@@ -29,7 +33,7 @@ class DummyFile(object):
     def write(self, x):
         pass
 
-    def flush(self, x = None):
+    def flush(self, x=None):
         pass
 
 
@@ -38,7 +42,7 @@ def silence(func: Callable):
         res, exc = None, None
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
-        try: 
+        try:
             res = func(*args, **kwargs)
         except Exception as e:
             exc = e
@@ -46,7 +50,6 @@ def silence(func: Callable):
         if exc:
             raise exc
         return res
-
 
     return wrap
 
@@ -72,6 +75,7 @@ def install(name: str) -> bool:
         return True
 
     try:
+        print(f"Installing: \u001b[38;5;214m {name}\u001b[0m", end="\r")
         with open(os.devnull, "wb") as shutup:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--upgrade", name],
@@ -94,22 +98,26 @@ def is_stack_installed(deps: list[str]) -> bool:
 def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
     failed: bool = False
 
+    longest_dep_name = deps[0]
+    for dep in deps:
+        if len(dep) > len(longest_dep_name):
+            longest_dep_name = dep
+
     for index, dep in enumerate(deps):
         start = time.perf_counter()
         install_res = install(dep)
 
-        symbol = "✔"
-
         if not install_res:
-            symbol = "✘"
             failed = True
 
+        depname = str(dep)[: len(longest_dep_name)]
+
         print(
-            f"[{index + 1}/{len(deps)}] {symbol} {dep}",
-            f"\tin {round(time.perf_counter() - start, 5)}s",
-            sep="    ",
+            f"[{index + 1}/{len(deps)}]\u001b[38;5;214m {depname.ljust(14)}\u001b[0m",
+            f"\u001b[38;5;236m in {round(time.perf_counter() - start, 5)}s\u001b[0m",
+            # sep="    ",
         )
-    
+
     if failed:
         return Exception("deps was unable to install some packag(es).")
 
@@ -117,9 +125,9 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
 def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
     try:
         x = subprocess.call([sys.executable, *cmd])
-        if (x == 0):
+        if x == 0:
             return True, None
-        else: 
+        else:
             return False, f"\tExit code: {x}"
     except Exception as e:
         return False, e

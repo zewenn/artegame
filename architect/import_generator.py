@@ -23,7 +23,7 @@ def delete_files_in_directory(directory_path):
             file_path = os.path.join(directory_path, file)
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            print(f"[{index + 1}/{len(files)}] Removing: {file[:16]}...", end="\r")
+            printf.full_line(f"[{index + 1}/{len(files)}] Removing: {file[:16]}...", end="\r")
         print("")
     except OSError as e:
         print("Error occurred while deleting files: \n", e)

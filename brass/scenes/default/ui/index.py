@@ -4,7 +4,7 @@ from events import *
 
 
 @awake
-def awk():
+def _awake():
     DOM(
         Element(
             "PlayerVitals",
