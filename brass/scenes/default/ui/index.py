@@ -14,8 +14,8 @@ def _awake():
             
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
-                top="0.5u",
-                left="0.5u",
+                top=".5u",
+                left=".5u",
                 # width="3u",
                 # height="3u",
                 # bg_color=(20, 120, 220, 1),

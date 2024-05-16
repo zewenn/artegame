@@ -113,7 +113,7 @@ class ApplicationSettings:
     application_name: str = "fyne"
     icon: Optional[str] = None
     camera: Optional[Camera] = None
-    axis_rounding: Optional[int] = 500
+    axis_rounding: Optional[int] = 20000
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
     scaling: str = "GENERIC"

@@ -21,7 +21,6 @@ walk: Audio
 move_vec: Vector2 = Vector2()
 move_math_vec: CompleteMathVector
 
-text_elem: gui.Element
 
 @init
 def _s():
@@ -43,16 +42,12 @@ def _s():
     box_res = Items.get("box")
     hand_res = Items.get("player->left_hand")
 
-    text_elem = gui.get_element("TestElement")
-
     if player_res:
         player = player_res
     if box_res:
         box = box_res
     if hand_res:
         hand = hand_res
-
-    # Debugger.print("player.transform:", player.transform)
 
 
 @update
@@ -70,7 +65,7 @@ def _u():
 
     if Input.get_button("k"):
         pgapi.set_screen_size(Vector2(1600, 900))
-        text_elem.children[0] = gui.Text("Wakey Wakey!!!")
+        # text_elem.children[0] = gui.Text("Wakey Wakey!!!")
 
     if Input.active_bind("music-on"):
         music.fade_in(1000)
