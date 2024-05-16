@@ -2,7 +2,7 @@ from zenyx import pyon
 from dataclasses import dataclass
 from classes import Item, Moment
 from copy import deepcopy
-from entities import Items
+import items
 from load import load_game_scene
 from pgapi import Debugger
 import os
@@ -23,7 +23,7 @@ class Loader:
     @classmethod
     def save(this):
         this.make_url()
-        for_save = Moment(deepcopy(Items.rendering))
+        for_save = Moment(deepcopy(items.rendering))
         pyon.dump(for_save, this.SAVE_FILE, 4)
         Debugger.print("Saving...")
 
@@ -37,7 +37,7 @@ class Loader:
             if not use_load_file: 
                 raise Exception("Not using save file")
             loaded: Moment = pyon.load(this.SAVE_FILE)
-            Items.rendering = loaded.items
+            items.rendering = loaded.items
         except Exception as e:
             Debugger.print(f"Error during loading: {e}")
             failed = True

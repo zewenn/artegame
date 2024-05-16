@@ -1,8 +1,9 @@
 
-from entities import *
+from classes import *
+import items
 
 def load_game_scene():
-    # Items.create(
+    # items.create(
     #     Item(
     #         id="displ",
     #         tags=["displ", "item"],
@@ -16,7 +17,7 @@ def load_game_scene():
     #         can_move=False
     #     )
     # )
-    Items.create(
+    items.create(
         Item(
             id="player",
             tags=["player", "item"],
@@ -75,7 +76,7 @@ def load_game_scene():
         )
     )
 
-    Items.create(
+    items.create(
         Item(
             id="box",
             tags=["box", "item"],
@@ -91,7 +92,7 @@ def load_game_scene():
         )
     )
 
-    Items.create(
+    items.create(
         Item(
             id="asd",
             tags=["asd", "item"],
@@ -108,4 +109,4 @@ def load_game_scene():
         )
     )
 
-    # print(Items.rendering)
+    # print(items.rendering)

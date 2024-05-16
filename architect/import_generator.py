@@ -120,7 +120,7 @@ def build_scenes_file(scenes: list[str]) -> None:
         wf.write("from events import Scene\n\n")
         wf.write("class SCENES:\n\n")
         for scene in scenes:
-            wf.write(f'\t{scene.upper()}: Scene = Scene("{scene}")\n')
+            wf.write(f'\t{scene.lower()}: Scene = Scene("{scene}")\n')
 
 
 def create_replace_temp(routines: list[Routine]) -> None:
@@ -138,16 +138,16 @@ def create_replace_temp(routines: list[Routine]) -> None:
 
         contents = "from scenenum import SCENES\n" + contents
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.spawn, f"@SCENES.{routine.scene.upper()}.spawn"
+            conf.ROUTINE_EVENTS.spawn, f"@SCENES.{routine.scene.lower()}.spawn"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.awake, f"@SCENES.{routine.scene.upper()}.awake"
+            conf.ROUTINE_EVENTS.awake, f"@SCENES.{routine.scene.lower()}.awake"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.init, f"@SCENES.{routine.scene.upper()}.initalise"
+            conf.ROUTINE_EVENTS.init, f"@SCENES.{routine.scene.lower()}.initalise"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.update, f"@SCENES.{routine.scene.upper()}.update"
+            conf.ROUTINE_EVENTS.update, f"@SCENES.{routine.scene.lower()}.update"
         )
 
         with open(

@@ -1,6 +1,6 @@
 from events import *
 from classes import *
-from entities import *
+import items
 from vectormath import MathVectorToolkit, CompleteMathVector
 from files import asset
 from audio_helper import Audio
@@ -8,7 +8,7 @@ from input_handler import Input
 from pgapi import TIME
 import gui
 import pgapi
-
+from scenenum import SCENES
 
 camera: Camera
 player: Item
@@ -38,9 +38,9 @@ def _s():
     music.set_volume(0.05)
     music.fade_in(1000, 1)
 
-    player_res = Items.get("player")
-    box_res = Items.get("box")
-    hand_res = Items.get("player->left_hand")
+    player_res = items.get("player")
+    box_res = items.get("box")
+    hand_res = items.get("player->left_hand")
 
     if player_res:
         player = player_res
@@ -65,6 +65,7 @@ def _u():
 
     if Input.get_button("k"):
         pgapi.set_screen_size(Vector2(1600, 900))
+        SCENES.main.load()
         # text_elem.children[0] = gui.Text("Wakey Wakey!!!")
 
     if Input.active_bind("music-on"):
@@ -72,6 +73,8 @@ def _u():
 
     if Input.active_bind("music-off"):
         music.fade_out(1000)
+
+    # if Input.get_button("k"):
 
     move_math_vec = MathVectorToolkit.normalise(MathVectorToolkit.new(move_vec))
 

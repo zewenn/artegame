@@ -53,9 +53,9 @@ def update_read_build_counter() -> str:
         return str(res)
 
 
-def new_routine(ui: bool) -> str:
-    match ui:
-        case True:
+def new_routine(T: Literal["gui"] | Literal["routine"] | Literal["config"], scn_name: str = "") -> str:
+    match T:
+        case "gui":
             return "\n".join(
                 [
                     "from events import *",
@@ -63,17 +63,29 @@ def new_routine(ui: bool) -> str:
                     "from gui import *",
                     "\n\n\n@awake",
                     "def _awake():",
-                    "    pass",
+                    "    DOM()",
                 ]
             )
-        case False:
+        case "config":
+            return "\n".join(
+                [
+                    "from events import *",
+                    "from enums import *",
+                    "from result import *",
+                    "import saves",
+                    "\n\n\n@spawn",
+                    "def spawn_scene():",
+                    f"    loaded = saves.load(\"{scn_name.lower()}\")",
+                ]
+            )
+        case "routine":
             return "\n".join(
                 [
                     "from audio_helper import Audio",
                     "from input_handler import Input",
-                    "from entities import *",
                     "from classes import *",
                     "from events import *",
+                    "import items",
                     "import pgapi",
                     "\n\n\n@init",
                     "def _init():",
@@ -100,7 +112,7 @@ def main(args):
     if args[1] in ["--new-scene", "-ns"]:
         printf.title("Creating New Scene")
 
-        usr_input = input("Scene name: ")
+        usr_input = input("Scene name: ").lower()
         if usr_input == "":
             printf("@!Aborted$& Scene creation!")
             return
@@ -117,13 +129,14 @@ def main(args):
         os.mkdir(new_scene_routines)
         os.mkdir(new_scene_ui)
 
-        make_file(os.path.join(new_scene_routines, "main.py"), new_routine(False))
-        make_file(os.path.join(new_scene_ui, "index.py"), new_routine(True))
+        make_file(os.path.join(new_scene_routines, "main.py"), new_routine("routine"))
+        make_file(os.path.join(new_scene_routines, "__config__.py"), new_routine("config", scn_name=usr_input))
+        make_file(os.path.join(new_scene_ui, "index.py"), new_routine("gui"))
 
     if args[1] in ["--new-routine", "-nr"]:
         printf.title("Creating New Routine")
 
-        usr_input = input("Scene name: ")
+        usr_input = input("Scene name: ").lower()
         if usr_input == "":
             printf("@!Aborted$& Routine creation!")
             return
@@ -136,13 +149,13 @@ def main(args):
             printf("@!Aborted$& Routine creation, since the scene does not exist!")
             return
 
-        usr_input = input("UI routine? (No by default) [Yes/No]: ")
+        usr_input = input("UI routine? (No by default) [Yes/No]: ").lower()
         ui: bool = False
 
-        if usr_input.lower() in ["y", "yes"]:
+        if usr_input in ["y", "yes"]:
             ui = True
 
-        filename: str = input("Routine Name: ")
+        filename: str = input("Routine Name: ").lower()
         if filename == "":
             printf("@!Aborted$& Routine creation!")
             return

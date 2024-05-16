@@ -2,7 +2,6 @@ from enums import *
 from gui import *
 from events import *
 
-
 @awake
 def _awake():
     DOM(

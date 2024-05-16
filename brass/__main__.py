@@ -6,7 +6,7 @@ from src.imports import *
 import files as files, render
 import pgapi
 from repulse import Collision
-from entities import *
+import items
 from classes import *
 from animator import animator
 from input_handler import Input
@@ -38,7 +38,7 @@ def init():
     Input.init_controllers()
     Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
 
-    SCENES.DEFAULT.load()
+    SCENES.default.load()
     Events.call(Events.ids.awake)
     Events.call(Events.ids.initalise)
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import *
 
 
 @dataclass
@@ -55,12 +55,14 @@ class Collider:
     transform: Transform
     trigger: bool = False
 
+
 @dataclass
 class Distances:
     left: float = 0
     right: float = 0
     top: float = 0
     bottom: float = 0
+
 
 @dataclass
 class Item:
@@ -221,3 +223,16 @@ class Event:
 @dataclass
 class Moment:
     items: list[Item]
+
+
+# --------------------------- sdtlib --------------------------
+
+
+@dataclass
+class Mishap:
+    msg: str
+
+
+@dataclass
+class ValueMishap:
+    msg: str

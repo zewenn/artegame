@@ -1,7 +1,7 @@
 
 from saves import Loader
 from events import *
-from entities import Items
+import items
 
 @spawn
 def _spw():

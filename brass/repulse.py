@@ -1,5 +1,5 @@
 from classes import *
-from entities import Items
+import items
 
 
 class Collision:
@@ -75,11 +75,11 @@ class Collision:
         collide_items: list[Item] = []
         repulse_items: list[Item] = []
 
-        for item in Items.rendering:
+        for item in items.rendering:
             if item.can_collide and item.render:
                 collide_items.append(item)
 
-        for item in Items.rendering:
+        for item in items.rendering:
             if item in collide_items and item.can_repulse:
                 repulse_items.append(item)
 
