@@ -2,7 +2,7 @@
 import pygame
 import pygame._sdl2.controller as pycontroller
 import pgapi
-from typing import Literal
+from typing import *
 
 class Input:
     controller_codes: dict[str, int] = {
@@ -60,7 +60,7 @@ class Input:
             pgapi.CONTROLLERS.append(pycontroller.Controller(i))
 
     @classmethod
-    def __inner_get__(this, key: str) -> tuple[float, int]:
+    def __inner_get__(this, key: str) -> Tuple[float, int]:
         """x@controller#0
         x@keyboard - default
         left@mouse
@@ -159,10 +159,6 @@ class Input:
 
         device, event = this.__inner_get__(key)
         device = str(device)
-
-        rounding = 5000
-        if pgapi.SETTINGS.axis_rounding is not None:
-            rounding = pgapi.SETTINGS.axis_rounding
 
         if device == "0":
             return resolve(bool(pygame.mouse.get_pressed(5)[event]))

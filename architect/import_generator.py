@@ -23,7 +23,10 @@ def delete_files_in_directory(directory_path):
             file_path = os.path.join(directory_path, file)
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            printf.full_line(f"[{index + 1}/{len(files)}] Removing: {file[:16]}...", end="\r")
+            printf.full_line(
+                f"[{index + 1}/{len(files)}] Removing: {file[:16]}{'...' if len(file) >= 16 else ''}",
+                end="\r",
+            )
         print("")
     except OSError as e:
         print("Error occurred while deleting files: \n", e)
@@ -35,8 +38,11 @@ def generate_imports_from_directory(directory: str) -> Result[list[str], ValueEr
     file_list: list[str] = []
     for index, filename in enumerate(os.listdir(directory)):
         if filename.endswith(".py"):
-            file_list.append(f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import " + filename.replace(".py", ""))
-            out_txt = f"[{index + 1}/{len(file_list)}] Binding Routines: {filename[:16]}..."
+            file_list.append(
+                f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import "
+                + filename.replace(".py", "")
+            )
+            out_txt = f"[{index + 1}/{len(file_list)}] Binding Routines: {filename[:16]}{'...' if len(filename) >= 16 else ''}"
             printf.full_line(out_txt, end="\r")
     print("")
     return Ok(file_list)
@@ -153,7 +159,7 @@ def create_replace_temp(routines: list[Routine]) -> None:
         with open(
             os.path.join(
                 temp_path,
-                f"r{random.randint(0, 100000000)}_{routine.scene}_{routine.filename[:-3]}_{routine.ui_routine}.py",
+                f"r{random.randint(0, 100000000)}_{routine.scene}_{routine.filename[:-3]}_{'ui' if routine.ui_routine else 'rt'}.py",
             ),
             "w",
             encoding="utf-8",

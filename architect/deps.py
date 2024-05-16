@@ -75,7 +75,7 @@ def install(name: str) -> bool:
         return True
 
     try:
-        print(f"Installing: \u001b[38;5;214m {name}\u001b[0m", end="\r")
+        print(f"[GET] Installing: \u001b[38;5;214m {name}\u001b[0m", end="\r")
         with open(os.devnull, "wb") as shutup:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--upgrade", name],
