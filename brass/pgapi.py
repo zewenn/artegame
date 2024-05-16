@@ -1,10 +1,9 @@
-from files import ASSETS
 from zenyx import printf
 from classes import *
 from typing import *
 from result import *
-from events import Scene, Events
 
+import assets
 import pygame
 import pygame._sdl2.controller as pycontroller
 import time
@@ -12,7 +11,7 @@ import inspect
 
 T = TypeVar("T")
 
-SETTINGS: Optional[ApplicationSettings]
+SETTINGS: Optional[ApplicationSettings] = None
 RUN: bool = True
 SCREEN: Optional[pygame.Surface]
 CLOCK: Optional[pygame.time.Clock]
@@ -47,7 +46,7 @@ def use(settings: ApplicationSettings):
     pygame.transform.set_smoothscale_backend(settings.scaling)
 
     if settings.icon is not None:
-        pygame.display.set_icon(ASSETS[settings.icon])
+        pygame.display.set_icon(assets.use(settings.icon))
 
     if settings.camera is not None:
         CAMERA = settings.camera
@@ -97,11 +96,11 @@ def get_fps() -> Optional[float]:
     return sum(fps_list) / len(fps_list)
 
 
-def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, str]:
+def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
     try:
         return Ok(func(*args))
     except Exception as e:
-        return Err(" ".join(e.args))
+        return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
 
 class Debugger:

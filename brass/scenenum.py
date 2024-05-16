@@ -4,4 +4,4 @@ from events import Scene
 
 class SCENES:
 
-	DEFAULT: Scene = Scene("default")
+	default: Scene = Scene("default")

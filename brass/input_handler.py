@@ -2,7 +2,7 @@
 import pygame
 import pygame._sdl2.controller as pycontroller
 import pgapi
-from typing import Literal, Optional
+from typing import Literal
 
 class Input:
     controller_codes: dict[str, int] = {

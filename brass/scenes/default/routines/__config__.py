@@ -1,22 +1,24 @@
+from events import *
+from classes import *
+from enums import *
+from result import *
+from typing import *
+import items
+import saves
 
-from entities import *
 
-def load_game_scene():
-    # Items.create(
-    #     Item(
-    #         id="displ",
-    #         tags=["displ", "item"],
-    #         transform=Transform(
-    #             Vector2(-32, -32),
-    #             Vector3(0, 0, 0),
-    #             Vector2(64, 64)
-    #         ),
-    #         fill_color=[20, 20, 20],
-    #         # sprite="test.png",
-    #         can_move=False
-    #     )
-    # )
-    Items.create(
+
+@spawn
+def spawn_scene():
+    saves.select_slot(0)
+    res_loaded: Result[None, Mishap] = saves.load()
+    
+    if res_loaded.is_ok():
+        return
+
+
+    # if loaded.is_ok():
+    items.create(
         Item(
             id="player",
             tags=["player", "item"],
@@ -75,7 +77,7 @@ def load_game_scene():
         )
     )
 
-    Items.create(
+    items.create(
         Item(
             id="box",
             tags=["box", "item"],
@@ -91,7 +93,7 @@ def load_game_scene():
         )
     )
 
-    Items.create(
+    items.create(
         Item(
             id="asd",
             tags=["asd", "item"],
@@ -107,5 +109,3 @@ def load_game_scene():
             lightness=10,
         )
     )
-
-    # print(Items.rendering)

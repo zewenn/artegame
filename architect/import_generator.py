@@ -23,7 +23,7 @@ def delete_files_in_directory(directory_path):
             file_path = os.path.join(directory_path, file)
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            print(f"[{index + 1}/{len(files)}] Removing: {file[:16]}...", end="\r")
+            printf.full_line(f"[{index + 1}/{len(files)}] Removing: {file[:16]}...", end="\r")
         print("")
     except OSError as e:
         print("Error occurred while deleting files: \n", e)
@@ -115,12 +115,12 @@ def get_routines_and_scenes(from_dir: list[str]) -> Tuple[list[Routine], list[st
 
 
 def build_scenes_file(scenes: list[str]) -> None:
-    with open(os.path.join(*conf.SCENES_FILE), "w", encoding="utf-8") as wf:
+    with open(os.path.join(*conf.SCENES_ENUM_FILE), "w", encoding="utf-8") as wf:
         wf.write("# Generating scenes enum\n\n")
         wf.write("from events import Scene\n\n")
         wf.write("class SCENES:\n\n")
         for scene in scenes:
-            wf.write(f'\t{scene.upper()}: Scene = Scene("{scene}")\n')
+            wf.write(f'\t{scene.lower()}: Scene = Scene("{scene}")\n')
 
 
 def create_replace_temp(routines: list[Routine]) -> None:
@@ -138,16 +138,16 @@ def create_replace_temp(routines: list[Routine]) -> None:
 
         contents = "from scenenum import SCENES\n" + contents
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.spawn, f"@SCENES.{routine.scene.upper()}.spawn"
+            conf.ROUTINE_EVENTS.spawn, f"@SCENES.{routine.scene.lower()}.spawn"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.awake, f"@SCENES.{routine.scene.upper()}.awake"
+            conf.ROUTINE_EVENTS.awake, f"@SCENES.{routine.scene.lower()}.awake"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.init, f"@SCENES.{routine.scene.upper()}.initalise"
+            conf.ROUTINE_EVENTS.init, f"@SCENES.{routine.scene.lower()}.initalise"
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.update, f"@SCENES.{routine.scene.upper()}.update"
+            conf.ROUTINE_EVENTS.update, f"@SCENES.{routine.scene.lower()}.update"
         )
 
         with open(

@@ -1,9 +1,9 @@
 import pgapi
-from files import ASSETS
-from entities import *
+from assets import ASSETS
 from gui import *
 import pygame
 import math
+import items
 
 
 def is_on_screen(item: Item) -> bool:
@@ -247,7 +247,7 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
 
 
 def render():
-    for item in Items.rendering:
+    for item in items.rendering:
         # render_thread = threading.Thread(
         #     target=render_one,
         #     args=(item,)

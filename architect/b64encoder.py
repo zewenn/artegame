@@ -30,7 +30,7 @@ def serialize_file_to_b64string(filepath) -> str:
 
 
 def serialise() -> None:
-    images: list = get_files_in_directory(os.path.join("brass", "assets"))
+    images: list = get_files_in_directory(os.path.join("brass", conf.ASSETS_DIR_NAME))
     img_dict: dict = {}
 
     for index, image in enumerate(images):
@@ -42,7 +42,7 @@ def serialise() -> None:
         )
 
     with open(
-        os.path.join(*conf.SERIALISED_OUTPUT_DIR, f"{conf.ASSETS_FILE_NAME}"), "w"
+        os.path.join(*conf.SERIALISED_OUTPUT_DIR, f"{conf.ASSETS_FILE_DIST_NAME}"), "w"
     ) as wf:
         wf.write(f"REFERENCE_TABLE: dict[str, str] = {img_dict}")
 

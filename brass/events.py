@@ -1,6 +1,6 @@
 import os
 from classes import *
-from entities import *
+import items, gui
 
 
 class Events:
@@ -82,8 +82,10 @@ class Scene:
         Events.set_update_name(f"{self.id}::update")
     
     def close(self):
-        self.items = Items.rendering
-        Items.rendering = []
+        self.items = items.rendering
+        items.rendering = []
+        gui.query_available = []
+        gui.DOM_El.children = []
 
         Events.call(f"{self.id}::quit")
 

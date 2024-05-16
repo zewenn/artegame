@@ -2,9 +2,8 @@ from enums import *
 from gui import *
 from events import *
 
-
 @awake
-def awk():
+def _awake():
     DOM(
         Element(
             "PlayerVitals",
@@ -14,8 +13,8 @@ def awk():
             
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
-                top="0.5u",
-                left="0.5u",
+                top=".5u",
+                left=".5u",
                 # width="3u",
                 # height="3u",
                 # bg_color=(20, 120, 220, 1),
