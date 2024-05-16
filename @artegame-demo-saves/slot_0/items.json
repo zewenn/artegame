@@ -7,8 +7,8 @@
         ],
         "transform": {
             "position": {
-                "x": 135.0,
-                "y": 162.36291501015228,
+                "x": 167.93457804493005,
+                "y": -65.0,
                 "pyon_converted": true,
                 "@class": "Vector2"
             },
@@ -151,8 +151,8 @@
         ],
         "transform": {
             "position": {
-                "x": 64.0,
-                "y": 0.0,
+                "x": 135.99999999999997,
+                "y": 0.6666666666672398,
                 "pyon_converted": true,
                 "@class": "Vector2"
             },
