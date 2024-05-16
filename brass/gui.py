@@ -47,57 +47,36 @@ def unit(u: str) -> float:
             return num * 16
 
 
-@dataclass
-class StyleSheet:
-    position: str = POSITION.ABSOLUTE
-
-    bottom: str = "0x"
-    right: str = "0x"
-    left: str = "0x"
-    top: str = "0x"
-
-    width: str = "0x"
-    height: str = "0x"
-
-    bg_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
-    bg_image: str = None
-
-    color: Tuple[int, int, int, int] = (0, 0, 0, 1)
-    font: str = "press_play.ttf"
-    font_size: str = FONT_SIZE.EXTRA_SMALL
-
-
-rendering: list["Element"] = []
+query_available: list[GUIElement] = []
 
 
 def get_element(id: str) -> "Element":
-    for el in rendering:
+    for el in query_available:
         if el.id == id:
             return el
 
-
-class Element:
-    def __init__(
-        self,
+def Element(
         id: str,
-        *children: type["Element"] | str,
+        *children: GUIElement,
         style: Optional[StyleSheet] = None,
-    ) -> None:
-        self.id = id
-        self.children = list(children)
-        self.style = style if style else StyleSheet()
+    ) -> GUIElement:
+        this = GUIElement(
+            id, 
+            children,
+            style if style else StyleSheet()
+        )
+        query_available.append(this)
+        return this
 
-        rendering.append(self)
 
-
-DOM_El: Optional[Element] = Element("DOM")
+DOM_El: Optional[GUIElement] = Element("DOM")
 
 
 def Text(t: str) -> str:
     return t
 
 
-def DOM(*children: Element | str, style: Optional[StyleSheet] = None) -> None:
+def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None:
     global DOM_El
     DOM_El.children = children
     DOM_El.style = style if style else StyleSheet()

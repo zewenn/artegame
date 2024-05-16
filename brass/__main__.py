@@ -3,16 +3,19 @@ from events import Events
 # Importing scripts, so they can run
 from src.imports import *
 
-import files as files, render
+import assets
+import render
 import pgapi
 from repulse import Collision
 import items
 from classes import *
 from animator import animator
 from input_handler import Input
+import saves
 import pygame
 import pygame._sdl2.controller as pycontroller
 from scenenum import SCENES
+
 
 def init():
     # Setting up pygame
@@ -20,7 +23,7 @@ def init():
     pycontroller.init()
     pygame.mixer.init()
 
-    files.init()
+    assets.create_runtime_objects()
 
     pgapi.use(
         ApplicationSettings(
@@ -30,17 +33,17 @@ def init():
             vsync=0,
             icon="neunyx32x32.png",
             camera=Camera(Vector2(0, 0), 1),
+            is_demo=True,
             # axis_rounding=10
         )
     )
-    
+
     Input.init_controllers()
     Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)
     Events.call(Events.ids.initalise)
-
 
     while pgapi.RUN:
         for event in pygame.event.get():
@@ -64,6 +67,7 @@ def init():
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
 
     pygame.quit()
+    saves.save()
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ class Scene:
     def close(self):
         self.items = items.rendering
         items.rendering = []
-        gui.rendering = []
+        gui.query_available = []
         gui.DOM_El.children = []
 
         Events.call(f"{self.id}::quit")

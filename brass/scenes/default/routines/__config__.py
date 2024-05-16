@@ -10,7 +10,12 @@ import saves
 
 @spawn
 def spawn_scene():
-    # loaded: Result[Any, Mishap] = saves.load("default")
+    saves.select_slot(0)
+    res_loaded: Result[None, Mishap] = saves.load()
+    
+    if res_loaded.is_ok():
+        return
+
 
     # if loaded.is_ok():
     items.create(

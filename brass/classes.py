@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import *
+from enums import *
 
 
 @dataclass
@@ -110,7 +111,8 @@ class Camera:
 @dataclass
 class ApplicationSettings:
     screen_size: tuple[int]
-    max_fps: int
+    is_demo: bool = False
+    max_fps: int = 240
     vsync: int = 0
     application_name: str = "fyne"
     icon: Optional[str] = None
@@ -230,11 +232,41 @@ class Moment:
 # --------------------------- sdtlib --------------------------
 
 
-@dataclass
 class Mishap:
-    msg: str
+    def __init__(self, msg: str, fatal: bool = False) -> None:
+        self.msg: str = f"{'FATAL' if fatal else 'NONFATAL'} :: {msg}"
+
+    def is_fatal(self) -> bool:
+        if self.msg.startswith("FATAL"):
+            return True
+        return False
+
+
+# ----------------------------- ui ----------------------------
 
 
 @dataclass
-class ValueMishap:
-    msg: str
+class StyleSheet:
+    position: str = POSITION.ABSOLUTE
+
+    bottom: str = "0x"
+    right: str = "0x"
+    left: str = "0x"
+    top: str = "0x"
+
+    width: str = "0x"
+    height: str = "0x"
+
+    bg_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
+    bg_image: str = None
+
+    color: Tuple[int, int, int, int] = (0, 0, 0, 1)
+    font: str = "press_play.ttf"
+    font_size: str = FONT_SIZE.EXTRA_SMALL
+
+
+@dataclass
+class GUIElement:
+    id: str
+    children: list["GUIElement"]
+    style: StyleSheet

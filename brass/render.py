@@ -1,5 +1,5 @@
 import pgapi
-from files import ASSETS
+from assets import ASSETS
 from gui import *
 import pygame
 import math

@@ -15,7 +15,8 @@ BUILD_OUTPUT_DIR = ["dist"]
 SERIALISED_OUTPUT_DIR = ["brass", "src"]
 
 # Used for the b64 images and sounds
-ASSETS_FILE_NAME = "b64_asset_ref_table.py"
+ASSETS_DIR_NAME = "asset_files"
+ASSETS_FILE_DIST_NAME = "b64_asset_ref_table.py"
 
 # Used to generate script imports
 ROUTINE_PATH = ["brass", "src", "temp"]

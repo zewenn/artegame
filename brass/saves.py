@@ -1,9 +1,96 @@
-from zenyx import pyon
 from dataclasses import dataclass
-from classes import Item, Moment
 from copy import deepcopy
-from pgapi import Debugger
+from classes import *
+from result import *
+import zenyx
+import pgapi
 import items
 import gui
 import os
 
+
+def path(path: str) -> str:
+    return os.path.realpath(os.path.join(*path.split("/")))
+
+
+SAVES_DIR: Optional[str] = None
+SLOTS: list[dict[str, Any]] = []
+SLOT: int = 0
+
+
+def create_save_dir() -> Result[None, Mishap]:
+    global SAVES_DIR
+
+    try:
+        if SAVES_DIR == None:
+            SAVES_DIR = (
+                path(pgapi.SETTINGS.demo_save_path)
+                if pgapi.SETTINGS.is_demo
+                else path(pgapi.SETTINGS.save_path)
+            )
+
+        if os.path.isdir(SAVES_DIR):
+            return Err(Mishap(f"{SAVES_DIR} already exists!"))
+        os.mkdir(SAVES_DIR)
+
+        for slot_num in range(4):
+            pth = path(f"{SAVES_DIR}/slot_{slot_num}")
+
+            if os.path.isdir(pth):
+                return Err(Mishap(f"{pth} already exists!"))
+
+            os.mkdir(pth)
+
+        return Ok(None)
+    except Exception as e:
+        print(f"An exception occured while creating the save directories: {e}")
+        return Err(Mishap(f"An error occured: {e}", True))
+
+
+def select_slot(num: Literal[0, 1, 2, 3]) -> None:
+    global SLOT
+    SLOT = num
+
+
+def load() -> Result[None, Mishap]:
+    create_res = create_save_dir()
+
+    if create_res.is_err():
+        res = create_res.err()
+        if res.is_fatal():
+            return Err(Mishap("Couldn't create the save dir!", True))
+
+    item_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "items.json")
+    gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
+
+    items_loaded: Result[list[Item], Mishap] = pgapi.attempt(
+        zenyx.pyon.load, (item_file,)
+    )
+    gui_loaded: Result[list[GUIElement], Mishap] = pgapi.attempt(
+        zenyx.pyon.load, (gui_file,)
+    )
+
+    if items_loaded.is_err() or gui_loaded.is_err():
+        return Err(Mishap("Couldn't load save files!", True))
+    
+    items.rendering = items_loaded.ok()
+    gui.DOM(*(gui_loaded.ok()))
+
+    return Ok(None)
+
+
+def save() -> Result[None, Mishap]:
+    create_res = create_save_dir()
+
+    if create_res.is_err():
+        res = create_res.err()
+        if res.is_fatal():
+            return Err(Mishap("Couldn't create the save dir!", True))
+
+    item_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "items.json")
+    gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
+
+    zenyx.pyon.dump(deepcopy(items.rendering), item_file)
+    zenyx.pyon.dump(deepcopy(gui.DOM_El.children), gui_file)
+
+    return Ok(None)

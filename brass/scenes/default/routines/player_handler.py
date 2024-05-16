@@ -2,7 +2,7 @@ from events import *
 from classes import *
 import items
 from vectormath import MathVectorToolkit, CompleteMathVector
-from files import asset
+import assets
 from audio_helper import Audio
 from input_handler import Input
 from pgapi import TIME
@@ -31,10 +31,10 @@ def _s():
     Input.bind_buttons("music-off", ["1", "dpad-down@ctrl#0"])
     Input.bind_buttons("music-on", ["2", "dpad-up@ctrl#0"])
 
-    walk = Audio(asset("walking.mp3"))
+    walk = Audio(assets.use("walking.mp3"))
     walk.set_volume(0.1)
 
-    music = Audio(asset("background.mp3"))
+    music = Audio(assets.use("background.mp3"))
     music.set_volume(0.05)
     music.fade_in(1000, 1)
 
