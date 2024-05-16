@@ -1,6 +1,6 @@
 import os
 from classes import *
-import items
+import items, gui
 
 
 class Events:
@@ -84,6 +84,8 @@ class Scene:
     def close(self):
         self.items = items.rendering
         items.rendering = []
+        gui.rendering = []
+        gui.DOM_El.children = []
 
         Events.call(f"{self.id}::quit")
 

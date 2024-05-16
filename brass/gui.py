@@ -67,11 +67,11 @@ class StyleSheet:
     font_size: str = FONT_SIZE.EXTRA_SMALL
 
 
-ELEMENTS: list["Element"] = []
+rendering: list["Element"] = []
 
 
 def get_element(id: str) -> "Element":
-    for el in ELEMENTS:
+    for el in rendering:
         if el.id == id:
             return el
 
@@ -87,7 +87,7 @@ class Element:
         self.children = list(children)
         self.style = style if style else StyleSheet()
 
-        ELEMENTS.append(self)
+        rendering.append(self)
 
 
 DOM_El: Optional[Element] = Element("DOM")

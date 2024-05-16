@@ -63,10 +63,7 @@ def _u():
         case False:
             walk.fade_out(200)
 
-    if Input.get_button("k"):
-        pgapi.set_screen_size(Vector2(1600, 900))
-        SCENES.main.load()
-        # text_elem.children[0] = gui.Text("Wakey Wakey!!!")
+
 
     if Input.active_bind("music-on"):
         music.fade_in(1000)

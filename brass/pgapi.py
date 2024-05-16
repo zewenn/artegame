@@ -3,7 +3,6 @@ from zenyx import printf
 from classes import *
 from typing import *
 from result import *
-from events import Scene, Events
 
 import pygame
 import pygame._sdl2.controller as pycontroller

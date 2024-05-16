@@ -75,7 +75,7 @@ def new_routine(T: Literal["gui"] | Literal["routine"] | Literal["config"], scn_
                     "import saves",
                     "\n\n\n@spawn",
                     "def spawn_scene():",
-                    f"    loaded = saves.load(\"{scn_name.lower()}\")",
+                    "    items.create(Item(id=\"test_item\"))",
                 ]
             )
         case "routine":

@@ -12,7 +12,6 @@ from animator import animator
 from input_handler import Input
 import pygame
 import pygame._sdl2.controller as pycontroller
-from saves import Loader
 from scenenum import SCENES
 
 def init():
@@ -65,7 +64,6 @@ def init():
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
 
     pygame.quit()
-    Loader.save()
 
 
 if __name__ == "__main__":

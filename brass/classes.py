@@ -119,6 +119,8 @@ class ApplicationSettings:
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
     scaling: str = "GENERIC"
+    save_path: str = "~/artegame"
+    demo_save_path: str = "./@artegame-demo-saves"
 
 
 @dataclass
