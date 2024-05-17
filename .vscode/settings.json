@@ -1,4 +1,7 @@
 {
+    "workbench.colorTheme": "Black Italic",
+    "workbench.sideBar.location": "right",
+    "workbench.activityBar.location": "top",
     "editor.smoothScrolling": true,
     "editor.cursorSmoothCaretAnimation": "on",
     "editor.cursorBlinking": "smooth",
