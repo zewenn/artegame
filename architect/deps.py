@@ -1,7 +1,18 @@
 # Dependency manager
-from typing import Optional, Callable
+from typing import *
 import subprocess
 import sys, os, io, time
+
+T = TypeVar("T")
+
+
+def attempt(
+    func: Callable[..., T], args: Tuple = ()
+) -> Tuple[Optional[T], Optional[str]]:
+    try:
+        return (func(*args), None)
+    except Exception as e:
+        return (None, " ".join(e.args))
 
 
 def title(content: str, line_char: chr = "─") -> None:
@@ -13,7 +24,7 @@ def title(content: str, line_char: chr = "─") -> None:
         raise ValueError("line char is not a char")
 
     sep_text = line_char * side_width
-    print("\n"*5)
+    print("\n" * 5)
     print(f"{sep_text}{mid_text}{sep_text}")
     print("\n")
 
@@ -21,16 +32,24 @@ def title(content: str, line_char: chr = "─") -> None:
 class DummyFile(object):
     def write(self, x):
         pass
-    def flush(seld, x): 
+
+    def flush(self, x=None):
         pass
 
 
 def silence(func: Callable):
     def wrap(*args, **kwargs):
+        res, exc = None, None
         save_stdout = sys.stdout
         sys.stdout = DummyFile()
-        func(*args, **kwargs)
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            exc = e
         sys.stdout = save_stdout
+        if exc:
+            raise exc
+        return res
 
     return wrap
 
@@ -51,11 +70,12 @@ def is_installed(name: str) -> bool:
         return False
 
 
-def install(name: str) -> bool | Exception:
+def install(name: str) -> bool:
     if is_installed(name):
-        return False
+        return True
 
     try:
+        print(f"[GET] Installing: \u001b[38;5;214m {name}\u001b[0m", end="\r")
         with open(os.devnull, "wb") as shutup:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--upgrade", name],
@@ -64,8 +84,8 @@ def install(name: str) -> bool | Exception:
                 stdin=shutup,
             )
         return True
-    except Exception as e:
-        return e
+    except Exception:
+        return False
 
 
 def is_stack_installed(deps: list[str]) -> bool:
@@ -75,19 +95,39 @@ def is_stack_installed(deps: list[str]) -> bool:
     return True
 
 
-def dep_stack(deps: list[str]) -> list[Optional[Exception]]:
+def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
+    failed: bool = False
 
+    longest_dep_name = deps[0]
     for dep in deps:
+        if len(dep) > len(longest_dep_name):
+            longest_dep_name = dep
+
+    for index, dep in enumerate(deps):
         start = time.perf_counter()
-        res = install(dep)
+        install_res = install(dep)
 
-        symbol = "✘"
-        addon_text = ""
+        if not install_res:
+            failed = True
 
-        if not isinstance(res, Exception):
-            symbol = "+"
+        depname = str(dep)[: len(longest_dep_name)]
 
-        if not res:
-            symbol = "✔"
+        print(
+            f"[{index + 1}/{len(deps)}]\u001b[38;5;214m {depname.ljust(14)}\u001b[0m",
+            f"\u001b[38;5;236m in {round(time.perf_counter() - start, 5)}s\u001b[0m",
+            # sep="    ",
+        )
 
-        print(f"{symbol} {dep}  \t[{round(time.perf_counter() - start, 5)}s]")
+    if failed:
+        return Exception("deps was unable to install some packag(es).")
+
+
+def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
+    try:
+        x = subprocess.call([sys.executable, *cmd])
+        if x == 0:
+            return True, None
+        else:
+            return False, f"\tExit code: {x}"
+    except Exception as e:
+        return False, e

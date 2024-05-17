@@ -1,17 +1,24 @@
 from deps import *
 from typing import *
-
-
-dependencies = ["pygame", "termcolor", "recordclass", "zenyx", "result"]
+import sys
+import __config__ as conf
 
 
 def main() -> None:
-    title("Dependency check")
+    title("Architect")
+    print("Performing a dependecy check...\n")
 
-    dep_stack(dependencies)
-    subprocess.check_call(
-        [sys.executable, os.path.join(os.path.dirname(__file__), "mn.py")]
+    res = handle_dep_stack(conf.DEPENDENCIES)
+    if isinstance(res, Exception):
+        print("\n\nERROR: Critical dependency not found!")
+        return
+
+    success, err = run_python_command(
+        [os.path.join(os.path.dirname(__file__), "cli.py"), *sys.argv[1:]]
     )
+
+    if not success:
+        print(f"Error happened while running architect:", err)
 
 
 if __name__ == "__main__":

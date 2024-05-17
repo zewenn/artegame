@@ -1,0 +1,240 @@
+[
+    {
+        "id": "player",
+        "tags": [
+            "player",
+            "item"
+        ],
+        "transform": {
+            "position": {
+                "x": 167.93457804493005,
+                "y": -65.0,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "direction": 0,
+                "pyon_converted": true,
+                "@class": "Vector3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "bones": {
+            "left_hand": {
+                "transform": {
+                    "position": {
+                        "x": -32,
+                        "y": 32,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "rotation": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 20,
+                        "direction": 0,
+                        "pyon_converted": true,
+                        "@class": "Vector3"
+                    },
+                    "scale": {
+                        "x": 32,
+                        "y": 32,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "pyon_converted": true,
+                    "@class": "Transform"
+                },
+                "anchor": {
+                    "x": 0,
+                    "y": 0,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "sprite": "test.png",
+                "fill_color": null,
+                "pyon_converted": true,
+                "@class": "Bone"
+            },
+            "right_hand": {
+                "transform": {
+                    "position": {
+                        "x": 32,
+                        "y": 32,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "rotation": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -20,
+                        "direction": 0,
+                        "pyon_converted": true,
+                        "@class": "Vector3"
+                    },
+                    "scale": {
+                        "x": 32,
+                        "y": 32,
+                        "pyon_converted": true,
+                        "@class": "Vector2"
+                    },
+                    "pyon_converted": true,
+                    "@class": "Transform"
+                },
+                "anchor": {
+                    "x": 0,
+                    "y": 0,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "sprite": "test.png",
+                "fill_color": null,
+                "pyon_converted": true,
+                "@class": "Bone"
+            }
+        },
+        "render": true,
+        "sprite": "test.png",
+        "crop": null,
+        "fill_color": null,
+        "can_move": false,
+        "movement_speed": 300,
+        "inventory": {
+            "box_gloves": {
+                "damage": 3,
+                "damage_area": {
+                    "x": 50,
+                    "y": 150,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "pyon_converted": true,
+                "@class": "Weapon"
+            },
+            "weight_plate": {
+                "damage": 10,
+                "damage_area": {
+                    "x": 100,
+                    "y": 50,
+                    "pyon_converted": true,
+                    "@class": "Vector2"
+                },
+                "pyon_converted": true,
+                "@class": "Weapon"
+            },
+            "banana": 0,
+            "strawberry": 0,
+            "blueberry": 0
+        },
+        "can_collide": true,
+        "can_repulse": true,
+        "lightness": 1,
+        "trigger_collider": false,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "box",
+        "tags": [
+            "box",
+            "item"
+        ],
+        "transform": {
+            "position": {
+                "x": 135.99999999999997,
+                "y": 0.6666666666672398,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "direction": 0,
+                "pyon_converted": true,
+                "@class": "Vector3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "bones": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": [
+            20,
+            20,
+            20
+        ],
+        "can_move": null,
+        "movement_speed": null,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": true,
+        "lightness": 2,
+        "trigger_collider": false,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "asd",
+        "tags": [
+            "asd",
+            "item"
+        ],
+        "transform": {
+            "position": {
+                "x": 200,
+                "y": 0,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "direction": 0,
+                "pyon_converted": true,
+                "@class": "Vector3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vector2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "bones": null,
+        "render": true,
+        "sprite": "test.png",
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "movement_speed": null,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 10,
+        "trigger_collider": false,
+        "pyon_converted": true,
+        "@class": "Item"
+    }
+]

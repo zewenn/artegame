@@ -1,20 +1,36 @@
 import pgapi
-from img import surface_ref_table
-from entities import *
+from assets import ASSETS
+from gui import *
 import pygame
 import math
+import items
+
+
+def is_on_screen(item: Item) -> bool:
+    if (
+        item.transform.position.x >= 0
+        and (
+            item.transform.position.x + item.transform.scale.x
+            <= pgapi.SETTINGS.screen_size[0]
+        )
+        and item.transform.position.y >= 0
+        and (
+            item.transform.position.y + item.transform.scale.y
+            <= pgapi.SETTINGS.screen_size[1]
+        )
+    ):
+        return True
+    return False
 
 
 def render_item(item: Item):
-    if item.transform is None or (
-        item.sprite is None and item.fill_color is None
-    ):
+    if item.transform is None or (item.sprite is None and item.fill_color is None):
         return
 
     image: pygame.Surface
 
     if item.sprite is not None:
-        image = surface_ref_table[item.sprite]
+        image = ASSETS[item.sprite]
     elif item.fill_color is not None:
         image = pygame.Surface((item.transform.scale.x, item.transform.scale.y))
         image.fill(tuple(item.fill_color))
@@ -74,7 +90,7 @@ def render_bone(bone: Bone, parent: Item):
     image: pygame.Surface
 
     if bone.sprite is not None:
-        image = surface_ref_table[bone.sprite]
+        image = ASSETS[bone.sprite]
 
     elif bone.fill_color is not None:
         image = pygame.Surface((bone.transform.scale.x, bone.transform.scale.y))
@@ -149,8 +165,89 @@ def render_bone(bone: Bone, parent: Item):
     pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
 
 
+def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None:
+    elstl = element.style
+
+    x = 0
+    y = 0
+    w = unit(elstl.width) if elstl.width != None else 20
+    h = unit(elstl.height) if elstl.height != None else 0
+
+    match elstl.position:
+        case POSITION.ABSOLUTE:
+            x = (
+                unit(elstl.left)
+                if unit(elstl.left) != None
+                else unit(elstl.right) if unit(elstl.right) != None else 0
+            )
+            y = (
+                unit(elstl.top)
+                if unit(elstl.top) != None
+                else unit(elstl.bottom) if unit(elstl.bottom) != None else 0
+            )
+
+        case POSITION.RELATIVE:
+            x = (
+                unit(elstl.left) + unit(parent_style.left)
+                if unit(elstl.left) != None and unit(parent_style.left) != None
+                else (
+                    unit(elstl.right) + unit(parent_style.right)
+                    if unit(elstl.right) != None and unit(parent_style.right) != None
+                    else 0
+                )
+            )
+            y = (
+                unit(elstl.top) + unit(parent_style.top)
+                if unit(elstl.top) != None and unit(parent_style.top) != None
+                else (
+                    unit(elstl.bottom) + unit(parent_style.bottom)
+                    if unit(elstl.bottom) != None and unit(parent_style.bottom) != None
+                    else 0
+                )
+            )
+
+    bg_color = elstl.bg_color
+
+    image: pygame.Surface
+
+    if (not elstl.bg_image):
+        image = pygame.Surface((w, h))
+        image.fill(bg_color)
+    else:
+        image = pygame.transform.scale(
+            ASSETS[elstl.bg_image],
+            (
+                w,
+                h
+            )
+        )
+
+    positioned_rect = image.get_rect(topleft=(x, y))
+
+    pgapi.SCREEN.blit(image, positioned_rect.topleft)
+
+    child_strings_count = 0
+
+    for child in element.children:
+        if isinstance(child, str):
+            font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
+            # font.size = unit(element.style.font_size)
+            text_surf = font.render(
+                child, True, element.style.color, element.style.bg_color if not elstl.bg_image else None
+            )
+
+            pgapi.SCREEN.blit(
+                text_surf, (x, y + element.style.font_size * child_strings_count)
+            )
+
+            child_strings_count += 1
+            continue
+
+        render_ui(child, element.style)
+
+
 def render():
-    for item in Items.rendering:
+    for item in items.rendering:
         # render_thread = threading.Thread(
         #     target=render_one,
         #     args=(item,)
@@ -159,8 +256,18 @@ def render():
 
         # render_thread.start()
 
+        if (
+            not item.render
+            # and is_on_screen(item)
+        ):
+            continue
+
         render_item(item=item)
 
-        if item.bones is not None:
-            for bone in item.bones.values():
-                render_bone(bone=bone, parent=item)
+        if item.bones is None:
+            continue
+
+        for bone in item.bones.values():
+            render_bone(bone=bone, parent=item)
+
+    render_ui(DOM_El)

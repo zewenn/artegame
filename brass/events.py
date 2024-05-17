@@ -1,6 +1,6 @@
 import os
 from classes import *
-from entities import *
+import items, gui
 
 
 class Events:
@@ -10,7 +10,7 @@ class Events:
         update: str = "evn::update"
     
     current_scene: Optional[any] = None
-    update_name: Optional[str] = ""
+    update_name: Optional[str] = "NONE"
     event_map: dict[str, list[Event]] = {}
 
     @classmethod
@@ -30,11 +30,11 @@ class Events:
     def system_update(this) -> None:
         this.call(this.ids.update)
         
-        if this.update_name:
+        if this.update_name != "NONE":
             this.call(this.update_name)
 
     @classmethod
-    def set_update_name(this, to: Callable) -> None:
+    def set_update_name(this, to: str) -> None:
         this.update_name = to
 
     @classmethod
@@ -82,7 +82,22 @@ class Scene:
         Events.set_update_name(f"{self.id}::update")
     
     def close(self):
-        self.items = Items.rendering
-        Items.rendering = []
+        self.items = items.rendering
+        items.rendering = []
+        gui.query_available = []
+        gui.DOM_El.children = []
 
         Events.call(f"{self.id}::quit")
+
+def spawn(fn: Callable[[], None]):
+    return None
+
+def awake(fn: Callable[[], None]):
+    return None
+
+def init(fn: Callable[[], None]):
+    return None
+
+def update(fn: Callable[[], None]):
+    return None
+

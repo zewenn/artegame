@@ -1,1 +1,1 @@
-python architect app
+python architect %*

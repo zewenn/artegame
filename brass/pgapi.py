@@ -1,27 +1,28 @@
-from img import surface_ref_table
 from zenyx import printf
 from classes import *
-from typing import Optional
-from events import Scene, Events
+from typing import *
+from result import *
 
+import assets
 import pygame
 import pygame._sdl2.controller as pycontroller
 import time
 import inspect
 
-SETTINGS: Optional[ApplicationSettings]
+T = TypeVar("T")
+
+SETTINGS: Optional[ApplicationSettings] = None
 RUN: bool = True
 SCREEN: Optional[pygame.Surface]
 CLOCK: Optional[pygame.time.Clock]
 TIME: Time = Time(0.016)
-CAMERA: Camera = Camera(Vector2(), 1)
+CAMERA: Camera = Camera(Vector2(1000), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
+NEXT_CAMERA_POS: Optional[Vector2] = None
+
 
 fps_list = []
 last_fps = time.perf_counter()
-
-class SCENES:
-    default: Scene = Scene("default")
 
 
 def use(settings: ApplicationSettings):
@@ -37,13 +38,15 @@ def use(settings: ApplicationSettings):
         flags=(pygame.SCALED),
         vsync=SETTINGS.vsync,
     )
+
     CLOCK = pygame.time.Clock()
+
     pygame.display.set_caption(settings.application_name)
 
     pygame.transform.set_smoothscale_backend(settings.scaling)
 
     if settings.icon is not None:
-        pygame.display.set_icon(surface_ref_table[settings.icon])
+        pygame.display.set_icon(assets.use(settings.icon))
 
     if settings.camera is not None:
         CAMERA = settings.camera
@@ -54,10 +57,50 @@ def use(settings: ApplicationSettings):
     pygame.key.set_repeat(SETTINGS.key_repeat)
 
 
+def set_screen_size(to: Vector2):
+    global SCREEN
+    SCREEN = pygame.display.set_mode(
+        size=(to.x, to.y),
+        flags=(pygame.SCALED),
+        vsync=SETTINGS.vsync,
+    )
+
+
+def get_screen_size() -> Vector2:
+    global SCREEN
+    return Vector2(SCREEN.get_width(), SCREEN.get_height())
+
+
+def get_camera() -> Camera:
+    return CAMERA if not SETTINGS.camera else SETTINGS.camera
+
+
+def system_update_camera() -> None:
+    global NEXT_CAMERA_POS
+
+    if NEXT_CAMERA_POS is None:
+        return
+
+    CAMERA.position.x = NEXT_CAMERA_POS.x
+    CAMERA.position.y = NEXT_CAMERA_POS.y
+
+
+def move_camera(to: Vector2) -> None:
+    global NEXT_CAMERA_POS
+    NEXT_CAMERA_POS = to
+
+
 def get_fps() -> Optional[float]:
     if len(fps_list) < 2:
         return
     return sum(fps_list) / len(fps_list)
+
+
+def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
+    try:
+        return Ok(func(*args))
+    except Exception as e:
+        return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
 
 class Debugger:
@@ -81,7 +124,6 @@ class Debugger:
             caller_class = f"<unknown>.{stack.function}"
         else:
             caller_class = __cls.__name__
-
         if caller_class != this.last_printed_cls:
             if this.last_end == "\r":
                 printf("\n", end="")
@@ -97,7 +139,7 @@ class Debugger:
         printf.full_line(f"  ", *args, **kwargs)
 
     @classmethod
-    def print_resoult(this, func: callable) -> callable:
+    def print_resoult(this, func: Callable) -> Callable:
         def wrap(*args, **kwargs):
             res = func(*args, **kwargs)
             this.print(f"{func.__qualname__}: {res}")
@@ -106,7 +148,7 @@ class Debugger:
         return wrap
 
     @classmethod
-    def time_this(this, func: callable) -> callable:
+    def time_this(this, func: Callable[[any], None]) -> Callable:
         def wrap(*args, **kwargs):
             start = time.perf_counter()
             res = func(*args, **kwargs)

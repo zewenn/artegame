@@ -1,4 +1,5 @@
-from entities import *
+import items
+import time
 from classes import *
 import copy
 from result import Result, Ok, Err
@@ -200,7 +201,7 @@ class animator:
 
     @staticmethod
     def render_keyframe(target: str, keyframe: Keyframe) -> None:
-        target_obj: Item | Bone = Items.get(target)
+        target_obj: Item | Bone = items.get(target)
 
         if target_obj is None:
             print("Bad query")
