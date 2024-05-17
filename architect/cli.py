@@ -164,10 +164,10 @@ def main(args):
             filename += ".py"
 
         if ui:
-            make_file(os.path.join(new_scene_ui, filename), new_routine(True))
+            make_file(os.path.join(new_scene_ui, filename), new_routine("gui"))
             return
 
-        make_file(os.path.join(new_scene_routines, filename), new_routine(False))
+        make_file(os.path.join(new_scene_routines, filename), new_routine("routine"))
 
     printf.title(f"Build")
 

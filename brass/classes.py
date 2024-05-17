@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from result import *
 from typing import *
 from enums import *
 
@@ -83,7 +84,10 @@ class Item:
 
     # Movement
     can_move: Optional[bool] = None
-    movement_speed: Optional[int | float] = None
+    base_movement_speed: Optional[int | float] = None
+    movement_speed: Optional[int] = None
+    dash_speed: Optional[int] = None
+    dashing: Optional[bool] = None
 
     # Inventory
     inventory: Optional[dict[str, Weapon | int]] = None
