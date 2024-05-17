@@ -100,6 +100,14 @@ class Item:
     # colliders: Optional[list[Collider]] = None
 
 
+@dataclass
+class Dasher:
+    this: Item
+    towards: "CompleteMathVector"
+    speed_multiplier: float
+    time: float
+
+
 # ------------------------- Camera System -------------------------
 
 
@@ -132,6 +140,7 @@ class ApplicationSettings:
 @dataclass
 class Time:
     deltatime: float
+    current: float
 
 
 # ---------------------- Anims and Keyframes ----------------------

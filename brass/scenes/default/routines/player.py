@@ -36,6 +36,9 @@ def move_player():
         MathVectorToolkit.new(Vector2(Input.horizontal(), Input.vertical()))
     )
 
+    if Input.get_button_down("space"):
+        items.apply_dash_effect(player, move_math_vec, 3, .1)
+
     player.transform.position.y += (
         player.movement_speed * pgapi.TIME.deltatime * move_math_vec.end.y
     )

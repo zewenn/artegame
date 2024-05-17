@@ -65,6 +65,7 @@ def init():
         render.render()
         pygame.display.flip()
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
+        pgapi.TIME.current = pgapi.time.perf_counter()
 
     pygame.quit()
     saves.save()

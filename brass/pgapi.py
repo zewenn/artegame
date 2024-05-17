@@ -15,7 +15,7 @@ SETTINGS: Optional[ApplicationSettings] = None
 RUN: bool = True
 SCREEN: Optional[pygame.Surface]
 CLOCK: Optional[pygame.time.Clock]
-TIME: Time = Time(0.016)
+TIME: Time = Time(0.016, time.perf_counter())
 CAMERA: Camera = Camera(Vector2(1000), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
 NEXT_CAMERA_POS: Optional[Vector2] = None

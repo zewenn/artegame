@@ -9,7 +9,7 @@ class Events:
         initalise: str = "evn::initalise"
         update: str = "evn::update"
     
-    current_scene: Optional[any] = None
+    current_scene: Optional["Scene"] = None
     update_name: Optional[str] = "NONE"
     event_map: dict[str, list[Event]] = {}
 
