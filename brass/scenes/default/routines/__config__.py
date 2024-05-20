@@ -1,3 +1,5 @@
+from input_handler import Input
+from enums import keybinds
 from events import *
 from classes import *
 from enums import *
@@ -11,6 +13,9 @@ import saves
 @spawn
 def spawn_scene():
     saves.select_slot(0)
+
+    Input.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"])
+
     # res_loaded: Result[None, Mishap] = saves.load()
     
     # if res_loaded.is_ok():

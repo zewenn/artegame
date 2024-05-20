@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from zenyx import Pipe
 from result import *
 from typing import *
-from enums import *
+from enums.gui import *
 
 
 @dataclass
@@ -106,6 +107,7 @@ class Dasher:
     towards: "CompleteMathVector"
     speed_multiplier: float
     time: float
+    start_time: float
 
 
 # ------------------------- Camera System -------------------------

@@ -1,9 +1,11 @@
-import os, time
-from zenyx import printf
 from result import Result, Ok, Err
 from dataclasses import dataclass
+from zenyx import printf
+from uuid import uuid4
 from typing import *
+
 import __config__ as conf
+import os, time
 import random
 
 
@@ -159,7 +161,16 @@ def create_replace_temp(routines: list[Routine]) -> None:
         with open(
             os.path.join(
                 temp_path,
-                f"r{random.randint(0, 100000000)}_{routine.scene}_{routine.filename[:-3]}_{'ui' if routine.ui_routine else 'rt'}.py",
+                (
+                    ('gui' if routine.ui_routine else 'rtn')
+                    + "_"
+                    + routine.scene.replace("_", "")
+                    + "_"
+                    + routine.filename[:-3].replace("_", "")
+                    + "_"
+                    + uuid4().hex
+                    + ".py"
+                ),
             ),
             "w",
             encoding="utf-8",

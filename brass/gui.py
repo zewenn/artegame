@@ -1,6 +1,6 @@
 from classes import *
 from pgapi import *
-from enums import *
+from enums.gui import *
 
 
 def unit(u: str) -> float:

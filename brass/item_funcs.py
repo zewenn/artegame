@@ -2,14 +2,26 @@ from classes import *
 from events import Events
 import pgapi
 
-dashers: list[Dasher] = []
+DASH_OBJECTS: list[Dasher] = []
 
 
 @Events.update
 def upd_dash():
-    global dashers
-    for e in dashers:
-        pass
+    global DASH_OBJECTS
+
+    for dsh_obj in DASH_OBJECTS:
+        if pgapi.TIME.current > dsh_obj.start_time + dsh_obj.time:
+            DASH_OBJECTS.remove(dsh_obj)
+            dsh_obj.this.can_move = True
+            dsh_obj.this.movement_speed = dsh_obj.this.base_movement_speed
+            continue
+
+        dsh_obj.this.transform.position.y += (
+            dsh_obj.this.movement_speed * pgapi.TIME.deltatime * dsh_obj.towards.end.y
+        )
+        dsh_obj.this.transform.position.x += (
+            dsh_obj.this.movement_speed * pgapi.TIME.deltatime * dsh_obj.towards.end.x
+        )
 
 
 def apply_dash_effect(
@@ -20,13 +32,4 @@ def apply_dash_effect(
 
     start_t = pgapi.TIME.current
 
-    def dash():
-        this.transform.position.y += (
-            this.movement_speed * pgapi.TIME.deltatime * move_vec.end.y
-        )
-        this.transform.position.x += (
-            this.movement_speed * pgapi.TIME.deltatime * move_vec.end.x
-        )
-        if not start_t + timeMS < pgapi.TIME.current:
-            this.can_move = True
-            return
+    DASH_OBJECTS.append(Dasher(this, move_vec, speed_multiplier, timeMS / 1000, start_t))
