@@ -74,7 +74,7 @@ def move_player():
         # if player.dashes_remaining == player.dash_count:
         player.last_dash_charge_refill = pgapi.TIME.current
         player.dashes_remaining -= 1
-        item_funcs.apply_dash_effect(player, move_math_vec, 12.5, 80)
+        item_funcs.apply_dash_effect(player, move_math_vec, player.dash_movement_multiplier, 80)
 
     player.transform.position.y += (
         player.movement_speed * pgapi.TIME.deltatime * move_math_vec.end.y

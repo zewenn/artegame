@@ -33,33 +33,34 @@ def spawn_scene():
                 Vector2(64, 64)
             ),
             # fill_color=[20, 20, 20],
-            sprite="test.png",
+            sprite="gyuri.png",
             can_move=True, 
             can_collide=True,
             can_repulse=True,
             lightness=1,
             base_movement_speed=300,
-            dash_count=5,
+            dash_count=2,
+            dash_movement_multiplier=10,
             dash_charge_refill_time=.5,
             bones={
                 "left_hand": Bone(
                     transform=Transform(
-                        Vector2(-32, 32),
-                        Vector3(0, 0, 20),
-                        Vector2(32, 32)
+                        Vector2(-36, 16),
+                        Vector3(0, 0, -40),
+                        Vector2(48, 48)
                     ),
                     anchor=Vector2(0, 0),
                     # fill_color=[255, 255, 255]
-                    sprite="test.png"
+                    sprite="weight_plate.png"
                 ),
                 "right_hand": Bone(
                     transform=Transform(
-                        Vector2(32, 32),
-                        Vector3(0, 0, -20),
-                        Vector2(32, 32)
+                        Vector2(36, 16),
+                        Vector3(0, 0, 40),
+                        Vector2(48, 48)
                     ),
                     anchor=Vector2(0, 0),
-                    sprite="test.png"
+                    sprite="weight_plate.png"
                 )
             },
             inventory={

@@ -88,6 +88,7 @@ class Item:
     base_movement_speed: Optional[int | float] = None
     movement_speed: Optional[int] = None
     # |> Movement -> Dashes
+    dash_movement_multiplier: Optional[int] = None
     dash_count: Optional[int] = None
     dashes_remaining: Optional[int] = None
     """@runtime"""
