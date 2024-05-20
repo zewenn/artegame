@@ -39,8 +39,8 @@ def spawn_scene():
             can_repulse=True,
             lightness=1,
             base_movement_speed=300,
-            dash_count=2,
-            dash_charge_refill_time=.75,
+            dash_count=5,
+            dash_charge_refill_time=.5,
             bones={
                 "left_hand": Bone(
                     transform=Transform(
