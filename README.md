@@ -3,31 +3,33 @@
 
 Az **Artegame** az Arteglaive csapat játéka a NJIT 2023-2024-es tanévének negyedik IKT projekt kiírásra.
 
-- Run the project:
+## CLI
+
+- Futtasd a projektet:
 
     ```bash
     ./architect -r | --run
     ```
 
-- Build the project (into an *standalone* executable):
+- Építsd ki a projektet (egy *standalone executable* fájlba):
 
     ```bash
     ./architect -b | --build
     ```
 
-- Create new scene:
+- Hozz létre egy új jelenetet:
 
     ```bash
     ./architect -ns | --new-scene
     ```
 
-- Create new routine/gui-routine:
+- Készíts egy új routine-t/gui-routine-t:
 
     ```bash
     ./architect -nr | --new-routine
     ```
 
-- Show help menu:
+- Hozd elő a segítség menüt:
 
     ```bash
     ./architect -h | --help
