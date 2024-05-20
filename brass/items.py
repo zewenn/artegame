@@ -1,4 +1,6 @@
 from classes import *
+from threading import Timer
+import pgapi
 
 # class Items:
 selector_map: dict[str, Optional[Item | Bone]] = {}
@@ -47,7 +49,7 @@ def __inner_get__(
             return item
 
 
-def get(selector: str) -> Optional[Item | Bone]:
+def get(selector: str) -> Result[Item | Bone, Mishap]:
     """Selector based item query\n
     `"player" - Item` \n
     `"player|item" - Item` \n
@@ -75,7 +77,7 @@ def get(selector: str) -> Optional[Item | Bone]:
     bone_id: Optional[str] = None
 
     if len(item_and_bone) > 2:
-        raise ValueError(f"Wrong selector: {selector} | includes more than one '->'")
+        return Err(Mishap(f"Wrong selector: {selector} | includes more than one '->'"))
 
     if len(item_and_bone) == 2:
         bone_id = item_and_bone[1]
@@ -89,8 +91,17 @@ def get(selector: str) -> Optional[Item | Bone]:
 
     if bone_id is None:
         add_to_selector_map(selector, item)
-        return item
+        return Ok(item)
 
     if hasattr(item, "bones"):
         add_to_selector_map(selector, item.bones.get(bone_id))
-        return item.bones.get(bone_id)
+        res = item.bones.get(bone_id)
+
+        if res == None:
+            return Err(Mishap(f"Couldn't find item: {selector}"))
+        
+        return Ok(res)
+
+
+    
+

@@ -41,6 +41,9 @@ def serialise() -> None:
             end="\r" if index != len(images) - 1 else "\n",
         )
 
+    if not os.path.isdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR)):
+        os.mkdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR))
+
     with open(
         os.path.join(*conf.SERIALISED_OUTPUT_DIR, f"{conf.ASSETS_FILE_DIST_NAME}"), "w"
     ) as wf:

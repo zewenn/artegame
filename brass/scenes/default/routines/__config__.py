@@ -11,10 +11,10 @@ import saves
 @spawn
 def spawn_scene():
     saves.select_slot(0)
-    res_loaded: Result[None, Mishap] = saves.load()
+    # res_loaded: Result[None, Mishap] = saves.load()
     
-    if res_loaded.is_ok():
-        return
+    # if res_loaded.is_ok():
+    #     return
 
 
     # if loaded.is_ok():
@@ -29,11 +29,11 @@ def spawn_scene():
             ),
             # fill_color=[20, 20, 20],
             sprite="test.png",
-            can_move=False, 
+            can_move=True, 
             can_collide=True,
             can_repulse=True,
             lightness=1,
-            movement_speed=300,
+            base_movement_speed=300,
             bones={
                 "left_hand": Bone(
                     transform=Transform(
