@@ -27,6 +27,8 @@ def upd_dash():
 def apply_dash_effect(
     this: Item, move_vec: CompleteMathVector, speed_multiplier: float, timeMS: int
 ) -> None:
+    # print(this.dashes_remaining)
+
     this.can_move = False
     this.movement_speed = this.base_movement_speed * speed_multiplier
 

@@ -1,8 +1,8 @@
-
 import pygame
 import pygame._sdl2.controller as pycontroller
 import pgapi
 from typing import *
+
 
 class Input:
     controller_codes: dict[str, int] = {
@@ -293,9 +293,19 @@ class Input:
         this,
         name: str,
         key_set_list: list[set[str]],
+        T: Optional[Literal["down", "up"]] = None,
     ) -> None:
-        if this.bind_cache.get(name): 
+        if this.bind_cache.get(name):
             return
+
+        getfn: Callable[[str], bool]
+        match T:
+            case None:
+                getfn = this.get_button
+            case "down":
+                getfn = this.get_button_down
+            case "up":
+                getfn = this.get_button_up
 
         def bindf():
             all_down_any = False
@@ -307,7 +317,7 @@ class Input:
             for _set in key_set_list:
                 set_good = 0
                 for key in _set:
-                    if this.get_button(key):
+                    if getfn(key):
                         set_good += 1
                 if set_good == len(_set):
                     all_down_any = True

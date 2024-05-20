@@ -50,10 +50,11 @@ def unit(u: str) -> float:
 query_available: list[GUIElement] = []
 
 
-def get_element(id: str) -> "Element":
+def get_element(id: str) -> Result[GUIElement, None]:
     for el in query_available:
         if el.id == id:
-            return el
+            return Ok(el)
+    return Err(None)
 
 def Element(
         id: str,
@@ -62,7 +63,7 @@ def Element(
     ) -> GUIElement:
         this = GUIElement(
             id, 
-            children,
+            list(children),
             style if style else StyleSheet()
         )
         query_available.append(this)

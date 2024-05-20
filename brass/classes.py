@@ -87,8 +87,14 @@ class Item:
     can_move: Optional[bool] = None
     base_movement_speed: Optional[int | float] = None
     movement_speed: Optional[int] = None
-    dash_speed: Optional[int] = None
-    dashing: Optional[bool] = None
+    # |> Movement -> Dashes
+    dash_count: Optional[int] = None
+    dashes_remaining: Optional[int] = None
+    """@runtime"""
+    # |> Movement -> Dashes -> Cooldown Management
+    dash_charge_refill_time: Optional[float] = None
+    last_dash_charge_refill: Optional[int] = None
+    """@runtime"""
 
     # Inventory
     inventory: Optional[dict[str, Weapon | int]] = None

@@ -14,7 +14,7 @@ import saves
 def spawn_scene():
     saves.select_slot(0)
 
-    Input.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"])
+    Input.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
 
     # res_loaded: Result[None, Mishap] = saves.load()
     
@@ -39,6 +39,8 @@ def spawn_scene():
             can_repulse=True,
             lightness=1,
             base_movement_speed=300,
+            dash_count=2,
+            dash_charge_refill_time=.75,
             bones={
                 "left_hand": Bone(
                     transform=Transform(
