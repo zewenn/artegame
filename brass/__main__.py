@@ -39,7 +39,7 @@ def init():
     )
 
     Input.init_controllers()
-    Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
+    Input.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)

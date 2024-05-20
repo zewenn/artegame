@@ -49,7 +49,7 @@ def move_player():
     # print(player.dashes_remaining)
 
     dash_display.children[0] = (
-        " ".join(["[x]" for _ in range(player.dashes_remaining)])
+        " ".join(["[×]" for _ in range(player.dashes_remaining)])
         + (" " if player.dashes_remaining != 0 else "")
         + " ".join(["[ ]" for _ in range(player.dash_count - player.dashes_remaining)])
     )
