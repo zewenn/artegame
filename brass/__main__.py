@@ -39,7 +39,7 @@ def init():
     )
 
     Input.init_controllers()
-    Input.bind_buttons("exit", ["escape", "x@ctrl#0"])
+    Input.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)
@@ -65,6 +65,7 @@ def init():
         render.render()
         pygame.display.flip()
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
+        pgapi.TIME.current = pgapi.time.perf_counter()
 
     pygame.quit()
     saves.save()

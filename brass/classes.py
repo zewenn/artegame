@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from zenyx import Pipe
+from result import *
 from typing import *
-from enums import *
+from enums.gui import *
 
 
 @dataclass
@@ -83,7 +85,17 @@ class Item:
 
     # Movement
     can_move: Optional[bool] = None
-    movement_speed: Optional[int | float] = None
+    base_movement_speed: Optional[int | float] = None
+    movement_speed: Optional[int] = None
+    # |> Movement -> Dashes
+    dash_movement_multiplier: Optional[int] = None
+    dash_count: Optional[int] = None
+    dashes_remaining: Optional[int] = None
+    """@runtime"""
+    # |> Movement -> Dashes -> Cooldown Management
+    dash_charge_refill_time: Optional[float] = None
+    last_dash_charge_refill: Optional[int] = None
+    """@runtime"""
 
     # Inventory
     inventory: Optional[dict[str, Weapon | int]] = None
@@ -94,6 +106,15 @@ class Item:
     lightness: int = 1
     trigger_collider: bool = False
     # colliders: Optional[list[Collider]] = None
+
+
+@dataclass
+class Dasher:
+    this: Item
+    towards: "CompleteMathVector"
+    speed_multiplier: float
+    time: float
+    start_time: float
 
 
 # ------------------------- Camera System -------------------------
@@ -128,6 +149,7 @@ class ApplicationSettings:
 @dataclass
 class Time:
     deltatime: float
+    current: float
 
 
 # ---------------------- Anims and Keyframes ----------------------

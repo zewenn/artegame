@@ -1,4 +1,4 @@
-from enums import FONT_SIZE
+from enums.gui import FONT_SIZE
 from io import BytesIO
 import base64
 import pygame

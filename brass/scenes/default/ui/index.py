@@ -20,5 +20,20 @@ def _awake():
                 # bg_color=(20, 120, 220, 1),
                 color=(255, 80, 50, 255)
             ),
+        ),
+        Element(
+            "PlayerDashCounter",
+
+            Text("[×] [×] "),
+
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                top="3.5u",
+                left=".5u",
+                # width="3u",
+                # height="3u",
+                # bg_color=(20, 120, 220, 1),
+                color=(255, 255, 255, 255)
+            ),
         )
     )

@@ -162,5 +162,5 @@ cython_debug/
 [DEMO]Arte-Game-Saves/
 @artegame-demo-saves/
 brass/src/temp/
-brass/src/*
+brass/src/
 architect/@build_counter.txt

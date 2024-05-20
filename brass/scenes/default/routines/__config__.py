@@ -1,3 +1,5 @@
+from input_handler import Input
+from enums import keybinds
 from events import *
 from classes import *
 from enums import *
@@ -11,10 +13,13 @@ import saves
 @spawn
 def spawn_scene():
     saves.select_slot(0)
-    res_loaded: Result[None, Mishap] = saves.load()
+
+    Input.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
+
+    # res_loaded: Result[None, Mishap] = saves.load()
     
-    if res_loaded.is_ok():
-        return
+    # if res_loaded.is_ok():
+    #     return
 
 
     # if loaded.is_ok():
@@ -28,31 +33,34 @@ def spawn_scene():
                 Vector2(64, 64)
             ),
             # fill_color=[20, 20, 20],
-            sprite="test.png",
-            can_move=False, 
+            sprite="gyuri.png",
+            can_move=True, 
             can_collide=True,
             can_repulse=True,
             lightness=1,
-            movement_speed=300,
+            base_movement_speed=300,
+            dash_count=2,
+            dash_movement_multiplier=10,
+            dash_charge_refill_time=.5,
             bones={
                 "left_hand": Bone(
                     transform=Transform(
-                        Vector2(-32, 32),
-                        Vector3(0, 0, 20),
-                        Vector2(32, 32)
+                        Vector2(-36, 16),
+                        Vector3(0, 0, -40),
+                        Vector2(48, 48)
                     ),
                     anchor=Vector2(0, 0),
                     # fill_color=[255, 255, 255]
-                    sprite="test.png"
+                    sprite="weight_plate.png"
                 ),
                 "right_hand": Bone(
                     transform=Transform(
-                        Vector2(32, 32),
-                        Vector3(0, 0, -20),
-                        Vector2(32, 32)
+                        Vector2(36, 16),
+                        Vector3(0, 0, 40),
+                        Vector2(48, 48)
                     ),
                     anchor=Vector2(0, 0),
-                    sprite="test.png"
+                    sprite="weight_plate.png"
                 )
             },
             inventory={
