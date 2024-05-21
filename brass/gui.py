@@ -1,9 +1,10 @@
 from repulse import Collision
 from enums.gui import *
 from classes import *
-from pgapi import *
+import pgapi
 import copy
 import inpt
+
 
 def unit(u: str) -> float:
     """
@@ -27,10 +28,20 @@ def unit(u: str) -> float:
     if u is None:
         return None
 
-    num_res = attempt(float, (u[:-1],))
+    num_res: float
+
+    try:
+        num_res = pgapi.attempt(float, (u[:-1],))
+    except:
+        pgapi.unreachable(
+            f"Cannot parse float from incorrect unit type!"
+            + "\n | Expected:\tstr"
+            + f"\n | Type Given:\t{type(u).__name__}"
+            + (f"\nTry using \"{u}x\" instead of {u}!" if type(u) in [int, float] else "")
+        )
 
     if num_res.is_err():
-        print(num_res.err())
+        print(num_res.err().msg)
         return 0
 
     num: float = num_res.ok()
@@ -40,10 +51,10 @@ def unit(u: str) -> float:
             return num
 
         case "h":
-            return get_screen_size().y * (num / 100)
+            return pgapi.get_screen_size().y * (num / 100)
 
         case "w":
-            return get_screen_size().x * (num / 100)
+            return pgapi.get_screen_size().x * (num / 100)
 
         case "u":
             return num * 16
@@ -52,6 +63,7 @@ def unit(u: str) -> float:
 query_available: list[GUIElement] = []
 mouse_transform: Transform = Transform(Vector2(), Vector3(), Vector2(1, 1))
 hovering: Optional[GUIElement] = None
+
 
 def get_element(id: str) -> Result[GUIElement, None]:
     for el in query_available:
@@ -151,8 +163,8 @@ def system_update() -> None:
                     )
                 )
 
-        el.transform.position.x = x    
-        el.transform.position.y = y    
+        el.transform.position.x = x
+        el.transform.position.y = y
         el.transform.scale.x = w
         el.transform.scale.y = h
 
@@ -160,7 +172,5 @@ def system_update() -> None:
             hovering = el
             break
 
-    
     if inpt.get_button_down("left@mouse") and hovering != None:
         hovering.onclick()
-

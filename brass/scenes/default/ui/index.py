@@ -18,6 +18,8 @@ def _awake():
                 # width="3u",
                 # height="3u",
                 # bg_color=(100, 100, 100, .2),
+                font_size=FONT_SIZE.MEDIUM,
+                gap="2x",
                 color=(255, 80, 50, 1)
             ),
         ),
@@ -30,6 +32,7 @@ def _awake():
                 position=POSITION.ABSOLUTE,
                 top="3.5u",
                 left=".5u",
+                font_size=FONT_SIZE.MEDIUM,
                 color=(255, 255, 255, 1)
             )
         )

@@ -284,6 +284,7 @@ class StyleSheet:
     color: Tuple[int, int, int, int] = (0, 0, 0, 1)
     font: str = "press_play.ttf"
     font_size: str = FONT_SIZE.EXTRA_SMALL
+    gap: str = "0x"
 
 
 @dataclass

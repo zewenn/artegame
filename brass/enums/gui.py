@@ -1,9 +1,9 @@
 class FONT_SIZE:
-    EXTRA_SMALL = 16
-    SMALL = 24
-    MEDIUM = 32
-    BIG = 40
-    LARGE = 48
+    EXTRA_SMALL = 8
+    SMALL = 12
+    MEDIUM = 16
+    BIG = 20
+    LARGE = 32
     EXTRA_LARGE = 64
 
 

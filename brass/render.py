@@ -208,7 +208,7 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
 
     bg_color = list(elstl.bg_color)
     bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
-    
+
     color = list(elstl.color)
     color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
 
@@ -246,7 +246,7 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
         text_surf.set_alpha(color[3])
 
         pgapi.SCREEN.blit(
-            text_surf, (x, y + element.style.font_size * child_strings_count)
+            text_surf, (x, y + (element.style.font_size + unit(element.style.gap)) * child_strings_count)
         )
 
         child_strings_count += 1
