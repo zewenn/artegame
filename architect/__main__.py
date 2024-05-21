@@ -5,8 +5,8 @@ import __config__ as conf
 
 
 def main() -> None:
-    title("Architect")
-    print("Performing a dependecy check...\n")
+    title("Initalising")
+    print("📦 Performing a dependecy check...\n")
 
     res = handle_dep_stack(conf.DEPENDENCIES)
     if isinstance(res, Exception):

@@ -169,7 +169,7 @@ def main(args):
 
         make_file(os.path.join(new_scene_routines, filename), new_routine("routine"))
 
-    printf.title(f"Build")
+    printf.title(f"Architect")
 
     # Need to serialise these, so that the game can use the files
     # Mostly auto import

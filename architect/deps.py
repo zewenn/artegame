@@ -75,7 +75,7 @@ def install(name: str) -> bool:
         return True
 
     try:
-        print(f"[GET] Installing: \u001b[38;5;214m {name}\u001b[0m", end="\r")
+        print(f"[GET] Installing: \u001b[38;5;215m {name}\u001b[0m", end="\r")
         with open(os.devnull, "wb") as shutup:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--upgrade", name],
@@ -113,8 +113,8 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
         depname = str(dep)[: len(longest_dep_name)]
 
         print(
-            f"[{index + 1}/{len(deps)}]\u001b[38;5;214m {depname.ljust(14)}\u001b[0m",
-            f"\u001b[38;5;236m in {round(time.perf_counter() - start, 5)}s\u001b[0m",
+            f"[{index + 1}/{len(deps)}]\u001b[38;5;215m {depname.ljust(14)}\u001b[0m",
+            f"\u001b[38;5;236m {round(time.perf_counter() - start, 5)}s\u001b[0m",
             # sep="    ",
         )
 
