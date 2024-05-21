@@ -1,4 +1,3 @@
-from input_handler import Input
 from enums import keybinds
 from events import *
 from classes import *
@@ -7,6 +6,7 @@ from result import *
 from typing import *
 import items
 import saves
+import inpt
 
 
 
@@ -14,7 +14,7 @@ import saves
 def spawn_scene():
     saves.select_slot(0)
 
-    Input.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
+    inpt.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
 
     # res_loaded: Result[None, Mishap] = saves.load()
     

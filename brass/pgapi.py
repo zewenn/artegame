@@ -102,6 +102,12 @@ def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
     except Exception as e:
         return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
+def unreachable(msg: str) -> Never:
+    stack = inspect.stack()[1]
+    printf(f"\n\n@!unreachable$& in {stack.filename}, line {stack.lineno} in {stack.function}")
+    printf(f"\nError: {msg}")
+    exit()
+
 
 class Debugger:
     # [min, [avg, count], max]

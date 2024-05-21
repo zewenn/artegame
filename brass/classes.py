@@ -11,7 +11,6 @@ class Vector2:
     Args:
         x (float): horizontal position
         y (float): vertical position
-        direction (float): vector direction
     """
 
     x: float = 0
@@ -292,3 +291,6 @@ class GUIElement:
     id: str
     children: list["GUIElement"]
     style: StyleSheet
+    parent: Optional["GUIElement"] = None
+    onclick: Optional[Callable[[], None]] = None
+    transform: Optional[Transform] = None

@@ -15,13 +15,13 @@ class Collision:
         return min([dists.left, dists.right, dists.top, dists.bottom])
 
     @classmethod
-    def collides(this, a: Collider, b: Collider) -> bool:
+    def collides(this, a: Transform, b: Transform) -> bool:
         # print(a.transform, b.transform)
         if (
-            a.transform.position.x + a.transform.scale.x >= b.transform.position.x
-            and a.transform.position.x <= b.transform.position.x + b.transform.scale.x
-            and a.transform.position.y + a.transform.scale.y >= b.transform.position.y
-            and a.transform.position.y <= b.transform.position.y + b.transform.scale.y
+            a.position.x + a.scale.x >= b.position.x
+            and a.position.x <= b.position.x + b.scale.x
+            and a.position.y + a.scale.y >= b.position.y
+            and a.position.y <= b.position.y + b.scale.y
         ):
             return True
         return False
@@ -86,7 +86,7 @@ class Collision:
         # rei for repulse item
         for rei in repulse_items:
             for other in collide_items:
-                if not this.collides(rei, other):
+                if not this.collides(rei.transform, other.transform):
                     continue
 
                 rei_dist = Distances()

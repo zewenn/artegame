@@ -1,12 +1,12 @@
 from vectormath import MathVectorToolkit
 from audio_helper import Audio
-from input_handler import Input
 from enums import keybinds
 from classes import *
 from events import *
 import item_funcs
 import items
 import pgapi
+import inpt
 
 
 player: Optional[Item] = None
@@ -21,12 +21,12 @@ def _init():
     dash_gui_query = gui.get_element("PlayerDashCounter")
 
     if player_query.is_err():
-        raise Exception("Player item couldn't be found!")
+        pgapi.unreachable("Player Item does not exist!")
 
     player = player_query.ok()
 
     if dash_gui_query.is_err():
-        raise Exception("Critical player dash GUIElement is missing!")
+        pgapi.unreachable("Dash display GUIElement does not exist!")
 
     dash_display = dash_gui_query.ok()
 
@@ -63,11 +63,11 @@ def move_player():
             player.last_dash_charge_refill = pgapi.TIME.current
 
     move_math_vec = MathVectorToolkit.normalise(
-        MathVectorToolkit.new(Vector2(Input.horizontal(), Input.vertical()))
+        MathVectorToolkit.new(Vector2(inpt.horizontal(), inpt.vertical()))
     )
 
     if (
-        Input.active_bind(keybinds.PLAYER_DASH)
+        inpt.active_bind(keybinds.PLAYER_DASH)
         and player.dashes_remaining > 0
         and (move_math_vec.end.x != 0 or move_math_vec.end.y != 0)
     ):

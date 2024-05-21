@@ -7,10 +7,10 @@ import assets
 import render
 import pgapi
 from repulse import Collision
-import items
+import gui
 from classes import *
 from animator import animator
-from input_handler import Input
+import inpt
 import saves
 import pygame
 import pygame._sdl2.controller as pycontroller
@@ -38,8 +38,8 @@ def init():
         )
     )
 
-    Input.init_controllers()
-    Input.bind_buttons("exit", ["escape", "back@ctrl#0"])
+    inpt.init_controllers()
+    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)
@@ -51,10 +51,11 @@ def init():
                 pgapi.RUN = False
 
         # Demo exit
-        if Input.active_bind("exit"):
+        if inpt.active_bind("exit"):
             pgapi.RUN = False
 
         pgapi.SCREEN.fill("black")
+        gui.system_update()
 
         Events.system_update()
         animator.tick_anims()
