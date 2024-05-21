@@ -165,7 +165,7 @@ def render_bone(bone: Bone, parent: Item):
     pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
 
 
-def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None:
+def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> None:
     elstl = element.style
 
     x = 0
@@ -206,13 +206,18 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
                 )
             )
 
-    bg_color = elstl.bg_color
+    bg_color = list(elstl.bg_color)
+    bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
+    
+    color = list(elstl.color)
+    color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
 
     image: pygame.Surface
 
     if (not elstl.bg_image):
-        image = pygame.Surface((w, h))
+        image = pygame.Surface((w, h), pygame.SRCALPHA)
         image.fill(bg_color)
+        image.set_alpha(bg_color[3])
     else:
         image = pygame.transform.scale(
             ASSETS[elstl.bg_image],
@@ -229,21 +234,23 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
     child_strings_count = 0
 
     for child in element.children:
-        if isinstance(child, str):
-            font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
-            # font.size = unit(element.style.font_size)
-            text_surf = font.render(
-                child, True, element.style.color, element.style.bg_color if not elstl.bg_image else None
-            )
-
-            pgapi.SCREEN.blit(
-                text_surf, (x, y + element.style.font_size * child_strings_count)
-            )
-
-            child_strings_count += 1
+        if not isinstance(child, str):
+            render_ui(child, element.style)
             continue
 
-        render_ui(child, element.style)
+        font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
+        # font.size = unit(element.style.font_size)
+        text_surf = font.render(
+            child, True, color, None
+        )
+        text_surf.set_alpha(color[3])
+
+        pgapi.SCREEN.blit(
+            text_surf, (x, y + element.style.font_size * child_strings_count)
+        )
+
+        child_strings_count += 1
+
 
 
 def render():
