@@ -1,6 +1,6 @@
-from repulse import Collision
 from enums.gui import *
 from base import *
+import collision
 import pgapi
 import copy
 import inpt
@@ -168,7 +168,7 @@ def system_update() -> None:
         el.transform.scale.x = w
         el.transform.scale.y = h
 
-        if Collision.collides(mouse_transform, el.transform):
+        if collision.collides(mouse_transform, el.transform):
             hovering = el
             break
 

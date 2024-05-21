@@ -15,6 +15,7 @@ import inpt
 def spawn_scene():
     saves.select_slot(0)
 
+    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
     inpt.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
 
     # res_loaded: Result[None, Mishap] = saves.load()

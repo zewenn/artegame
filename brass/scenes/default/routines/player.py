@@ -1,10 +1,10 @@
 from base import *
 
-from vectormath import MathVectorToolkit
 from audio_helper import Audio
 from enums import keybinds
 from events import *
 import item_funcs
+import vectormath
 import items
 import pgapi
 import inpt
@@ -63,8 +63,8 @@ def move_player():
             player.dashes_remaining = player.dash_count
             player.last_dash_charge_refill = pgapi.TIME.current
 
-    move_math_vec = MathVectorToolkit.normalise(
-        MathVectorToolkit.new(Vector2(inpt.horizontal(), inpt.vertical()))
+    move_math_vec = vectormath.normalise(
+        vectormath.new(Vector2(inpt.horizontal(), inpt.vertical()))
     )
 
     if (

@@ -8,7 +8,7 @@ from src.imports import *
 import assets
 import render
 import pgapi
-from repulse import Collision
+import collision
 import gui
 from animator import animator
 import inpt
@@ -40,7 +40,6 @@ def init():
     )
 
     inpt.init_controllers()
-    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)
@@ -60,7 +59,7 @@ def init():
 
         Events.system_update()
         animator.tick_anims()
-        Collision.repulse()
+        collision.system_update()
 
         pgapi.system_update_camera()
 

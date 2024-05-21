@@ -7,7 +7,6 @@ import pygame._sdl2.controller as pycontroller
 import time
 import inspect
 
-T = TypeVar("T")
 
 SETTINGS: Optional[ApplicationSettings] = None
 RUN: bool = True
@@ -92,8 +91,6 @@ def get_fps() -> Optional[float]:
     if len(fps_list) < 2:
         return
     return sum(fps_list) / len(fps_list)
-
-
 
 
 class Debugger:
