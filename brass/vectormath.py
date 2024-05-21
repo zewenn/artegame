@@ -1,4 +1,5 @@
-from classes import *
+from base import *
+
 from dataclasses import fields
 import math, copy
 
@@ -14,10 +15,10 @@ class MathVectorToolkit:
         else:
             out += "Some of the following might be None: \n"
             out += ", ".join(missing)
-        raise ValueError(out)
+        unreachable(out)
 
     def __raise_incorrect_error(paramname):
-        raise ValueError(f"{paramname} does not match the calculated value!")
+        unreachable(f"{paramname} does not match the calculated value!")
 
     class cloning:
         def MathVector(mv: CompleteMathVector) -> CompleteMathVector:
@@ -90,7 +91,9 @@ class MathVectorToolkit:
                 mv.magnitude,
                 mv.start,
             ]:
-                MathVectorToolkit.__raise_creation_error(["Start", "Direction", "Magnitude"])
+                MathVectorToolkit.__raise_creation_error(
+                    ["Start", "Direction", "Magnitude"]
+                )
 
             mv.end = Vector2(
                 x=mv.start.x + mv.magnitude * math.cos(math.radians(mv.direction)),
@@ -99,7 +102,9 @@ class MathVectorToolkit:
 
         if mv.start is None:
             if None in [mv.direction, mv.magnitude, mv.end]:
-                MathVectorToolkit.__raise_creation_error(["End", "Direction", "Magnitude"])
+                MathVectorToolkit.__raise_creation_error(
+                    ["End", "Direction", "Magnitude"]
+                )
 
             mv.start = Vector2(
                 x=mv.end.x - mv.magnitude * math.cos(math.radians(mv.direction)),
@@ -176,7 +181,9 @@ class MathVectorToolkit:
         Returns:
             CompleteMathVector: The updated vector
         """
-        return MathVectorToolkit.new(Vector2(mv.end.x * multiplier, mv.end.y * multiplier))
+        return MathVectorToolkit.new(
+            Vector2(mv.end.x * multiplier, mv.end.y * multiplier)
+        )
 
     def divide(mv: CompleteMathVector, divisor: float) -> CompleteMathVector:
         """divide a vector by a scalar amount
@@ -190,7 +197,7 @@ class MathVectorToolkit:
         """
         return MathVectorToolkit.new(
             start=MathVectorToolkit.cloning.Vector2(mv.start),
-            end=Vector2(mv.end.x / divisor, mv.end.y / divisor)
+            end=Vector2(mv.end.x / divisor, mv.end.y / divisor),
         )
 
     def dot_product(mv1: CompleteMathVector, mv2: CompleteMathVector) -> float:
@@ -250,7 +257,9 @@ class MathVectorToolkit:
         )
 
     def angle_between(
-        mv1: CompleteMathVector, mv2: CompleteMathVector, _in="degrees"
+        mv1: CompleteMathVector,
+        mv2: CompleteMathVector,
+        result_as: Literal["degrees", "radians"] = "degrees",
     ) -> float:
         """Gets the angle between two vectors endpoints
 
@@ -265,10 +274,10 @@ class MathVectorToolkit:
         Returns:
             float: the angle betwween the two end points
         """
-        if _in not in ['degrees', 'radians']:
-            raise ValueError(f"Cannot convert angle to \"{_in}\"")
+        if result_as not in ["degrees", "radians"]:
+            unreachable(f'Cannot convert angle to "{result_as}"')
 
-        if _in == "degrees":
+        if result_as == "degrees":
             return abs(mv1.direction - mv2.direction)
         else:
             return math.radians(abs(mv1.direction - mv2.direction))

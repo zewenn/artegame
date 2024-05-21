@@ -1,3 +1,5 @@
+from base import *
+
 import pgapi
 from assets import ASSETS
 from gui import *

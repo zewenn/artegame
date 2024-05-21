@@ -1,6 +1,7 @@
+from base import *
+
 from enums import keybinds
 from events import *
-from classes import *
 from enums import *
 from result import *
 from typing import *

@@ -1,8 +1,6 @@
-from zenyx import printf
-from classes import *
-from typing import *
-from result import *
+from base import *
 
+from zenyx import printf
 import assets
 import pygame
 import pygame._sdl2.controller as pycontroller
@@ -96,21 +94,6 @@ def get_fps() -> Optional[float]:
     return sum(fps_list) / len(fps_list)
 
 
-def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
-    try:
-        return Ok(func(*args))
-    except Exception as e:
-        return Err(Mishap(" ".join([str(x) for x in e.args]), True))
-
-
-def unreachable(msg: str) -> Never:
-    stack = inspect.stack()[1]
-    printf(
-        "\n\n@!unreachable$&"
-        + f"\n@~In {stack.filename}, line {stack.lineno} in {stack.function}()$&"
-    )
-    printf(f"\n@!Error Message:$&\n{msg}")
-    exit()
 
 
 class Debugger:

@@ -1,6 +1,6 @@
 from repulse import Collision
 from enums.gui import *
-from classes import *
+from base import *
 import pgapi
 import copy
 import inpt
@@ -31,9 +31,9 @@ def unit(u: str) -> float:
     num_res: float
 
     try:
-        num_res = pgapi.attempt(float, (u[:-1],))
+        num_res = attempt(float, (u[:-1],))
     except:
-        pgapi.unreachable(
+        unreachable(
             f"Cannot parse float from incorrect unit type!"
             + "\n | Expected:\tstr"
             + f"\n | Type Given:\t{type(u).__name__}"

@@ -1,6 +1,7 @@
-import os
-from classes import *
-import items, gui
+from base import *
+
+import items
+import gui
 
 
 class Events:

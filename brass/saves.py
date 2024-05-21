@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from base import *
+
 from copy import deepcopy
-from classes import *
 from result import *
 import zenyx
 import pgapi
@@ -63,10 +63,10 @@ def load() -> Result[None, Mishap]:
     item_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "items.json")
     gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
 
-    items_loaded: Result[list[Item], Mishap] = pgapi.attempt(
+    items_loaded: Result[list[Item], Mishap] = attempt(
         zenyx.pyon.load, (item_file,)
     )
-    gui_loaded: Result[list[GUIElement], Mishap] = pgapi.attempt(
+    gui_loaded: Result[list[GUIElement], Mishap] = attempt(
         zenyx.pyon.load, (gui_file,)
     )
 

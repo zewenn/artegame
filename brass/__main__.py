@@ -1,3 +1,5 @@
+from base import *
+
 from events import Events
 
 # Importing scripts, so they can run
@@ -8,7 +10,6 @@ import render
 import pgapi
 from repulse import Collision
 import gui
-from classes import *
 from animator import animator
 import inpt
 import saves

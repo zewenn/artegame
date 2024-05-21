@@ -1,8 +1,8 @@
+from base import *
+
 import items
 import time
-from classes import *
 import copy
-from result import Result, Ok, Err
 
 class play_object:
     def __init__(self, id: str):

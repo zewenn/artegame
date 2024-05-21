@@ -1,7 +1,8 @@
+from base import *
+
 from vectormath import MathVectorToolkit
 from audio_helper import Audio
 from enums import keybinds
-from classes import *
 from events import *
 import item_funcs
 import items
@@ -21,12 +22,12 @@ def _init():
     dash_gui_query = gui.get_element("PlayerDashCounter")
 
     if player_query.is_err():
-        pgapi.unreachable("Player Item does not exist!")
+        unreachable("Player Item does not exist!")
 
     player = player_query.ok()
 
     if dash_gui_query.is_err():
-        pgapi.unreachable("Dash display GUIElement does not exist!")
+        unreachable("Dash display GUIElement does not exist!")
 
     dash_display = dash_gui_query.ok()
 

@@ -1,4 +1,5 @@
-from classes import *
+from base import *
+
 import items
 
 
