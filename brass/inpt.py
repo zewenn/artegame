@@ -79,8 +79,6 @@ def __inner_get__(key: str) -> Tuple[float, int]:
     if key_cache.get(key):
         return key_cache.get(key)
 
-    pgapi.Debugger.print(f'Evaluating: "{key}"', end="\r")
-
     filter_list: list[str] = key.split("@")
     query = filter_list[0].lower()
 
@@ -109,7 +107,6 @@ def __inner_get__(key: str) -> Tuple[float, int]:
     ]:
         controller_index: int = int(filter_list[1].split("#")[1])
         if controller_index < 0 or controller_index >= len(pgapi.CONTROLLERS):
-            pgapi.Debugger.print("Invalid controller")
             device = 5
             event = 0
 
@@ -129,8 +126,6 @@ def __inner_get__(key: str) -> Tuple[float, int]:
 
     res = (device, event)
     key_cache[key] = res
-
-    pgapi.Debugger.print(f'"{key}" evaluated as {res}')
 
     return res
 

@@ -13,12 +13,12 @@ def is_on_screen(item: Item) -> bool:
         item.transform.position.x >= 0
         and (
             item.transform.position.x + item.transform.scale.x
-            <= pgapi.SETTINGS.screen_size[0]
+            <= pgapi.SETTINGS.screen_size.x
         )
         and item.transform.position.y >= 0
         and (
             item.transform.position.y + item.transform.scale.y
-            <= pgapi.SETTINGS.screen_size[1]
+            <= pgapi.SETTINGS.screen_size.y
         )
     ):
         return True
@@ -60,17 +60,17 @@ def render_item(item: Item):
 
     # Set the position of the rotated image
     rotated_rect.center = (
-        pgapi.SETTINGS.screen_size[0] / 2
+        pgapi.SETTINGS.screen_size.x / 2
         + (pgapi.CAMERA.position.x * -1 + item.transform.position.x)
         * pgapi.CAMERA.pixel_unit_ratio,
-        pgapi.SETTINGS.screen_size[1] / 2
+        pgapi.SETTINGS.screen_size.y / 2
         + (pgapi.CAMERA.position.y * -1 + item.transform.position.y)
         * pgapi.CAMERA.pixel_unit_ratio,
     )
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
+        pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
         return
 
     pgapi.SCREEN.blit(
@@ -128,7 +128,7 @@ def render_bone(bone: Bone, parent: Item):
 
     rotated_rect = rotated_image.get_rect(
         center=(
-            pgapi.SETTINGS.screen_size[0] / 2
+            pgapi.SETTINGS.screen_size.x / 2
             + (
                 pgapi.CAMERA.position.x * -1
                 + parent.transform.position.x
@@ -141,7 +141,7 @@ def render_bone(bone: Bone, parent: Item):
                 + bone.anchor.x
             )
             * pgapi.CAMERA.pixel_unit_ratio,
-            pgapi.SETTINGS.screen_size[1] / 2
+            pgapi.SETTINGS.screen_size.y / 2
             + (
                 pgapi.CAMERA.position.y * -1
                 + parent.transform.position.y
@@ -164,7 +164,7 @@ def render_bone(bone: Bone, parent: Item):
     # )
 
     # Blit the rotated image onto the screen
-    pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
+    pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
 
 
 def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> None:
@@ -231,7 +231,7 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
 
     positioned_rect = image.get_rect(topleft=(x, y))
 
-    pgapi.SCREEN.blit(image, positioned_rect.topleft)
+    pgapi.SCREEN.this.blit(image, positioned_rect.topleft)
 
     child_strings_count = 0
 
@@ -247,7 +247,7 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
         )
         text_surf.set_alpha(color[3])
 
-        pgapi.SCREEN.blit(
+        pgapi.SCREEN.this.blit(
             text_surf, (x, y + (element.style.font_size + unit(element.style.gap)) * child_strings_count)
         )
 

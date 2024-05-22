@@ -29,7 +29,7 @@ def init():
     pgapi.use(
         ApplicationSettings(
             application_name="Artegame - v1.1",
-            screen_size=(1600, 720),
+            screen_size=Vector2(1600, 900),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
@@ -38,6 +38,7 @@ def init():
             # axis_rounding=10
         )
     )
+    # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
 
     inpt.init_controllers()
 
@@ -54,14 +55,14 @@ def init():
         if inpt.active_bind("exit"):
             pgapi.RUN = False
 
-        pgapi.SCREEN.fill("black")
+        pgapi.SCREEN.this.fill("black")
         gui.system_update()
 
         Events.system_update()
         animator.tick_anims()
         collision.system_update()
 
-        pgapi.system_update_camera()
+        pgapi.system_camera()
 
         render.render()
         pygame.display.flip()

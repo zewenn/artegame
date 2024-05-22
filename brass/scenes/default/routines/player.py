@@ -39,6 +39,7 @@ def _init():
 @update
 def _update():
     move_player()
+    pgapi.move_camera(player.transform.position)
 
 
 def move_player():

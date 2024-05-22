@@ -4,6 +4,7 @@ from result import *
 from typing import *
 from enums.gui import *
 
+import pygame
 
 @dataclass
 class Vector2:
@@ -130,7 +131,7 @@ class Camera:
 
 @dataclass
 class ApplicationSettings:
-    screen_size: tuple[int]
+    screen_size: Vector2
     is_demo: bool = False
     max_fps: int = 240
     vsync: int = 0
@@ -150,6 +151,13 @@ class Time:
     deltatime: float
     current: float
 
+
+@dataclass
+class Screen: 
+    this: pygame.Surface
+    size: Vector2
+    flags: int
+    vsync: bool
 
 # ---------------------- Anims and Keyframes ----------------------
 

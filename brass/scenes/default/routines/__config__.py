@@ -3,8 +3,6 @@ from base import *
 from enums import keybinds
 from events import *
 from enums import *
-from result import *
-from typing import *
 import items
 import saves
 import inpt

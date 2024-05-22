@@ -145,7 +145,7 @@ class animator:
         FORWARD: int = 1
 
     class Timing:
-        timing_table: dict[int, callable] = {
+        timing_table: dict[int, Callable[[float, float, float], float]] = {
             0: interpolation.lerp,
             1: interpolation.ease_in,
             2: interpolation.ease_out,
