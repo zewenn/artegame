@@ -20,16 +20,16 @@ ASSETS_FILE_DIST_NAME = "b64_asset_ref_table.py"
 
 # Used to generate script imports
 ROUTINE_PATH = ["brass", "src", "temp"]
-SCENES_PATH = ["brass", "scenes"]
+SCENES_PATH = ["scenes"]
 SCENES_ENUM_FILE = ["brass", "scenenum.py"]
 
 
 @dataclass
 class ROUTINE_EVENTS:
-    spawn = "@spawn"
-    awake = "@awake"
-    init = "@init"
-    update = "@update"
+    spawn = "def spawn("
+    awake = "def awake("
+    init = "def init("
+    update = "def update("
 
 
 TEMP_DIR_PATH = ["brass", "src", "temp"]

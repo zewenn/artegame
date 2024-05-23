@@ -124,6 +124,7 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
 
 def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
     try:
+        # print([sys.executable, *cmd])
         x = subprocess.call([sys.executable, *cmd])
         if x == 0:
             return True, None

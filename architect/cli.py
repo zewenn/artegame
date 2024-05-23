@@ -208,7 +208,9 @@ def main(args):
     if args[1] in ["--run", "-r"]:
         printf.title(f"Run")
         # os.system(f"python {main_file_dir}")
-        deps.run_python_command([f"{conf.MAIN_FILE_DIR}", "__main__.py"])
+        pth = os.path.realpath(os.path.join(conf.MAIN_FILE_DIR, "__main__.py"))
+        # print(pth)
+        deps.run_python_command((pth,))
         return
 
     if args[1] in ["--build", "-b"]:

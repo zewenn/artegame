@@ -1,15 +1,17 @@
-from enums import *
-from gui import *
-from events import *
+from brass.base import *
 
-@awake
-def _awake():
-    DOM(
-        Element(
+from brass import (
+    gui
+)
+
+
+def awake() -> None:
+    gui.DOM(
+        gui.Element(
             "PlayerVitals",
 
-            Text("Helth: 100"),
-            Text("Mana: 50"),
+            gui.Text("Helth: 100"),
+            gui.Text("Mana: 50"),
             
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
@@ -23,7 +25,7 @@ def _awake():
                 color=(255, 80, 50, 1)
             ),
         ),
-        Element(
+        gui.Element(
             "PlayerDashCounter",
 
             Text("[×] [×] "),

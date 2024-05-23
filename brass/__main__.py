@@ -34,13 +34,15 @@ def init():
             vsync=0,
             icon="neunyx32x32.png",
             camera=Camera(Vector2(0, 0), 1),
-            is_demo=True,
+            is_demo=False,
             # axis_rounding=10
         )
     )
     # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
 
     inpt.init_controllers()
+
+    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
     SCENES.default.load()
     Events.call(Events.ids.awake)

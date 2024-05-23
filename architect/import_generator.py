@@ -6,7 +6,7 @@ from typing import *
 
 import __config__ as conf
 import os, time
-import random
+import re
 
 
 @dataclass
@@ -131,6 +131,25 @@ def build_scenes_file(scenes: list[str]) -> None:
             wf.write(f'\t{scene.lower()}: Scene = Scene("{scene}")\n')
 
 
+def multiline_to_singleline_imports(python_code: str) -> str:
+    # Regex to find items within parentheses of from-import statements
+    pattern = re.compile(r"(\s*import\s*)\(([^)]+)\)", re.DOTALL)
+
+    def replacer(match):
+        module_part = match.group(1)
+        items_part = match.group(2)
+
+        # Clean the items
+        items = [item.strip() for item in items_part.replace("\n", "").split(",")]
+        single_line_items = ", ".join(items)
+
+        return f"{module_part}{single_line_items}"
+
+    # Replace multi-line imports with single-line imports
+    result = pattern.sub(replacer, python_code)
+    return result
+
+
 def create_replace_temp(routines: list[Routine]) -> None:
     temp_path = os.path.join(*conf.TEMP_DIR_PATH)
 
@@ -146,23 +165,31 @@ def create_replace_temp(routines: list[Routine]) -> None:
 
         contents = "from scenenum import SCENES\n" + contents
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.spawn, f"@SCENES.{routine.scene.lower()}.spawn"
+            conf.ROUTINE_EVENTS.spawn,
+            f"@SCENES.{routine.scene.lower()}.spawn\n{conf.ROUTINE_EVENTS.spawn}",
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.awake, f"@SCENES.{routine.scene.lower()}.awake"
+            conf.ROUTINE_EVENTS.awake,
+            f"@SCENES.{routine.scene.lower()}.awake\n{conf.ROUTINE_EVENTS.awake}",
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.init, f"@SCENES.{routine.scene.lower()}.initalise"
+            conf.ROUTINE_EVENTS.init,
+            f"@SCENES.{routine.scene.lower()}.initalise\n{conf.ROUTINE_EVENTS.init}",
         )
         contents = contents.replace(
-            conf.ROUTINE_EVENTS.update, f"@SCENES.{routine.scene.lower()}.update"
+            conf.ROUTINE_EVENTS.update,
+            f"@SCENES.{routine.scene.lower()}.update\n{conf.ROUTINE_EVENTS.update}",
         )
+        contents = contents.replace("from brass ", "")
+        contents = contents.replace("from brass.", "from ")
+
+        contents = multiline_to_singleline_imports(contents)
 
         with open(
             os.path.join(
                 temp_path,
                 (
-                    ('gui' if routine.ui_routine else 'rtn')
+                    ("gui" if routine.ui_routine else "rtn")
                     + "_"
                     + routine.scene.replace("_", "")
                     + "_"

@@ -10,7 +10,13 @@ import os
 
 
 def path(path: str) -> str:
-    return os.path.realpath(os.path.join(*path.split("/")))
+    pth: list[str] = path.split("/")
+
+    for index, pth_part in enumerate(pth):
+        if pth_part == "~":
+            pth[index] = os.path.expanduser(pth_part)
+
+    return os.path.realpath(os.path.join(*pth))
 
 
 SAVES_DIR: Optional[str] = None

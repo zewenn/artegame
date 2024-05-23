@@ -1,20 +1,19 @@
-from base import *
+from brass.base import *
 
-from enums import keybinds
-from events import *
-from enums import *
-import items
-import saves
-import inpt
+from brass import (
+    enums, 
+    events, 
+    items, 
+    saves, 
+    inpt
+)
 
 
 
-@spawn
-def spawn_scene():
+def spawn() -> None:
     saves.select_slot(0)
 
-    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
-    inpt.bind_buttons(keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
+    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
 
     # res_loaded: Result[None, Mishap] = saves.load()
     

@@ -1,21 +1,24 @@
-from base import *
+from brass.base import *
 
-from audio_helper import Audio
-from enums import keybinds
-from events import *
-import item_funcs
-import vectormath
-import items
-import pgapi
-import inpt
+# fmt: off
+from brass import (
+    item_funcs, 
+    vectormath, 
+    events, 
+    enums, 
+    items, 
+    pgapi, 
+    inpt, 
+    gui
+)
+# fmt: on
 
 
 player: Optional[Item] = None
 dash_display: Optional[GUIElement] = None
 
 
-@init
-def _init():
+def init() -> None:
     global player, dash_display
 
     player_query = items.get("player")
@@ -36,13 +39,12 @@ def _init():
     player.last_dash_charge_refill = pgapi.TIME.current
 
 
-@update
-def _update():
+def update() -> None:
     move_player()
     pgapi.move_camera(player.transform.position)
 
 
-def move_player():
+def move_player() -> None:
     global dash_display
 
     if not player.can_move:
@@ -69,14 +71,16 @@ def move_player():
     )
 
     if (
-        inpt.active_bind(keybinds.PLAYER_DASH)
+        inpt.active_bind(enums.keybinds.PLAYER_DASH)
         and player.dashes_remaining > 0
         and (move_math_vec.end.x != 0 or move_math_vec.end.y != 0)
     ):
         # if player.dashes_remaining == player.dash_count:
         player.last_dash_charge_refill = pgapi.TIME.current
         player.dashes_remaining -= 1
-        item_funcs.apply_dash_effect(player, move_math_vec, player.dash_movement_multiplier, 80)
+        item_funcs.apply_dash_effect(
+            player, move_math_vec, player.dash_movement_multiplier, 80
+        )
 
     player.transform.position.y += (
         player.movement_speed * pgapi.TIME.deltatime * move_math_vec.end.y
