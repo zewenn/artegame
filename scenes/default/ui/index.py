@@ -1,31 +1,31 @@
 from brass.base import *
-
-from brass import (
-    gui
-)
+from brass.gui import *
 
 
 def awake() -> None:
-    gui.DOM(
-        gui.Element(
+    DOM(
+        Element(
             "PlayerVitals",
 
-            gui.Text("Helth: 100"),
-            gui.Text("Mana: 50"),
+            Text("Helth: 100"),
+            Text("Mana: 50"),
             
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
                 top=".5u",
                 left=".5u",
-                # width="3u",
-                # height="3u",
+                width="3u",
+                height="3u",
                 # bg_color=(100, 100, 100, .2),
                 font_size=FONT_SIZE.MEDIUM,
                 gap="2x",
                 color=(255, 80, 50, 1)
             ),
+            hover=StyleSheet(
+                color=(255, 255, 255, 1)
+            )
         ),
-        gui.Element(
+        Element(
             "PlayerDashCounter",
 
             Text("[×] [×] "),
@@ -35,7 +35,8 @@ def awake() -> None:
                 top="3.5u",
                 left=".5u",
                 font_size=FONT_SIZE.MEDIUM,
-                color=(255, 255, 255, 1)
+                font=FONTS.PRESS_PLAY,
+                color=COLOURS.WHITE
             )
         )
     )

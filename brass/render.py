@@ -168,14 +168,16 @@ def render_bone(bone: Bone, parent: Item):
 
 
 def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> None:
-    elstl = element.style
+    elstl = element.current_style
 
     x = 0
     y = 0
     w = unit(elstl.width) if elstl.width != None else 20
     h = unit(elstl.height) if elstl.height != None else 0
 
-    match elstl.position:
+    position = elstl.position if elstl.position else POSITION.ABSOLUTE
+
+    match position:
         case POSITION.ABSOLUTE:
             x = (
                 unit(elstl.left)
@@ -208,11 +210,15 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
                 )
             )
 
-    bg_color = list(elstl.bg_color)
+    bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
     bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
 
-    color = list(elstl.color)
+    color = list(elstl.color if elstl.color else (255, 255, 255, 1))
     color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
+
+    font_size = elstl.font_size if elstl.font_size else 16
+    font_family = elstl.font if elstl.font else 'inter.ttf'
+    gap = elstl.gap if elstl.gap else "0x"
 
     image: pygame.Surface
 
@@ -237,10 +243,10 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
 
     for child in element.children:
         if not isinstance(child, str):
-            render_ui(child, element.style)
+            render_ui(child, element.current_style)
             continue
 
-        font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
+        font = ASSETS[f"font-{font_size}-{font_family}"]
         # font.size = unit(element.style.font_size)
         text_surf = font.render(
             child, True, color, None
@@ -248,7 +254,7 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
         text_surf.set_alpha(color[3])
 
         pgapi.SCREEN.this.blit(
-            text_surf, (x, y + (element.style.font_size + unit(element.style.gap)) * child_strings_count)
+            text_surf, (x, y + (font_size + unit(gap)) * child_strings_count)
         )
 
         child_strings_count += 1

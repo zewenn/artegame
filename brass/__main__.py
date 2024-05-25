@@ -34,7 +34,7 @@ def init():
             vsync=0,
             icon="neunyx32x32.png",
             camera=Camera(Vector2(0, 0), 1),
-            is_demo=False,
+            is_demo=True,
             # axis_rounding=10
         )
     )

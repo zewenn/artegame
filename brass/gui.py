@@ -32,7 +32,8 @@ def unit(u: str) -> float:
 
     try:
         num_res = attempt(float, (u[:-1],))
-    except:
+    except Exception as e:
+        # print(f"trace: {e.with_traceback()}")
         unreachable(
             f"Cannot parse float from incorrect unit type!"
             + "\n | Expected:\tstr"
@@ -84,12 +85,16 @@ def Element(
     id: str,
     *children: GUIElement,
     style: Optional[StyleSheet] = None,
+    hover: Optional[StyleSheet] = None,
     onclick: Optional[Callable[[], None]] = None,
 ) -> GUIElement:
+    styl = style if style else StyleSheet()
     this = GUIElement(
         id=id,
         children=list(children),
-        style=style if style else StyleSheet(),
+        style=styl,
+        current_style=styl,
+        hover=hover,
         onclick=onclick,
         transform=Transform(Vector2(), Vector3(), Vector2()),
     )
@@ -109,7 +114,12 @@ def Text(t: str) -> str:
 def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None:
     global DOM_El
     DOM_El.children = children
-    DOM_El.style = style if style else StyleSheet()
+    DOM_El.current_style = style if style else StyleSheet(
+        width="100w",
+        height="100h",
+        top="0x",
+        left="0x"
+    )
 
 
 def system_update() -> None:
@@ -119,10 +129,12 @@ def system_update() -> None:
     hovering = None
 
     for el in query_available[::-1]:
+        if (el.id == "DOM"):
+            continue
         if isinstance(el, str):
             continue
 
-        elstl = el.style
+        elstl = el.current_style
 
         x, y = 0, 0
         w = unit(elstl.width) if elstl.width != None else 0
@@ -143,22 +155,22 @@ def system_update() -> None:
 
             case POSITION.RELATIVE:
                 x = (
-                    unit(elstl.left) + unit(el.parent.style.left)
-                    if unit(elstl.left) != None and unit(el.parent.style.left) != None
+                    unit(elstl.left) + unit(el.parent.current_style.left)
+                    if unit(elstl.left) != None and unit(el.parent.current_style.left) != None
                     else (
-                        unit(elstl.right) + unit(el.parent.style.right)
+                        unit(elstl.right) + unit(el.parent.current_style.right)
                         if unit(elstl.right) != None
-                        and unit(el.parent.style.right) != None
+                        and unit(el.parent.current_style.right) != None
                         else 0
                     )
                 )
                 y = (
-                    unit(elstl.top) + unit(el.parent.style.top)
-                    if unit(elstl.top) != None and unit(el.parent.style.top) != None
+                    unit(elstl.top) + unit(el.parent.current_style.top)
+                    if unit(elstl.top) != None and unit(el.parent.current_style.top) != None
                     else (
-                        unit(elstl.bottom) + unit(el.parent.style.bottom)
+                        unit(elstl.bottom) + unit(el.parent.current_style.bottom)
                         if unit(elstl.bottom) != None
-                        and unit(el.parent.style.bottom) != None
+                        and unit(el.parent.current_style.bottom) != None
                         else 0
                     )
                 )
@@ -171,6 +183,17 @@ def system_update() -> None:
         if collision.collides(mouse_transform, el.transform):
             hovering = el
             break
+        el.current_style = el.style
+        print("Resetting element style: ", el.id)
 
-    if inpt.get_button_down("left@mouse") and hovering != None:
+    print("Hovering:", hovering)
+    if hovering == None:
+        return
+    
+    if hovering.hover: 
+        merge_res = merge(hovering.style, hovering.hover)
+        if merge_res.is_ok():
+            hovering.current_style = merge_res.ok()
+
+    if inpt.get_button_down("left@mouse"):
         hovering.onclick()

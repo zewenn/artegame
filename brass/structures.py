@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from zenyx import Pipe
 from result import *
 from typing import *
-from enums.gui import *
 
 import pygame
+
 
 @dataclass
 class Vector2:
@@ -153,11 +153,12 @@ class Time:
 
 
 @dataclass
-class Screen: 
+class Screen:
     this: pygame.Surface
     size: Vector2
     flags: int
     vsync: bool
+
 
 # ---------------------- Anims and Keyframes ----------------------
 
@@ -276,23 +277,23 @@ class Mishap:
 
 @dataclass
 class StyleSheet:
-    position: str = POSITION.ABSOLUTE
+    position: str = None
 
-    bottom: str = "0x"
-    right: str = "0x"
-    left: str = "0x"
-    top: str = "0x"
+    bottom: str = None
+    right: str = None
+    left: str = None
+    top: str = None
 
-    width: str = "0x"
-    height: str = "0x"
+    width: str = None
+    height: str = None
 
-    bg_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
+    bg_color: Tuple[int, int, int, int] = None
     bg_image: str = None
 
-    color: Tuple[int, int, int, int] = (0, 0, 0, 1)
-    font: str = "press_play.ttf"
-    font_size: str = FONT_SIZE.EXTRA_SMALL
-    gap: str = "0x"
+    color: Tuple[int, int, int, int] = None
+    font: str = None
+    font_size: str = None
+    gap: str = None
 
 
 @dataclass
@@ -300,6 +301,11 @@ class GUIElement:
     id: str
     children: list["GUIElement"]
     style: StyleSheet
+    hover: StyleSheet = None
+    current_style: StyleSheet = None
     parent: Optional["GUIElement"] = None
     onclick: Optional[Callable[[], None]] = None
     transform: Optional[Transform] = None
+
+
+Colour = Tuple[int, int, int, float]

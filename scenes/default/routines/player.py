@@ -29,6 +29,8 @@ def init() -> None:
 
     player = player_query.ok()
 
+    print(typeof(player), typeof(10))
+
     if dash_gui_query.is_err():
         unreachable("Dash display GUIElement does not exist!")
 
@@ -37,6 +39,7 @@ def init() -> None:
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
+
 
 
 def update() -> None:
