@@ -4,7 +4,8 @@ from brass.base import *
 from brass import (
     item_funcs, 
     vectormath, 
-    events, 
+    events,
+    scene,
     enums, 
     items, 
     pgapi, 

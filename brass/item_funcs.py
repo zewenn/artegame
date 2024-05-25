@@ -1,12 +1,12 @@
 from base import *
 
-from events import Events
+import events
 import pgapi
 
 DASH_OBJECTS: list[Dasher] = []
 
 
-@Events.update
+@events.update
 def upd_dash():
     global DASH_OBJECTS
 

@@ -1,10 +1,11 @@
 from base import *
 
-from events import Events
 
 # Importing scripts, so they can run
+import enums.scenes
 from src.imports import *
 
+import events
 import assets
 import render
 import pgapi
@@ -15,7 +16,8 @@ import inpt
 import saves
 import pygame
 import pygame._sdl2.controller as pycontroller
-from scenenum import SCENES
+import scene
+import enums
 
 
 def init():
@@ -44,9 +46,9 @@ def init():
 
     inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
 
-    SCENES.default.load()
-    Events.call(Events.ids.awake)
-    Events.call(Events.ids.initalise)
+    scene.load(enums.scenes.DEFAULT)
+    events.call(events.IDS.awake)
+    events.call(events.IDS.init)
 
     while pgapi.RUN:
         for event in pygame.event.get():
@@ -60,7 +62,7 @@ def init():
         pgapi.SCREEN.this.fill("black")
         gui.system_update()
 
-        Events.system_update()
+        events.system_update()
         animator.tick_anims()
         collision.system_update()
 

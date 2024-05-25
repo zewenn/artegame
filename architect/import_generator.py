@@ -124,11 +124,9 @@ def get_routines_and_scenes(from_dir: list[str]) -> Tuple[list[Routine], list[st
 
 def build_scenes_file(scenes: list[str]) -> None:
     with open(os.path.join(*conf.SCENES_ENUM_FILE), "w", encoding="utf-8") as wf:
-        wf.write("# Generating scenes enum\n\n")
-        wf.write("from events import Scene\n\n")
-        wf.write("class SCENES:\n\n")
+        wf.write("# Generated Scene Enum\n\n")
         for scene in scenes:
-            wf.write(f'\t{scene.lower()}: Scene = Scene("{scene}")\n')
+            wf.write(f'{scene.upper()}: str = "{scene}"\n')
 
 
 def multiline_to_singleline_imports(python_code: str) -> str:
@@ -163,22 +161,23 @@ def create_replace_temp(routines: list[Routine]) -> None:
         with open(routine.path_str, "r", encoding="utf-8") as rf:
             contents = rf.read()
 
-        contents = "from scenenum import SCENES\n" + contents
+        contents = "import events, scene\n" + contents
+        contents = "import enums\n" + contents
         contents = contents.replace(
             conf.ROUTINE_EVENTS.spawn,
-            f"@SCENES.{routine.scene.lower()}.spawn\n{conf.ROUTINE_EVENTS.spawn}",
+            f"@scene.spawn(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.spawn}",
         )
         contents = contents.replace(
             conf.ROUTINE_EVENTS.awake,
-            f"@SCENES.{routine.scene.lower()}.awake\n{conf.ROUTINE_EVENTS.awake}",
+            f"@scene.awake(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.awake}",
         )
         contents = contents.replace(
             conf.ROUTINE_EVENTS.init,
-            f"@SCENES.{routine.scene.lower()}.initalise\n{conf.ROUTINE_EVENTS.init}",
+            f"@scene.init(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.init}",
         )
         contents = contents.replace(
             conf.ROUTINE_EVENTS.update,
-            f"@SCENES.{routine.scene.lower()}.update\n{conf.ROUTINE_EVENTS.update}",
+            f"@scene.update(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.update}",
         )
         contents = contents.replace("from brass ", "")
         contents = contents.replace("from brass.", "from ")
