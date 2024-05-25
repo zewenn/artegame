@@ -36,7 +36,7 @@ def use(settings: ApplicationSettings):
 
     pygame.display.set_caption(settings.application_name)
 
-    pygame.transform.set_smoothscale_backend(settings.scaling)
+    pygame.transform.set_smoothscale_backend(settings.sprite_scaling)
 
     if settings.icon is not None:
         pygame.display.set_icon(assets.use(settings.icon))
@@ -102,3 +102,8 @@ def get_fps() -> Optional[float]:
     if len(fps_list) < 2:
         return
     return sum(fps_list) / len(fps_list)
+
+
+def as_menu() -> None:
+    global SETTINGS
+    SETTINGS.menu_mode = True

@@ -217,7 +217,15 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
     color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
 
     font_size = elstl.font_size if elstl.font_size else 16
-    font_family = elstl.font if elstl.font else 'inter.ttf'
+    font_family = elstl.font_family if elstl.font_family else 'inter.ttf'
+
+    bold = False
+    italic = False
+
+    if elstl.font_variant:
+        bold = "bold" in elstl.font_variant
+        italic = "italic" in elstl.font_variant
+
     gap = elstl.gap if elstl.gap else "0x"
 
     image: pygame.Surface
@@ -247,6 +255,8 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
             continue
 
         font = ASSETS[f"font-{font_size}-{font_family}"]
+        font.italic = italic
+        font.bold = bold
         # font.size = unit(element.style.font_size)
         text_surf = font.render(
             child, True, color, None

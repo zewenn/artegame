@@ -2,6 +2,7 @@ from base import *
 
 import items
 import gui
+import pgapi
 
 
 class Events:
@@ -84,7 +85,10 @@ class Scene:
     
     def close(self):
         self.items = items.rendering
+        pgapi.SETTINGS.menu_mode = False
         items.rendering = []
+        gui.buttons = []
+        gui.selected_button_index = 0
         gui.query_available = []
         gui.DOM_El.children = []
 

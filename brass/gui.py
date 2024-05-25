@@ -64,6 +64,8 @@ def unit(u: str) -> float:
 query_available: list[GUIElement] = []
 mouse_transform: Transform = Transform(Vector2(), Vector3(), Vector2(1, 1))
 hovering: Optional[GUIElement] = None
+buttons: list[GUIElement] = []
+selected_button_index: Optional[int] = 0
 
 
 def get_element(id: str) -> Result[GUIElement, None]:
@@ -87,6 +89,7 @@ def Element(
     style: Optional[StyleSheet] = None,
     hover: Optional[StyleSheet] = None,
     onclick: Optional[Callable[[], None]] = None,
+    is_button: bool = False
 ) -> GUIElement:
 
     if typeof(onclick) not in ["NoneType", "function"]:
@@ -105,10 +108,13 @@ def Element(
         hover=hover,
         onclick=onclick,
         transform=Transform(Vector2(), Vector3(), Vector2()),
+        button=is_button
     )
 
     this.children = [add_parent(x, this) for x in this.children]
     query_available.append(this)
+    if (is_button):
+        buttons.append(this)
     return this
 
 
@@ -128,7 +134,15 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 
 
 def system_update() -> None:
-    global hovering
+    global hovering, buttons, selected_button_index
+
+    if inpt.get_button_down("dpad-down@ctrl#0"):
+        if selected_button_index + 1 < len(buttons):
+            selected_button_index += 1
+
+    if inpt.get_button_down("dpad-up@ctrl#0"):
+        if selected_button_index - 1 >= 0:
+            selected_button_index -= 1
 
     mouse_transform.position = inpt.get_mouse_position()
     hovering = None
@@ -193,6 +207,15 @@ def system_update() -> None:
         el.current_style = el.style
 
     if hovering == None:
+        btn = buttons[selected_button_index]
+
+        if not btn.hover or not pgapi.SETTINGS.menu_mode:
+            return
+
+        merge_res = merge(btn.style, btn.hover)
+        if merge_res.is_ok():
+            btn.current_style = merge_res.ok()
+
         return
 
     if hovering.hover:

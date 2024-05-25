@@ -133,6 +133,11 @@ class Camera:
 class ApplicationSettings:
     screen_size: Vector2
     is_demo: bool = False
+    """
+    Controls the save dir.
+    - True: this.save_path
+    - False: this.demo_save_path
+    """
     max_fps: int = 240
     vsync: int = 0
     application_name: str = "fyne"
@@ -141,9 +146,13 @@ class ApplicationSettings:
     axis_rounding: Optional[int] = 20000
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
-    scaling: str = "GENERIC"
+    sprite_scaling: Literal["GENERIC"] = "GENERIC"
     save_path: str = "~/artegame"
     demo_save_path: str = "./@artegame-demo-saves"
+    menu_mode: bool = False
+    """
+    If enabled dpad jumps between menupoints
+    """
 
 
 @dataclass
@@ -291,8 +300,9 @@ class StyleSheet:
     bg_image: str = None
 
     color: Tuple[int, int, int, int] = None
-    font: str = None
+    font_family: str = None
     font_size: str = None
+    font_variant: list[Literal["bold", "italic"]] = None
     gap: str = None
 
 
@@ -306,6 +316,7 @@ class GUIElement:
     parent: Optional["GUIElement"] = None
     onclick: Optional[Callable[[], None]] = None
     transform: Optional[Transform] = None
+    button: bool = False
 
 
 Colour = Tuple[int, int, int, float]
