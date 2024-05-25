@@ -53,48 +53,17 @@ def update_read_build_counter() -> str:
         return str(res)
 
 
-def new_routine(T: Literal["gui"] | Literal["routine"] | Literal["config"], scn_name: str = "") -> str:
-    match T:
-        case "gui":
-            return "\n".join(
-                [
-                    "from events import *",
-                    "from enums import *",
-                    "from gui import *",
-                    "\n\n\n@awake",
-                    "def _awake():",
-                    "    DOM()",
-                ]
-            )
-        case "config":
-            return "\n".join(
-                [
-                    "from events import *",
-                    "from enums import *",
-                    "from result import *",
-                    "import saves",
-                    "\n\n\n@spawn",
-                    "def spawn_scene():",
-                    "    items.create(Item(id=\"test_item\"))",
-                ]
-            )
-        case "routine":
-            return "\n".join(
-                [
-                    "from audio_helper import Audio",
-                    "from input_handler import Input",
-                    "from classes import *",
-                    "from events import *",
-                    "import items",
-                    "import pgapi",
-                    "\n\n\n@init",
-                    "def _init():",
-                    "    pass",
-                    "\n\n@update",
-                    "def _update():",
-                    "    pass",
-                ]
-            )
+def new_routine(T: Literal["gui"] | Literal["routine"] | Literal["config"]) -> str:
+    filepath_dict: dict[str, str] = {
+        "gui" : os.path.join(*conf.TEMPLATE_FILES_DIR, "gui.tpy"),
+        "routine" : os.path.join(*conf.TEMPLATE_FILES_DIR, "rtn.tpy"),
+        "config" : os.path.join(*conf.TEMPLATE_FILES_DIR, "cnf.tpy"),
+    }
+    
+    res = ""
+    with open(filepath_dict[T], "r", encoding="utf-8") as rf:
+        res = rf.read()
+    return res
 
 
 def main(args):
@@ -130,7 +99,7 @@ def main(args):
         os.mkdir(new_scene_ui)
 
         make_file(os.path.join(new_scene_routines, "main.py"), new_routine("routine"))
-        make_file(os.path.join(new_scene_routines, "__config__.py"), new_routine("config", scn_name=usr_input))
+        make_file(os.path.join(new_scene_routines, "conf.py"), new_routine("config"))
         make_file(os.path.join(new_scene_ui, "index.py"), new_routine("gui"))
 
     if args[1] in ["--new-routine", "-nr"]:
@@ -169,7 +138,7 @@ def main(args):
 
         make_file(os.path.join(new_scene_routines, filename), new_routine("routine"))
 
-    printf.title(f"Build")
+    printf.title(f"Architect")
 
     # Need to serialise these, so that the game can use the files
     # Mostly auto import
@@ -208,7 +177,9 @@ def main(args):
     if args[1] in ["--run", "-r"]:
         printf.title(f"Run")
         # os.system(f"python {main_file_dir}")
-        deps.run_python_command([f"{conf.MAIN_FILE_DIR}", "__main__.py"])
+        pth = os.path.realpath(os.path.join(conf.MAIN_FILE_DIR, "__main__.py"))
+        # print(pth)
+        deps.run_python_command((pth,))
         return
 
     if args[1] in ["--build", "-b"]:

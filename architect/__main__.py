@@ -5,12 +5,12 @@ import __config__ as conf
 
 
 def main() -> None:
-    title("Architect")
+    title("Initalising")
     print("Performing a dependecy check...\n")
 
     res = handle_dep_stack(conf.DEPENDENCIES)
     if isinstance(res, Exception):
-        print("\n\nERROR: Critical dependency not found!")
+        print("\nunreachable: Critical dependency not found!")
         return
 
     success, err = run_python_command(

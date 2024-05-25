@@ -1,103 +1,49 @@
-import os
-from classes import *
-import items, gui
+from base import *
 
 
-class Events:
-    class ids:
-        awake: str = "evn::awake"
-        initalise: str = "evn::initalise"
-        update: str = "evn::update"
-    
-    current_scene: Optional["Scene"] = None
-    update_name: Optional[str] = "NONE"
-    event_map: dict[str, list[Event]] = {}
-
-    @classmethod
-    def subscribe(this, event_name: str, callback: Callable) -> None:
-        if not this.event_map.get(event_name):
-            this.event_map[event_name] = []
-        this.event_map[event_name].append(Event(callable.__name__, callback))
-
-    @classmethod
-    def call(this, event_name: str):
-        if not this.event_map.get(event_name):
-            return
-        for event in this.event_map.get(event_name):
-            event.callback()
-
-    @classmethod
-    def system_update(this) -> None:
-        this.call(this.ids.update)
-        
-        if this.update_name != "NONE":
-            this.call(this.update_name)
-
-    @classmethod
-    def set_update_name(this, to: str) -> None:
-        this.update_name = to
-
-    @classmethod
-    def awake(this, func: Callable) -> None:
-        Events.subscribe(this.ids.awake, func)
-
-    @classmethod
-    def init(this, func: Callable) -> None:
-        Events.subscribe(this.ids.initalise, func)
-
-    @classmethod
-    def update(this, func: Callable) -> None:
-        Events.subscribe(this.ids.update, func)
+class IDS:
+    awake: str = "evn::awake"
+    init: str = "evn::init"
+    update: str = "evn::update"
 
 
-class Scene:
-    def __init__(self, name: str) -> None:
-        self.id: str = name
-        self.items: list[Item] = []
+current_scene: str = None
+update_name: Optional[str] = "NONE"
+event_map: dict[str, list[Event]] = {}
 
-    def spawn(self, fn: Callable) -> None:
-        Events.subscribe(f"{self.id}::spawn", fn)
 
-    def awake(self, fn: Callable) -> None:
-        Events.subscribe(f"{self.id}::awake", fn)
-    
-    def initalise(self, fn: Callable) -> None:
-        Events.subscribe(f"{self.id}::initalise", fn)
-    
-    def update(self, fn: Callable) -> None:
-        Events.subscribe(f"{self.id}::update", fn)
+def on(event_name: str, callback: Callable) -> None:
+    if not event_map.get(event_name):
+        event_map[event_name] = []
+    event_map[event_name].append(Event(callable.__name__, callback))
 
-    def quit(self, fn: Callable) -> None:
-        Events.subscribe(f"{self.id}::quit", fn)
 
-    def load(self):
-        if Events.current_scene:
-            Events.current_scene.close()
-        Events.current_scene = self
+def call(event_name: str):
+    if not event_map.get(event_name):
+        return
+    for event in event_map.get(event_name):
+        event.callback()
 
-        Events.call(f"{self.id}::spawn")
-        Events.call(f"{self.id}::awake")
-        Events.call(f"{self.id}::initalise")
 
-        Events.set_update_name(f"{self.id}::update")
-    
-    def close(self):
-        self.items = items.rendering
-        items.rendering = []
-        gui.query_available = []
-        gui.DOM_El.children = []
+def system_update() -> None:
+    call(IDS.update)
 
-        Events.call(f"{self.id}::quit")
+    if update_name != "NONE":
+        call(update_name)
 
-def spawn(fn: Callable[[], None]):
-    return None
 
-def awake(fn: Callable[[], None]):
-    return None
+def set_update_name(to: str) -> None:
+    global update_name
+    update_name = to
 
-def init(fn: Callable[[], None]):
-    return None
 
-def update(fn: Callable[[], None]):
-    return None
+def awake(func: Callable) -> None:
+    on(IDS.awake, func)
 
+
+def init(func: Callable) -> None:
+    on(IDS.initalise, func)
+
+
+def update(func: Callable) -> None:
+    on(IDS.update, func)

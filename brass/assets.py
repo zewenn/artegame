@@ -2,7 +2,6 @@ from enums.gui import FONT_SIZE
 from io import BytesIO
 import base64
 import pygame
-import os
 
 from src.b64_asset_ref_table import REFERENCE_TABLE as b64_ref_table
 

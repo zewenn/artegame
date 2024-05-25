@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from zenyx import Pipe
 from result import *
 from typing import *
-from enums.gui import *
+
+import pygame
 
 
 @dataclass
@@ -11,7 +12,6 @@ class Vector2:
     Args:
         x (float): horizontal position
         y (float): vertical position
-        direction (float): vector direction
     """
 
     x: float = 0
@@ -131,8 +131,13 @@ class Camera:
 
 @dataclass
 class ApplicationSettings:
-    screen_size: tuple[int]
+    screen_size: Vector2
     is_demo: bool = False
+    """
+    Controls the save dir.
+    - True: this.save_path
+    - False: this.demo_save_path
+    """
     max_fps: int = 240
     vsync: int = 0
     application_name: str = "fyne"
@@ -141,15 +146,27 @@ class ApplicationSettings:
     axis_rounding: Optional[int] = 20000
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
-    scaling: str = "GENERIC"
+    sprite_scaling: Literal["GENERIC"] = "GENERIC"
     save_path: str = "~/artegame"
     demo_save_path: str = "./@artegame-demo-saves"
+    menu_mode: bool = False
+    """
+    If enabled dpad jumps between menupoints
+    """
 
 
 @dataclass
 class Time:
     deltatime: float
     current: float
+
+
+@dataclass
+class Screen:
+    this: pygame.Surface
+    size: Vector2
+    flags: int
+    vsync: bool
 
 
 # ---------------------- Anims and Keyframes ----------------------
@@ -269,22 +286,24 @@ class Mishap:
 
 @dataclass
 class StyleSheet:
-    position: str = POSITION.ABSOLUTE
+    position: str = None
 
-    bottom: str = "0x"
-    right: str = "0x"
-    left: str = "0x"
-    top: str = "0x"
+    bottom: str = None
+    right: str = None
+    left: str = None
+    top: str = None
 
-    width: str = "0x"
-    height: str = "0x"
+    width: str = None
+    height: str = None
 
-    bg_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
+    bg_color: Tuple[int, int, int, int] = None
     bg_image: str = None
 
-    color: Tuple[int, int, int, int] = (0, 0, 0, 1)
-    font: str = "press_play.ttf"
-    font_size: str = FONT_SIZE.EXTRA_SMALL
+    color: Tuple[int, int, int, int] = None
+    font_family: str = None
+    font_size: str = None
+    font_variant: list[Literal["bold", "italic"]] = None
+    gap: str = None
 
 
 @dataclass
@@ -292,3 +311,12 @@ class GUIElement:
     id: str
     children: list["GUIElement"]
     style: StyleSheet
+    hover: StyleSheet = None
+    current_style: StyleSheet = None
+    parent: Optional["GUIElement"] = None
+    onclick: Optional[Callable[[], None]] = None
+    transform: Optional[Transform] = None
+    button: bool = False
+
+
+Colour = Tuple[int, int, int, float]

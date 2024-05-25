@@ -1,20 +1,23 @@
-from events import Events
+from base import *
+
 
 # Importing scripts, so they can run
+import enums.scenes
 from src.imports import *
 
+import events
 import assets
 import render
 import pgapi
-from repulse import Collision
-import items
-from classes import *
+import collision
+import gui
 from animator import animator
-from input_handler import Input
+import inpt
 import saves
 import pygame
 import pygame._sdl2.controller as pycontroller
-from scenenum import SCENES
+import scene
+import enums
 
 
 def init():
@@ -28,7 +31,7 @@ def init():
     pgapi.use(
         ApplicationSettings(
             application_name="Artegame - v1.1",
-            screen_size=(1600, 720),
+            screen_size=Vector2(1600, 900),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
@@ -37,13 +40,15 @@ def init():
             # axis_rounding=10
         )
     )
+    # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
 
-    Input.init_controllers()
-    Input.bind_buttons("exit", ["escape", "back@ctrl#0"])
+    inpt.init_controllers()
 
-    SCENES.default.load()
-    Events.call(Events.ids.awake)
-    Events.call(Events.ids.initalise)
+    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
+
+    scene.load(enums.scenes.DEFAULT)
+    events.call(events.IDS.awake)
+    events.call(events.IDS.init)
 
     while pgapi.RUN:
         for event in pygame.event.get():
@@ -51,16 +56,17 @@ def init():
                 pgapi.RUN = False
 
         # Demo exit
-        if Input.active_bind("exit"):
+        if inpt.active_bind("exit"):
             pgapi.RUN = False
 
-        pgapi.SCREEN.fill("black")
+        pgapi.SCREEN.this.fill("black")
+        gui.system_update()
 
-        Events.system_update()
+        events.system_update()
         animator.tick_anims()
-        Collision.repulse()
+        collision.system_update()
 
-        pgapi.system_update_camera()
+        pgapi.system_camera()
 
         render.render()
         pygame.display.flip()

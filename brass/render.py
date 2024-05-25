@@ -1,3 +1,5 @@
+from base import *
+
 import pgapi
 from assets import ASSETS
 from gui import *
@@ -11,12 +13,12 @@ def is_on_screen(item: Item) -> bool:
         item.transform.position.x >= 0
         and (
             item.transform.position.x + item.transform.scale.x
-            <= pgapi.SETTINGS.screen_size[0]
+            <= pgapi.SETTINGS.screen_size.x
         )
         and item.transform.position.y >= 0
         and (
             item.transform.position.y + item.transform.scale.y
-            <= pgapi.SETTINGS.screen_size[1]
+            <= pgapi.SETTINGS.screen_size.y
         )
     ):
         return True
@@ -58,17 +60,17 @@ def render_item(item: Item):
 
     # Set the position of the rotated image
     rotated_rect.center = (
-        pgapi.SETTINGS.screen_size[0] / 2
+        pgapi.SETTINGS.screen_size.x / 2
         + (pgapi.CAMERA.position.x * -1 + item.transform.position.x)
         * pgapi.CAMERA.pixel_unit_ratio,
-        pgapi.SETTINGS.screen_size[1] / 2
+        pgapi.SETTINGS.screen_size.y / 2
         + (pgapi.CAMERA.position.y * -1 + item.transform.position.y)
         * pgapi.CAMERA.pixel_unit_ratio,
     )
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
+        pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
         return
 
     pgapi.SCREEN.blit(
@@ -126,7 +128,7 @@ def render_bone(bone: Bone, parent: Item):
 
     rotated_rect = rotated_image.get_rect(
         center=(
-            pgapi.SETTINGS.screen_size[0] / 2
+            pgapi.SETTINGS.screen_size.x / 2
             + (
                 pgapi.CAMERA.position.x * -1
                 + parent.transform.position.x
@@ -139,7 +141,7 @@ def render_bone(bone: Bone, parent: Item):
                 + bone.anchor.x
             )
             * pgapi.CAMERA.pixel_unit_ratio,
-            pgapi.SETTINGS.screen_size[1] / 2
+            pgapi.SETTINGS.screen_size.y / 2
             + (
                 pgapi.CAMERA.position.y * -1
                 + parent.transform.position.y
@@ -162,18 +164,20 @@ def render_bone(bone: Bone, parent: Item):
     # )
 
     # Blit the rotated image onto the screen
-    pgapi.SCREEN.blit(rotated_image, rotated_rect.topleft)
+    pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
 
 
-def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None:
-    elstl = element.style
+def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> None:
+    elstl = element.current_style
 
     x = 0
     y = 0
     w = unit(elstl.width) if elstl.width != None else 20
     h = unit(elstl.height) if elstl.height != None else 0
 
-    match elstl.position:
+    position = elstl.position if elstl.position else POSITION.ABSOLUTE
+
+    match position:
         case POSITION.ABSOLUTE:
             x = (
                 unit(elstl.left)
@@ -206,13 +210,30 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
                 )
             )
 
-    bg_color = elstl.bg_color
+    bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
+    bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
+
+    color = list(elstl.color if elstl.color else (255, 255, 255, 1))
+    color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
+
+    font_size = elstl.font_size if elstl.font_size else 16
+    font_family = elstl.font_family if elstl.font_family else 'inter.ttf'
+
+    bold = False
+    italic = False
+
+    if elstl.font_variant:
+        bold = "bold" in elstl.font_variant
+        italic = "italic" in elstl.font_variant
+
+    gap = elstl.gap if elstl.gap else "0x"
 
     image: pygame.Surface
 
     if (not elstl.bg_image):
-        image = pygame.Surface((w, h))
+        image = pygame.Surface((w, h), pygame.SRCALPHA)
         image.fill(bg_color)
+        image.set_alpha(bg_color[3])
     else:
         image = pygame.transform.scale(
             ASSETS[elstl.bg_image],
@@ -224,26 +245,30 @@ def render_ui(element: Element, parent_style: StyleSheet = StyleSheet()) -> None
 
     positioned_rect = image.get_rect(topleft=(x, y))
 
-    pgapi.SCREEN.blit(image, positioned_rect.topleft)
+    pgapi.SCREEN.this.blit(image, positioned_rect.topleft)
 
     child_strings_count = 0
 
     for child in element.children:
-        if isinstance(child, str):
-            font = ASSETS[f"font-{element.style.font_size}-{element.style.font}"]
-            # font.size = unit(element.style.font_size)
-            text_surf = font.render(
-                child, True, element.style.color, element.style.bg_color if not elstl.bg_image else None
-            )
-
-            pgapi.SCREEN.blit(
-                text_surf, (x, y + element.style.font_size * child_strings_count)
-            )
-
-            child_strings_count += 1
+        if not isinstance(child, str):
+            render_ui(child, element.current_style)
             continue
 
-        render_ui(child, element.style)
+        font = ASSETS[f"font-{font_size}-{font_family}"]
+        font.italic = italic
+        font.bold = bold
+        # font.size = unit(element.style.font_size)
+        text_surf = font.render(
+            child, True, color, None
+        )
+        text_surf.set_alpha(color[3])
+
+        pgapi.SCREEN.this.blit(
+            text_surf, (x, y + (font_size + unit(gap)) * child_strings_count)
+        )
+
+        child_strings_count += 1
+
 
 
 def render():

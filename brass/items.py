@@ -1,6 +1,4 @@
-from classes import *
-from threading import Timer
-import pgapi
+from base import *
 
 # class Items:
 selector_map: dict[str, Optional[Item | Bone]] = {}
@@ -91,7 +89,9 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
 
     if bone_id is None:
         add_to_selector_map(selector, item)
-        return Ok(item)
+        if item: 
+            return Ok(item)
+        return Err(Mishap(f"Couldn't find item: {selector}"))
 
     if hasattr(item, "bones"):
         add_to_selector_map(selector, item.bones.get(bone_id))
