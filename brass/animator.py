@@ -250,10 +250,10 @@ class animator:
         anim_list: list[Animation],
     ) -> Optional[ValueError]:
         if mode not in this.Modes.mode_list:
-            return ValueError("Incorrect animation mode")
+            unreachable("Incorrect animation mode")
 
         if timing_function not in this.Timing.timing_table:
-            return ValueError("Incorrect timing function")
+            unreachable("Incorrect timing function")
 
         for anim in anim_list:
             first_frame = anim.keyframes[list(anim.keyframes)[0]]

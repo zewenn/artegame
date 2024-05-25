@@ -1,3 +1,4 @@
+from types import UnionType
 from zenyx import printf
 from structures import *
 import inspect
@@ -74,3 +75,24 @@ def merge(a: T, b: T) -> Result[T, Mishap]:
         dict_a[key] = value
 
     return Ok(constructor(**dict_a))
+
+
+class Piper(Generic[T, K]):
+    def __init__(self, value: T) -> None:
+        self.value = value
+        self.next_args: list[Any] = []
+        self.next_kwargs: dict[str, Any] = {}
+
+    def __or__(self, func: Callable[..., K]) -> "Piper[K]":
+        self.value = func(self.value, *self.next_args, **self.next_kwargs)
+    
+    def __rshift__(self, kwargs: dict[str, Any]) -> None:
+        self.next_kwargs = kwargs
+        return self
+    
+    def __add__(self, args: list[Any]) -> None:
+        self.next_args = args
+        return self
+
+    def __call__(self, *args: Any, **kwds: Any) -> K:
+        return self.value
