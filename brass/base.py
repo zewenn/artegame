@@ -20,3 +20,19 @@ def unreachable(msg: str) -> Never:
     )
     printf(f"\n@!Error Message:$&\n{msg}")
     exit()
+
+def typeof(a: Any, T: type) -> bool:
+    if isinstance(a, T):
+        return True
+    
+    if type(a) == T:
+        return True
+    
+    try:
+        if a.__name__ == T.__name__:
+            return True
+    except AttributeError:
+        if a.__class__.__name__ == T.__name__:
+            return True
+
+    return False

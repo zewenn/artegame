@@ -15,10 +15,10 @@ def spawn() -> None:
 
     inpt.bind_buttons(enums.keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
 
-    # res_loaded: Result[None, Mishap] = saves.load()
+    res_loaded: Result[None, Mishap] = saves.load()
     
-    # if res_loaded.is_ok():
-    #     return
+    if res_loaded.is_ok():
+        return
 
 
     # if loaded.is_ok():
