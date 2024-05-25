@@ -117,6 +117,20 @@ class Dasher:
     start_time: float
 
 
+# ------------------------- Audio System --------------------------
+
+
+Sound = pygame.mixer.Sound
+
+
+@dataclass
+class Audio:
+    sound: Sound
+    volume: float
+    playing: bool
+    maxtimeMS: int
+
+
 # ------------------------- Camera System -------------------------
 
 
@@ -260,25 +274,16 @@ class Event:
     callback: Callable
 
 
-# --------------------------- Saves ---------------------------
-
-
-@dataclass
-class Moment:
-    items: list[Item]
-
-
 # --------------------------- sdtlib --------------------------
 
 
 class Mishap:
     def __init__(self, msg: str, fatal: bool = False) -> None:
-        self.msg: str = f"{'FATAL' if fatal else 'NONFATAL'} :: {msg}"
+        self.msg: str = msg
+        self.fatal = fatal
 
     def is_fatal(self) -> bool:
-        if self.msg.startswith("FATAL"):
-            return True
-        return False
+        return self.fatal
 
 
 # ----------------------------- ui ----------------------------
