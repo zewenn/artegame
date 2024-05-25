@@ -13,5 +13,9 @@
         "**/node_modules/*/**": true,
         "**/.hg/store/**": true,
         "**/__pycache__": true
+    },
+    "files.associations": {
+        // For .t(emplate)py(thon)
+        "*.tpy": "python"
     }
 }

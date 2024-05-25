@@ -42,7 +42,6 @@ def init() -> None:
     player.last_dash_charge_refill = pgapi.TIME.current
 
 
-
 def update() -> None:
     move_player()
     pgapi.move_camera(player.transform.position)

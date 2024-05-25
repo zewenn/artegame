@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-# For PyInstaller
+# For nuitka
 PROJECT_NAME = "Artegame"
 VERSION = "1.2.2"
 
@@ -10,6 +10,7 @@ DEPENDENCIES = ["pygame", "termcolor", "recordclass", "zenyx", "result", "nuitka
 # For architect to run the correct __main__.py file
 MAIN_FILE_DIR = "brass"
 BUILD_OUTPUT_DIR = ["dist"]
+TEMPLATE_FILES_DIR = ["architect", "templates"]
 
 # Used to store the output of b64encoder.py and import_generator.py
 SERIALISED_OUTPUT_DIR = ["brass", "src"]
