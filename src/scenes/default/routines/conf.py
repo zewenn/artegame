@@ -104,6 +104,35 @@ def spawn() -> None:
 
     items.add_to_scene(
         Item(
+            id="enemy1",
+            tags=["enemy", "item"],
+            transform=Transform(Vec2(-512, -32), Vec3(0, 0, 0), Vec2(64, 64)),
+            # fill_color=[20, 20, 20],
+            sprite="test.png",
+            can_move=True,
+            can_collide=True,
+            can_repulse=True,
+            lightness=1,
+            base_movement_speed=300,
+            dash_count=2,
+            dash_movement_multiplier=10,
+            dash_charge_refill_time=0.5,
+            max_hitpoints=100,
+            hitpoints=100,
+            max_mana=100,
+            team="Enemy",
+            inventory={
+                "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
+                "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
+                "banana": 0,
+                "strawberry": 0,
+                "blueberry": 0,
+            },
+        )
+    )
+
+    items.add_to_scene(
+        Item(
             id="box",
             tags=["box", "item"],
             transform=Transform(

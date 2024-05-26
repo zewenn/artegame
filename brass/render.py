@@ -171,9 +171,6 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
     if parent_style == None:
         parent_style = DOM_El.current_style
 
-    if (element.id == "PlayerHitpointBar"):
-        print(element.current_style.width)
-
     elstl = element.current_style
 
     x = 0

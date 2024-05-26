@@ -42,10 +42,18 @@ def system_update() -> None:
             if collision.collides(projectile.transform, item.transform):
                 item.hitpoints -= projectile.projectile_damage
                 rm_projectile(projectile)
+            
+            if item.hitpoints <= 0:
+                match item.team:
+                    case "Player":
+                        return
+                    case "Enemy":
+                        items.rendering.remove(item)
+                        del item
 
 def new(
     sprite: string,
-    pos: Vec2,
+    position: Vec2,
     scale: Vec2,
     direction: Number,
     lifetime_seconds: Number,
@@ -56,7 +64,7 @@ def new(
     return Item(
         id=f"Projectile-{uuid()}",
         tags=["projectile", "item"],
-        transform=Transform(position=pos, rotation=Vec3(0, 0, direction), scale=scale),
+        transform=Transform(position=position, rotation=Vec3(0, 0, direction), scale=scale),
         facing=direction,
         sprite=sprite,
         base_movement_speed=speed,

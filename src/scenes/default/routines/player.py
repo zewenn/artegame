@@ -97,14 +97,14 @@ def update() -> None:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
             projectiles.new(
-                "gyuri.png",
-                structured_clone(player.transform.position),
-                Vec2(128, 32),
-                player_hand_holder.transform.rotation.z,
-                .3,
-                100,
-                "Enemy",
-                10
+                sprite="gyuri.png",
+                position=structured_clone(player.transform.position),
+                scale=Vec2(128, 128),
+                direction=player_hand_holder.transform.rotation.z,
+                lifetime_seconds=1,
+                speed=100,
+                team="Player",
+                damage=10
             )
         )
     
