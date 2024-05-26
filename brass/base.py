@@ -4,6 +4,7 @@ from structures import *
 import inspect
 import copy
 import time
+import math
 
 import pygame._sdl2.controller as pycontroller
 import pygame

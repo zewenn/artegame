@@ -41,7 +41,7 @@ def init() -> None:
         unreachable("Player Item does not exist!")
 
     player = player_query.ok()
-    
+
     # Player Hand Holder
     if player_hand_holder_query.is_err():
         unreachable("Player Item does not exist!")
@@ -131,5 +131,15 @@ def move_player() -> None:
     )
 
     player_hand_holder.transform.position = player.transform.position
-    if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
-        player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90
+    match pgapi.SETTINGS.input_mode:
+        case enums.input_modes.CONTROLLER:
+            if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
+                player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90
+        case enums.input_modes.MOUSE_AND_KEYBOARD:
+            center = Vec2(pgapi.SCREEN.size.x / 2, pgapi.SCREEN.size.y / 2)
+            mouse_relative_pos = Vec2(
+                pgapi.MOUSE_POSITION.x - center.x, pgapi.MOUSE_POSITION.y - center.y
+            )
+
+            rotation = math.degrees(math.atan2(mouse_relative_pos.x, mouse_relative_pos.y))
+            player_hand_holder.transform.rotation.z = rotation
