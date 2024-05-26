@@ -6,6 +6,11 @@ from typing import *
 import pygame
 
 
+Sound = pygame.mixer.Sound
+Number = int | float
+string = str
+
+
 @dataclass
 class Vector2:
     """
@@ -120,9 +125,6 @@ class Dasher:
 # ------------------------- Audio System --------------------------
 
 
-Sound = pygame.mixer.Sound
-
-
 @dataclass
 class Audio:
     sound: Sound
@@ -218,9 +220,10 @@ class AnimationGroup:
     - 1 is forwards
     """
 
+    id: string
     lenght: float = 1
-    mode: int = 0
-    timing_function: int = 0
+    mode: Literal["Normal", "Forwards"] = "Normal"
+    timing_function: Callable[[Number, Number, Number], Number] = None
     animations: Optional[list[Animation]] = None
 
 
@@ -235,6 +238,12 @@ class ExpandedAnim:
     end_time: float = 0.001
     duration: float = 0.001
 
+
+@dataclass
+class PlayObject:
+    group: AnimationGroup
+    anims: list[ExpandedAnim]
+    finished: bool
 
 # ---------------------- Maths & Physics ----------------------
 

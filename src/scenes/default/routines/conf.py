@@ -1,8 +1,15 @@
 from brass.base import *
 
-from brass.animator import animator
-
-from brass import enums, events, items, saves, inpt
+# fmt: off
+from brass import (
+    enums, 
+    events,
+    items, 
+    saves, 
+    inpt, 
+    animator
+)
+# fmt: on
 
 
 def spawn() -> None:
@@ -12,16 +19,18 @@ def spawn() -> None:
 
     res_loaded: Result[None, Mishap] = saves.load()
 
-    animator.create(
+    animator.store.add(
         "hit",
-        1,
-        animator.Modes.FORWARD,
-        animator.Timing.EASE,
-        [
-            Animation(
-                "player", {1: Keyframe(rotation_z=0), 100: Keyframe(rotation_z=100)}
-            )
-        ],
+        animator.create(
+            1,
+            enums.animations.MODES.NORMAL,
+            enums.animations.TIMING.EASE_IN_OUT,
+            [
+                Animation(
+                    "player", {1: Keyframe(rotation_z=0), 100: Keyframe(rotation_z=100)}
+                )
+            ],
+        )
     )
 
     if res_loaded.is_ok():

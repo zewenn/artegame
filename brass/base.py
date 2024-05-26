@@ -3,6 +3,7 @@ from zenyx import printf
 from structures import *
 import inspect
 import copy
+import time
 
 T = TypeVar("T")
 K = TypeVar("K")

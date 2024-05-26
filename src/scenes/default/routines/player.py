@@ -1,11 +1,11 @@
 from brass.base import *
-from brass.animator import animator
 
 from global_routines import item_funcs
 
 # fmt: off
 from brass import (
     vectormath, 
+    animator,
     assets,
     audio,
     enums, 
@@ -44,7 +44,12 @@ def init() -> None:
     walk_sound = assets.use("walking.mp3")
     audio.set_volume(walk_sound, 0.1)
 
-    animator.play("hit")
+    rotate_anim = animator.store.get("hit")
+
+    if rotate_anim.is_err():
+        unreachable("\"hit\" animation does not exist")
+
+    animator.play(rotate_anim.ok())
 
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
