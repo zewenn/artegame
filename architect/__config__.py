@@ -14,14 +14,14 @@ TEMPLATE_FILES_DIR = ["architect", "templates"]
 SERIALISED_OUTPUT_DIR = ["brass", "src"]
 
 # Used for the b64 images and sounds
-ASSETS_DIR_NAME = "asset_files"
+ASSETS_DIR_PATH = ["src", "assets"]
 ASSETS_FILE_DIST_NAME = "b64_asset_ref_table.py"
 
 # Used to generate script imports
 ROUTINE_PATH = ["brass", "src", "temp"]
-SCENES_PATH = ["scenes"]
+SCENES_PATH = ["src", "scenes"]
 SCENES_ENUM_FILE = ["brass", "enums", "scenes.py"]
-GLOBAL_ROUTINES_DIR_PATH = ["global_routines"]
+GLOBAL_ROUTINES_DIR_PATH = ["src", "global_routines"]
 GLOBAL_ROUTINES_DIR_DIST_PATH = ["brass", "src", "global_routines"]
 
 
