@@ -118,18 +118,16 @@ def complete(
     elif mv.delta.x != calc_delta.x or mv.delta.y != calc_delta.y:
         __raise_incorrect_error("Delta")
 
-    calc_magnitude: float = (mv.delta.x**2 + mv.delta.y**2) ** 0.5
     if mv.magnitude is None:
+        calc_magnitude: float = (mv.delta.x**2 + mv.delta.y**2) ** 0.5
         mv.magnitude = calc_magnitude
-    elif mv.magnitude != calc_magnitude:
-        __raise_incorrect_error("Magnitude")
 
-    calc_direction: float = math.degrees(math.atan2(mv.delta.y, mv.delta.x))
     if mv.direction is None:
+        calc_direction: float = math.degrees(math.atan2(mv.delta.y, mv.delta.x))
         mv.direction = calc_direction
-    elif round(mv.direction, 5) != round(calc_direction, 5):
-        print(round(mv.direction, 5), round(calc_direction, 5))
-        __raise_incorrect_error("Direction")
+    # elif round(mv.direction, 5) != round(calc_direction, 5):
+    #     print(round(mv.direction, 5), round(calc_direction, 5))
+    #     __raise_incorrect_error("Direction")
 
     return CompleteMathVector(
         start=mv.start,

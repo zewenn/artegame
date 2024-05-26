@@ -1,8 +1,12 @@
 from brass.base import *
 
-from global_routines import dash
 
 # fmt: off
+from global_routines import (
+    projectiles,
+    dash
+)
+
 from brass import (
     vectormath, 
     animator,
@@ -78,6 +82,16 @@ def update() -> None:
 
     if inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK):
         animator.play(player_light_attack_anim)
+        projectiles.shoot(
+            projectiles.new(
+                "gyuri.png",
+                structured_clone(player.transform.position),
+                Vec2(128, 32),
+                player_hand_holder.transform.rotation.z,
+                .3,
+                500
+            )
+        )
 
 
 def move_player() -> None:
@@ -123,6 +137,7 @@ def move_player() -> None:
         dash.apply_dash_effect(
             player, move_math_vec, player.dash_movement_multiplier, 80
         )
+        player.invulnerable = True
 
     player.transform.position.y += (
         player.movement_speed * pgapi.TIME.deltatime * move_math_vec.end.y
@@ -142,5 +157,7 @@ def move_player() -> None:
                 pgapi.MOUSE_POSITION.x - center.x, pgapi.MOUSE_POSITION.y - center.y
             )
 
-            rotation = math.degrees(math.atan2(mouse_relative_pos.x, mouse_relative_pos.y))
+            rotation = math.degrees(
+                math.atan2(mouse_relative_pos.x, mouse_relative_pos.y)
+            )
             player_hand_holder.transform.rotation.z = rotation

@@ -1,10 +1,12 @@
 from types import UnionType
 from zenyx import printf
 from structures import *
+from uuid import uuid4
 import inspect
 import copy
 import time
 import math
+
 
 import pygame._sdl2.controller as pycontroller
 import pygame
@@ -102,3 +104,6 @@ class Piper(Generic[T, K]):
 
     def __call__(self, *args: Any, **kwds: Any) -> K:
         return self.value
+
+def uuid() -> string:
+    return uuid4().hex

@@ -5,8 +5,9 @@ selector_map: dict[str, Optional[Item | Bone]] = {}
 rendering: list[Item] = []
 
 
-def create(item: Item) -> None:
+def add_to_scene(item: Item) -> Item:
     rendering.append(item)
+    return item
 
 
 def add_to_selector_map(selector: str, item: Optional[Item]) -> None:

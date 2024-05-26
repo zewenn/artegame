@@ -7,6 +7,7 @@ import pygame
 
 
 Sound = pygame.mixer.Sound
+Surface = pygame.Surface
 Number = int | float
 string = str
 
@@ -80,6 +81,7 @@ class Item:
     # Transforms
     transform: Optional[Transform] = None
     bones: Optional[dict[str, Bone]] = None
+    facing: Number = None
 
     # Shiny render
     render: bool = True
@@ -110,6 +112,17 @@ class Item:
     lightness: int = 1
     trigger_collider: bool = False
     # colliders: Optional[list[Collider]] = None
+
+    # Projectiles
+    is_projectile: bool = False
+    lifetime_seconds: Optional[Number] = None
+    life_start: Optional[Number] = None
+    team: Optional[Literal["Player", "Enemy"]] = None
+
+    # Combat // Alive
+    hitpoint: Optional[Number] = None
+    mana: Optional[Number] = None
+    invulnerable: bool = False
 
 
 @dataclass
@@ -244,6 +257,7 @@ class PlayObject:
     group: AnimationGroup
     anims: list[ExpandedAnim]
     finished: bool
+
 
 # ---------------------- Maths & Physics ----------------------
 

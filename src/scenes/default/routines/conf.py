@@ -54,7 +54,7 @@ def spawn() -> None:
     #     return
 
     # if loaded.is_ok():
-    items.create(
+    items.add_to_scene(
         Item(
             id="player",
             tags=["player", "item"],
@@ -78,7 +78,7 @@ def spawn() -> None:
             },
         )
     )
-    items.create(
+    items.add_to_scene(
         Item(
             id="player_hand_holder",
             tags=["player_hand_holder", "item"],
@@ -99,7 +99,7 @@ def spawn() -> None:
         )
     )
 
-    items.create(
+    items.add_to_scene(
         Item(
             id="box",
             tags=["box", "item"],
@@ -113,7 +113,7 @@ def spawn() -> None:
         )
     )
 
-    items.create(
+    items.add_to_scene(
         Item(
             id="asd",
             tags=["asd", "item"],

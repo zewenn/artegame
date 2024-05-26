@@ -17,6 +17,7 @@ def upd_dash():
             DASH_OBJECTS.remove(dsh_obj)
             dsh_obj.this.can_move = True
             dsh_obj.this.movement_speed = dsh_obj.this.base_movement_speed
+            dsh_obj.this.invulnerable = False
             continue
 
         dsh_obj.this.transform.position.y += (
