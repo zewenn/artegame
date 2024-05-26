@@ -29,7 +29,8 @@ def init():
     pgapi.use(
         ApplicationSettings(
             application_name=f"Artegame - DEMO",
-            screen_size=Vec2(1600, 900),
+            # screen_size=Vec2(1600, 900),
+            screen_size=Vec2(1920, 1080),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
@@ -38,11 +39,12 @@ def init():
             # axis_rounding=10
         )
     )
-    # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
+    pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
 
     inpt.init_controllers()
 
     inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
+    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, ["enter", "a@ctrl#0"])
 
     scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)

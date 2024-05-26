@@ -228,6 +228,9 @@ def system_update() -> None:
         if merge_res.is_ok():
             btn.current_style = merge_res.ok()
 
+        if btn.onclick != None and inpt.active_bind(enums.keybinds.ACCEPT_MENU):
+            btn.onclick()
+
         return
 
     if hovering.hover:

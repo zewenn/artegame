@@ -168,6 +168,7 @@ def move_player() -> None:
         case enums.input_modes.CONTROLLER:
             if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
                 player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90
+                
         case enums.input_modes.MOUSE_AND_KEYBOARD:
             center = Vec2(pgapi.SCREEN.size.x / 2, pgapi.SCREEN.size.y / 2)
             mouse_relative_pos = Vec2(
