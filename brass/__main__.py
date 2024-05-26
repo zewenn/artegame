@@ -2,7 +2,7 @@ from base import *
 
 
 # Importing scripts, so they can run
-import enums.scenes
+import enums
 from src.imports import *
 
 import events
@@ -14,8 +14,6 @@ import gui
 import animator
 import inpt
 import saves
-import pygame
-import pygame._sdl2.controller as pycontroller
 import scene
 import enums
 

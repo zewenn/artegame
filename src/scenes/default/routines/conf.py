@@ -16,25 +16,34 @@ def spawn() -> None:
     saves.select_slot(0)
 
     inpt.bind_buttons(enums.keybinds.PLAYER_DASH, ["space", "a@ctrl#0"], "down")
-
-    res_loaded: Result[None, Mishap] = saves.load()
+    inpt.bind_buttons(
+        enums.keybinds.PLAYER_LIGHT_ATTACK,
+        ["left@mouse", "shoulder-right@ctrl#0"],
+        "down",
+    )
 
     animator.store.add(
         "hit",
         animator.create(
-            1,
-            enums.animations.MODES.NORMAL,
-            enums.animations.TIMING.EASE_IN_OUT,
-            [
+            duration_seconds=.2,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.EASE_IN_OUT,
+            animations=[
                 Animation(
-                    "player", {1: Keyframe(rotation_z=0), 100: Keyframe(rotation_z=100)}
+                    "player_hand_holder->left_hand",
+                    {
+                        1: Keyframe(position_y=16),
+                        50: Keyframe(position_y=100),
+                        100: Keyframe(position_y=16),
+                    },
                 )
             ],
-        )
+        ),
     )
 
-    if res_loaded.is_ok():
-        return
+    # res_loaded: Result[None, Mishap] = saves.load()
+    # if res_loaded.is_ok():
+    #     return
 
     # if loaded.is_ok():
     items.create(
@@ -52,6 +61,20 @@ def spawn() -> None:
             dash_count=2,
             dash_movement_multiplier=10,
             dash_charge_refill_time=0.5,
+            inventory={
+                "box_gloves": Weapon(damage=3, damage_area=Vector2(50, 150)),
+                "weight_plate": Weapon(damage=10, damage_area=Vector2(100, 50)),
+                "banana": 0,
+                "strawberry": 0,
+                "blueberry": 0,
+            },
+        )
+    )
+    items.create(
+        Item(
+            id="player_hand_holder",
+            tags=["player_hand_holder", "item"],
+            transform=Transform(Vector2(-32, -32), Vector3(0, 0, 0), Vector2(64, 64)),
             bones={
                 "left_hand": Bone(
                     transform=Transform(
@@ -68,13 +91,6 @@ def spawn() -> None:
                     anchor=Vector2(0, 0),
                     sprite="weight_plate.png",
                 ),
-            },
-            inventory={
-                "box_gloves": Weapon(damage=3, damage_area=Vector2(50, 150)),
-                "weight_plate": Weapon(damage=10, damage_area=Vector2(100, 50)),
-                "banana": 0,
-                "strawberry": 0,
-                "blueberry": 0,
             },
         )
     )

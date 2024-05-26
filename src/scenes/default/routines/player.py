@@ -18,14 +18,22 @@ from brass import (
 
 
 player: Optional[Item] = None
+player_hand_holder: Optional[Item] = None
+player_light_attack_anim: Optional[AnimationGroup] = None
+
 dash_display: Optional[GUIElement] = None
 walk_sound: Optional[Audio] = None
 
 
 def init() -> None:
-    global player, dash_display, walk_sound
+    global player
+    global player_hand_holder
+    global dash_display
+    global walk_sound
+    global player_light_attack_anim
 
     player_query = items.get("player")
+    player_hand_holder_query = items.get("player_hand_holder")
     dash_gui_query = gui.get_element("PlayerDashCounter")
 
     # Player
@@ -33,6 +41,12 @@ def init() -> None:
         unreachable("Player Item does not exist!")
 
     player = player_query.ok()
+    
+    # Player Hand Holder
+    if player_hand_holder_query.is_err():
+        unreachable("Player Item does not exist!")
+
+    player_hand_holder = player_hand_holder_query.ok()
 
     # Dash Display GUIElement
     if dash_gui_query.is_err():
@@ -44,12 +58,12 @@ def init() -> None:
     walk_sound = assets.use("walking.mp3")
     audio.set_volume(walk_sound, 0.1)
 
-    rotate_anim = animator.store.get("hit")
+    player_light_attack_anim_query = animator.store.get("hit")
 
-    if rotate_anim.is_err():
-        unreachable("\"hit\" animation does not exist")
+    if player_light_attack_anim_query.is_err():
+        unreachable('"hit" animation does not exist')
 
-    animator.play(rotate_anim.ok())
+    player_light_attack_anim = player_light_attack_anim_query.ok()
 
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
@@ -57,12 +71,17 @@ def init() -> None:
 
 
 def update() -> None:
+    global player_light_attack_anim
+
     move_player()
     pgapi.move_camera(player.transform.position)
 
+    if inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK):
+        animator.play(player_light_attack_anim)
+
 
 def move_player() -> None:
-    global dash_display
+    global dash_display, player_hand_holder
 
     if not player.can_move:
         return
@@ -110,3 +129,7 @@ def move_player() -> None:
     player.transform.position.x += (
         player.movement_speed * pgapi.TIME.deltatime * move_math_vec.end.x
     )
+
+    player_hand_holder.transform.position = player.transform.position
+    if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
+        player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90

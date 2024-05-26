@@ -5,6 +5,10 @@ import inspect
 import copy
 import time
 
+import pygame._sdl2.controller as pycontroller
+import pygame
+
+
 T = TypeVar("T")
 K = TypeVar("K")
 
