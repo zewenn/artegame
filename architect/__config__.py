@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 # For nuitka
 PROJECT_NAME = "Artegame"
 VERSION = "1.2.2"
@@ -23,9 +21,10 @@ ASSETS_FILE_DIST_NAME = "b64_asset_ref_table.py"
 ROUTINE_PATH = ["brass", "src", "temp"]
 SCENES_PATH = ["scenes"]
 SCENES_ENUM_FILE = ["brass", "enums", "scenes.py"]
+GLOBAL_ROUTINES_DIR_PATH = ["global_routines"]
+GLOBAL_ROUTINES_DIR_DIST_PATH = ["brass", "src", "global_routines"]
 
 
-@dataclass
 class ROUTINE_EVENTS:
     spawn = "def spawn("
     awake = "def awake("

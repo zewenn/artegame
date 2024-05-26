@@ -1,3 +1,4 @@
+from distutils.dir_util import copy_tree
 from result import Result, Ok, Err
 from dataclasses import dataclass
 from zenyx import printf
@@ -181,6 +182,8 @@ def create_replace_temp(routines: list[Routine]) -> None:
         )
         contents = contents.replace("from brass ", "")
         contents = contents.replace("from brass.", "from ")
+        contents = contents.replace("from global_routines ", "from src.global_routines ")
+        contents = contents.replace("from global_routines.", "from src.global_routines.")
 
         contents = multiline_to_singleline_imports(contents)
 
@@ -210,6 +213,11 @@ def serialise_imports():
     thus the script runs when the file is loaded.\n
     This is needed with the use event decorators, which - on load - bind functions to events.
     """
+
+    copy_tree(
+        os.path.join(*conf.GLOBAL_ROUTINES_DIR_PATH),
+        os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH),
+    )
 
     routines, scenes = get_routines_and_scenes(conf.SCENES_PATH)
 
