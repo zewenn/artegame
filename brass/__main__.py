@@ -11,7 +11,7 @@ import render
 import pgapi
 import collision
 import gui
-from animator import animator
+import animator
 import inpt
 import saves
 import pygame

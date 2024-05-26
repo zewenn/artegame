@@ -1,3 +1,4 @@
+from base import *
 from enums.gui import FONT_SIZE
 from io import BytesIO
 import base64
@@ -17,7 +18,7 @@ def load(name: str, base64_string: str, font_size=12):
 
     # Open the data using Pygame
     if name.endswith(".mp3"):
-        res = pygame.mixer.Sound(data_buffer)
+        res = Audio(pygame.mixer.Sound(data_buffer), 1, False, 0)
     elif name.endswith(".ttf"):
         res = pygame.font.Font(data_buffer, font_size)
     else:

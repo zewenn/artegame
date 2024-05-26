@@ -1,11 +1,13 @@
 from brass.base import *
 
+from global_routines import item_funcs
+
 # fmt: off
 from brass import (
-    item_funcs, 
     vectormath, 
-    events,
-    scene,
+    animator,
+    assets,
+    audio,
     enums, 
     items, 
     pgapi, 
@@ -17,25 +19,37 @@ from brass import (
 
 player: Optional[Item] = None
 dash_display: Optional[GUIElement] = None
+walk_sound: Optional[Audio] = None
 
 
 def init() -> None:
-    global player, dash_display
+    global player, dash_display, walk_sound
 
     player_query = items.get("player")
     dash_gui_query = gui.get_element("PlayerDashCounter")
 
+    # Player
     if player_query.is_err():
         unreachable("Player Item does not exist!")
 
     player = player_query.ok()
 
-    print(typeof(player), typeof(10))
-
+    # Dash Display GUIElement
     if dash_gui_query.is_err():
         unreachable("Dash display GUIElement does not exist!")
 
     dash_display = dash_gui_query.ok()
+
+    # Walking audio
+    walk_sound = assets.use("walking.mp3")
+    audio.set_volume(walk_sound, 0.1)
+
+    rotate_anim = animator.store.get("hit")
+
+    if rotate_anim.is_err():
+        unreachable("\"hit\" animation does not exist")
+
+    animator.play(rotate_anim.ok())
 
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
@@ -72,6 +86,11 @@ def move_player() -> None:
     move_math_vec = vectormath.normalise(
         vectormath.new(Vector2(inpt.horizontal(), inpt.vertical()))
     )
+
+    if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
+        audio.fade_in(walk_sound, 100, 1)
+    else:
+        audio.fade_out(walk_sound, 100)
 
     if (
         inpt.active_bind(enums.keybinds.PLAYER_DASH)

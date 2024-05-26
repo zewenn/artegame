@@ -1,7 +1,9 @@
-from base import *
+from brass.base import *
 
-import events
-import pgapi
+from brass import (
+    events,
+    pgapi
+)
 
 DASH_OBJECTS: list[Dasher] = []
 

@@ -65,7 +65,7 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
     """
 
     if selector_map.get(selector):
-        return selector_map.get(selector)
+        return Ok(selector_map.get(selector))
 
     item_and_bone: list[str] = selector.split("->")
     enity_selector_list: list[str] = item_and_bone[0].split("|")

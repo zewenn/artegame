@@ -30,7 +30,7 @@ def serialize_file_to_b64string(filepath) -> str:
 
 
 def serialise() -> None:
-    images: list = get_files_in_directory(os.path.join("brass", conf.ASSETS_DIR_NAME))
+    images: list = get_files_in_directory(os.path.join(*conf.ASSETS_DIR_PATH))
     img_dict: dict = {}
 
     for index, image in enumerate(images):

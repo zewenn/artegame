@@ -1,3 +1,4 @@
+from distutils.dir_util import copy_tree
 from result import Result, Ok, Err
 from dataclasses import dataclass
 from zenyx import printf
@@ -18,15 +19,19 @@ class Routine:
     path_str: str
 
 
+def shorten(filename: str) -> str:
+    return filename[:16] + ("..." if len(filename) >= 16 else "")
+
+
 def delete_files_in_directory(directory_path):
     try:
         files = os.listdir(directory_path)
-        for index, file in enumerate(files):
-            file_path = os.path.join(directory_path, file)
+        for index, filename in enumerate(files):
+            file_path = os.path.join(directory_path, filename)
             if os.path.isfile(file_path):
                 os.remove(file_path)
             printf.full_line(
-                f"[{index + 1}/{len(files)}] Removing: {file[:16]}{'...' if len(file) >= 16 else ''}",
+                f"[{index + 1}/{len(files)}] Removing: {shorten(filename)}",
                 end="\r",
             )
         print("")
@@ -44,7 +49,9 @@ def generate_imports_from_directory(directory: str) -> Result[list[str], ValueEr
                 f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import "
                 + filename.replace(".py", "")
             )
-            out_txt = f"[{index + 1}/{len(file_list)}] Binding Routines: {filename[:16]}{'...' if len(filename) >= 16 else ''}"
+            out_txt = (
+                f"[{index + 1}/{len(file_list)}] Binding Routines: {shorten(filename)}"
+            )
             printf.full_line(out_txt, end="\r")
     print("")
     return Ok(file_list)
@@ -148,6 +155,15 @@ def multiline_to_singleline_imports(python_code: str) -> str:
     return result
 
 
+def replace_imports(contents: str) -> str:
+    contents = contents.replace("from brass ", "")
+    contents = contents.replace("from brass.", "from ")
+    contents = contents.replace("from global_routines ", "from src.global_routines ")
+    contents = contents.replace("from global_routines.", "from src.global_routines.")
+    contents = multiline_to_singleline_imports(contents)
+    return contents
+
+
 def create_replace_temp(routines: list[Routine]) -> None:
     temp_path = os.path.join(*conf.TEMP_DIR_PATH)
 
@@ -179,10 +195,7 @@ def create_replace_temp(routines: list[Routine]) -> None:
             conf.ROUTINE_EVENTS.update,
             f"@scene.update(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.update}",
         )
-        contents = contents.replace("from brass ", "")
-        contents = contents.replace("from brass.", "from ")
-
-        contents = multiline_to_singleline_imports(contents)
+        contents = replace_imports(contents)
 
         with open(
             os.path.join(
@@ -204,12 +217,52 @@ def create_replace_temp(routines: list[Routine]) -> None:
             wf.write(contents)
 
 
+def build_global_routines() -> None:
+    delete_files_in_directory(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
+
+    copy_tree(
+        os.path.join(*conf.GLOBAL_ROUTINES_DIR_PATH),
+        os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH),
+    )
+
+    global_rtns = os.listdir(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
+
+    for item in global_rtns:
+        if os.path.isdir(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH, item)):
+            global_rtns.remove(item)
+
+    for index, global_rtn in enumerate(global_rtns):
+        print(
+            f"[{index + 1}/{len(global_rtns)}] Binding GLOBAL Routines: {shorten(global_rtn)} ",
+            end="\r",
+        )
+
+        contents: str = ""
+        with open(
+            os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH, global_rtn),
+            "r",
+            encoding="utf-8",
+        ) as rf:
+            contents = rf.read()
+        contents = replace_imports(contents)
+        with open(
+            os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH, global_rtn),
+            "w",
+            encoding="utf-8",
+        ) as wf:
+            wf.write(contents)
+
+        print("")
+
+
 def serialise_imports():
     """
     Binding a script adds it to the `script_import.py` file as an import,
     thus the script runs when the file is loaded.\n
     This is needed with the use event decorators, which - on load - bind functions to events.
     """
+
+    build_global_routines()
 
     routines, scenes = get_routines_and_scenes(conf.SCENES_PATH)
 

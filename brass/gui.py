@@ -89,7 +89,7 @@ def Element(
     style: Optional[StyleSheet] = None,
     hover: Optional[StyleSheet] = None,
     onclick: Optional[Callable[[], None]] = None,
-    is_button: bool = False
+    is_button: bool = False,
 ) -> GUIElement:
 
     if typeof(onclick) not in ["NoneType", "function"]:
@@ -108,12 +108,12 @@ def Element(
         hover=hover,
         onclick=onclick,
         transform=Transform(Vector2(), Vector3(), Vector2()),
-        button=is_button
+        button=is_button,
     )
 
     this.children = [add_parent(x, this) for x in this.children]
     query_available.append(this)
-    if (is_button):
+    if is_button:
         buttons.append(this)
     return this
 
