@@ -29,11 +29,11 @@ def init():
     pgapi.use(
         ApplicationSettings(
             application_name=f"Artegame - v1.4.2",
-            screen_size=Vector2(1600, 900),
+            screen_size=Vec2(1600, 900),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
-            camera=Camera(Vector2(0, 0), 1),
+            camera=Camera(Vec2(0, 0), 1),
             is_demo=True,
             # axis_rounding=10
         )
@@ -58,6 +58,7 @@ def init():
             pgapi.RUN = False
 
         pgapi.SCREEN.this.fill("black")
+        inpt.system_udpate()
         gui.system_update()
 
         events.system_update()

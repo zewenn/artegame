@@ -10,10 +10,11 @@ RUN: bool = True
 SCREEN: Optional[Screen]
 CLOCK: Optional[pygame.time.Clock]
 TIME: Time = Time(0.016, time.perf_counter())
-CAMERA: Camera = Camera(Vector2(1000), 1)
+CAMERA: Camera = Camera(Vec2(1000), 1)
 CONTROLLERS: list[pycontroller.Controller] = []
-NEXT_CAMERA_POS: Optional[Vector2] = None
-
+NEXT_CAMERA_POS: Optional[Vec2] = None
+MOUSE_POSITION: Vec2 = Vec2()
+LAST_MOUSE_POSITION: Vec2 = Vec2()
 
 fps_list = []
 last_fps = time.perf_counter()
@@ -77,14 +78,14 @@ def set_screen_flags(to: int) -> None:
     set_screen_mode()
 
 
-def set_screen_size(to: Vector2):
+def set_screen_size(to: Vec2):
     global SCREEN
 
     SCREEN.size = to
     set_screen_mode()
 
 
-def get_screen_size() -> Vector2:
+def get_screen_size() -> Vec2:
     global SCREEN
     return SCREEN.size
 
@@ -93,7 +94,7 @@ def get_camera() -> Camera:
     return CAMERA if not SETTINGS.camera else SETTINGS.camera
 
 
-def move_camera(to: Vector2) -> None:
+def move_camera(to: Vec2) -> None:
     global NEXT_CAMERA_POS
     NEXT_CAMERA_POS = to
 

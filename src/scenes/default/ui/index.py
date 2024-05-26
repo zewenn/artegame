@@ -3,7 +3,7 @@ from brass.gui import *
 
 from brass import pgapi
 
-def test_component(id: str, pos: Vector2):
+def test_component(id: str, pos: Vec2):
     left = str(pos.x) + "u"
     top = str(pos.y) + "u"
 
@@ -52,9 +52,9 @@ def awake() -> None:
             ),
             hover=StyleSheet(color=(255, 255, 255, 1)),
         ),
-        test_component("HelloWorld", Vector2(2, 5)),
-        test_component("HelloWorld2", Vector2(2, 7)),
-        test_component("HelloWorld3", Vector2(2, 9)),
+        test_component("HelloWorld", Vec2(2, 5)),
+        test_component("HelloWorld2", Vec2(2, 7)),
+        test_component("HelloWorld3", Vec2(2, 9)),
         Element(
             "PlayerDashCounter",
             

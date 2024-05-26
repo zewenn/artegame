@@ -1,9 +1,8 @@
 from base import *
 
-import pygame._sdl2.controller as pycontroller
-import pygame
+import vectormath
 import pgapi
-
+import enums
 
 controller_codes: dict[str, int] = {
     # normals
@@ -182,13 +181,10 @@ def get_button_down(key: str) -> bool:
         bool
     """
 
-    in_list = key in [x for x in keys_down]
+    in_list = key in keys_down
     is_down = get_button(key)
 
-    if not is_down:
-        return False
-
-    if in_list:
+    if not is_down or in_list:
         return False
 
     return True
@@ -205,13 +201,10 @@ def get_button_up(key: str) -> bool:
         bool
     """
 
-    in_list = key in [x for x in keys_down]
+    in_list = key in keys_down
     is_down = get_button(key)
 
-    if is_down:
-        return False
-
-    if in_list:
+    if in_list or is_down:
         return True
 
     return False
@@ -330,6 +323,53 @@ def active_bind(name: str):
     return bind_cache[name]()
 
 
-def get_mouse_position() -> Vector2:
+def get_mouse_position() -> Vec2:
     mp = pygame.mouse.get_pos()
-    return Vector2(mp[0], mp[1])
+    return Vec2(mp[0], mp[1])
+
+
+def system_udpate() -> None:
+    pgapi.LAST_MOUSE_POSITION, pgapi.MOUSE_POSITION = (
+        pgapi.MOUSE_POSITION,
+        get_mouse_position(),
+    )
+
+    distance = vectormath.get_Vec2_distcance(
+        pgapi.MOUSE_POSITION, pgapi.LAST_MOUSE_POSITION
+    )
+
+    if distance >= 15:
+        pgapi.SETTINGS.input_mode = enums.input_modes.MOUSE_AND_KEYBOARD
+        return
+
+    if (
+        abs(get_button("left-x@ctrl#0")) > pgapi.SETTINGS.axis_rounding
+        or abs(get_button("left-y@ctrl#0")) > pgapi.SETTINGS.axis_rounding
+        or abs(get_button("right-x@ctrl#0")) > pgapi.SETTINGS.axis_rounding
+        or abs(get_button("right-y@ctrl#0")) > pgapi.SETTINGS.axis_rounding
+    ):
+        pgapi.SETTINGS.input_mode = enums.input_modes.CONTROLLER
+        return
+
+    if len(keys_down) == 0:
+        return
+
+    key = keys_down[0]
+
+    if any(
+        [
+            "mouse" in key,
+            "ms" in key,
+            "cursor" in key,
+            "crs" in key,
+            "keyboard" in key,
+            "kb" in key,
+            "kybrd" in key,
+        ]
+    ):
+        pgapi.SETTINGS.input_mode = enums.input_modes.MOUSE_AND_KEYBOARD
+        return
+
+    if any(["controller" in key, "ctrl" in key, "joystick" in key, "jstick" in key]):
+        pgapi.SETTINGS.input_mode = enums.input_modes.CONTROLLER
+        return

@@ -1,4 +1,5 @@
 from enums.gui import *
+import enums
 from base import *
 import collision
 import pgapi
@@ -62,7 +63,7 @@ def unit(u: str) -> float:
 
 
 query_available: list[GUIElement] = []
-mouse_transform: Transform = Transform(Vector2(), Vector3(), Vector2(1, 1))
+mouse_transform: Transform = Transform(Vec2(), Vec3(), Vec2(1, 1))
 hovering: Optional[GUIElement] = None
 buttons: list[GUIElement] = []
 selected_button_index: Optional[int] = 0
@@ -107,7 +108,7 @@ def Element(
         current_style=styl,
         hover=hover,
         onclick=onclick,
-        transform=Transform(Vector2(), Vector3(), Vector2()),
+        transform=Transform(Vec2(), Vec3(), Vec2()),
         button=is_button,
     )
 
@@ -210,7 +211,11 @@ def system_update() -> None:
     if hovering == None:
         btn = buttons[selected_button_index]
 
-        if not btn.hover or not pgapi.SETTINGS.menu_mode:
+        if (
+            not btn.hover
+            or not pgapi.SETTINGS.menu_mode
+            or pgapi.SETTINGS.input_mode == enums.input_modes.MOUSE_AND_KEYBOARD
+        ):
             return
 
         merge_res = merge(btn.style, btn.hover)

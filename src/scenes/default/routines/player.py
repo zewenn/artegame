@@ -103,7 +103,7 @@ def move_player() -> None:
             player.last_dash_charge_refill = pgapi.TIME.current
 
     move_math_vec = vectormath.normalise(
-        vectormath.new(Vector2(inpt.horizontal(), inpt.vertical()))
+        vectormath.new(Vec2(inpt.horizontal(), inpt.vertical()))
     )
 
     if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
