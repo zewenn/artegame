@@ -33,25 +33,6 @@ def test_component(id: str, pos: Vec2):
 def awake() -> None:
     pgapi.as_menu()
     DOM(
-        Element(
-            "PlayerVitals",
-
-            Text("Helth: 100"),
-            Text("Mana: 50"),
-            
-            style=StyleSheet(
-                position=POSITION.ABSOLUTE,
-                top=".5u",
-                left=".5u",
-                width="3u",
-                height="3u",
-                # bg_color=(100, 100, 100, .2),
-                font_size=FONT_SIZE.MEDIUM,
-                gap="2x",
-                color=(255, 80, 50, 1),
-            ),
-            hover=StyleSheet(color=(255, 255, 255, 1)),
-        ),
         test_component("HelloWorld", Vec2(2, 5)),
         test_component("HelloWorld2", Vec2(2, 7)),
         test_component("HelloWorld3", Vec2(2, 9)),
@@ -69,4 +50,41 @@ def awake() -> None:
                 color=COLOURS.WHITE,
             ),
         ),
+        Element(
+            "TestBarBackground",
+
+            Element(
+                "TestBarInnerContainer",
+
+                Element(
+                    "Testbar",
+                    
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        left="0u",
+                        top="0u",
+                        width="75%",
+                        height="100%",
+                        bg_color=(255, 80, 50, 1)
+                    )
+                ),
+
+                style=StyleSheet(
+                    position=POSITION.RELATIVE,
+                    top=".25u",
+                    left=".25u",
+                    width="9.5u",
+                    height="1.5u",
+                )
+            ),
+
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                top="1u",
+                left="1u",
+                width="10u",
+                height="2u",
+                bg_color=(50, 50, 50, 1)
+            )
+        )
     )

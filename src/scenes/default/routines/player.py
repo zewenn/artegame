@@ -89,7 +89,8 @@ def update() -> None:
                 Vec2(128, 32),
                 player_hand_holder.transform.rotation.z,
                 .3,
-                500
+                500,
+                "Player"
             )
         )
 

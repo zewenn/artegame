@@ -167,48 +167,55 @@ def render_bone(bone: Bone, parent: Item):
     pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
 
 
-def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> None:
+def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
+    if parent_style == None:
+        parent_style = DOM_El.style
+
     elstl = element.current_style
 
     x = 0
     y = 0
-    w = unit(elstl.width) if elstl.width != None else 20
-    h = unit(elstl.height) if elstl.height != None else 0
+    w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 20
+    h = unit(elstl.height, unit(parent_style.height)) if elstl.height != None else 0
 
     position = elstl.position if elstl.position else POSITION.ABSOLUTE
 
     match position:
         case POSITION.ABSOLUTE:
             x = (
-                unit(elstl.left)
-                if unit(elstl.left) != None
-                else unit(elstl.right) if unit(elstl.right) != None else 0
+                unit(elstl.left, unit(parent_style.left))
+                if elstl.left != None
+                else unit(elstl.right, unit(parent_style.right)) if elstl.right != None else 0
             )
             y = (
-                unit(elstl.top)
-                if unit(elstl.top) != None
-                else unit(elstl.bottom) if unit(elstl.bottom) != None else 0
+                unit(elstl.top, unit(parent_style.top))
+                if elstl.top != None
+                else unit(elstl.bottom, unit(parent_style.bottom)) if elstl.bottom != None else 0
             )
 
         case POSITION.RELATIVE:
             x = (
-                unit(elstl.left) + unit(parent_style.left)
-                if unit(elstl.left) != None and unit(parent_style.left) != None
+                unit(elstl.left, unit(parent_style.left)) + unit(parent_style.left)
+                if elstl.left != None and parent_style.left != None
                 else (
-                    unit(elstl.right) + unit(parent_style.right)
-                    if unit(elstl.right) != None and unit(parent_style.right) != None
+                    unit(elstl.right, unit(parent_style.right)) + unit(parent_style.right)
+                    if elstl.right != None and parent_style.right != None
                     else 0
                 )
             )
             y = (
-                unit(elstl.top) + unit(parent_style.top)
-                if unit(elstl.top) != None and unit(parent_style.top) != None
+                unit(elstl.top, unit(parent_style.top)) + unit(parent_style.top)
+                if elstl.top != None and parent_style.top != None
                 else (
-                    unit(elstl.bottom) + unit(parent_style.bottom)
-                    if unit(elstl.bottom) != None and unit(parent_style.bottom) != None
+                    unit(elstl.bottom, unit(parent_style.bottom)) + unit(parent_style.bottom)
+                    if elstl.bottom != None and parent_style.bottom != None
                     else 0
                 )
             )
+
+    if elstl.left and elstl.width:
+        if elstl.left.endswith("%") or elstl.width.endswith("%"):
+            print(x, y, w, h, parent_style.width, parent_style.height)
 
     bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
     bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
@@ -249,9 +256,20 @@ def render_ui(element: GUIElement, parent_style: StyleSheet = StyleSheet()) -> N
 
     child_strings_count = 0
 
+    p_style = StyleSheet(
+        position=elstl.position,
+        left=f"{x}x",
+        top=f"{y}x",
+        width=f"{w}x",
+        height=f"{h}x",
+        bg_color=bg_color,
+        color=color,
+        gap=gap
+    )
+
     for child in element.children:
         if not isinstance(child, str):
-            render_ui(child, element.current_style)
+            render_gui(child, p_style)
             continue
 
         font = ASSETS[f"font-{font_size}-{font_family}"]
@@ -295,4 +313,4 @@ def render():
         for bone in item.bones.values():
             render_bone(bone=bone, parent=item)
 
-    render_ui(DOM_El)
+    render_gui(DOM_El)

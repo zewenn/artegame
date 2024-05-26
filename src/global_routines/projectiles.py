@@ -22,7 +22,6 @@ def system_update() -> None:
             items.rendering.remove(projectile)
             continue
         
-        print(projectile.facing)
         move_vec = vectormath.new(start=Vec2(), magnitude=1, direction=(-projectile.facing + 90))
 
         projectile.transform.position.y += (
