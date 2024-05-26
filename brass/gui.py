@@ -209,7 +209,7 @@ def system_update() -> None:
         el.transform.scale.x = w
         el.transform.scale.y = h
 
-        if collision.collides(mouse_transform, el.transform) and hovering == None:
+        if collision.collides(mouse_transform, el.transform) and hovering == None and el.button:
             hovering = el
             continue
         el.current_style = el.style

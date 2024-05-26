@@ -3,11 +3,7 @@ from brass.base import *
 
 # Import generic utilities
 from brass.gui import *
-from brass import (
-    pgapi,
-    saves,
-    scene
-)
+from brass import pgapi, saves, scene
 
 FS = FONT_SIZE.MEDIUM
 
@@ -51,9 +47,32 @@ def awake() -> None:
 
     title_card_len = len("| | | | |  | ||  __/ (_| | (_| | | | | | |  __/")
 
-    pgapi.as_menu()
     # DOM creates a new document object model
     DOM(
+        Element(
+            "Background",
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                left="0x",
+                top="0x",
+                width="100w",
+                height="100h",
+                bg_image="background.png",
+            ),
+            is_button=False,
+        ),
+        Element(
+            "BackgroundShade",
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                left="0x",
+                top="0x",
+                width="100w",
+                height="100h",
+                bg_color=(0, 0, 0, 0.8),
+            ),
+            is_button=False,
+        ),
         Element(
             "TitleCard",
             Element(
@@ -78,6 +97,7 @@ def awake() -> None:
                 ),
             ),
             style=StyleSheet(position=POSITION.ABSOLUTE, left="50w", top="25h"),
+            is_button=False,
         ),
         Element(
             "CenterButtons",
@@ -87,3 +107,4 @@ def awake() -> None:
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )
+    pgapi.as_menu()
