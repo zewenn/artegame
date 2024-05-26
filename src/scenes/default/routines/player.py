@@ -1,6 +1,6 @@
 from brass.base import *
 
-from global_routines import item_funcs
+from global_routines import dash
 
 # fmt: off
 from brass import (
@@ -81,7 +81,8 @@ def update() -> None:
 
 
 def move_player() -> None:
-    global dash_display, player_hand_holder
+    # global dash_display
+    # global player_hand_holder
 
     if not player.can_move:
         return
@@ -119,7 +120,7 @@ def move_player() -> None:
         # if player.dashes_remaining == player.dash_count:
         player.last_dash_charge_refill = pgapi.TIME.current
         player.dashes_remaining -= 1
-        item_funcs.apply_dash_effect(
+        dash.apply_dash_effect(
             player, move_math_vec, player.dash_movement_multiplier, 80
         )
 

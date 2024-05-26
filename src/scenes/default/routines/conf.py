@@ -25,7 +25,7 @@ def spawn() -> None:
     animator.store.add(
         "hit",
         animator.create(
-            duration_seconds=.2,
+            duration_seconds=0.2,
             mode=enums.animations.MODES.NORMAL,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
             animations=[
@@ -33,10 +33,18 @@ def spawn() -> None:
                     "player_hand_holder->left_hand",
                     {
                         1: Keyframe(position_y=16),
-                        50: Keyframe(position_y=100),
-                        100: Keyframe(position_y=16),
+                        30: Keyframe(position_y=64),
+                        60: Keyframe(position_y=16),
                     },
-                )
+                ),
+                Animation(
+                    "player_hand_holder->right_hand", 
+                    {
+                        20: Keyframe(position_y=16),
+                        50: Keyframe(position_y=64),
+                        80: Keyframe(position_y=16),
+                    }
+                ),
             ],
         ),
     )
@@ -77,17 +85,13 @@ def spawn() -> None:
             transform=Transform(Vec2(-32, -32), Vec3(0, 0, 0), Vec2(64, 64)),
             bones={
                 "left_hand": Bone(
-                    transform=Transform(
-                        Vec2(-36, 16), Vec3(0, 0, -40), Vec2(48, 48)
-                    ),
+                    transform=Transform(Vec2(-32, 16), Vec3(0, 0, -40), Vec2(48, 48)),
                     anchor=Vec2(0, 0),
                     # fill_color=[255, 255, 255]
                     sprite="weight_plate.png",
                 ),
                 "right_hand": Bone(
-                    transform=Transform(
-                        Vec2(36, 16), Vec3(0, 0, 40), Vec2(48, 48)
-                    ),
+                    transform=Transform(Vec2(32, 16), Vec3(0, 0, 40), Vec2(48, 48)),
                     anchor=Vec2(0, 0),
                     sprite="weight_plate.png",
                 ),

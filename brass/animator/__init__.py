@@ -75,7 +75,8 @@ def tick_anims() -> None:
 
 
 def play(anim: AnimationGroup) -> None:
-    playing_groups[anim.id] = play_objects.new(anim)
+    if (anim.id not in playing_groups):
+        playing_groups[anim.id] = play_objects.new(anim)
 
 
 def stop(anim: AnimationGroup) -> None:
