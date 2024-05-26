@@ -118,9 +118,12 @@ class Item:
     lifetime_seconds: Optional[Number] = None
     life_start: Optional[Number] = None
     team: Optional[Literal["Player", "Enemy"]] = None
+    projectile_damage: Optional[Number] = None
 
     # Combat // Alive
-    hitpoint: Optional[Number] = None
+    max_hitpoints: Optional[Number] = None
+    hitpoints: Optional[Number] = None
+    max_mana: Optional[Number] = None
     mana: Optional[Number] = None
     invulnerable: bool = False
 

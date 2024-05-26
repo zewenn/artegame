@@ -169,7 +169,10 @@ def render_bone(bone: Bone, parent: Item):
 
 def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
     if parent_style == None:
-        parent_style = DOM_El.style
+        parent_style = DOM_El.current_style
+
+    if (element.id == "PlayerHitpointBar"):
+        print(element.current_style.width)
 
     elstl = element.current_style
 
@@ -213,9 +216,6 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
                 )
             )
 
-    if elstl.left and elstl.width:
-        if elstl.left.endswith("%") or elstl.width.endswith("%"):
-            print(x, y, w, h, parent_style.width, parent_style.height)
 
     bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
     bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255

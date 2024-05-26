@@ -26,6 +26,7 @@ player_hand_holder: Optional[Item] = None
 player_light_attack_anim: Optional[AnimationGroup] = None
 
 dash_display: Optional[GUIElement] = None
+hitpoint_display: Optional[GUIElement] = None
 walk_sound: Optional[Audio] = None
 
 
@@ -33,12 +34,14 @@ def init() -> None:
     global player
     global player_hand_holder
     global dash_display
+    global hitpoint_display
     global walk_sound
     global player_light_attack_anim
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
     dash_gui_query = gui.get_element("PlayerDashCounter")
+    hitpoint_bar_query = gui.get_element("TestBarInnerContainer")
 
     # Player
     if player_query.is_err():
@@ -58,6 +61,12 @@ def init() -> None:
 
     dash_display = dash_gui_query.ok()
 
+    # Hitpoint Display GUIElement
+    if hitpoint_bar_query.is_err():
+        unreachable("Hitpoint display GUIElement does not exist!")
+
+    hitpoint_display = hitpoint_bar_query.ok().children[0]
+
     # Walking audio
     walk_sound = assets.use("walking.mp3")
     audio.set_volume(walk_sound, 0.1)
@@ -72,10 +81,14 @@ def init() -> None:
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
+    player.hitpoints = player.max_hitpoints
+    player.mana = player.max_mana
+
+    # hitpoint_display.style.bg_color = (20, 120, 220, 1)
 
 
 def update() -> None:
-    global player_light_attack_anim
+    global player_light_attack_anim, hitpoint_display
 
     move_player()
     pgapi.move_camera(player.transform.position)
@@ -89,10 +102,13 @@ def update() -> None:
                 Vec2(128, 32),
                 player_hand_holder.transform.rotation.z,
                 .3,
-                500,
-                "Player"
+                100,
+                "Enemy",
+                10
             )
         )
+    
+    hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
 
 
 def move_player() -> None:

@@ -69,6 +69,9 @@ def spawn() -> None:
             dash_count=2,
             dash_movement_multiplier=10,
             dash_charge_refill_time=0.5,
+            max_hitpoints=100,
+            max_mana=100,
+            team="Player",
             inventory={
                 "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
                 "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),

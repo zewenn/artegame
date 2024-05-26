@@ -57,7 +57,7 @@ def awake() -> None:
                 "TestBarInnerContainer",
 
                 Element(
-                    "Testbar",
+                    "PlayerHitpointBar",
                     
                     style=StyleSheet(
                         position=POSITION.RELATIVE,

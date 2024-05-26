@@ -1,15 +1,14 @@
 from brass.base import *
 
-from brass import (
-    vectormath,
-    collision,
-    events,
-    pgapi,
-    items
-)
+from brass import vectormath, collision, events, pgapi, items
 
 
 PROJECTILES: list[Item] = []
+
+
+def rm_projectile(proj: Item) -> None:
+    PROJECTILES.remove(proj)
+    items.rendering.remove(proj)
 
 
 @events.update
@@ -18,11 +17,12 @@ def system_update() -> None:
 
     for projectile in PROJECTILES:
         if pgapi.TIME.current > projectile.life_start + projectile.lifetime_seconds:
-            PROJECTILES.remove(projectile)
-            items.rendering.remove(projectile)
+            rm_projectile(projectile)
             continue
-        
-        move_vec = vectormath.new(start=Vec2(), magnitude=1, direction=(-projectile.facing + 90))
+
+        move_vec = vectormath.new(
+            start=Vec2(), magnitude=1, direction=(-projectile.facing + 90)
+        )
 
         projectile.transform.position.y += (
             projectile.movement_speed * pgapi.TIME.deltatime * move_vec.end.y
@@ -31,6 +31,17 @@ def system_update() -> None:
             projectile.movement_speed * pgapi.TIME.deltatime * move_vec.end.x
         )
 
+        for item in items.rendering:
+            if (
+                not item.can_collide
+                or item.team == projectile.team
+                or not item.hitpoints
+            ):
+                continue
+
+            if collision.collides(projectile.transform, item.transform):
+                item.hitpoints -= projectile.projectile_damage
+                rm_projectile(projectile)
 
 def new(
     sprite: string,
@@ -39,7 +50,8 @@ def new(
     direction: Number,
     lifetime_seconds: Number,
     speed: Number,
-    team: Literal["Player", "Enemy"]
+    team: Literal["Player", "Enemy"],
+    damage: Number,
 ) -> Item:
     return Item(
         id=f"Projectile-{uuid()}",
@@ -48,11 +60,13 @@ def new(
         facing=direction,
         sprite=sprite,
         base_movement_speed=speed,
+        # can_collide=True,
         movement_speed=speed,
         is_projectile=True,
         lifetime_seconds=lifetime_seconds,
         life_start=pgapi.TIME.current,
-        team=team
+        team=team,
+        projectile_damage=damage,
     )
 
 

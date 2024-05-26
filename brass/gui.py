@@ -88,7 +88,7 @@ def add_parent(to: GUIElement, prnt: GUIElement) -> GUIElement:
         return to
 
     to.parent = prnt
-    return copy.deepcopy(to)
+    return to
 
 
 def Element(
@@ -214,7 +214,6 @@ def system_update() -> None:
             continue
         el.current_style = el.style
 
-    # print(hovering)
     if hovering == None:
         btn = buttons[selected_button_index]
 
