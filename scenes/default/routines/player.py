@@ -1,4 +1,5 @@
 from brass.base import *
+from brass.animator import animator
 
 # fmt: off
 from brass import (
@@ -42,9 +43,15 @@ def init() -> None:
     walk_sound = assets.use("walking.mp3")
     audio.set_volume(walk_sound, .1)
 
+
+    animator.play("hit")
+
+    print(player)
+
     player.movement_speed = player.base_movement_speed
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
+
 
 
 def update() -> None:

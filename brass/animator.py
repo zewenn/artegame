@@ -201,7 +201,13 @@ class animator:
 
     @staticmethod
     def render_keyframe(target: str, keyframe: Keyframe) -> None:
-        target_obj: Item | Bone = items.get(target)
+        target_o = items.get(target)
+
+        if target_o.is_err():
+            printf(f"Target object by the query \"{target}\" does not exist!")
+            return
+        
+        target_obj = target_o.ok()
 
         if target_obj is None:
             print("Bad query")
