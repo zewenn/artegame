@@ -1,7 +1,6 @@
 from base import *
 
 # fmt: off
-from uuid import uuid4
 from . import (
     play_objects, 
     interpolation, 
@@ -75,7 +74,8 @@ def tick_anims() -> None:
 
 
 def play(anim: AnimationGroup) -> None:
-    playing_groups[anim.id] = play_objects.new(anim)
+    if (anim.id not in playing_groups):
+        playing_groups[anim.id] = play_objects.new(anim)
 
 
 def stop(anim: AnimationGroup) -> None:
@@ -136,10 +136,10 @@ def render_keyframe(target: str, keyframe: Keyframe) -> None:
 
 
 def create(
-    durationS: int,
+    duration_seconds: int,
     mode: Literal["Normal", "Forwards"],
     timing_function: Callable[[Number, Number, Number], Number],
-    anim_list: list[Animation],
+    animations: list[Animation],
 ) -> AnimationGroup:
     if mode not in ["Normal", "Forwards"]:
         unreachable(
@@ -155,7 +155,7 @@ def create(
     #         + f"\n | Recieved: {timing_function}"
     #     )
 
-    for anim in anim_list:
+    for anim in animations:
         first_frame = anim.keyframes[list(anim.keyframes)[0]]
 
         anim.keyframes[0] = first_frame
@@ -171,8 +171,8 @@ def create(
 
     return AnimationGroup(
         id=uuid4().hex,
-        lenght=durationS,
+        lenght=duration_seconds,
         mode=mode,
         timing_function=timing_function,
-        animations=anim_list,
+        animations=animations,
     )

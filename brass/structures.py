@@ -7,12 +7,13 @@ import pygame
 
 
 Sound = pygame.mixer.Sound
+Surface = pygame.Surface
 Number = int | float
 string = str
 
 
 @dataclass
-class Vector2:
+class Vec2:
     """
     Args:
         x (float): horizontal position
@@ -24,30 +25,29 @@ class Vector2:
 
 
 @dataclass
-class Vector3:
+class Vec3:
     x: float = 0
     y: float = 0
     z: float = 0
-    direction: float = 0
 
 
 @dataclass
 class Transform:
-    position: Vector2
-    rotation: Vector3
-    scale: Vector2
+    position: Vec2
+    rotation: Vec3
+    scale: Vec2
 
 
 @dataclass
 class Crop:
-    start: Vector2
-    end: Vector2
+    start: Vec2
+    end: Vec2
 
 
 @dataclass
 class Bone:
     transform: Optional[Transform] = None
-    anchor: Optional[Vector2] = None
+    anchor: Optional[Vec2] = None
     sprite: Optional[str] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 
@@ -55,7 +55,7 @@ class Bone:
 @dataclass
 class Weapon:
     damage: int
-    damage_area: Vector2
+    damage_area: Vec2
 
 
 @dataclass
@@ -81,6 +81,7 @@ class Item:
     # Transforms
     transform: Optional[Transform] = None
     bones: Optional[dict[str, Bone]] = None
+    facing: Number = None
 
     # Shiny render
     render: bool = True
@@ -112,6 +113,17 @@ class Item:
     trigger_collider: bool = False
     # colliders: Optional[list[Collider]] = None
 
+    # Projectiles
+    is_projectile: bool = False
+    lifetime_seconds: Optional[Number] = None
+    life_start: Optional[Number] = None
+    team: Optional[Literal["Player", "Enemy"]] = None
+
+    # Combat // Alive
+    hitpoint: Optional[Number] = None
+    mana: Optional[Number] = None
+    invulnerable: bool = False
+
 
 @dataclass
 class Dasher:
@@ -138,7 +150,7 @@ class Audio:
 
 @dataclass
 class Camera:
-    position: Optional[Vector2] = None
+    position: Optional[Vec2] = None
     pixel_unit_ratio: Optional[int] = None
 
 
@@ -147,7 +159,7 @@ class Camera:
 
 @dataclass
 class ApplicationSettings:
-    screen_size: Vector2
+    screen_size: Vec2
     is_demo: bool = False
     """
     Controls the save dir.
@@ -169,6 +181,7 @@ class ApplicationSettings:
     """
     If enabled dpad jumps between menupoints
     """
+    input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
 
 
 @dataclass
@@ -180,7 +193,7 @@ class Time:
 @dataclass
 class Screen:
     this: pygame.Surface
-    size: Vector2
+    size: Vec2
     flags: int
     vsync: bool
 
@@ -245,6 +258,7 @@ class PlayObject:
     anims: list[ExpandedAnim]
     finished: bool
 
+
 # ---------------------- Maths & Physics ----------------------
 
 
@@ -254,9 +268,9 @@ class IncompleteMathVector:
     Make sure to covert it into a `CompleteMathVector`!
     """
 
-    start: Optional[Vector2] = None
-    end: Optional[Vector2] = None
-    delta: Optional[Vector2] = None
+    start: Optional[Vec2] = None
+    end: Optional[Vec2] = None
+    delta: Optional[Vec2] = None
     direction: Optional[float] = None
     magnitude: Optional[float] = None
 
@@ -267,9 +281,9 @@ class CompleteMathVector:
     so you can be sure whatever you are trying to access is there
     """
 
-    start: Vector2
-    end: Vector2
-    delta: Vector2
+    start: Vec2
+    end: Vec2
+    delta: Vec2
     direction: float
     magnitude: float
 

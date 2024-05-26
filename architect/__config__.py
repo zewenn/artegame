@@ -1,6 +1,6 @@
 # For nuitka
 PROJECT_NAME = "Artegame"
-VERSION = "1.2.2"
+VERSION = "1.4.4"
 
 # For the installer, to install...
 DEPENDENCIES = ["pygame", "termcolor", "recordclass", "zenyx", "result", "nuitka"]

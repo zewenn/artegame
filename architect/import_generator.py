@@ -252,7 +252,7 @@ def build_global_routines() -> None:
         ) as wf:
             wf.write(contents)
 
-        print("")
+    print("")
 
 
 def serialise_imports():

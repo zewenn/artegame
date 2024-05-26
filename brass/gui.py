@@ -1,4 +1,5 @@
 from enums.gui import *
+import enums
 from base import *
 import collision
 import pgapi
@@ -6,7 +7,7 @@ import copy
 import inpt
 
 
-def unit(u: str) -> float:
+def unit(u: str, in_relation_to: float = None) -> float:
     """
     ## Units
     x   - pixel\n
@@ -34,12 +35,16 @@ def unit(u: str) -> float:
         num_res = attempt(float, (u[:-1],))
     except Exception as e:
         # print(f"trace: {e.with_traceback()}")
-        unreachable(
-            f"Cannot parse float from incorrect unit type!"
-            + "\n | Expected:\tstr"
-            + f"\n | Type Given:\t{type(u).__name__}"
-            + (f'\nTry using "{u}x" instead of {u}!' if type(u) in [int, float] else "")
-        )
+        if typeof(u) in ["int", "float", "Number"]:
+            num_res = Ok(u)
+            u = str(u) + "x"
+        else:
+            unreachable(
+                f"Cannot parse float from incorrect unit type!"
+                + "\n | Expected:\tstr"
+                + f"\n | Type Given:\t{type(u).__name__}"
+                + (f'\nTry using "{u}x" instead of {u}!' if type(u) in [int, float] else "")
+            )
 
     if num_res.is_err():
         print(num_res.err().msg)
@@ -60,9 +65,12 @@ def unit(u: str) -> float:
         case "u":
             return num * 16
 
+        case "%":
+            
+            return (in_relation_to if in_relation_to != None else 0) * num // 100
 
 query_available: list[GUIElement] = []
-mouse_transform: Transform = Transform(Vector2(), Vector3(), Vector2(1, 1))
+mouse_transform: Transform = Transform(Vec2(), Vec3(), Vec2(1, 1))
 hovering: Optional[GUIElement] = None
 buttons: list[GUIElement] = []
 selected_button_index: Optional[int] = 0
@@ -107,7 +115,7 @@ def Element(
         current_style=styl,
         hover=hover,
         onclick=onclick,
-        transform=Transform(Vector2(), Vector3(), Vector2()),
+        transform=Transform(Vec2(), Vec3(), Vec2()),
         button=is_button,
     )
 
@@ -210,7 +218,11 @@ def system_update() -> None:
     if hovering == None:
         btn = buttons[selected_button_index]
 
-        if not btn.hover or not pgapi.SETTINGS.menu_mode:
+        if (
+            not btn.hover
+            or not pgapi.SETTINGS.menu_mode
+            or pgapi.SETTINGS.input_mode == enums.input_modes.MOUSE_AND_KEYBOARD
+        ):
             return
 
         merge_res = merge(btn.style, btn.hover)

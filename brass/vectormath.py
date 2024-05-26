@@ -4,6 +4,10 @@ from dataclasses import fields
 import math, copy
 
 
+def get_Vec2_distcance(point1: Vec2, point2: Vec2):
+    return math.hypot(point1.x - point2.x, point1.y - point2.y)
+
+
 def __raise_creation_error(missing: list[str] = None):
     if missing is None:
         missing = []
@@ -23,18 +27,16 @@ def __raise_incorrect_error(paramname):
 
 class cloning:
     def MathVector(mv: CompleteMathVector) -> CompleteMathVector:
-        return new(
-            start=Vector2(mv.start.x, mv.start.y), end=Vector2(mv.end.x, mv.end.y)
-        )
+        return new(start=Vec2(mv.start.x, mv.start.y), end=Vec2(mv.end.x, mv.end.y))
 
-    def Vector2(v: Vector2) -> Vector2:
-        return Vector2(x=v.x, y=v.y)
+    def Vector2(v: Vec2) -> Vec2:
+        return Vec2(x=v.x, y=v.y)
 
 
 def new(
-    end: Vector2 | None = None,
-    start: Vector2 | None = None,
-    delta: Vector2 | None = None,
+    end: Vec2 | None = None,
+    start: Vec2 | None = None,
+    delta: Vec2 | None = None,
     direction: float | None = None,
     magnitude: float | None = None,
 ) -> CompleteMathVector:
@@ -54,16 +56,16 @@ def new(
     """
 
     if start is not None:
-        start = Vector2(start.x, start.y)
+        start = Vec2(start.x, start.y)
 
     if end is not None:
-        end = Vector2(end.x, end.y)
+        end = Vec2(end.x, end.y)
 
     if delta is not None:
-        delta = Vector2(delta.x, delta.y)
+        delta = Vec2(delta.x, delta.y)
 
     if [start, direction, magnitude] == [None, None, None]:
-        start = Vector2()
+        start = Vec2()
 
     return complete(
         IncompleteMathVector(
@@ -96,7 +98,7 @@ def complete(
         ]:
             __raise_creation_error(["Start", "Direction", "Magnitude"])
 
-        mv.end = Vector2(
+        mv.end = Vec2(
             x=mv.start.x + mv.magnitude * math.cos(math.radians(mv.direction)),
             y=mv.start.y + mv.magnitude * math.sin(math.radians(mv.direction)),
         )
@@ -105,29 +107,27 @@ def complete(
         if None in [mv.direction, mv.magnitude, mv.end]:
             __raise_creation_error(["End", "Direction", "Magnitude"])
 
-        mv.start = Vector2(
+        mv.start = Vec2(
             x=mv.end.x - mv.magnitude * math.cos(math.radians(mv.direction)),
             y=mv.end.y - mv.magnitude * math.sin(math.radians(mv.direction)),
         )
 
-    calc_delta: Vector2 = Vector2(x=mv.end.x - mv.start.x, y=mv.end.y - mv.start.y)
+    calc_delta: Vec2 = Vec2(x=mv.end.x - mv.start.x, y=mv.end.y - mv.start.y)
     if mv.delta is None:
         mv.delta = calc_delta
     elif mv.delta.x != calc_delta.x or mv.delta.y != calc_delta.y:
         __raise_incorrect_error("Delta")
 
-    calc_magnitude: float = (mv.delta.x**2 + mv.delta.y**2) ** 0.5
     if mv.magnitude is None:
+        calc_magnitude: float = (mv.delta.x**2 + mv.delta.y**2) ** 0.5
         mv.magnitude = calc_magnitude
-    elif mv.magnitude != calc_magnitude:
-        __raise_incorrect_error("Magnitude")
 
-    calc_direction: float = math.degrees(math.atan2(mv.delta.y, mv.delta.x))
     if mv.direction is None:
+        calc_direction: float = math.degrees(math.atan2(mv.delta.y, mv.delta.x))
         mv.direction = calc_direction
-    elif round(mv.direction, 5) != round(calc_direction, 5):
-        print(round(mv.direction, 5), round(calc_direction, 5))
-        __raise_incorrect_error("Direction")
+    # elif round(mv.direction, 5) != round(calc_direction, 5):
+    #     print(round(mv.direction, 5), round(calc_direction, 5))
+    #     __raise_incorrect_error("Direction")
 
     return CompleteMathVector(
         start=mv.start,
@@ -151,7 +151,7 @@ def add(origin: CompleteMathVector, addend: CompleteMathVector) -> CompleteMathV
     """
     return new(
         start=cloning.Vector2(origin.start),
-        end=Vector2(
+        end=Vec2(
             x=(origin.delta.x + addend.delta.x),
             y=(origin.delta.y + addend.delta.y),
         ),
@@ -164,7 +164,7 @@ def subtract(
     return new(
         # start=copy.deepcopy(origin.start),
         start=cloning.Vector2(origin.start),
-        end=Vector2(
+        end=Vec2(
             x=(origin.delta.x - subtrahend.delta.x),
             y=(origin.delta.y - subtrahend.delta.y),
         ),
@@ -181,7 +181,7 @@ def multiply(mv: CompleteMathVector, multiplier: float) -> CompleteMathVector:
     Returns:
         CompleteMathVector: The updated vector
     """
-    return new(Vector2(mv.end.x * multiplier, mv.end.y * multiplier))
+    return new(Vec2(mv.end.x * multiplier, mv.end.y * multiplier))
 
 
 def divide(mv: CompleteMathVector, divisor: float) -> CompleteMathVector:
@@ -196,7 +196,7 @@ def divide(mv: CompleteMathVector, divisor: float) -> CompleteMathVector:
     """
     return new(
         start=cloning.Vector2(mv.start),
-        end=Vector2(mv.end.x / divisor, mv.end.y / divisor),
+        end=Vec2(mv.end.x / divisor, mv.end.y / divisor),
     )
 
 
@@ -210,11 +210,11 @@ def dot_product(mv1: CompleteMathVector, mv2: CompleteMathVector) -> float:
     Returns:
         float: the dot product
     """
-    displacement = Vector2(x=(mv1.start.x - mv2.start.x), y=(mv1.start.y - mv2.start.y))
+    displacement = Vec2(x=(mv1.start.x - mv2.start.x), y=(mv1.start.y - mv2.start.y))
 
-    mv1_a = Vector2(mv1.end.x - displacement.x, mv1.end.y - displacement.y)
+    mv1_a = Vec2(mv1.end.x - displacement.x, mv1.end.y - displacement.y)
 
-    mv2_a = Vector2(mv2.end.x - displacement.x, mv2.end.y - displacement.y)
+    mv2_a = Vec2(mv2.end.x - displacement.x, mv2.end.y - displacement.y)
 
     return (mv1_a.x * mv2_a.x) + (mv1_a.y * mv2_a.y)
 
@@ -232,7 +232,7 @@ def normalise(mv: CompleteMathVector) -> CompleteMathVector:
         CompleteMathVector: the updated vector
     """
     if mv.magnitude == 0:
-        return new(Vector2(0, 0))
+        return new(Vec2(0, 0))
 
     return divide(mv, mv.magnitude)
 

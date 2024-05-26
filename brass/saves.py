@@ -80,7 +80,10 @@ def load() -> Result[None, Mishap]:
         return Err(Mishap("Couldn't load save files!", True))
     
     items.rendering = items_loaded.ok()
-    gui.DOM(*(gui_loaded.ok()))
+    # IF YOU ENABLE THIS IT WON'T HELP
+        # The gui cannot be saved, max recursion depth will be exceeded
+        # Also it kinda has no point since we override this anyway
+    # gui.DOM(*(gui_loaded.ok()))
 
     return Ok(None)
 
@@ -97,6 +100,9 @@ def save() -> Result[None, Mishap]:
     gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
 
     zenyx.pyon.dump(deepcopy(items.rendering), item_file)
-    zenyx.pyon.dump(deepcopy(gui.DOM_El.children), gui_file)
+    # IF YOU ENABLE THIS IT WON'T HELP
+        # The gui cannot be saved, max recursion depth will be exceeded
+        # Also it kinda has no point since we override this anyway
+    # zenyx.pyon.dump(deepcopy(gui.DOM_El.children), gui_file)
 
     return Ok(None)
