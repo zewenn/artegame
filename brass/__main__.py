@@ -30,7 +30,7 @@ def init():
 
     pgapi.use(
         ApplicationSettings(
-            application_name="Artegame - v1.1",
+            application_name=f"Artegame - v1.4.2",
             screen_size=Vector2(1600, 900),
             max_fps=240,
             vsync=0,
