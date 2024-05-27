@@ -108,3 +108,7 @@ def get_fps() -> Optional[float]:
 def as_menu() -> None:
     global SETTINGS
     SETTINGS.menu_mode = True
+
+def exit() -> Never:
+    global RUN
+    RUN = False

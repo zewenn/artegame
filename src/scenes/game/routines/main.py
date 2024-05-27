@@ -34,3 +34,4 @@ def update() -> None:
     if menu.SHOWING and inpt.active_bind(enums.keybinds.BACK):
         menu.hide_menu()
     
+    print("FPS:", 1 / pgapi.TIME.deltatime, end="\r")

@@ -103,7 +103,7 @@ def awake() -> None:
             "CenterButtons",
             title_button("StartGame", "Start Game", 0, load_game_scene),
             title_button("StartGame", "Options", FS + gap),
-            title_button("StartGame", "Exit", (FS + gap) * 2, lambda: exit()),
+            title_button("StartGame", "Exit", (FS + gap) * 2, lambda: pgapi.exit()),
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )

@@ -1,5 +1,6 @@
 from base import *
 
+import threading
 import pgapi
 from assets import ASSETS
 from gui import *
@@ -287,9 +288,7 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
 
         child_strings_count += 1
 
-
-
-def render():
+def render_items() -> None:
     for item in items.rendering:
         # render_thread = threading.Thread(
         #     target=render_one,
@@ -305,12 +304,26 @@ def render():
         ):
             continue
 
-        render_item(item=item)
+        # render_thread = threading.Thread(target=render_item, args=(item,))
+        # bone_thread = None
+        render_item(item)
 
         if item.bones is None:
             continue
 
         for bone in item.bones.values():
-            render_bone(bone=bone, parent=item)
+            # bone_thread = threading.Thread(target=render_bone, args=(bone, item))
+            render_bone(bone, item)
+        
+        # render_thread.start()
+        # if bone_thread:
+        #     bone_thread.start()
+        # render_thread.join()
+        # if bone_thread:
+        #     bone_thread.join()
 
+def render():
+    render_items()
     render_gui(DOM_El)
+
+RENDER_THREAD = threading.Thread(target=render, daemon=True, args=())

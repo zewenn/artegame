@@ -54,6 +54,50 @@ def spawn() -> None:
     #     return
 
     # if loaded.is_ok():
+
+    
+    items.add_to_scene(
+        Item(
+            id="asd",
+            tags=["asd", "item"],
+            transform=Transform(
+                position=Vec2(256, 256), rotation=Vec3(), scale=Vec2(256, 256)
+            ),
+            sprite="test.png",
+            render=True,
+            can_collide=True,
+            can_repulse=False,
+            lightness=10,
+        )
+    )
+    items.add_to_scene(
+        Item(
+            id="asd",
+            tags=["asd", "item"],
+            transform=Transform(
+                position=Vec2(256, 512), rotation=Vec3(), scale=Vec2(256, 256)
+            ),
+            sprite="test.png",
+            render=True,
+            can_collide=True,
+            can_repulse=False,
+            lightness=10,
+        )
+    )
+    items.add_to_scene(
+        Item(
+            id="asd",
+            tags=["asd", "item"],
+            transform=Transform(
+                position=Vec2(0, 512), rotation=Vec3(), scale=Vec2(256, 256)
+            ),
+            sprite="test.png",
+            render=True,
+            can_collide=True,
+            can_repulse=False,
+            lightness=10,
+        )
+    )
     items.add_to_scene(
         Item(
             id="player",
