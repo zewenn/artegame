@@ -75,6 +75,14 @@ hovering: Optional[GUIElement] = None
 buttons: list[GUIElement] = []
 selected_button_index: Optional[int] = 0
 
+def reset() -> None:
+    global query_available, buttons, selected_button_index
+    del query_available[::]
+    del buttons[::]
+
+    selected_button_index = 0
+    query_available = []
+    buttons = []
 
 def get_element(id: str) -> Result[GUIElement, None]:
     for el in query_available:

@@ -65,12 +65,6 @@ def close(scene: str) -> None:
     
     # print("Items rendering: ", items.rendering, item_list)
     # gui.buttons = []
-    for x in gui.buttons:
-        gui.buttons.remove(x)
-    gui.selected_button_index = 0
-    # gui.query_available = []
-    for x in gui.query_available:
-        gui.query_available.remove(x)
-    gui.DOM_El.children = []
+    gui.reset()
 
     events.call(f"{scene}::quit")
