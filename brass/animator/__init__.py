@@ -19,6 +19,14 @@ import time
 playing_groups: dict[str, PlayObject] = {}
 
 
+def reset() -> None:
+    global playing_groups
+    
+    for val in playing_groups.values():
+        del val
+
+    playing_groups = {}
+
 def reset_anim(id: string) -> None:
     for anim in playing_groups[id].group.animations:
         render_keyframe(anim.target, list(anim.keyframes.values())[0])
@@ -90,6 +98,9 @@ def set_mode(anim: AnimationGroup, mode: int) -> None:
 
 def render_keyframe(target: str, keyframe: Keyframe) -> None:
     target_o = items.get(target)
+
+    if typeof(target_o) == "NoneType":
+        return
 
     if target_o.is_err():
         printf(f'Target object by the query "{target}" does not exist!')

@@ -3,6 +3,7 @@ from base import *
 import events
 import pgapi
 import items
+import animator
 import gui
 
 
@@ -61,6 +62,7 @@ def close(scene: str) -> None:
 
     # item_list = copy.copy(items.rendering)
     # del item_list[::]
+    animator.reset()
     items.reset()
     
     # print("Items rendering: ", items.rendering, item_list)
