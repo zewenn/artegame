@@ -43,8 +43,10 @@ def init():
 
     inpt.init_controllers()
 
-    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
-    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, ["enter", "a@ctrl#0"])
+    # inpt.bind_buttons("exit", ["escape"])
+    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, ["enter", "a@ctrl#0"], "down")
+    inpt.bind_buttons(enums.keybinds.SHOW_MENU, ["escape", "back@ctrl#0"], "down")
+    inpt.bind_buttons(enums.keybinds.BACK, ["escape", "b@ctrl#0"], "down")
 
     scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)
@@ -56,8 +58,8 @@ def init():
                 pgapi.RUN = False
 
         # Demo exit
-        if inpt.active_bind("exit"):
-            pgapi.RUN = False
+        # if inpt.active_bind("exit"):
+        #     pgapi.RUN = False
 
         pgapi.SCREEN.this.fill("black")
         inpt.system_udpate()

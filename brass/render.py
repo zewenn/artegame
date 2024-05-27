@@ -173,6 +173,9 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
 
     elstl = element.current_style
 
+    if elstl.display == "none":
+        return
+
     x = 0
     y = 0
     w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 20

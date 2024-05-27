@@ -8,7 +8,7 @@ PROJECTILES: list[Item] = []
 
 def rm_projectile(proj: Item) -> None:
     PROJECTILES.remove(proj)
-    items.rendering.remove(proj)
+    items.remove(proj)
 
 
 @events.update

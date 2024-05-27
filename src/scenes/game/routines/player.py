@@ -93,6 +93,8 @@ def update() -> None:
     move_player()
     pgapi.move_camera(player.transform.position)
 
+    # print(items.rendering)
+
     if inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK):
         animator.play(player_light_attack_anim)
         projectiles.shoot(

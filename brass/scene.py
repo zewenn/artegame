@@ -50,15 +50,27 @@ def load(scene: str) -> None:
     events.call(f"{scene}::awake")
     events.call(f"{scene}::init")
 
+    # print(items.rendering)
+
     events.set_update_name(f"{scene}::update")
 
 
 def close(scene: str) -> None:
     pgapi.SETTINGS.menu_mode = False
-    items.rendering = []
-    gui.buttons = []
+    # items.rendering = []
+
+    # item_list = copy.copy(items.rendering)
+    # del item_list[::]
+    items.reset()
+    
+    # print("Items rendering: ", items.rendering, item_list)
+    # gui.buttons = []
+    for x in gui.buttons:
+        gui.buttons.remove(x)
     gui.selected_button_index = 0
-    gui.query_available = []
+    # gui.query_available = []
+    for x in gui.query_available:
+        gui.query_available.remove(x)
     gui.DOM_El.children = []
 
     events.call(f"{scene}::quit")

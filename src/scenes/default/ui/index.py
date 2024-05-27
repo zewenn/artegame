@@ -20,7 +20,7 @@ def title_button(
             position=POSITION.RELATIVE,
             color=COLOURS.WHITE,
             width=f"{len(content) * FS}x",
-            height=f"{FS}x",
+            height=f"{FS * 1.25}x",
             left=f"-{len(content) * FS / 2}x",
             top=top,
             font_size=FS,
@@ -37,7 +37,7 @@ def title_button(
 
 
 def load_game_scene() -> None:
-    saves.select_slot(0)
+    # saves.select_slot(0)
     scene.load(enums.scenes.GAME)
 
 

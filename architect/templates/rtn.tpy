@@ -4,7 +4,6 @@ from brass.base import *
 # Import generic utilities
 # fmt: off
 from brass import (
-    item_funcs, 
     vectormath,
     enums, 
     items, 

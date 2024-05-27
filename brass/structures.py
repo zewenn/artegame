@@ -317,7 +317,8 @@ class Mishap:
 
 @dataclass
 class StyleSheet:
-    position: str = None
+    display: Literal["block", "none"] = None
+    position: Literal["absolute", "relative"] = None
 
     bottom: str = None
     right: str = None
