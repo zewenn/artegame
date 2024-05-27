@@ -42,7 +42,7 @@ def awake(func: Callable) -> None:
 
 
 def init(func: Callable) -> None:
-    on(IDS.initalise, func)
+    on(IDS.init, func)
 
 
 def update(func: Callable) -> None:

@@ -26,7 +26,7 @@ def render_loop() -> None:
         pgapi.system_camera()
 
         render.render()
-        pygame.display.flip()
+        # pygame.display.flip()
 
 
 
@@ -53,7 +53,7 @@ def init():
         )
     )
 
-    pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
+    pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED | pygame.DOUBLEBUF)
 
 
 

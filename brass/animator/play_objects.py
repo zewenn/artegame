@@ -18,7 +18,7 @@ def new(group: AnimationGroup) -> PlayObject:
 
 
 def set_anim_duration(play_object: PlayObject, anim: ExpandedAnim):
-    anim.duration = play_object.group.lenght * (
+    anim.duration = play_object.group.length * (
         anim.end_time_multipliers[anim.current_keyframe + 1] + 0.001
     )
 

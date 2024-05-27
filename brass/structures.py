@@ -237,7 +237,7 @@ class AnimationGroup:
     """
 
     id: string
-    lenght: float = 1
+    length: float = 1
     mode: Literal["Normal", "Forwards"] = "Normal"
     timing_function: Callable[[Number, Number, Number], Number] = None
     animations: Optional[list[Animation]] = None

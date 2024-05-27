@@ -7,6 +7,9 @@ from gui import *
 import pygame
 import math
 import items
+import events
+
+DIRTY_RECTS: list[pygame.Rect] = []
 
 
 def is_on_screen(item: Item) -> bool:
@@ -26,63 +29,54 @@ def is_on_screen(item: Item) -> bool:
     return False
 
 
-def render_item(item: Item):
+def render_item(item):
     if item.transform is None or (item.sprite is None and item.fill_color is None):
         return
 
-    image: pygame.Surface
-
+    # Get the image either from sprite or by creating a colored surface
     if item.sprite is not None:
         image = ASSETS[item.sprite]
-    elif item.fill_color is not None:
+    else:
         image = pygame.Surface((item.transform.scale.x, item.transform.scale.y))
         image.fill(tuple(item.fill_color))
-    else:
-        return
 
     # Scale the image
-    scaled_image = pygame.transform.scale(
-        image,
-        (
-            int(item.transform.scale.x * pgapi.CAMERA.pixel_unit_ratio),
-            int(item.transform.scale.y * pgapi.CAMERA.pixel_unit_ratio),
-        ),
-    )
-
-    # scaled_image = pygame.transform.smoothscale(
-    #     scaled_image, (item.transform.scale.x, item.transform.scale.y)
-    # )
+    pixel_ratio = pgapi.CAMERA.pixel_unit_ratio
+    scale_x = int(item.transform.scale.x * pixel_ratio)
+    scale_y = int(item.transform.scale.y * pixel_ratio)
+    scaled_image = pygame.transform.scale(image, (scale_x, scale_y))
 
     # Rotate the image
     rotated_image = pygame.transform.rotate(scaled_image, item.transform.rotation.z)
-
-    # Get the rect of the rotated image
     rotated_rect = rotated_image.get_rect()
 
-    # Set the position of the rotated image
+    # Calculate the position
+    screen_center_x = pgapi.SETTINGS.screen_size.x / 2
+    screen_center_y = pgapi.SETTINGS.screen_size.y / 2
+    camera_pos_x = pgapi.CAMERA.position.x * -1
+    camera_pos_y = pgapi.CAMERA.position.y * -1
+    item_pos_x = item.transform.position.x
+    item_pos_y = item.transform.position.y
     rotated_rect.center = (
-        pgapi.SETTINGS.screen_size.x / 2
-        + (pgapi.CAMERA.position.x * -1 + item.transform.position.x)
-        * pgapi.CAMERA.pixel_unit_ratio,
-        pgapi.SETTINGS.screen_size.y / 2
-        + (pgapi.CAMERA.position.y * -1 + item.transform.position.y)
-        * pgapi.CAMERA.pixel_unit_ratio,
+        screen_center_x + (camera_pos_x + item_pos_x) * pixel_ratio,
+        screen_center_y + (camera_pos_y + item_pos_y) * pixel_ratio,
     )
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
+        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft))
         return
+    crop_start_x = item.crop.start.x * pixel_ratio
+    crop_start_y = item.crop.start.y * pixel_ratio
+    crop_end_x = item.crop.end.x * pixel_ratio
+    crop_end_y = item.crop.end.y * pixel_ratio
 
-    pgapi.SCREEN.blit(
-        rotated_image,
-        rotated_rect.topleft,
-        (
-            item.crop.start.x * pgapi.CAMERA.pixel_unit_ratio,
-            item.crop.start.y * pgapi.CAMERA.pixel_unit_ratio,
-            item.crop.end.x * pgapi.CAMERA.pixel_unit_ratio,
-            item.crop.end.y * pgapi.CAMERA.pixel_unit_ratio,
-        ),
+    DIRTY_RECTS.append(
+        pgapi.SCREEN.this.blit(
+            rotated_image,
+            rotated_rect.topleft,
+            (crop_start_x, crop_start_y, crop_end_x, crop_end_y),
+        )
     )
 
 
@@ -90,86 +84,72 @@ def render_bone(bone: Bone, parent: Item):
     if bone.transform is None or (bone.sprite is None and bone.fill_color is None):
         return
 
-    image: pygame.Surface
-
+    # Determine the image to use
     if bone.sprite is not None:
         image = ASSETS[bone.sprite]
-
-    elif bone.fill_color is not None:
+    else:
         image = pygame.Surface((bone.transform.scale.x, bone.transform.scale.y))
         image.fill(tuple(bone.fill_color))
 
-    else:
-        return
+    # Compute the pixel unit ratio and scale the image
+    pixel_ratio = pgapi.CAMERA.pixel_unit_ratio
+    scale_x = int(bone.transform.scale.x * pixel_ratio)
+    scale_y = int(bone.transform.scale.y * pixel_ratio)
+    scaled_image = pygame.transform.scale(image, (scale_x, scale_y))
 
-    # vec: CompleteMathVector = MathVectorToolkit.normalise(
-    #     MathVectorToolkit.new(
-    #         start=Vector2(0, 0), magnitude=1, direction=parent.transform.rotation.z
-    #     )
-    # )
-
-    # Scale the image
-    scaled_image = pygame.transform.scale(
-        image,
-        (
-            int(bone.transform.scale.x * pgapi.CAMERA.pixel_unit_ratio),
-            int(bone.transform.scale.y * pgapi.CAMERA.pixel_unit_ratio),
-        ),
-    )
+    # Calculate rotation angle
+    bone_rotation = bone.transform.rotation.z
+    parent_rotation = parent.transform.rotation.z
+    rotation_angle = 2 * bone_rotation + (parent_rotation - bone_rotation)
 
     # Rotate the image
-    rotated_image = pygame.transform.rotate(
-        scaled_image,
-        2 * bone.transform.rotation.z
-        + (parent.transform.rotation.z - bone.transform.rotation.z),
-    )
+    rotated_image = pygame.transform.rotate(scaled_image, rotation_angle)
 
-    # Get the rect of the rotated image
-    # math.cos(theta) * cx - math.sin(theta) * cy + px
+    # Precompute trigonometric functions for position calculation
+    cos_theta = math.cos(math.radians(-parent_rotation))
+    sin_theta = math.sin(math.radians(-parent_rotation))
 
-    rotated_rect = rotated_image.get_rect(
-        center=(
-            pgapi.SETTINGS.screen_size.x / 2
-            + (
-                pgapi.CAMERA.position.x * -1
-                + parent.transform.position.x
-                + (
-                    (bone.transform.position.x)
-                    * math.cos(math.radians(-parent.transform.rotation.z))
-                    - math.sin(math.radians(-parent.transform.rotation.z))
-                    * (bone.transform.position.y)
-                )
-                + bone.anchor.x
-            )
-            * pgapi.CAMERA.pixel_unit_ratio,
-            pgapi.SETTINGS.screen_size.y / 2
-            + (
-                pgapi.CAMERA.position.y * -1
-                + parent.transform.position.y
-                + (
-                    (bone.transform.position.x)
-                    * math.sin(math.radians(-parent.transform.rotation.z))
-                    + math.cos(math.radians(-parent.transform.rotation.z))
-                    * (bone.transform.position.y)
-                )
-                + bone.anchor.y
-            )
-            * pgapi.CAMERA.pixel_unit_ratio,
+    # Calculate the rotated rect position
+    screen_center_x = pgapi.SETTINGS.screen_size.x / 2
+    screen_center_y = pgapi.SETTINGS.screen_size.y / 2
+    camera_pos_x = pgapi.CAMERA.position.x * -1
+    camera_pos_y = pgapi.CAMERA.position.y * -1
+    parent_pos_x = parent.transform.position.x
+    parent_pos_y = parent.transform.position.y
+    bone_pos_x = bone.transform.position.x
+    bone_pos_y = bone.transform.position.y
+    bone_anchor_x = bone.anchor.x
+    bone_anchor_y = bone.anchor.y
+
+    final_x = (
+        screen_center_x
+        + (
+            camera_pos_x
+            + parent_pos_x
+            + (bone_pos_x * cos_theta - bone_pos_y * sin_theta)
+            + bone_anchor_x
         )
+        * pixel_ratio
+    )
+    final_y = (
+        screen_center_y
+        + (
+            camera_pos_y
+            + parent_pos_y
+            + (bone_pos_x * sin_theta + bone_pos_y * cos_theta)
+            + bone_anchor_y
+        )
+        * pixel_ratio
     )
 
-    # Set the position of the rotated image
-    # rotated_rect.topleft = (
-    #     parent.transform.position.x + bone.transform.position.x,
-    #     parent.transform.position.y + bone.transform.position.y
-    # )
+    rotated_rect = rotated_image.get_rect(center=(final_x, final_y))
 
     # Blit the rotated image onto the screen
-    pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft)
+    DIRTY_RECTS.append(pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft))
 
 
 def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
-    if parent_style == None:
+    if parent_style is None:
         parent_style = DOM_El.current_style
 
     elstl = element.current_style
@@ -177,85 +157,81 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
     if elstl.display == "none":
         return
 
-    x = 0
-    y = 0
-    w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 20
-    h = unit(elstl.height, unit(parent_style.height)) if elstl.height != None else 0
+    # Set default values and units
+    x = y = 0
+    w = unit(elstl.width, unit(parent_style.width)) if elstl.width is not None else 0
+    h = unit(elstl.height, unit(parent_style.height)) if elstl.height is not None else 0
 
+    # Determine position
     position = elstl.position if elstl.position else POSITION.ABSOLUTE
 
-    match position:
-        case POSITION.ABSOLUTE:
-            x = (
-                unit(elstl.left, unit(parent_style.left))
-                if elstl.left != None
-                else unit(elstl.right, unit(parent_style.right)) if elstl.right != None else 0
+    if position == POSITION.ABSOLUTE:
+        x = (
+            unit(elstl.left, unit(parent_style.left))
+            if elstl.left is not None
+            else (
+                unit(elstl.right, unit(parent_style.right))
+                if elstl.right is not None
+                else 0
             )
-            y = (
-                unit(elstl.top, unit(parent_style.top))
-                if elstl.top != None
-                else unit(elstl.bottom, unit(parent_style.bottom)) if elstl.bottom != None else 0
+        )
+        y = (
+            unit(elstl.top, unit(parent_style.top))
+            if elstl.top is not None
+            else (
+                unit(elstl.bottom, unit(parent_style.bottom))
+                if elstl.bottom is not None
+                else 0
             )
-
-        case POSITION.RELATIVE:
-            x = (
-                unit(elstl.left, unit(parent_style.left)) + unit(parent_style.left)
-                if elstl.left != None and parent_style.left != None
-                else (
-                    unit(elstl.right, unit(parent_style.right)) + unit(parent_style.right)
-                    if elstl.right != None and parent_style.right != None
-                    else 0
+        )
+    elif position == POSITION.RELATIVE:
+        x = (
+            (unit(elstl.left, unit(parent_style.left)) + unit(parent_style.left))
+            if elstl.left is not None and parent_style.left is not None
+            else (
+                (unit(elstl.right, unit(parent_style.right)) + unit(parent_style.right))
+                if elstl.right is not None and parent_style.right is not None
+                else 0
+            )
+        )
+        y = (
+            (unit(elstl.top, unit(parent_style.top)) + unit(parent_style.top))
+            if elstl.top is not None and parent_style.top is not None
+            else (
+                (
+                    unit(elstl.bottom, unit(parent_style.bottom))
+                    + unit(parent_style.bottom)
                 )
-            )
-            y = (
-                unit(elstl.top, unit(parent_style.top)) + unit(parent_style.top)
-                if elstl.top != None and parent_style.top != None
-                else (
-                    unit(elstl.bottom, unit(parent_style.bottom)) + unit(parent_style.bottom)
-                    if elstl.bottom != None and parent_style.bottom != None
-                    else 0
-                )
-            )
-
-
-    bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
-    bg_color[3] = (1 if bg_color[3] > 1 else 0 if bg_color[3] < 0 else bg_color[3]) * 255
-
-    color = list(elstl.color if elstl.color else (255, 255, 255, 1))
-    color[3] = (1 if color[3] > 1 else 0 if color[3] < 0 else color[3]) * 255
-
-    font_size = elstl.font_size if elstl.font_size else 16
-    font_family = elstl.font_family if elstl.font_family else 'inter.ttf'
-
-    bold = False
-    italic = False
-
-    if elstl.font_variant:
-        bold = "bold" in elstl.font_variant
-        italic = "italic" in elstl.font_variant
-
-    gap = elstl.gap if elstl.gap else "0x"
-
-    image: pygame.Surface
-
-    if (not elstl.bg_image):
-        image = pygame.Surface((w, h), pygame.SRCALPHA)
-        image.fill(bg_color)
-        image.set_alpha(bg_color[3])
-    else:
-        image = pygame.transform.scale(
-            ASSETS[elstl.bg_image],
-            (
-                w,
-                h
+                if elstl.bottom is not None and parent_style.bottom is not None
+                else 0
             )
         )
 
+    # Background color and alpha
+    bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
+    bg_color[3] = min(max(bg_color[3], 0), 1) * 255
+
+    # Text color and alpha
+    color = list(elstl.color if elstl.color else (255, 255, 255, 1))
+    color[3] = min(max(color[3], 0), 1) * 255
+
+    # Font settings
+    font_size = elstl.font_size if elstl.font_size else 16
+    font_family = elstl.font_family if elstl.font_family else "inter.ttf"
+    bold = "bold" in elstl.font_variant if elstl.font_variant else False
+    italic = "italic" in elstl.font_variant if elstl.font_variant else False
+    gap = unit(elstl.gap if elstl.gap else "0x")
+
+    # Create image surface
+    if not elstl.bg_image:
+        image = pygame.Surface((w, h), pygame.SRCALPHA)
+        image.fill(bg_color)
+    else:
+        image = pygame.transform.scale(ASSETS[elstl.bg_image], (w, h))
+
     positioned_rect = image.get_rect(topleft=(x, y))
 
-    pgapi.SCREEN.this.blit(image, positioned_rect.topleft)
-
-    child_strings_count = 0
+    DIRTY_RECTS.append(pgapi.SCREEN.this.blit(image, positioned_rect.topleft))
 
     p_style = StyleSheet(
         position=elstl.position,
@@ -265,28 +241,41 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
         height=f"{h}x",
         bg_color=bg_color,
         color=color,
-        gap=gap
+        gap=gap,
     )
+
+    child_strings_count = 0
 
     for child in element.children:
         if not isinstance(child, str):
             render_gui(child, p_style)
-            continue
+        else:
+            font = ASSETS[f"font-{font_size}-{font_family}"]
+            font.italic = italic
+            font.bold = bold
+            text_surf = font.render(child, True, color)
+            text_surf.set_alpha(color[3])
+            DIRTY_RECTS.append(
+                pgapi.SCREEN.this.blit(
+                    text_surf, (x, y + (font_size + gap) * child_strings_count)
+                )
+            )
+            child_strings_count += 1
 
-        font = ASSETS[f"font-{font_size}-{font_family}"]
-        font.italic = italic
-        font.bold = bold
-        # font.size = unit(element.style.font_size)
-        text_surf = font.render(
-            child, True, color, None
-        )
-        text_surf.set_alpha(color[3])
 
-        pgapi.SCREEN.this.blit(
-            text_surf, (x, y + (font_size + unit(gap)) * child_strings_count)
-        )
+def load_tiles(image: Surface, tile_width: int, tile_height: int) -> list[Surface]:
+    tiles: list[Surface] = []
+    for y in range(0, image.get_height(), tile_height):
+        for x in range(0, image.get_width(), tile_width):
+            if (
+                x + tile_width <= image.get_width()
+                and y + tile_height <= image.get_height()
+            ):
+                rect = pygame.Rect(x, y, tile_width, tile_height)
+                tile = image.subsurface(rect)
+                tiles.append(tile)
+    return tiles
 
-        child_strings_count += 1
 
 def render_items() -> None:
     for item in items.rendering:
@@ -314,7 +303,7 @@ def render_items() -> None:
         for bone in item.bones.values():
             # bone_thread = threading.Thread(target=render_bone, args=(bone, item))
             render_bone(bone, item)
-        
+
         # render_thread.start()
         # if bone_thread:
         #     bone_thread.start()
@@ -322,8 +311,42 @@ def render_items() -> None:
         # if bone_thread:
         #     bone_thread.join()
 
+
+def render_background(tiles: list[Surface], num_tiles_x: int):
+    for y in range(int(pgapi.CAMERA.position.y), pgapi.SCREEN.size.y, 32):
+        for x in range(int(pgapi.CAMERA.position.x), pgapi.SCREEN.size.x, 32):
+            tile_x = (x // 32) % num_tiles_x
+            tile_y = (y // 32) % (num_tiles_x)
+            tile_index = tile_y * num_tiles_x + tile_x
+            if tile_index >= len(tiles):
+                return
+            
+            tile = tiles[tile_index]
+
+            DIRTY_RECTS.append(
+                pgapi.SCREEN.this.blit(
+                    tile, (x - pgapi.CAMERA.position.x, y - pgapi.CAMERA.position.y)
+                )
+            )
+
+
+BACKGROUND = None
+BACKGROUND_WIDTH = 1920
+NUM_TILES_X = BACKGROUND_WIDTH // 32
+
+
+@events.init
+def init() -> None:
+    global BACKGROUND
+    BACKGROUND = load_tiles(ASSETS["background.png"], 32, 32)
+
+
 def render():
+    global DIRTY_RECTS
+
+    render_background(BACKGROUND, NUM_TILES_X)
     render_items()
     render_gui(DOM_El)
 
-RENDER_THREAD = threading.Thread(target=render, daemon=True, args=())
+    pygame.display.update(DIRTY_RECTS)
+    DIRTY_RECTS = []

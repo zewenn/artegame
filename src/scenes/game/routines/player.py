@@ -91,7 +91,7 @@ def update() -> None:
     global player_light_attack_anim, hitpoint_display
 
     move_player()
-    pgapi.move_camera(player.transform.position)
+    pgapi.CAMERA.position = player.transform.position
 
     # print(items.rendering)
 
