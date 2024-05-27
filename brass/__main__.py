@@ -19,6 +19,7 @@ import enums
 import threading
 import screeninfo
 
+
 def render_loop() -> None:
     while pgapi.RUN:
         pgapi.SCREEN.this.fill("black")
@@ -27,7 +28,6 @@ def render_loop() -> None:
 
         render.render()
         # pygame.display.flip()
-
 
 
 def init():
@@ -55,14 +55,12 @@ def init():
 
     pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED | pygame.DOUBLEBUF)
 
-
-
     inpt.init_controllers()
 
     # inpt.bind_buttons("exit", ["escape"])
-    inpt.bind_buttons(enums.keybinds.SHOW_MENU, ["escape", "back@ctrl#0"], "down")
-    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, ["enter", "a@ctrl#0"], "down")
-    inpt.bind_buttons(enums.keybinds.BACK, ["escape", "b@ctrl#0"], "down")
+    inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
 
     scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)
@@ -80,9 +78,14 @@ def init():
         # if inpt.active_bind("exit"):
         #     pgapi.RUN = False
 
+        # DO NOT SWITCH THESE UP
+        # I JUST SUFFERED FOR 1.5 HOURS TRYING TO FIX THIS SH*T
+        # INPT -> GUI -> EVENTS -> COLLISION
+        # THERE IS NO OTHER WAY
         inpt.system_udpate()
-        events.system_update()
         gui.system_update()
+
+        events.system_update()
         collision.system_update()
 
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000

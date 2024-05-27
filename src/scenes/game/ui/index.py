@@ -96,7 +96,7 @@ def awake() -> None:
             "GameMenu",
             Element(
                 "CenterButtons",
-                title_button("exit-btn", "Játék Folytatása", 0, menu.hide_menu),
+                title_button("continue-btn", "Játék Folytatása", 0, menu.hide_menu),
                 title_button(
                     "exit-btn",
                     "Főmenü",

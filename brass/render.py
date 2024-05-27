@@ -313,10 +313,10 @@ def render_items() -> None:
 
 
 def render_background(tiles: list[Surface], num_tiles_x: int):
-    for y in range(int(pgapi.CAMERA.position.y), pgapi.SCREEN.size.y, 32):
-        for x in range(int(pgapi.CAMERA.position.x), pgapi.SCREEN.size.x, 32):
-            tile_x = (x // 32) % num_tiles_x
-            tile_y = (y // 32) % (num_tiles_x)
+    for y in range(int(pgapi.CAMERA.position.y), pgapi.SCREEN.size.y, CHUNK_SIZE):
+        for x in range(int(pgapi.CAMERA.position.x), pgapi.SCREEN.size.x, CHUNK_SIZE):
+            tile_x = (x // CHUNK_SIZE) % num_tiles_x
+            tile_y = (y // CHUNK_SIZE) % (num_tiles_x)
             tile_index = tile_y * num_tiles_x + tile_x
             if tile_index >= len(tiles):
                 return
@@ -329,22 +329,22 @@ def render_background(tiles: list[Surface], num_tiles_x: int):
                 )
             )
 
-
+CHUNK_SIZE = 16
 BACKGROUND = None
 BACKGROUND_WIDTH = 1920
-NUM_TILES_X = BACKGROUND_WIDTH // 32
+NUM_TILES_X = BACKGROUND_WIDTH // CHUNK_SIZE
 
 
 @events.init
 def init() -> None:
     global BACKGROUND
-    BACKGROUND = load_tiles(ASSETS["background.png"], 32, 32)
+    BACKGROUND = load_tiles(ASSETS["background.png"], CHUNK_SIZE, CHUNK_SIZE)
 
 
 def render():
     global DIRTY_RECTS
 
-    render_background(BACKGROUND, NUM_TILES_X)
+    # render_background(BACKGROUND, NUM_TILES_X)
     render_items()
     render_gui(DOM_El)
 
