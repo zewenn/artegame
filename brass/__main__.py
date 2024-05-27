@@ -27,6 +27,7 @@ def render_loop() -> None:
         pgapi.system_camera()
 
         render.render()
+        # pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps)
         # pygame.display.flip()
 
 

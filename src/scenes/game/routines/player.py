@@ -95,7 +95,24 @@ def update() -> None:
 
     # print(items.rendering)
 
-    if inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK):
+    light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
+
+    if light_attacking and player.dashing:
+        animator.play(player_light_attack_anim)
+        projectiles.shoot(
+            projectiles.new(
+                sprite="gyuri.png",
+                position=structured_clone(player.transform.position),
+                scale=Vec2(128, 128),
+                direction=player_hand_holder.transform.rotation.z,
+                lifetime_seconds=2,
+                speed=1000,
+                team="Player",
+                damage=10,
+            )
+        )
+
+    elif light_attacking:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
             projectiles.new(
@@ -106,10 +123,10 @@ def update() -> None:
                 lifetime_seconds=1,
                 speed=100,
                 team="Player",
-                damage=10
+                damage=10,
             )
         )
-    
+
     hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
 
 
@@ -170,7 +187,7 @@ def move_player() -> None:
         case enums.input_modes.CONTROLLER:
             if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
                 player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90
-                
+
         case enums.input_modes.MOUSE_AND_KEYBOARD:
             center = Vec2(pgapi.SCREEN.size.x / 2, pgapi.SCREEN.size.y / 2)
             mouse_relative_pos = Vec2(

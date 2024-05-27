@@ -126,6 +126,8 @@ class Item:
     max_mana: Optional[Number] = None
     mana: Optional[Number] = None
     invulnerable: bool = False
+    can_attack: bool = False
+    dashing: bool = False
 
 
 @dataclass

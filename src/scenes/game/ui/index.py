@@ -46,7 +46,6 @@ def title_button(
 
 
 def awake() -> None:
-    pgapi.as_menu()
     DOM(
         Element(
             "PlayerDashCounter",

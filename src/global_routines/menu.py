@@ -21,6 +21,7 @@ def show_menu() -> None:
     
     MENU.style.display = "block"
     SHOWING = True
+    pgapi.as_menu()
 
 
 def hide_menu() -> None:
@@ -31,3 +32,4 @@ def hide_menu() -> None:
     
     MENU.style.display = "none"
     SHOWING = False
+    pgapi.SETTINGS.menu_mode = False

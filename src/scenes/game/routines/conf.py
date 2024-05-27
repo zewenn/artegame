@@ -15,7 +15,7 @@ from brass import (
 def spawn() -> None:
     saves.select_slot(0)
 
-    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, {"a@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, "a@ctrl#0"], "down")
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"shoulder-right@ctrl#0"}],
