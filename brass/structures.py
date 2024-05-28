@@ -133,6 +133,11 @@ class Item:
     can_attack: bool = False
     dashing: bool = False
 
+    # |> Combat -> Crowd Control
+    slowed_by_percent: Optional[int] = None
+    rooted: bool = False
+    stunned: bool = False
+    sleeping: bool = False
 
 
 @dataclass
@@ -318,6 +323,14 @@ class Mishap:
 
     def is_fatal(self) -> bool:
         return self.fatal
+
+
+@dataclass
+class Timeout:
+    interval: Number
+    fn: Callable[..., None]
+    args: Tuple[Any]
+    start_time: Number
 
 
 # ----------------------------- ui ----------------------------

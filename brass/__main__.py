@@ -53,11 +53,11 @@ def init():
     inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
+    inpt.bind_buttons('exit', [{"left shift", "escape"}])
 
     scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)
     events.call(events.IDS.init)
-
 
     while pgapi.RUN:
         for event in pygame.event.get():
@@ -80,11 +80,14 @@ def init():
 
         display.render()
 
+        if inpt.active_bind("exit"):
+            pgapi.exit()
+
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
         pgapi.TIME.current = pgapi.time.perf_counter()
 
     pygame.quit()
-    saves.save()
+    # saves.save()
 
 
 if __name__ == "__main__":

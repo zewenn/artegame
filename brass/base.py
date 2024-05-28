@@ -48,9 +48,11 @@ def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
     except Exception as e:
         return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
+
 @silence
 def quit() -> Never:
     raise Exception("Quit")
+
 
 def unreachable(msg: str) -> Never:
     stack = inspect.stack()[1]

@@ -23,6 +23,11 @@ def spawn() -> None:
         [{"left@mouse"}, {"shoulder-right@ctrl#0"}],
         "down",
     )
+    inpt.bind_buttons(
+        enums.keybinds.PLAYER_HEAVY_ATTACK,
+        [{"right@mouse"}, {"shoulder-left@ctrl#0"}],
+        "down",
+    )
 
     animator.store.add(
         "hit",
@@ -81,7 +86,7 @@ def spawn() -> None:
             lightness=1,
             base_movement_speed=300,
             dash_count=2,
-            dash_movement_multiplier=10,
+            dash_movement_multiplier=6,
             dash_charge_refill_time=0.5,
             max_hitpoints=100,
             max_mana=100,
