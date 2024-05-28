@@ -8,6 +8,7 @@ import pygame
 
 Sound = pygame.mixer.Sound
 Surface = pygame.Surface
+Font = pygame.font.Font
 Number = int | float
 string = str
 

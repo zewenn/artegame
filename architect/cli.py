@@ -198,10 +198,14 @@ def main(args):
                 "nuitka",
                 os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
                 "--standalone",
-                "--disable-console",
+                "--follow-imports",
+                # "--plugin-enable=pygame",
+                # "--disable-console",
+                # "--windows-disable-console",
                 # "--windows-disable-console",
                 f"--output-dir={os.path.realpath(os.path.join(*conf.BUILD_OUTPUT_DIR))}",
                 "--remove-output",
+                "--run" if "-r" in args[2:] else ""
                 # "-n",
                 # APP_NAME,
             ]

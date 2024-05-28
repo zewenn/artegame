@@ -1,4 +1,3 @@
-
 from brass.base import *
 from brass.gui import *
 
@@ -18,7 +17,7 @@ def show_menu() -> None:
 
     if not MENU:
         return
-    
+
     MENU.style.display = "block"
     SHOWING = True
     pgapi.as_menu()
@@ -26,10 +25,11 @@ def show_menu() -> None:
 
 def hide_menu() -> None:
     global SHOWING, MENU
-    
+
     if not MENU:
         return
-    
+
     MENU.style.display = "none"
     SHOWING = False
-    pgapi.SETTINGS.menu_mode = False
+    if pgapi.SETTINGS:
+        pgapi.SETTINGS.menu_mode = False

@@ -68,7 +68,7 @@ def init() -> None:
     hitpoint_display = hitpoint_bar_query.ok().children[0]
 
     # Walking audio
-    walk_sound = assets.use("walking.mp3")
+    walk_sound = assets.use("walking.mp3", T=Audio)
     audio.set_volume(walk_sound, 0.1)
 
     player_light_attack_anim_query = animator.store.get("hit")

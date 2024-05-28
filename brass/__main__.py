@@ -5,6 +5,8 @@ from base import *
 import enums
 from src.imports import *
 
+import pygame
+import pygame._sdl2.controller
 import events
 import assets
 import display
@@ -16,7 +18,6 @@ import inpt
 import saves
 import scene
 import enums
-import threading
 import screeninfo
 
 

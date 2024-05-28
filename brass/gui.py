@@ -113,7 +113,7 @@ def Element(
     is_button: bool = False,
 ) -> GUIElement:
 
-    if typeof(onclick) not in ["NoneType", "function"]:
+    if typeof(onclick) not in ["NoneType", "function", "compiled_function"]:
         unreachable(
             f'"{id}": GUIElement\'s onclick is not of the required type!'
             + "\n | Expected:\t[None, Callable[[], None]]"
