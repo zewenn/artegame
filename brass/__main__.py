@@ -7,7 +7,7 @@ from src.imports import *
 
 import events
 import assets
-import render
+import display
 import pgapi
 import collision
 import gui
@@ -20,15 +20,6 @@ import threading
 import screeninfo
 
 
-def render_loop() -> None:
-    while pgapi.RUN:
-        pgapi.SCREEN.this.fill("black")
-        animator.tick_anims()
-        pgapi.system_camera()
-
-        render.render()
-        # pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps)
-        # pygame.display.flip()
 
 
 def init():
@@ -58,7 +49,6 @@ def init():
 
     inpt.init_controllers()
 
-    # inpt.bind_buttons("exit", ["escape"])
     inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
@@ -67,17 +57,11 @@ def init():
     events.call(events.IDS.awake)
     events.call(events.IDS.init)
 
-    RENDER_THREAD = threading.Thread(target=render_loop, args=(), daemon=True)
-    RENDER_THREAD.start()
 
     while pgapi.RUN:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pgapi.RUN = False
-
-        # Demo exit
-        # if inpt.active_bind("exit"):
-        #     pgapi.RUN = False
 
         # DO NOT SWITCH THESE UP
         # I JUST SUFFERED FOR 1.5 HOURS TRYING TO FIX THIS SH*T
@@ -88,6 +72,12 @@ def init():
 
         events.system_update()
         collision.system_update()
+
+        pgapi.SCREEN.this.fill("black")
+        animator.tick_anims()
+        pgapi.system_camera()
+
+        display.render()
 
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
         pgapi.TIME.current = pgapi.time.perf_counter()

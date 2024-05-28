@@ -12,6 +12,21 @@ import events
 DIRTY_RECTS: list[pygame.Rect] = []
 
 
+def is_same_transform(a: Transform, b: Transform) -> bool:
+    if a == None or b == None:
+        return False
+
+    if (
+        a.rotation.x == b.rotation.x
+        and a.rotation.y == b.rotation.y
+        and a.rotation.z == b.rotation.z
+        and a.scale.x == b.scale.x
+        and a.scale.y == b.scale.y
+    ):
+        return True
+    return False
+
+
 def is_on_screen(item: Item) -> bool:
     if (
         item.transform.position.x >= 0
@@ -29,10 +44,7 @@ def is_on_screen(item: Item) -> bool:
     return False
 
 
-def render_item(item):
-    if item.transform is None or (item.sprite is None and item.fill_color is None):
-        return
-
+def calculate_transform_cache(item: Item) -> None:
     # Get the image either from sprite or by creating a colored surface
     if item.sprite is not None:
         image = ASSETS[item.sprite]
@@ -47,16 +59,31 @@ def render_item(item):
     scaled_image = pygame.transform.scale(image, (scale_x, scale_y))
 
     # Rotate the image
-    rotated_image = pygame.transform.rotate(scaled_image, item.transform.rotation.z)
-    rotated_rect = rotated_image.get_rect()
+    return pygame.transform.rotate(scaled_image, item.transform.rotation.z)
 
-    # Calculate the position
+
+def render_item(item: Item):
+    if item.transform is None or (item.sprite is None and item.fill_color is None):
+        return
+
+    same_transform: bool = is_same_transform(item.transform, item.transform_cache)
+
+    if item.surface == None or not same_transform:
+        item.surface = calculate_transform_cache(item)
+        item.transform_cache = structured_clone(item.transform)
+
     screen_center_x = pgapi.SETTINGS.screen_size.x / 2
     screen_center_y = pgapi.SETTINGS.screen_size.y / 2
+
     camera_pos_x = pgapi.CAMERA.position.x * -1
     camera_pos_y = pgapi.CAMERA.position.y * -1
+
     item_pos_x = item.transform.position.x
     item_pos_y = item.transform.position.y
+
+    pixel_ratio = pgapi.CAMERA.pixel_unit_ratio
+
+    rotated_rect = item.surface.get_rect()
     rotated_rect.center = (
         screen_center_x + (camera_pos_x + item_pos_x) * pixel_ratio,
         screen_center_y + (camera_pos_y + item_pos_y) * pixel_ratio,
@@ -64,8 +91,9 @@ def render_item(item):
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(rotated_image, rotated_rect.topleft))
+        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(item.surface, rotated_rect.topleft))
         return
+
     crop_start_x = item.crop.start.x * pixel_ratio
     crop_start_y = item.crop.start.y * pixel_ratio
     crop_end_x = item.crop.end.x * pixel_ratio
@@ -73,7 +101,7 @@ def render_item(item):
 
     DIRTY_RECTS.append(
         pgapi.SCREEN.this.blit(
-            rotated_image,
+            item.surface,
             rotated_rect.topleft,
             (crop_start_x, crop_start_y, crop_end_x, crop_end_y),
         )
@@ -158,54 +186,9 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
         return
 
     # Set default values and units
-    x = y = 0
-    w = unit(elstl.width, unit(parent_style.width)) if elstl.width is not None else 0
-    h = unit(elstl.height, unit(parent_style.height)) if elstl.height is not None else 0
-
-    # Determine position
-    position = elstl.position if elstl.position else POSITION.ABSOLUTE
-
-    if position == POSITION.ABSOLUTE:
-        x = (
-            unit(elstl.left, unit(parent_style.left))
-            if elstl.left is not None
-            else (
-                unit(elstl.right, unit(parent_style.right))
-                if elstl.right is not None
-                else 0
-            )
-        )
-        y = (
-            unit(elstl.top, unit(parent_style.top))
-            if elstl.top is not None
-            else (
-                unit(elstl.bottom, unit(parent_style.bottom))
-                if elstl.bottom is not None
-                else 0
-            )
-        )
-    elif position == POSITION.RELATIVE:
-        x = (
-            (unit(elstl.left, unit(parent_style.left)) + unit(parent_style.left))
-            if elstl.left is not None and parent_style.left is not None
-            else (
-                (unit(elstl.right, unit(parent_style.right)) + unit(parent_style.right))
-                if elstl.right is not None and parent_style.right is not None
-                else 0
-            )
-        )
-        y = (
-            (unit(elstl.top, unit(parent_style.top)) + unit(parent_style.top))
-            if elstl.top is not None and parent_style.top is not None
-            else (
-                (
-                    unit(elstl.bottom, unit(parent_style.bottom))
-                    + unit(parent_style.bottom)
-                )
-                if elstl.bottom is not None and parent_style.bottom is not None
-                else 0
-            )
-        )
+    x, y = element.transform.position.x, element.transform.position.y
+    w = element.transform.scale.x
+    h = element.transform.scale.y
 
     # Background color and alpha
     bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
@@ -312,39 +295,24 @@ def render_items() -> None:
         #     bone_thread.join()
 
 
-def render_background(tiles: list[Surface], num_tiles_x: int):
-    for y in range(int(pgapi.CAMERA.position.y), pgapi.SCREEN.size.y, CHUNK_SIZE):
-        for x in range(int(pgapi.CAMERA.position.x), pgapi.SCREEN.size.x, CHUNK_SIZE):
-            tile_x = (x // CHUNK_SIZE) % num_tiles_x
-            tile_y = (y // CHUNK_SIZE) % (num_tiles_x)
-            tile_index = tile_y * num_tiles_x + tile_x
-            if tile_index >= len(tiles):
-                return
-            
-            tile = tiles[tile_index]
 
-            DIRTY_RECTS.append(
-                pgapi.SCREEN.this.blit(
-                    tile, (x - pgapi.CAMERA.position.x, y - pgapi.CAMERA.position.y)
-                )
-            )
-
-CHUNK_SIZE = 16
-BACKGROUND = None
-BACKGROUND_WIDTH = 1920
-NUM_TILES_X = BACKGROUND_WIDTH // CHUNK_SIZE
-
-
-@events.init
-def init() -> None:
-    global BACKGROUND
-    BACKGROUND = load_tiles(ASSETS["background.png"], CHUNK_SIZE, CHUNK_SIZE)
+    
 
 
 def render():
     global DIRTY_RECTS
 
     # render_background(BACKGROUND, NUM_TILES_X)
+    if pgapi.SETTINGS.background_image != None:
+        DIRTY_RECTS.append(
+            pgapi.SCREEN.this.blit(
+                pgapi.SETTINGS.background_image,
+                (
+                    -pgapi.CAMERA.position.x * pgapi.CAMERA.pixel_unit_ratio,
+                    -pgapi.CAMERA.position.y * pgapi.CAMERA.pixel_unit_ratio,
+                ),
+            )
+        )
     render_items()
     render_gui(DOM_El)
 

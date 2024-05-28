@@ -3,17 +3,19 @@ from brass.base import *
 # fmt: off
 from brass import (
     enums, 
-    events,
+    pgapi,
     items, 
     saves, 
     inpt, 
-    animator
+    animator,
+    assets
 )
 # fmt: on
 
 
 def spawn() -> None:
-    saves.select_slot(0)
+    pgapi.use_background(assets.use("background.png"), Vec2(2540, 1440))
+    
 
     inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, "a@ctrl#0"], "down")
     inpt.bind_buttons(
@@ -55,7 +57,7 @@ def spawn() -> None:
 
     # if loaded.is_ok():
 
-    # items.add_to_scene(
+    # items.add(
     #     Item(
     #         id="CHUNKYBOY",
     #         tags=["asd", "item"],
@@ -63,11 +65,10 @@ def spawn() -> None:
     #             position=Vec2(0, 0), rotation=Vec3(), scale=Vec2(2048, 2048)
     #         ),
     #         sprite="test.png",
-    #         render=True,
-    #         lightness=10
+    #         render=True
     #     )
     # )
-    items.add_to_scene(
+    items.add(
         Item(
             id="player",
             tags=["player", "item"],
@@ -94,7 +95,7 @@ def spawn() -> None:
             },
         )
     )
-    items.add_to_scene(
+    items.add(
         Item(
             id="player_hand_holder",
             tags=["player_hand_holder", "item"],
@@ -115,7 +116,7 @@ def spawn() -> None:
         )
     )
 
-    items.add_to_scene(
+    items.add(
         Item(
             id="enemy1",
             tags=["enemy", "item"],
@@ -144,7 +145,7 @@ def spawn() -> None:
         )
     )
 
-    items.add_to_scene(
+    items.add(
         Item(
             id="box",
             tags=["box", "item"],
@@ -158,7 +159,7 @@ def spawn() -> None:
         )
     )
 
-    items.add_to_scene(
+    items.add(
         Item(
             id="asd",
             tags=["asd", "item"],

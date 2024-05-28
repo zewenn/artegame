@@ -109,6 +109,17 @@ def as_menu() -> None:
     global SETTINGS
     SETTINGS.menu_mode = True
 
+
+def use_background(surf: Surface, size: Optional[Vec2] = None) -> None:
+    global SETTINGS
+
+    if size != None:
+        SETTINGS.background_image = pygame.transform.scale(surf, (size.x, size.y))
+        return
+    
+    SETTINGS.background_image = surf
+
+
 def exit() -> Never:
     global RUN
     RUN = False

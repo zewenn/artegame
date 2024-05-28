@@ -10,9 +10,9 @@ GAP = 40
 
 def back_to_main_menu() -> None:
     menu.hide_menu()
-    err = saves.save()
-    if err.is_err():
-        print(err.err().msg)
+    # err = saves.save()
+    # if err.is_err():
+    #     print(err.err().msg)
     scene.load(enums.scenes.DEFAULT)
 
 

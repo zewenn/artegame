@@ -83,5 +83,5 @@ def shoot(projectile: Item) -> None:
         printf(f"Cannot shoot non-projectile Item: {projectile.id}")
         return
 
-    items.add_to_scene(projectile)
+    items.add(projectile)
     PROJECTILES.append(projectile)

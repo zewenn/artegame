@@ -58,6 +58,7 @@ def load(scene: str) -> None:
 
 def close(scene: str) -> None:
     pgapi.SETTINGS.menu_mode = False
+    pgapi.SETTINGS.background_image = None
     # items.rendering = []
 
     # item_list = copy.copy(items.rendering)

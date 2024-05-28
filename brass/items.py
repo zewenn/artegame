@@ -10,15 +10,19 @@ def reset() -> None:
     del rendering[::]
     rendering = []
 
-def remove(x: Item) -> None:
-    global rendering
-    if x in rendering:
-        rendering.remove(x)
-        del x
 
-def add_to_scene(item: Item) -> Item:
+def remove(item: Item) -> Item:
+    global rendering
+    if item in rendering:
+        rendering.remove(item)
+    return item
+
+
+def add(item: Item) -> Item:
+    item.uuid = "item:" + uuid()
     rendering.append(item)
     return item
+
 
 
 # def add_to_selector_map(selector: str, item: Optional[Item]) -> None:
@@ -101,7 +105,7 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
 
     if bone_id is None:
         # add_to_selector_map(selector, item)
-        if item: 
+        if item:
             return Ok(item)
         return Err(Mishap(f"Couldn't find item: {selector}"))
 
@@ -111,9 +115,5 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
 
         if res == None:
             return Err(Mishap(f"Couldn't find item: {selector}"))
-        
+
         return Ok(res)
-
-
-    
-

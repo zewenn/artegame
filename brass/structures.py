@@ -75,17 +75,20 @@ class Distances:
 @dataclass
 class Item:
     # Item identty
-    id: str
-    tags: Optional[list[str]] = None
+    id: string
+    tags: Optional[list[string]] = None
+    uuid: string = None
 
     # Transforms
     transform: Optional[Transform] = None
+    transform_cache: Optional[Transform] = None
     bones: Optional[dict[str, Bone]] = None
     facing: Number = None
 
     # Shiny render
     render: bool = True
     sprite: Optional[str] = None
+    surface: Optional[Surface] = None
     crop: Optional[Crop] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 
@@ -128,6 +131,7 @@ class Item:
     invulnerable: bool = False
     can_attack: bool = False
     dashing: bool = False
+
 
 
 @dataclass
@@ -187,6 +191,7 @@ class ApplicationSettings:
     If enabled dpad jumps between menupoints
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
+    background_image: Surface = None
 
 
 @dataclass
