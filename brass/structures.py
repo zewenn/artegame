@@ -75,17 +75,20 @@ class Distances:
 @dataclass
 class Item:
     # Item identty
-    id: str
-    tags: Optional[list[str]] = None
+    id: string
+    tags: Optional[list[string]] = None
+    uuid: string = None
 
     # Transforms
     transform: Optional[Transform] = None
+    transform_cache: Optional[Transform] = None
     bones: Optional[dict[str, Bone]] = None
     facing: Number = None
 
     # Shiny render
     render: bool = True
     sprite: Optional[str] = None
+    surface: Optional[Surface] = None
     crop: Optional[Crop] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 
@@ -118,11 +121,17 @@ class Item:
     lifetime_seconds: Optional[Number] = None
     life_start: Optional[Number] = None
     team: Optional[Literal["Player", "Enemy"]] = None
+    projectile_damage: Optional[Number] = None
 
     # Combat // Alive
-    hitpoint: Optional[Number] = None
+    max_hitpoints: Optional[Number] = None
+    hitpoints: Optional[Number] = None
+    max_mana: Optional[Number] = None
     mana: Optional[Number] = None
     invulnerable: bool = False
+    can_attack: bool = False
+    dashing: bool = False
+
 
 
 @dataclass
@@ -182,6 +191,7 @@ class ApplicationSettings:
     If enabled dpad jumps between menupoints
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
+    background_image: Surface = None
 
 
 @dataclass
@@ -234,7 +244,7 @@ class AnimationGroup:
     """
 
     id: string
-    lenght: float = 1
+    length: float = 1
     mode: Literal["Normal", "Forwards"] = "Normal"
     timing_function: Callable[[Number, Number, Number], Number] = None
     animations: Optional[list[Animation]] = None
@@ -314,7 +324,8 @@ class Mishap:
 
 @dataclass
 class StyleSheet:
-    position: str = None
+    display: Literal["block", "none"] = None
+    position: Literal["absolute", "relative"] = None
 
     bottom: str = None
     right: str = None

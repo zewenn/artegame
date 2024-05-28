@@ -1,20 +1,35 @@
 from base import *
 
 # class Items:
-selector_map: dict[str, Optional[Item | Bone]] = {}
+# selector_map: dict[str, Optional[Item | Bone]] = {}
 rendering: list[Item] = []
 
 
-def add_to_scene(item: Item) -> Item:
+def reset() -> None:
+    global rendering
+    del rendering[::]
+    rendering = []
+
+
+def remove(item: Item) -> Item:
+    global rendering
+    if item in rendering:
+        rendering.remove(item)
+    return item
+
+
+def add(item: Item) -> Item:
+    item.uuid = "item:" + uuid()
     rendering.append(item)
     return item
 
 
-def add_to_selector_map(selector: str, item: Optional[Item]) -> None:
-    global selector_map
 
-    if item is not None:
-        selector_map[selector] = item
+# def add_to_selector_map(selector: str, item: Optional[Item]) -> None:
+#     global selector_map
+
+#     if item is not None:
+#         selector_map[selector] = item
 
 
 def __inner_get__(
@@ -65,8 +80,8 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
         Item or Bone or None: REFERENCE
     """
 
-    if selector_map.get(selector):
-        return Ok(selector_map.get(selector))
+    # if selector_map.get(selector):
+    #     return Ok(selector_map.get(selector))
 
     item_and_bone: list[str] = selector.split("->")
     enity_selector_list: list[str] = item_and_bone[0].split("|")
@@ -89,20 +104,16 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
     item: Optional[Item] = __inner_get__(id=item_id, tags=item_tags)
 
     if bone_id is None:
-        add_to_selector_map(selector, item)
-        if item: 
+        # add_to_selector_map(selector, item)
+        if item:
             return Ok(item)
         return Err(Mishap(f"Couldn't find item: {selector}"))
 
     if hasattr(item, "bones"):
-        add_to_selector_map(selector, item.bones.get(bone_id))
+        # add_to_selector_map(selector, item.bones.get(bone_id))
         res = item.bones.get(bone_id)
 
         if res == None:
             return Err(Mishap(f"Couldn't find item: {selector}"))
-        
+
         return Ok(res)
-
-
-    
-

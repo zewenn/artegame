@@ -3,6 +3,7 @@ from base import *
 import events
 import pgapi
 import items
+import animator
 import gui
 
 
@@ -50,15 +51,23 @@ def load(scene: str) -> None:
     events.call(f"{scene}::awake")
     events.call(f"{scene}::init")
 
+    # print(items.rendering)
+
     events.set_update_name(f"{scene}::update")
 
 
 def close(scene: str) -> None:
     pgapi.SETTINGS.menu_mode = False
-    items.rendering = []
-    gui.buttons = []
-    gui.selected_button_index = 0
-    gui.query_available = []
-    gui.DOM_El.children = []
+    pgapi.SETTINGS.background_image = None
+    # items.rendering = []
+
+    # item_list = copy.copy(items.rendering)
+    # del item_list[::]
+    animator.reset()
+    items.reset()
+    
+    # print("Items rendering: ", items.rendering, item_list)
+    # gui.buttons = []
+    gui.reset()
 
     events.call(f"{scene}::quit")

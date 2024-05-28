@@ -27,3 +27,7 @@ class COLOURS:
 class POSITION:
     ABSOLUTE = "absolute"
     RELATIVE = "relative"
+
+class DISPLAY:
+    NONE = "none"
+    BLOCK = "block"

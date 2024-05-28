@@ -7,7 +7,7 @@ from src.imports import *
 
 import events
 import assets
-import render
+import display
 import pgapi
 import collision
 import gui
@@ -16,6 +16,10 @@ import inpt
 import saves
 import scene
 import enums
+import threading
+import screeninfo
+
+
 
 
 def init():
@@ -26,10 +30,12 @@ def init():
 
     assets.create_runtime_objects()
 
+    monitor = screeninfo.get_monitors()[0]
     pgapi.use(
         ApplicationSettings(
             application_name=f"Artegame - DEMO",
-            screen_size=Vec2(1600, 900),
+            # screen_size=Vec2(1600, 900),
+            screen_size=Vec2(monitor.width, monitor.height),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
@@ -38,37 +44,41 @@ def init():
             # axis_rounding=10
         )
     )
-    # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED)
+
+    pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED | pygame.DOUBLEBUF)
 
     inpt.init_controllers()
 
-    inpt.bind_buttons("exit", ["escape", "back@ctrl#0"])
+    inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
 
     scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)
     events.call(events.IDS.init)
+
 
     while pgapi.RUN:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pgapi.RUN = False
 
-        # Demo exit
-        if inpt.active_bind("exit"):
-            pgapi.RUN = False
-
-        pgapi.SCREEN.this.fill("black")
+        # DO NOT SWITCH THESE UP
+        # I JUST SUFFERED FOR 1.5 HOURS TRYING TO FIX THIS SH*T
+        # INPT -> GUI -> EVENTS -> COLLISION
+        # THERE IS NO OTHER WAY
         inpt.system_udpate()
         gui.system_update()
 
         events.system_update()
-        animator.tick_anims()
         collision.system_update()
 
+        pgapi.SCREEN.this.fill("black")
+        animator.tick_anims()
         pgapi.system_camera()
 
-        render.render()
-        pygame.display.flip()
+        display.render()
+
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000
         pgapi.TIME.current = pgapi.time.perf_counter()
 

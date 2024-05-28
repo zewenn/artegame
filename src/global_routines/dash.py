@@ -18,6 +18,7 @@ def upd_dash():
             dsh_obj.this.can_move = True
             dsh_obj.this.movement_speed = dsh_obj.this.base_movement_speed
             dsh_obj.this.invulnerable = False
+            dsh_obj.this.dashing = False
             continue
 
         dsh_obj.this.transform.position.y += (
@@ -34,6 +35,7 @@ def apply_dash_effect(
     # print(this.dashes_remaining)
 
     this.can_move = False
+    this.dashing = True
     this.movement_speed = this.base_movement_speed * speed_multiplier
 
     start_t = pgapi.TIME.current

@@ -19,22 +19,78 @@ import time
 playing_groups: dict[str, PlayObject] = {}
 
 
+def reset() -> None:
+    global playing_groups
+    
+    for val in playing_groups.values():
+        del val
+
+    playing_groups = {}
+
 def reset_anim(id: string) -> None:
     for anim in playing_groups[id].group.animations:
         render_keyframe(anim.target, list(anim.keyframes.values())[0])
 
 
 def tick_anims() -> None:
-    finished: list[Tuple[str, PlayObject]] = []
-    for id, play_obj in playing_groups.items():
+    # finished: list[Tuple[str, PlayObject]] = []
+    # for id, play_obj in playing_groups.items():
+    #     if play_obj is None:
+    #         continue
+
+    #     if play_obj.finished:
+    #         finished.append((play_obj.group.id, play_obj))
+    #         continue
+
+    #     finished_count: int = 0
+
+    #     for anim in play_obj.anims:
+    #         if anim.finished:
+    #             finished_count += 1
+    #             render_keyframe(anim.anim.target, anim.keyframe_list[-1])
+    #             continue
+
+    #         if time.perf_counter() > anim.end_time:
+    #             x = play_objects.next(play_obj, anim)
+    #             if x is False:
+    #                 continue
+
+    #         t = (time.perf_counter() - anim.start_time) / (
+    #             play_obj.group.lenght
+    #             * (anim.end_time_multipliers[anim.current_keyframe + 1] + 0.001)
+    #         )
+    #         t = max(0, min(1, t))
+
+    #         interpolated_keyframe = interpolation.interpolate_keyframes(
+    #             play_obj.group.timing_function,
+    #             anim.keyframe_list[anim.current_keyframe],
+    #             anim.keyframe_list[anim.current_keyframe + 1],
+    #             t,
+    #         )
+
+    #         render_keyframe(anim.anim.target, interpolated_keyframe)
+
+    #     if len(play_obj.anims) == finished_count:
+    #         play_obj.finished = True
+
+    # for id, po in finished:
+    #     if po.group.mode == enums.animations.MODES.NORMAL:
+    #         reset_anim(id)
+    #     del playing_groups[id]
+    #     del po
+    # del finished
+    finished = []
+
+    current_time = time.perf_counter()
+    for id, play_obj in list(playing_groups.items()):
         if play_obj is None:
             continue
 
         if play_obj.finished:
-            finished.append((play_obj.group.id, play_obj))
+            finished.append((id, play_obj))
             continue
 
-        finished_count: int = 0
+        finished_count = 0
 
         for anim in play_obj.anims:
             if anim.finished:
@@ -42,13 +98,12 @@ def tick_anims() -> None:
                 render_keyframe(anim.anim.target, anim.keyframe_list[-1])
                 continue
 
-            if time.perf_counter() > anim.end_time:
-                x = play_objects.next(play_obj, anim)
-                if x is False:
+            if current_time > anim.end_time:
+                if not play_objects.next(play_obj, anim):
                     continue
 
-            t = (time.perf_counter() - anim.start_time) / (
-                play_obj.group.lenght
+            t = (current_time - anim.start_time) / (
+                play_obj.group.length
                 * (anim.end_time_multipliers[anim.current_keyframe + 1] + 0.001)
             )
             t = max(0, min(1, t))
@@ -62,7 +117,7 @@ def tick_anims() -> None:
 
             render_keyframe(anim.anim.target, interpolated_keyframe)
 
-        if len(play_obj.anims) == finished_count:
+        if finished_count == len(play_obj.anims):
             play_obj.finished = True
 
     for id, po in finished:
@@ -90,6 +145,9 @@ def set_mode(anim: AnimationGroup, mode: int) -> None:
 
 def render_keyframe(target: str, keyframe: Keyframe) -> None:
     target_o = items.get(target)
+
+    if typeof(target_o) == "NoneType":
+        return
 
     if target_o.is_err():
         printf(f'Target object by the query "{target}" does not exist!')
@@ -171,7 +229,7 @@ def create(
 
     return AnimationGroup(
         id=uuid4().hex,
-        lenght=duration_seconds,
+        length=duration_seconds,
         mode=mode,
         timing_function=timing_function,
         animations=animations,

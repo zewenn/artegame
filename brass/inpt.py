@@ -287,18 +287,18 @@ def bind_buttons(
     T: Optional[Literal["down", "up"]] = None,
 ) -> None:
     if bind_cache.get(name):
+        print(f"[Warn] Couldn't overwrite bind: {name}")
         return
 
-    getfn: Callable[[str], bool]
-    match T:
-        case None:
+    def bindf():
+        getfn: Callable[[str], bool]
+        if T == None:
             getfn = get_button
-        case "down":
+        elif T == "down":
             getfn = get_button_down
-        case "up":
+        elif T == "up":
             getfn = get_button_up
 
-    def bindf():
         all_down_any = False
 
         for i in range(len(key_set_list)):
