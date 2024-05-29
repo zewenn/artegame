@@ -21,8 +21,6 @@ import enums
 import screeninfo
 
 
-
-
 def init():
     # Setting up pygame
     pygame.init()
@@ -43,6 +41,7 @@ def init():
             camera=Camera(Vec2(0, 0), 1),
             is_demo=True,
             # axis_rounding=10
+            skip_title_screen=True,
         )
     )
 
@@ -53,10 +52,13 @@ def init():
     inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
-    inpt.bind_buttons('exit', [{"left shift", "escape"}])
+    inpt.bind_buttons("exit", [{"left shift", "escape"}])
 
-    scene.load(enums.scenes.DEFAULT)
     events.call(events.IDS.awake)
+    if not pgapi.SETTINGS.skip_title_screen:
+        scene.load(enums.scenes.DEFAULT)
+    else:
+        scene.load(enums.scenes.GAME)
     events.call(events.IDS.init)
 
     while pgapi.RUN:

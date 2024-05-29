@@ -101,6 +101,7 @@ class Item:
     dash_movement_multiplier: Optional[int] = None
     dash_count: Optional[int] = None
     dashes_remaining: Optional[int] = None
+    dash_time: Optional[int] = None
     """@runtime"""
     # |> Movement -> Dashes -> Cooldown Management
     dash_charge_refill_time: Optional[float] = None
@@ -211,6 +212,7 @@ class ApplicationSettings:
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
     background_image: Surface = None
+    skip_title_screen: bool = False
 
 
 @dataclass

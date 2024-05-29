@@ -107,4 +107,9 @@ def awake() -> None:
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )
+    
+    # if pgapi.SETTINGS.skip_title_screen:
+    #     load_game_scene()
+    # else:
     pgapi.as_menu()
+

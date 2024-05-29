@@ -3,7 +3,7 @@ import random
 from brass.base import *
 
 # fmt: off
-from global_routines import projectiles, dash
+from global_routines import projectiles, dash, crowd_control
 from brass import (
     items, 
     pgapi, 
@@ -26,15 +26,15 @@ def awake() -> None:
     ENEMIES = items.get_all("enemy")
     # print(ENEMIES)
 
-    for enemy in ENEMIES:
-        enemy.movement_speed = enemy.base_movement_speed
-        enemy.hitpoints = enemy.max_hitpoints
-        enemy.mana = enemy.max_mana
-        enemy.team = "Enemy"
-        enemy.can_attack = True
-        enemy.slowed_by_percent = 0
-        if enemy.effective_range == None:
-            enemy.effective_range = 200
+    for item in ENEMIES:
+        item.movement_speed = item.base_movement_speed
+        item.hitpoints = item.max_hitpoints
+        item.mana = item.max_mana
+        item.team = "Enemy"
+        item.can_attack = True
+        item.slowed_by_percent = 0
+        if item.effective_range == None:
+            item.effective_range = 200
 
     player_q = items.get("player")
     if player_q.is_err():
@@ -48,7 +48,16 @@ def new(item: Item) -> Item:
     if not item.tags.__contains__("enemy"):
         item.tags.append("enemy")
 
+    
+    item.movement_speed = item.base_movement_speed
+    item.hitpoints = item.max_hitpoints
+    item.mana = item.max_mana
+    item.team = "Enemy"
+    item.can_attack = True
+    item.slowed_by_percent = 0
+
     ENEMIES.append(item)
+    items.add(item)
     return item
 
 
@@ -80,7 +89,7 @@ def update() -> None:
             end=vectormath.sub_Vec2(player.transform.position, enemy.transform.position)
         )
 
-        if enemy.can_move and or_vec.magnitude >= enemy.effective_range:
+        if enemy.can_move and or_vec.magnitude >= enemy.transform.scale.x * 1.5:
             vec = vectormath.normalise(or_vec)
             enemy.transform.position.y += (
                 enemy.movement_speed
@@ -115,17 +124,45 @@ def update() -> None:
             and not enemy.sleeping
             and not enemy.stunned
         ):
-            projectiles.shoot(
-                projectiles.new(
-                    "light_attack_projectile.png",
-                    structured_clone(enemy.transform.position),
-                    Vec2(64, 64),
-                    -or_vec.direction + 90,
-                    0.5,
-                    enemy.base_movement_speed,
-                    "Enemy",
-                    20,
-                )
+            shoot_random_projectile(or_vec, enemy)
+
+
+def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
+    rand = random.randint(0, 1)
+
+    # Light Attack
+
+    if rand == 0:
+        projectiles.shoot(
+            projectiles.new(
+                "light_attack_projectile.png",
+                structured_clone(item.transform.position),
+                Vec2(64, 64),
+                -vector.direction + 90,
+                1,
+                item.base_movement_speed * 1.2,
+                "Enemy",
+                10,
             )
-            enemy.can_attack = False
-            timeout.set(1.5, remove_attack_cooldown, (enemy,))
+        )
+        item.can_attack = False
+        timeout.set(.5, remove_attack_cooldown, (item,))
+        return
+    
+    # Heavy Attack
+
+    projectiles.shoot(
+        projectiles.new(
+            "heavy_attack_projectile.png",
+            structured_clone(item.transform.position),
+            Vec2(64, 64),
+            -vector.direction + 90,
+            1.5,
+            item.base_movement_speed * 1.1,
+            "Enemy",
+            20,
+        )
+    )
+    item.can_attack = False
+    crowd_control.apply(item, "stun", .5)
+    timeout.set(.75, remove_attack_cooldown, (item,))

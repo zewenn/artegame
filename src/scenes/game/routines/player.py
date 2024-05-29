@@ -89,6 +89,8 @@ def init() -> None:
     player.hitpoints = player.max_hitpoints
     player.mana = player.max_mana
     player.slowed_by_percent = 0
+    if not player.dash_time:
+        player.dash_time = 150
 
     # hitpoint_display.style.bg_color = (20, 120, 220, 1)
 
@@ -130,19 +132,23 @@ def handle_combat() -> None:
 
     if light_attacking and player.dashing:
         animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="dash_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(128, 64),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=0.35,
-                speed=player.base_movement_speed
-                * 1.5
-                * player.dash_movement_multiplier,
-                team="Player",
-                damage=20,
-            )
+        timeout.set(
+            (player.dash_time * 1.1) / 1000,
+            lambda: projectiles.shoot(
+                projectiles.new(
+                    sprite="dash_attack_projectile.png",
+                    position=structured_clone(player.transform.position),
+                    scale=Vec2(128, 64),
+                    direction=player_hand_holder.transform.rotation.z,
+                    lifetime_seconds=1,
+                    speed=player.base_movement_speed
+                    * 1.5
+                    * player.dash_movement_multiplier,
+                    team="Player",
+                    damage=20,
+                ),
+            ),
+            ()
         )
 
     elif light_attacking and can_attack:
@@ -153,7 +159,7 @@ def handle_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=0.2,
+                lifetime_seconds=0.5,
                 speed=player.base_movement_speed * 1.125,
                 team="Player",
                 damage=10,
@@ -171,13 +177,11 @@ def handle_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=0.2,
-                speed=player.base_movement_speed * 1.05,
+                lifetime_seconds=1.25,
+                speed=player.base_movement_speed * 0.75,
                 team="Player",
                 damage=25,
-                effects=[
-                    Effect("stun", 1)
-                ]
+                effects=[Effect("stun", 1)],
             )
         )
         crowd_control.apply(player, "root", 0.25)
@@ -227,7 +231,7 @@ def move_player() -> None:
         player.last_dash_charge_refill = pgapi.TIME.current
         player.dashes_remaining -= 1
         dash.apply_dash_effect(
-            player, move_math_vec, player.dash_movement_multiplier, 150
+            player, move_math_vec, player.dash_movement_multiplier, player.dash_time
         )
         player.invulnerable = True
 

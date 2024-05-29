@@ -190,6 +190,9 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
     w = element.transform.scale.x
     h = element.transform.scale.y
 
+    if w < 0 or h < 0:
+        return
+
     # Background color and alpha
     bg_color = list(elstl.bg_color if elstl.bg_color else (0, 0, 0, 0))
     bg_color[3] = min(max(bg_color[3], 0), 1) * 255
@@ -207,7 +210,14 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
 
     # Create image surface
     if not elstl.bg_image:
-        image = pygame.Surface((w, h), pygame.SRCALPHA)
+        image = attempt(pygame.Surface, ((w, h), pygame.SRCALPHA))
+
+        if image.is_err():
+            print(image.err().msg)
+            return
+        
+        image = image.ok()
+
         image.fill(bg_color)
     else:
         image = pygame.transform.scale(ASSETS[elstl.bg_image], (w, h))

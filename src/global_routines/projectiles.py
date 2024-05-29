@@ -7,8 +7,12 @@ PROJECTILES: list[Item] = []
 
 
 def rm_projectile(proj: Item) -> None:
-    PROJECTILES.remove(proj)
-    items.remove(proj)
+    if proj in PROJECTILES:
+        PROJECTILES.remove(proj)
+    if proj in items.rendering:
+        items.remove(proj)
+    del proj
+
 
 
 def play(

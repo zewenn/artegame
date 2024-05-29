@@ -53,7 +53,7 @@ def awake() -> None:
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
                 top="3.5u",
-                left=".5u",
+                left="1u",
                 font_size=FONT_SIZE.MEDIUM,
                 font_family=FONTS.PRESS_PLAY,
                 color=COLOURS.WHITE,
@@ -97,9 +97,15 @@ def awake() -> None:
                 "CenterButtons",
                 title_button("continue-btn", "Játék Folytatása", 0, menu.hide_menu),
                 title_button(
+                    "reload-btn",
+                    "Újratöltés",
+                    FS + GAP,
+                    lambda: scene.load(enums.scenes.GAME),
+                ),
+                title_button(
                     "exit-btn",
                     "Főmenü",
-                    FS + GAP,
+                    (FS + GAP) * 2,
                     back_to_main_menu,
                 ),
                 style=StyleSheet(position=POSITION.ABSOLUTE, top="40h", left="50w"),
