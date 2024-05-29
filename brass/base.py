@@ -139,3 +139,6 @@ class Piper(Generic[T, K]):
 
 def uuid() -> string:
     return uuid4().hex
+
+def delete(a: Any) -> None:
+    pass

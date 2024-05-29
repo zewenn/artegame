@@ -55,6 +55,25 @@ def spawn() -> None:
             ],
         ),
     )
+    animator.store.add(
+        "player_get_hit",
+        animator.create(
+            duration_seconds=0.1,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.EASE_IN_OUT,
+            animations=[
+                Animation(
+                    "player",
+                    {
+                        1: Keyframe(rotation_z=0),
+                        30: Keyframe(rotation_z=20),
+                        60: Keyframe(rotation_z=-20),
+                        100: Keyframe(rotation_z=0),
+                    },
+                )
+            ],
+        ),
+    )
 
     # res_loaded: Result[None, Mishap] = saves.load()
     # if res_loaded.is_ok():
@@ -83,10 +102,10 @@ def spawn() -> None:
             can_move=True,
             can_collide=True,
             can_repulse=True,
-            lightness=1,
-            base_movement_speed=300,
+            lightness=.9,
+            base_movement_speed=400,
             dash_count=2,
-            dash_movement_multiplier=6,
+            dash_movement_multiplier=3,
             dash_charge_refill_time=0.5,
             max_hitpoints=100,
             max_mana=100,
@@ -130,7 +149,7 @@ def spawn() -> None:
             sprite="test.png",
             can_move=True,
             can_collide=True,
-            can_repulse=True,
+            # can_repulse=True,
             lightness=1,
             base_movement_speed=300,
             dash_count=2,

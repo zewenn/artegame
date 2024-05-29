@@ -8,7 +8,7 @@ EFFECT_TYPES = Literal["slow", "root", "stun", "sleep", "all"]
 
 
 def cleanse(item: Item, effect: EFFECT_TYPES) -> None:
-    print(f"Removing \"{effect}\" from \"{item.id}\" item.", item.slowed_by_percent)
+    # print(f"Removing \"{effect}\" from \"{item.id}\" item.", item.slowed_by_percent)
     if effect == "all":
         item.slowed_by_percent = 0
         item.rooted = False
@@ -49,7 +49,7 @@ def apply(
         print("Cannot apply all effects!")
         return
 
-    print(T, to.id, to.uuid)
+    # print(T, to.id, to.uuid)
 
     if T == "sleep":
         Timer(sleep_countdown, apply_sleep, (to, length))

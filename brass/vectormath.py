@@ -8,6 +8,10 @@ def get_Vec2_distcance(point1: Vec2, point2: Vec2):
     return math.hypot(point1.x - point2.x, point1.y - point2.y)
 
 
+def sub_Vec2(point1: Vec2, point2: Vec2):
+    return Vec2(point1.x - point2.x, point1.y - point2.y)
+
+
 def __raise_creation_error(missing: list[str] = None):
     if missing is None:
         missing = []

@@ -12,7 +12,8 @@ from brass import (
     gui
 )
 from global_routines import (
-    menu
+    menu,
+    enemies
 )
 # fmt: on
 

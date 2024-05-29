@@ -232,7 +232,7 @@ def build_global_routines() -> None:
             global_rtns.remove(item)
 
     for index, global_rtn in enumerate(global_rtns):
-        print(
+        printf.full_line(
             f"[{index + 1}/{len(global_rtns)}] Binding GLOBAL Routines: {shorten(global_rtn)} ",
             end="\r",
         )

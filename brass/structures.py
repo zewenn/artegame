@@ -132,12 +132,16 @@ class Item:
     invulnerable: bool = False
     can_attack: bool = False
     dashing: bool = False
+    can_attack: bool = False
 
     # |> Combat -> Crowd Control
     slowed_by_percent: Optional[int] = None
     rooted: bool = False
     stunned: bool = False
     sleeping: bool = False
+
+    # Enemies
+    effective_range: Optional[Number] = None
 
 
 @dataclass

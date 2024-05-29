@@ -34,6 +34,7 @@ walk_sound: Optional[Audio] = None
 
 can_attack: bool = True
 
+
 def init() -> None:
     global player
     global player_hand_holder
@@ -97,13 +98,12 @@ def update() -> None:
 
     if inpt.get_button_down("y"):
         crowd_control.apply(player, "root", 2)
-        print("Player stunned: ", player.stunned)
-
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
-        print("Player can't move")
         player.can_move = False
-    elif (not (player.rooted or player.stunned or player.sleeping)) and not player.can_move:
+    elif (
+        not (player.rooted or player.stunned or player.sleeping)
+    ) and not player.can_move:
         player.can_move = True
 
     move_player()
@@ -111,7 +111,6 @@ def update() -> None:
 
     # print(items.rendering)
     handle_combat()
-    
 
     hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
 
@@ -129,7 +128,6 @@ def handle_combat() -> None:
     light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
     heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
 
-
     if light_attacking and player.dashing:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
@@ -138,8 +136,10 @@ def handle_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(128, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=.25,
-                speed=450 * player.dash_movement_multiplier,
+                lifetime_seconds=0.35,
+                speed=player.base_movement_speed
+                * 1.5
+                * player.dash_movement_multiplier,
                 team="Player",
                 damage=20,
             )
@@ -153,15 +153,16 @@ def handle_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=.2,
-                speed=450,
+                lifetime_seconds=0.2,
+                speed=player.base_movement_speed * 1.125,
                 team="Player",
                 damage=10,
             )
         )
         can_attack = False
-        timeout.set(.075, allow_attack, ())
-    
+        crowd_control.apply(player, "root", 0.1)
+        timeout.set(0.075, allow_attack, ())
+
     elif heavy_attacking and can_attack and not player.dashing:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
@@ -170,15 +171,15 @@ def handle_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=.2,
-                speed=350,
+                lifetime_seconds=0.2,
+                speed=player.base_movement_speed * 1.05,
                 team="Player",
                 damage=25,
             )
         )
-        crowd_control.apply(player, "root", .25)
+        crowd_control.apply(player, "root", 0.25)
         can_attack = False
-        timeout.set(.25, allow_attack, ())
+        timeout.set(0.25, allow_attack, ())
 
 
 def move_player() -> None:
@@ -229,10 +230,16 @@ def move_player() -> None:
 
     if player.can_move:
         player.transform.position.y += (
-            player.movement_speed * (1 - (player.slowed_by_percent / 100)) * pgapi.TIME.deltatime * move_math_vec.end.y
+            player.movement_speed
+            * (1 - (player.slowed_by_percent / 100))
+            * pgapi.TIME.deltatime
+            * move_math_vec.end.y
         )
         player.transform.position.x += (
-            player.movement_speed * (1 - (player.slowed_by_percent / 100)) * pgapi.TIME.deltatime * move_math_vec.end.x
+            player.movement_speed
+            * (1 - (player.slowed_by_percent / 100))
+            * pgapi.TIME.deltatime
+            * move_math_vec.end.x
         )
 
     player_hand_holder.transform.position = player.transform.position
