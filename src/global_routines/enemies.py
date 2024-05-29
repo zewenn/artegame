@@ -73,6 +73,8 @@ def update() -> None:
 
         if enemy.stunned or enemy.rooted or enemy.sleeping:
             enemy.can_move = False
+        elif not enemy.can_move:
+            enemy.can_move = True
 
         or_vec = vectormath.new(
             end=vectormath.sub_Vec2(player.transform.position, enemy.transform.position)
@@ -93,7 +95,7 @@ def update() -> None:
                 * vec.end.x
             )
 
-        if random.randint(0, 400) == 0:
+        if random.randint(0, 400) == 0 and enemy.can_move:
             dash.apply_dash_effect(
                 enemy,
                 vectormath.new(
@@ -107,7 +109,12 @@ def update() -> None:
                 150,
             )
 
-        if or_vec.magnitude <= enemy.effective_range and enemy.can_attack:
+        if (
+            or_vec.magnitude <= enemy.effective_range
+            and enemy.can_attack
+            and not enemy.sleeping
+            and not enemy.stunned
+        ):
             projectiles.shoot(
                 projectiles.new(
                     "light_attack_projectile.png",

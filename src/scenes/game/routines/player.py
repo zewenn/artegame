@@ -175,6 +175,9 @@ def handle_combat() -> None:
                 speed=player.base_movement_speed * 1.05,
                 team="Player",
                 damage=25,
+                effects=[
+                    Effect("stun", 1)
+                ]
             )
         )
         crowd_control.apply(player, "root", 0.25)

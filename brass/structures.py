@@ -123,6 +123,7 @@ class Item:
     life_start: Optional[Number] = None
     team: Optional[Literal["Player", "Enemy"]] = None
     projectile_damage: Optional[Number] = None
+    projectile_effects: Optional[list["Effect"]] = None
 
     # Combat // Alive
     max_hitpoints: Optional[Number] = None
@@ -142,6 +143,14 @@ class Item:
 
     # Enemies
     effective_range: Optional[Number] = None
+
+
+@dataclass
+class Effect:
+    T: Literal["slow", "root", "stun", "sleep"]
+    length: Number
+    slow_strength: Number = 50
+    sleep_wait_time: Number = 1
 
 
 @dataclass

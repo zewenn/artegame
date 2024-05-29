@@ -1,6 +1,7 @@
 from brass.base import *
 
 from brass import vectormath, collision, events, pgapi, items, animator, enums, timeout
+from global_routines import crowd_control
 
 PROJECTILES: list[Item] = []
 
@@ -9,10 +10,12 @@ def rm_projectile(proj: Item) -> None:
     PROJECTILES.remove(proj)
     items.remove(proj)
 
-@silence
-def play_get_hit_anim(item: Item) -> None:
-    anim = (
-        animator.create(
+
+def play(
+    item: Item, anim: Literal["get_hit", "get_stunned"], length: Number = 0.1
+) -> None:
+    if anim == "get_hit":
+        anim = animator.create(
             duration_seconds=0.1,
             mode=enums.animations.MODES.NORMAL,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
@@ -23,14 +26,46 @@ def play_get_hit_anim(item: Item) -> None:
                         1: Keyframe(rotation_z=0),
                         30: Keyframe(rotation_z=20),
                         60: Keyframe(rotation_z=-20),
-                        100: Keyframe(rotation_z=0),
                     },
                 )
             ],
         )
-    )
-    animator.play(anim)
-    timeout.set(.12, delete, (anim,))
+        animator.play(anim)
+        timeout.set(0.12, delete, (anim,))
+        return
+
+    if anim == "get_stunned":
+        original_h = item.transform.scale.y
+
+        anim = animator.create(
+            duration_seconds=length,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.EASE_IN_OUT,
+            animations=[
+                Animation(
+                    item.id,
+                    {
+                        # fmt: off
+                        1: Keyframe(
+                            height=original_h,
+                        ),
+                        30: Keyframe(
+                            height=original_h // 1.1,
+                        ),
+                        60: Keyframe(
+                            height=original_h // 1.5
+                        ),
+                        100: Keyframe(
+                            height=original_h,
+                        ),
+                        # fmt: on
+                    },
+                )
+            ],
+        )
+        animator.play(anim)
+        timeout.set(0.12, delete, (anim,))
+        return
 
 
 @events.update
@@ -64,8 +99,21 @@ def system_update() -> None:
 
             if collision.collides(projectile.transform, item.transform):
                 item.hitpoints -= projectile.projectile_damage
-                if (item.hitpoints > 0):
-                    play_get_hit_anim(item)
+                if item.hitpoints > 0:
+                    play_name = "get_hit"
+                    length = .1
+                    for effect in projectile.projectile_effects:
+                        if effect.T == "stun":
+                            play_name = "get_stunned"
+                        crowd_control.apply(
+                            item,
+                            effect.T,
+                            effect.length,
+                            effect.slow_strength,
+                            effect.sleep_wait_time,
+                        )
+
+                    play(item, play_name, length)
                 rm_projectile(projectile)
 
             # if item.hitpoints <= 0:
@@ -86,7 +134,9 @@ def new(
     speed: Number,
     team: Literal["Player", "Enemy"],
     damage: Number,
+    effects: list[Effect] = None,
 ) -> Item:
+    effects = [] if effects == None else effects
     return Item(
         id=f"Projectile-{uuid()}",
         tags=["projectile", "item"],
@@ -103,6 +153,7 @@ def new(
         life_start=pgapi.TIME.current,
         team=team,
         projectile_damage=damage,
+        projectile_effects=effects,
     )
 
 
