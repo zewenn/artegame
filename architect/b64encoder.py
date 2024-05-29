@@ -1,7 +1,6 @@
 import base64, os
 import __config__ as conf
-from zenyx import printf
-
+from util import *
 
 def get_files_in_directory(directory) -> list[str]:
     file_list = []
@@ -28,7 +27,7 @@ def serialize_file_to_b64string(filepath) -> str:
 
     return base64_string
 
-
+@task("Serialising Assets")
 def serialise() -> None:
     images: list = get_files_in_directory(os.path.join(*conf.ASSETS_DIR_PATH))
     img_dict: dict = {}
@@ -36,10 +35,9 @@ def serialise() -> None:
     for index, image in enumerate(images):
         basename: str = os.path.basename(image)
         img_dict[basename] = serialize_file_to_b64string(image)
-        printf.full_line(
-            f"[{index + 1}/{len(images)}] Serialising Assets: {basename}",
-            end="\r" if index != len(images) - 1 else "\n",
-        )
+        
+        progress_bar(index + 1, len(images), shorten(basename))
+    task_complete()
 
     if not os.path.isdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR)):
         os.mkdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR))

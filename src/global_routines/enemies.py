@@ -1,7 +1,9 @@
+import random
+
 from brass.base import *
 
 # fmt: off
-from global_routines import projectiles
+from global_routines import projectiles, dash
 from brass import (
     items, 
     pgapi, 
@@ -91,6 +93,20 @@ def update() -> None:
                 * vec.end.x
             )
 
+        if random.randint(0, 400) == 0:
+            dash.apply_dash_effect(
+                enemy,
+                vectormath.new(
+                    start=Vec2(0, 0),
+                    magnitude=1,
+                    direction=random.choice(
+                        [or_vec.direction - 90, or_vec.direction + 90, or_vec.direction]
+                    ),
+                ),
+                3,
+                150,
+            )
+
         if or_vec.magnitude <= enemy.effective_range and enemy.can_attack:
             projectiles.shoot(
                 projectiles.new(
@@ -106,4 +122,3 @@ def update() -> None:
             )
             enemy.can_attack = False
             timeout.set(1.5, remove_attack_cooldown, (enemy,))
-

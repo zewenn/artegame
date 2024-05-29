@@ -149,7 +149,7 @@ def spawn() -> None:
             sprite="test.png",
             can_move=True,
             can_collide=True,
-            # can_repulse=True,
+            can_repulse=True,
             lightness=1,
             base_movement_speed=300,
             dash_count=2,
