@@ -44,8 +44,51 @@ def title_button(
     )
 
 
+def item_display(nth: Number, name: string) -> GUIElement:
+    width = 48
+    gap = 32
+    FS = FONT_SIZE.SMALL
+    return Element(
+        "Inventory-Item-" + name,
+
+        Element(
+            "Inventory-Item-" + name + "-Counter",
+
+            Text("0"),
+            style=StyleSheet(
+                position=POSITION.RELATIVE,
+                top=f"{width - FS}x",
+                left=f"{width - FS}x",
+                font_size=FS,
+                font_family=FONTS.PRESS_PLAY
+            )
+        ),
+
+        style=StyleSheet(
+            position=POSITION.RELATIVE,
+            left=f"{width * nth - 1 + gap}x",
+            top="0x",
+            width=width,
+            height=width,
+            bg_image=f"{name}.png"
+        ) 
+    )
+
+
+
 def awake() -> None:
     DOM(
+        Element(
+            "InventoryDisplay",
+            item_display(1, "banana"),
+            item_display(2, "strawberry"),
+            item_display(3, "blueberry"),
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                left="80w",
+                top="90h"
+            )
+        ),
         Element(
             "PlayerDashCounter",
             Text("[×] [×] "),

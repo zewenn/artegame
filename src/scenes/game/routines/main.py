@@ -61,14 +61,7 @@ def update() -> None:
                 effective_range=600,
                 hitpoints=100,
                 max_mana=100,
-                team="Enemy",
-                inventory={
-                    "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
-                    "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
-                    "banana": 0,
-                    "strawberry": 0,
-                    "blueberry": 0,
-                },
+                team="Enemy"
             )
         )
         enemies.new(
@@ -90,13 +83,6 @@ def update() -> None:
                 effective_range=800,
                 hitpoints=100,
                 max_mana=100,
-                team="Enemy",
-                inventory={
-                    "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
-                    "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
-                    "banana": 0,
-                    "strawberry": 0,
-                    "blueberry": 0,
-                },
+                team="Enemy"
             )
         )

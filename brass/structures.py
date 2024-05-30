@@ -54,12 +54,6 @@ class Bone:
 
 
 @dataclass
-class Weapon:
-    damage: int
-    damage_area: Vec2
-
-
-@dataclass
 class Collider:
     transform: Transform
     trigger: bool = False
@@ -108,7 +102,8 @@ class Item:
     """@runtime"""
 
     # Inventory
-    inventory: Optional[dict[str, Weapon | int]] = None
+    inventory: Optional["Inventory"] = None
+    """@player-only"""
     weapon: Optional[Literal["plates", "gloves"]] = None
     """@player-only"""
 
@@ -181,6 +176,13 @@ class Dasher:
     speed_multiplier: float
     time: float
     start_time: float
+
+
+@dataclass
+class Inventory:
+    banana: int = 0
+    strawberry: int = 0
+    blueberry: int = 0
 
 
 # ------------------------- Audio System --------------------------

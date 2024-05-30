@@ -119,6 +119,9 @@ def init() -> None:
 
     base_attack_speed_frfr = player.base_attack_speed
 
+    if not player.inventory:
+        player.inventory = Inventory()
+
     if not player.weapon:
         player.weapon = "plates"
 

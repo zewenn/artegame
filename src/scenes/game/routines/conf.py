@@ -114,13 +114,7 @@ def spawn() -> None:
             max_mana=100,
             base_attack_speed=5,
             team="Player",
-            inventory={
-                "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
-                "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
-                "banana": 0,
-                "strawberry": 0,
-                "blueberry": 0,
-            },
+            inventory=Inventory(),
         )
     )
     items.add(
