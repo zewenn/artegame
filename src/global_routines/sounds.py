@@ -7,6 +7,8 @@ GAME_MUSIC: Optional[Audio] = None
 MENU_MUSIC: Optional[Audio] = None
 
 
+VOLUME = .15
+
 @events.awake
 def awk() -> None:
     global GAME_MUSIC, MENU_MUSIC
@@ -21,7 +23,7 @@ def game_spawn() -> None:
 
     audio.fade_out(MENU_MUSIC, 1000)
 
-    audio.set_volume(GAME_MUSIC, 0.35)
+    audio.set_volume(GAME_MUSIC, VOLUME)
     audio.fade_in(GAME_MUSIC, 500, 1)
 
 
@@ -31,5 +33,5 @@ def game_spawn() -> None:
 
     audio.fade_out(GAME_MUSIC, 1000)
 
-    audio.set_volume(MENU_MUSIC, 0.35)
+    audio.set_volume(MENU_MUSIC, VOLUME)
     audio.fade_in(MENU_MUSIC, 500, 1)

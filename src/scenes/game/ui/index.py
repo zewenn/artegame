@@ -51,7 +51,7 @@ def awake() -> None:
             Text("[×] [×] "),
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
-                top="3.5u",
+                top="5.5u",
                 left="1u",
                 font_size=FONT_SIZE.MEDIUM,
                 font_family=FONTS.PRESS_PLAY,
