@@ -41,7 +41,7 @@ def init():
             camera=Camera(Vec2(0, 0), 1),
             is_demo=True,
             # axis_rounding=10
-            skip_title_screen=True,
+            # skip_title_screen=True,
         )
     )
 

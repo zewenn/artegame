@@ -33,6 +33,7 @@ hitpoint_display: Optional[GUIElement] = None
 walk_sound: Optional[Audio] = None
 
 can_attack: bool = True
+can_dash: bool = False
 
 
 def init() -> None:
@@ -117,13 +118,14 @@ def update() -> None:
     hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
 
 
+
 def allow_attack() -> None:
     global can_attack
     can_attack = True
 
 
 def handle_combat() -> None:
-    global can_attack
+    global can_attack, can_dash
     if player.stunned or player.sleeping:
         return
 
@@ -132,24 +134,24 @@ def handle_combat() -> None:
 
     if light_attacking and player.dashing:
         animator.play(player_light_attack_anim)
-        timeout.set(
-            (player.dash_time * 1.1) / 1000,
-            lambda: projectiles.shoot(
-                projectiles.new(
-                    sprite="dash_attack_projectile.png",
-                    position=structured_clone(player.transform.position),
-                    scale=Vec2(128, 64),
-                    direction=player_hand_holder.transform.rotation.z,
-                    lifetime_seconds=1,
-                    speed=player.base_movement_speed
-                    * 1.5
-                    * player.dash_movement_multiplier,
-                    team="Player",
-                    damage=20,
-                ),
+        projectiles.shoot(
+            projectiles.new(
+                sprite="dash_attack_projectile.png",
+                position=structured_clone(player.transform.position),
+                scale=Vec2(128, 64),
+                direction=player_hand_holder.transform.rotation.z,
+                lifetime_seconds=1,
+                speed=player.base_movement_speed
+                * 1.5
+                * player.dash_movement_multiplier,
+                team="Player",
+                damage=20,
             ),
-            ()
-        )
+        ),
+        # timeout.set(
+        #     (player.dash_time * 1.1) / 1000,
+        #     ()
+        # )
 
     elif light_attacking and can_attack:
         animator.play(player_light_attack_anim)
@@ -166,6 +168,11 @@ def handle_combat() -> None:
             )
         )
         can_attack = False
+        # timeout.set()
+        
+        if not player.rooted and not can_dash:
+            can_dash = True
+
         crowd_control.apply(player, "root", 0.1)
         timeout.set(0.075, allow_attack, ())
 
@@ -190,6 +197,7 @@ def handle_combat() -> None:
 
 
 def move_player() -> None:
+    global can_dash
     # global dash_display
     # global player_hand_holder
 
@@ -225,7 +233,7 @@ def move_player() -> None:
         inpt.active_bind(enums.keybinds.PLAYER_DASH)
         and player.dashes_remaining > 0
         and (move_math_vec.end.x != 0 or move_math_vec.end.y != 0)
-        and player.can_move
+        and (player.can_move or can_dash)
     ):
         # if player.dashes_remaining == player.dash_count:
         player.last_dash_charge_refill = pgapi.TIME.current
@@ -234,6 +242,8 @@ def move_player() -> None:
             player, move_math_vec, player.dash_movement_multiplier, player.dash_time
         )
         player.invulnerable = True
+        if can_dash:
+            can_dash = False
 
     if player.can_move:
         player.transform.position.y += (

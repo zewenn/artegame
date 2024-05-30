@@ -1,14 +1,15 @@
 from brass.base import *
 
-from brass import (
-    events,
-    pgapi
-)
+from brass import events, pgapi, timeout, scene, enums
 
 DASH_OBJECTS: list[Dasher] = []
 
 
-@events.update
+def remove_invulnerable(item: Item) -> None:
+    item.invulnerable = False
+
+
+@scene.update(enums.scenes.GAME)
 def upd_dash():
     global DASH_OBJECTS
 
@@ -17,7 +18,8 @@ def upd_dash():
             DASH_OBJECTS.remove(dsh_obj)
             dsh_obj.this.can_move = True
             dsh_obj.this.movement_speed = dsh_obj.this.base_movement_speed
-            dsh_obj.this.invulnerable = False
+            # dsh_obj.this.invulnerable = False
+            timeout.set(.1, remove_invulnerable, (dsh_obj.this,))
             dsh_obj.this.dashing = False
             continue
 
@@ -40,4 +42,6 @@ def apply_dash_effect(
 
     start_t = pgapi.TIME.current
 
-    DASH_OBJECTS.append(Dasher(this, move_vec, speed_multiplier, timeMS / 1000, start_t))
+    DASH_OBJECTS.append(
+        Dasher(this, move_vec, speed_multiplier, timeMS / 1000, start_t)
+    )

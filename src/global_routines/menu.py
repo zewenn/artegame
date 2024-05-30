@@ -1,7 +1,7 @@
 from brass.base import *
 from brass.gui import *
 
-from brass import pgapi, scene, saves
+from brass import pgapi, scene, saves, enums
 
 MENU: Optional[GUIElement] = None
 SHOWING: bool = False
@@ -21,6 +21,7 @@ def show_menu() -> None:
     MENU.style.display = "block"
     SHOWING = True
     pgapi.as_menu()
+    scene.pause()
 
 
 def hide_menu() -> None:
@@ -33,3 +34,4 @@ def hide_menu() -> None:
     SHOWING = False
     if pgapi.SETTINGS:
         pgapi.SETTINGS.menu_mode = False
+    scene.resume(enums.scenes.GAME)

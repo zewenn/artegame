@@ -1,6 +1,16 @@
 from brass.base import *
 
-from brass import vectormath, collision, events, pgapi, items, animator, enums, timeout
+from brass import (
+    vectormath,
+    collision,
+    events,
+    pgapi,
+    items,
+    animator,
+    enums,
+    timeout,
+    scene
+)
 from global_routines import crowd_control
 
 PROJECTILES: list[Item] = []
@@ -12,7 +22,6 @@ def rm_projectile(proj: Item) -> None:
     if proj in items.rendering:
         items.remove(proj)
     del proj
-
 
 
 def play(
@@ -72,7 +81,7 @@ def play(
         return
 
 
-@events.update
+@scene.update(enums.scenes.GAME)
 def system_update() -> None:
     global PROJECTILES
 
@@ -102,10 +111,14 @@ def system_update() -> None:
                 continue
 
             if collision.collides(projectile.transform, item.transform):
-                item.hitpoints -= projectile.projectile_damage
-                if item.hitpoints > 0:
+                play_name: Optional[string] = None
+
+                if not item.invulnerable:
+                    item.hitpoints -= projectile.projectile_damage
                     play_name = "get_hit"
-                    length = .1
+
+                if item.hitpoints > 0:
+                    length = 0.1
                     for effect in projectile.projectile_effects:
                         if effect.T == "stun":
                             play_name = "get_stunned"
@@ -116,8 +129,8 @@ def system_update() -> None:
                             effect.slow_strength,
                             effect.sleep_wait_time,
                         )
-
-                    play(item, play_name, length)
+                    if play_name != None:
+                        play(item, play_name, length)
                 rm_projectile(projectile)
 
             # if item.hitpoints <= 0:
