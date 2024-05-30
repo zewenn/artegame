@@ -27,7 +27,7 @@ GOLIATH = Spell(
     []
 )
 
-SLEEP = Spell(
+Zzzz = Spell(
     "Zzzz...",
     "Ellenfelek elaltatása.",
     15,

@@ -115,7 +115,7 @@ def init() -> None:
     player.slowed_by_percent = 0
 
     if not player.spells:
-        player.spells = [enums.spells.HEALING, enums.spells.GOLIATH]
+        player.spells = [enums.spells.HEALING, enums.spells.Zzzz]
 
     if not player.dash_time:
         player.dash_time = 150

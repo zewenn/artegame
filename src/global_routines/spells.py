@@ -1,6 +1,7 @@
 from brass.base import *
 
-from brass import scene, enums, assets, events, timeout, pgapi
+from brass import scene, enums, assets, events, timeout, pgapi, items, collision
+from global_routines import crowd_control, projectiles
 
 
 SPELL_DICT: Dict[string, Callable[[Spell, Item, Number], None]] = {}
@@ -25,7 +26,7 @@ def cast(spell: Spell, item: Item) -> None:
 
     if item.mana < spell.mana_cost:
         return
-    
+
     if (
         spell.cooldown_start == None
         or spell.cooldown_start + spell.cooldown < pgapi.TIME.current
@@ -33,7 +34,6 @@ def cast(spell: Spell, item: Item) -> None:
         spell.cooldown_start = pgapi.TIME.current
     else:
         return
-
 
     item.mana -= spell.mana_cost
 
@@ -103,3 +103,28 @@ def __spell_fn_goliath(this: Spell, item: Item, effectiveness: Number) -> None:
     item.hitpoints *= effectiveness * 1.5
 
     timeout.set(15, reset, ())
+
+
+@spell(enums.spells.Zzzz)
+def __spell_fn_Zzzz(this: Spell, item: Item, effectiveness: Number) -> None:
+    trs: Transform = structured_clone(item.transform)
+
+    trs.position.x -= trs.scale.x
+    trs.position.y -= trs.scale.x
+
+    trs.scale.x *= 3
+    trs.scale.y = trs.scale.x
+
+    projectiles.shoot(
+        projectiles.new(
+            "gyuri.png",
+            trs.position,
+            trs.scale,
+            0,
+            1,
+            0,
+            item.team,
+            0,
+            [Effect("sleep", 2, 0, 2)]
+        )
+    )
