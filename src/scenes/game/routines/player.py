@@ -120,6 +120,7 @@ def init() -> None:
     if not player.dash_time:
         player.dash_time = 150
 
+    print("Player:", player.uuid)
     # hitpoint_display.style.bg_color = (20, 120, 220, 1)
 
 

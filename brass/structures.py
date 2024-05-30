@@ -89,7 +89,7 @@ class Item:
     # Shiny render
     render: bool = True
     sprite: Optional[str] = None
-    surface: Optional[Surface] = None
+    # surface: Optional[Surface] = None
     crop: Optional[Crop] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 

@@ -21,7 +21,7 @@ def game_spawn() -> None:
 
     audio.fade_out(MENU_MUSIC, 1000)
 
-    audio.set_volume(GAME_MUSIC, 0.85)
+    audio.set_volume(GAME_MUSIC, 0.35)
     audio.fade_in(GAME_MUSIC, 500, 1)
 
 
@@ -31,5 +31,5 @@ def game_spawn() -> None:
 
     audio.fade_out(GAME_MUSIC, 1000)
 
-    audio.set_volume(MENU_MUSIC, 0.85)
+    audio.set_volume(MENU_MUSIC, 0.35)
     audio.fade_in(MENU_MUSIC, 500, 1)

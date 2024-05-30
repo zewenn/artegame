@@ -12,6 +12,9 @@ import events
 DIRTY_RECTS: list[pygame.Rect] = []
 
 
+SURFACE_CHACHE: dict[string, Surface] = {}
+
+
 def is_same_transform(a: Transform, b: Transform) -> bool:
     if a == None or b == None:
         return False
@@ -63,13 +66,15 @@ def calculate_transform_cache(item: Item) -> None:
 
 
 def render_item(item: Item):
+    global SURFACE_CHACHE
+
     if item.transform is None or (item.sprite is None and item.fill_color is None):
         return
 
     same_transform: bool = is_same_transform(item.transform, item.transform_cache)
 
-    if item.surface == None or not same_transform:
-        item.surface = calculate_transform_cache(item)
+    if SURFACE_CHACHE.get(item.uuid) == None or not same_transform:
+        SURFACE_CHACHE[item.uuid] = calculate_transform_cache(item)
         item.transform_cache = structured_clone(item.transform)
 
     screen_center_x = pgapi.SETTINGS.screen_size.x / 2
@@ -83,7 +88,7 @@ def render_item(item: Item):
 
     pixel_ratio = pgapi.CAMERA.pixel_unit_ratio
 
-    rotated_rect = item.surface.get_rect()
+    rotated_rect = SURFACE_CHACHE.get(item.uuid).get_rect()
     rotated_rect.center = (
         screen_center_x + (camera_pos_x + item_pos_x) * pixel_ratio,
         screen_center_y + (camera_pos_y + item_pos_y) * pixel_ratio,
@@ -91,7 +96,7 @@ def render_item(item: Item):
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(item.surface, rotated_rect.topleft))
+        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(SURFACE_CHACHE.get(item.uuid), rotated_rect.topleft))
         return
 
     crop_start_x = item.crop.start.x * pixel_ratio
@@ -101,7 +106,7 @@ def render_item(item: Item):
 
     DIRTY_RECTS.append(
         pgapi.SCREEN.this.blit(
-            item.surface,
+            SURFACE_CHACHE.get(item.uuid),
             rotated_rect.topleft,
             (crop_start_x, crop_start_y, crop_end_x, crop_end_y),
         )
