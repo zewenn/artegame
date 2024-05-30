@@ -16,7 +16,6 @@ def back_to_main_menu() -> None:
     scene.load(enums.scenes.DEFAULT)
 
 
-
 def title_button(
     id: str, content: string, top: Number = 0, fn: Callable[..., None] = None
 ):
@@ -53,16 +52,16 @@ def awake() -> None:
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,
                 top="3.5u",
-                left=".5u",
+                left="1u",
                 font_size=FONT_SIZE.MEDIUM,
                 font_family=FONTS.PRESS_PLAY,
                 color=COLOURS.WHITE,
             ),
         ),
         Element(
-            "TestBarBackground",
+            "HitpointBarBackground",
             Element(
-                "TestBarInnerContainer",
+                "HitpointBarInnerContainer",
                 Element(
                     "PlayerHitpointBar",
                     style=StyleSheet(
@@ -72,6 +71,18 @@ def awake() -> None:
                         width="75%",
                         height="100%",
                         bg_color=(255, 80, 50, 1),
+                    ),
+                ),
+                Element(
+                    "HpAmountDispaly",
+                    Text("100/100"),
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        top=f"{(1.5 - (FONT_SIZE.SMALL / 16)) / 2}u",
+                        left="4.75u",
+                        font_size=FONT_SIZE.SMALL,
+                        font_family=FONTS.PRESS_PLAY,
+                        color=COLOURS.WHITE,
                     ),
                 ),
                 style=StyleSheet(
@@ -92,14 +103,52 @@ def awake() -> None:
             ),
         ),
         Element(
+            "ManaBarBackground",
+            Element(
+                "ManaBarInnerContainer",
+                Element(
+                    "ManaBar",
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        left="0u",
+                        top="0u",
+                        width="100%",
+                        height="100%",
+                        bg_color=(20, 120, 220, 1),
+                    ),
+                ),
+                style=StyleSheet(
+                    position=POSITION.RELATIVE,
+                    top=".25u",
+                    left=".25u",
+                    width="7u",
+                    height="1u",
+                ),
+            ),
+            style=StyleSheet(
+                position=POSITION.ABSOLUTE,
+                top="3.5u",
+                left="1u",
+                width="7.5u",
+                height="1.5u",
+                bg_color=(50, 50, 50, 1),
+            ),
+        ),
+        Element(
             "GameMenu",
             Element(
                 "CenterButtons",
                 title_button("continue-btn", "Játék Folytatása", 0, menu.hide_menu),
                 title_button(
+                    "reload-btn",
+                    "Újratöltés",
+                    FS + GAP,
+                    lambda: scene.load(enums.scenes.GAME),
+                ),
+                title_button(
                     "exit-btn",
                     "Főmenü",
-                    FS + GAP,
+                    (FS + GAP) * 2,
                     back_to_main_menu,
                 ),
                 style=StyleSheet(position=POSITION.ABSOLUTE, top="40h", left="50w"),

@@ -65,9 +65,17 @@ def close(scene: str) -> None:
     # del item_list[::]
     animator.reset()
     items.reset()
-    
+
     # print("Items rendering: ", items.rendering, item_list)
     # gui.buttons = []
     gui.reset()
 
     events.call(f"{scene}::quit")
+
+
+def pause() -> None:
+    events.set_update_name("NONE")
+
+
+def resume(scene: string) -> None:
+    events.set_update_name(f"{scene}::update")

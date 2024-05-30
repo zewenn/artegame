@@ -8,6 +8,7 @@ import pygame
 
 Sound = pygame.mixer.Sound
 Surface = pygame.Surface
+Font = pygame.font.Font
 Number = int | float
 string = str
 
@@ -100,7 +101,7 @@ class Item:
     dash_movement_multiplier: Optional[int] = None
     dash_count: Optional[int] = None
     dashes_remaining: Optional[int] = None
-    """@runtime"""
+    dash_time: Optional[int] = None
     # |> Movement -> Dashes -> Cooldown Management
     dash_charge_refill_time: Optional[float] = None
     last_dash_charge_refill: Optional[int] = None
@@ -122,16 +123,53 @@ class Item:
     life_start: Optional[Number] = None
     team: Optional[Literal["Player", "Enemy"]] = None
     projectile_damage: Optional[Number] = None
+    projectile_effects: Optional[list["Effect"]] = None
 
     # Combat // Alive
     max_hitpoints: Optional[Number] = None
     hitpoints: Optional[Number] = None
     max_mana: Optional[Number] = None
+    base_attack_speed: Optional[Number] = None
+    attack_speed: Optional[Number] = None
     mana: Optional[Number] = None
     invulnerable: bool = False
     can_attack: bool = False
     dashing: bool = False
+    can_attack: bool = False
 
+    # |> Combat -> Crowd Control
+    slowed_by_percent: Optional[int] = None
+    rooted: bool = False
+    stunned: bool = False
+    sleeping: bool = False
+    vulnerable: bool = False
+
+    # |> Combat -> Spells
+    spells: Optional[list["Spell", "Spell"]] = None
+
+    # Enemies
+    effective_range: Optional[Number] = None
+
+
+@dataclass
+class Effect:
+    T: Literal["slow", "root", "stun", "sleep"]
+    length: Number
+    slow_strength: Number = 50
+    sleep_wait_time: Number = 1
+
+
+@dataclass
+class Spell:
+    name: string
+    description: string
+    cooldown: Number
+    effectiveness: Number
+    mana_cost: Number
+    interrupted_by: Optional[
+        List[Literal["root", "stun", "sleep", "slow", "damage"]]
+    ] = None
+    cooldown_start: Optional[Number] = None
 
 
 @dataclass
@@ -192,6 +230,7 @@ class ApplicationSettings:
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
     background_image: Surface = None
+    skip_title_screen: bool = False
 
 
 @dataclass
@@ -225,7 +264,7 @@ class Keyframe:
     anchor_y: Optional[float] = None
 
     sprite: Optional[str] = None
-    fill_color: Optional[list[int] | tuple[int]] = None
+    fill_color: Optional[list[int, int, int] | Tuple[int, int, int]] = None
 
 
 @dataclass
@@ -317,6 +356,14 @@ class Mishap:
 
     def is_fatal(self) -> bool:
         return self.fatal
+
+
+@dataclass
+class Timeout:
+    interval: Number
+    fn: Callable[..., None]
+    args: Tuple[Any]
+    start_time: Number
 
 
 # ----------------------------- ui ----------------------------

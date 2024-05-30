@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from zenyx import printf
 from uuid import uuid4
 from typing import *
+import time
+from util import *
 
 import __config__ as conf
 import os, time
@@ -19,41 +21,41 @@ class Routine:
     path_str: str
 
 
-def shorten(filename: str) -> str:
-    return filename[:16] + ("..." if len(filename) >= 16 else "")
-
-
+@task("Delete Files")
 def delete_files_in_directory(directory_path):
     try:
         files = os.listdir(directory_path)
         for index, filename in enumerate(files):
             file_path = os.path.join(directory_path, filename)
+
             if os.path.isfile(file_path):
                 os.remove(file_path)
-            printf.full_line(
-                f"[{index + 1}/{len(files)}] Removing: {shorten(filename)}",
-                end="\r",
-            )
-        print("")
+            
+            progress_bar(index + 1, len(files), shorten(filename))
+        task_complete()
     except OSError as e:
         print("Error occurred while deleting files: \n", e)
 
 
+@task("Generating Imports")
 def generate_imports_from_directory(directory: str) -> Result[list[str], ValueError]:
 
     # Get the list of files in the directory
+    top = len([x for x in os.listdir(directory) if x.endswith(".py")])
     file_list: list[str] = []
+
     for index, filename in enumerate(os.listdir(directory)):
-        if filename.endswith(".py"):
-            file_list.append(
-                f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import "
-                + filename.replace(".py", "")
-            )
-            out_txt = (
-                f"[{index + 1}/{len(file_list)}] Binding Routines: {shorten(filename)}"
-            )
-            printf.full_line(out_txt, end="\r")
-    print("")
+        if not filename.endswith(".py"):
+            continue
+
+        file_list.append(
+            f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import "
+            + filename.replace(".py", "")
+        )
+
+        progress_bar((index + 1), top, shorten(filename))
+
+    task_complete()
     return Ok(file_list)
 
 
@@ -216,9 +218,8 @@ def create_replace_temp(routines: list[Routine]) -> None:
         ) as wf:
             wf.write(contents)
 
-
+@task("Binding GLOBAL Routines")
 def build_global_routines() -> None:
-    delete_files_in_directory(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
 
     copy_tree(
         os.path.join(*conf.GLOBAL_ROUTINES_DIR_PATH),
@@ -232,10 +233,11 @@ def build_global_routines() -> None:
             global_rtns.remove(item)
 
     for index, global_rtn in enumerate(global_rtns):
-        print(
-            f"[{index + 1}/{len(global_rtns)}] Binding GLOBAL Routines: {shorten(global_rtn)} ",
-            end="\r",
-        )
+        progress_bar(index + 1, len(global_rtns), shorten(global_rtn))
+        # printf.full_line(
+        #     f"[{index + 1}/{len(global_rtns)}] Binding GLOBAL Routines: {shorten(global_rtn)} ",
+        #     end="\r",
+        # )
 
         contents: str = ""
         with open(
@@ -252,7 +254,7 @@ def build_global_routines() -> None:
         ) as wf:
             wf.write(contents)
 
-    print("")
+    task_complete()
 
 
 def serialise_imports():
@@ -262,6 +264,7 @@ def serialise_imports():
     This is needed with the use event decorators, which - on load - bind functions to events.
     """
 
+    delete_files_in_directory(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
     build_global_routines()
 
     routines, scenes = get_routines_and_scenes(conf.SCENES_PATH)

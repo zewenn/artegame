@@ -12,6 +12,7 @@ def reset() -> None:
 
 
 def remove(item: Item) -> Item:
+    # global rendering
     global rendering
     if item in rendering:
         rendering.remove(item)
@@ -117,3 +118,7 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
             return Err(Mishap(f"Couldn't find item: {selector}"))
 
         return Ok(res)
+
+
+def get_all(tag: string) -> list[Item]:
+    return [x for x in rendering if tag in x.tags]

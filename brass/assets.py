@@ -7,7 +7,7 @@ import pygame
 from src.b64_asset_ref_table import REFERENCE_TABLE as b64_ref_table
 
 
-def load(name: str, base64_string: str, font_size=12):
+def load(name: string, base64_string: string, font_size=12):
     # Convert the Base64 string to bytes
     binary_data = base64.b64decode(base64_string)
 
@@ -22,16 +22,27 @@ def load(name: str, base64_string: str, font_size=12):
     elif name.endswith(".ttf"):
         res = pygame.font.Font(data_buffer, font_size)
     else:
-        res = pygame.image.load(data_buffer)
+        res = pygame.image.load_extended(data_buffer)
 
     return res
 
 
-ASSETS: dict[str, pygame.Surface | pygame.mixer.Sound | pygame.font.Font] = {}
+ASSETS: dict[string, Surface | Audio | Font] = {}
 
 
-def use(filename: str) -> pygame.Surface | pygame.mixer.Sound | pygame.font.Font:
-    return ASSETS[filename]
+UT = TypeVar("UT", type[Surface], type[Audio], type[Font])
+
+
+def use(filename: string, T: Optional[UT] = None) -> UT:
+    res = ASSETS.get(filename)
+
+    if res == None:
+        unreachable(f'Asset "{filename}" does not exist!')
+    
+    if T != None and type(res) != T:
+        unreachable(f'Asset "{filename}" cannot fit constaints: {T}')
+
+    return res
 
 
 def create_runtime_objects():

@@ -14,13 +14,18 @@ from brass import (
 
 
 def spawn() -> None:
-    pgapi.use_background(assets.use("background.png"), Vec2(2540, 1440))
+    pgapi.use_background(assets.use("background2.png"), Vec2(3840, 2160))
     
 
     inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, "a@ctrl#0"], "down")
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"shoulder-right@ctrl#0"}],
+        "down",
+    )
+    inpt.bind_buttons(
+        enums.keybinds.PLAYER_HEAVY_ATTACK,
+        [{"right@mouse"}, {"shoulder-left@ctrl#0"}],
         "down",
     )
 
@@ -47,6 +52,25 @@ def spawn() -> None:
                         80: Keyframe(position_y=16),
                     }
                 ),
+            ],
+        ),
+    )
+    animator.store.add(
+        "player_get_hit",
+        animator.create(
+            duration_seconds=0.1,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.EASE_IN_OUT,
+            animations=[
+                Animation(
+                    "player",
+                    {
+                        1: Keyframe(rotation_z=0),
+                        30: Keyframe(rotation_z=20),
+                        60: Keyframe(rotation_z=-20),
+                        100: Keyframe(rotation_z=0),
+                    },
+                )
             ],
         ),
     )
@@ -78,13 +102,15 @@ def spawn() -> None:
             can_move=True,
             can_collide=True,
             can_repulse=True,
-            lightness=1,
-            base_movement_speed=300,
+            lightness=.9,
+            base_movement_speed=400,
             dash_count=2,
-            dash_movement_multiplier=10,
+            dash_movement_multiplier=2.5,
             dash_charge_refill_time=0.5,
+            dash_time=200,
             max_hitpoints=100,
             max_mana=100,
+            base_attack_speed=5,
             team="Player",
             inventory={
                 "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
@@ -116,34 +142,64 @@ def spawn() -> None:
         )
     )
 
-    items.add(
-        Item(
-            id="enemy1",
-            tags=["enemy", "item"],
-            transform=Transform(Vec2(-512, -32), Vec3(0, 0, 0), Vec2(64, 64)),
-            # fill_color=[20, 20, 20],
-            sprite="test.png",
-            can_move=True,
-            can_collide=True,
-            can_repulse=True,
-            lightness=1,
-            base_movement_speed=300,
-            dash_count=2,
-            dash_movement_multiplier=10,
-            dash_charge_refill_time=0.5,
-            max_hitpoints=100,
-            hitpoints=100,
-            max_mana=100,
-            team="Enemy",
-            inventory={
-                "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
-                "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
-                "banana": 0,
-                "strawberry": 0,
-                "blueberry": 0,
-            },
-        )
-    )
+    # items.add(
+    #     Item(
+    #         id="enemy1",
+    #         tags=["enemy", "item"],
+    #         transform=Transform(Vec2(-512, -32), Vec3(0, 0, 0), Vec2(64, 64)),
+    #         # fill_color=[20, 20, 20],
+    #         sprite="test.png",
+    #         can_move=True,
+    #         can_collide=True,
+    #         can_repulse=True,
+    #         lightness=1,
+    #         base_movement_speed=300,
+    #         dash_count=2,
+    #         dash_movement_multiplier=10,
+    #         dash_charge_refill_time=0.25,
+    #         max_hitpoints=100,
+    #         effective_range=100,
+    #         hitpoints=100,
+    #         max_mana=100,
+    #         team="Enemy",
+    #         inventory={
+    #             "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
+    #             "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
+    #             "banana": 0,
+    #             "strawberry": 0,
+    #             "blueberry": 0,
+    #         },
+    #     )
+    # )
+    # items.add(
+    #     Item(
+    #         id="enemy2",
+    #         tags=["enemy", "item"],
+    #         transform=Transform(Vec2(512, 32), Vec3(0, 0, 0), Vec2(64, 64)),
+    #         # fill_color=[20, 20, 20],
+    #         sprite="test.png",
+    #         can_move=True,
+    #         can_collide=True,
+    #         can_repulse=True,
+    #         lightness=1,
+    #         base_movement_speed=300,
+    #         dash_count=2,
+    #         dash_movement_multiplier=10,
+    #         dash_charge_refill_time=0.5,
+    #         max_hitpoints=100,
+    #         effective_range=400,
+    #         hitpoints=100,
+    #         max_mana=100,
+    #         team="Enemy",
+    #         inventory={
+    #             "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),
+    #             "weight_plate": Weapon(damage=10, damage_area=Vec2(100, 50)),
+    #             "banana": 0,
+    #             "strawberry": 0,
+    #             "blueberry": 0,
+    #         },
+    #     )
+    # )
 
     items.add(
         Item(

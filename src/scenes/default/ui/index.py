@@ -101,10 +101,15 @@ def awake() -> None:
         ),
         Element(
             "CenterButtons",
-            title_button("StartGame-Btn", "Start Game", 0, load_game_scene),
-            title_button("Options-Btn", "Options", FS + gap),
-            title_button("Exit-Btn", "Exit", (FS + gap) * 2, lambda: pgapi.exit()),
+            title_button("StartGame-Btn", "Új Játék", 0, load_game_scene),
+            title_button("Options-Btn", "Beállítások", FS + gap),
+            title_button("Exit-Btn", "Kilépés", (FS + gap) * 2, lambda: pgapi.exit()),
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )
+    
+    # if pgapi.SETTINGS.skip_title_screen:
+    #     load_game_scene()
+    # else:
     pgapi.as_menu()
+

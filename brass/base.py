@@ -6,6 +6,7 @@ import inspect
 import copy
 import time
 import math
+import sys
 
 
 import pygame._sdl2.controller as pycontroller
@@ -16,11 +17,41 @@ T = TypeVar("T")
 K = TypeVar("K")
 
 
+class DummyFile(object):
+    def write(self, x):
+        pass
+
+    def flush(self, x=None):
+        pass
+
+
+def silence(func: Callable):
+    def wrap(*args, **kwargs):
+        res, exc = None, None
+        save_stdout = sys.stdout
+        sys.stdout = DummyFile()
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            exc = e
+        sys.stdout = save_stdout
+        if exc:
+            raise exc
+        return res
+
+    return wrap
+
+
 def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
     try:
         return Ok(func(*args))
     except Exception as e:
         return Err(Mishap(" ".join([str(x) for x in e.args]), True))
+
+
+@silence
+def quit() -> Never:
+    raise Exception("Quit")
 
 
 def unreachable(msg: str) -> Never:
@@ -31,7 +62,7 @@ def unreachable(msg: str) -> Never:
     )
     printf(f"\n@!Error Message:$&\n{msg}")
     printf()
-    exit()
+    quit()
 
 
 def typeof(a: Any) -> str:
@@ -93,11 +124,11 @@ class Piper(Generic[T, K]):
 
     def __or__(self, func: Callable[..., K]) -> "Piper[K]":
         self.value = func(self.value, *self.next_args, **self.next_kwargs)
-    
+
     def __rshift__(self, kwargs: dict[str, Any]) -> None:
         self.next_kwargs = kwargs
         return self
-    
+
     def __add__(self, args: list[Any]) -> None:
         self.next_args = args
         return self
@@ -105,5 +136,9 @@ class Piper(Generic[T, K]):
     def __call__(self, *args: Any, **kwds: Any) -> K:
         return self.value
 
+
 def uuid() -> string:
     return uuid4().hex
+
+def delete(a: Any) -> None:
+    pass

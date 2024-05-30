@@ -60,4 +60,3 @@ def fade_out(audio: Audio, timeMS: int = 0):
     audio.playing = False
 
     audio.sound.fadeout(timeMS)
-    Timer(timeMS, audio.sound.stop, ())
