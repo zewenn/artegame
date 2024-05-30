@@ -109,6 +109,8 @@ class Item:
 
     # Inventory
     inventory: Optional[dict[str, Weapon | int]] = None
+    weapon: Optional[Literal["plates", "gloves"]] = None
+    """@player-only"""
 
     # Collision
     can_collide: bool = False

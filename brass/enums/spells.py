@@ -13,7 +13,7 @@ HASTE = Spell(
     "Sietség",
     "Gyorsabb mozgás és nagyobb támadási sebesség.",
     10,
-    2,
+    3,
     15,
     []
 )

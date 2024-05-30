@@ -15,17 +15,19 @@ from brass import (
 
 def spawn() -> None:
     pgapi.use_background(assets.use("background2.png"), Vec2(3840, 2160))
-    
 
-    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, "a@ctrl#0"], "down")
+    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, {"a@ctrl#0"}], "down")
+    inpt.bind_buttons(
+        enums.keybinds.PLAYER_WEAPON_SWITCH, [{"tab"}, {"y@ctrl#0"}], "down"
+    )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
-        [{"left@mouse"}, {"shoulder-right@ctrl#0"}],
+        [{"left@mouse"}, {"right-trigger@ctrl#0"}],
         "down",
     )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_HEAVY_ATTACK,
-        [{"right@mouse"}, {"shoulder-left@ctrl#0"}],
+        [{"right@mouse"}, {"left-trigger@ctrl#0"}],
         "down",
     )
 
@@ -45,12 +47,12 @@ def spawn() -> None:
                     },
                 ),
                 Animation(
-                    "player_hand_holder->right_hand", 
+                    "player_hand_holder->right_hand",
                     {
                         20: Keyframe(position_y=16),
                         50: Keyframe(position_y=64),
                         80: Keyframe(position_y=16),
-                    }
+                    },
                 ),
             ],
         ),
@@ -102,7 +104,7 @@ def spawn() -> None:
             can_move=True,
             can_collide=True,
             can_repulse=True,
-            lightness=.9,
+            lightness=0.9,
             base_movement_speed=400,
             dash_count=2,
             dash_movement_multiplier=2.5,

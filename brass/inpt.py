@@ -168,7 +168,7 @@ def get_button(key: str) -> bool | int:
 
         if device[0] == "2":
             return resolve(controller.get_button(event))
-        return controller.get_axis(event)
+        return resolve(controller.get_axis(event))
 
 
 def get_button_down(key: str) -> bool:
@@ -183,6 +183,9 @@ def get_button_down(key: str) -> bool:
 
     in_list = key in keys_down
     is_down = get_button(key)
+
+    if typeof(is_down) == "int":
+        is_down = is_down > pgapi.SETTINGS.axis_rounding
 
     if not is_down or in_list:
         return False
@@ -203,6 +206,9 @@ def get_button_up(key: str) -> bool:
 
     in_list = key in keys_down
     is_down = get_button(key)
+
+    if typeof(is_down) == "int":
+        is_down = is_down > pgapi.SETTINGS.axis_rounding
 
     if in_list or is_down:
         return True
@@ -308,7 +314,10 @@ def bind_buttons(
         for _set in key_set_list:
             set_good = 0
             for key in _set:
-                if getfn(key):
+                r = getfn(key)
+                if typeof(r) == "int":
+                    r = r > pgapi.SETTINGS.axis_rounding
+                if r:
                     set_good += 1
             if set_good == len(_set):
                 all_down_any = True
