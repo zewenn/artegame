@@ -71,6 +71,7 @@ def update() -> None:
 
     for enemy in ENEMIES:
         if enemy.hitpoints <= 0:
+            player.mana += 10
             items.remove(enemy)
             ENEMIES.remove(enemy)
             del enemy

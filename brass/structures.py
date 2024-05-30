@@ -102,7 +102,6 @@ class Item:
     dash_count: Optional[int] = None
     dashes_remaining: Optional[int] = None
     dash_time: Optional[int] = None
-    """@runtime"""
     # |> Movement -> Dashes -> Cooldown Management
     dash_charge_refill_time: Optional[float] = None
     last_dash_charge_refill: Optional[int] = None
@@ -130,6 +129,8 @@ class Item:
     max_hitpoints: Optional[Number] = None
     hitpoints: Optional[Number] = None
     max_mana: Optional[Number] = None
+    base_attack_speed: Optional[Number] = None
+    attack_speed: Optional[Number] = None
     mana: Optional[Number] = None
     invulnerable: bool = False
     can_attack: bool = False
@@ -141,6 +142,10 @@ class Item:
     rooted: bool = False
     stunned: bool = False
     sleeping: bool = False
+    vulnerable: bool = False
+
+    # |> Combat -> Spells
+    spells: Optional[list["Spell", "Spell"]] = None
 
     # Enemies
     effective_range: Optional[Number] = None
@@ -152,6 +157,19 @@ class Effect:
     length: Number
     slow_strength: Number = 50
     sleep_wait_time: Number = 1
+
+
+@dataclass
+class Spell:
+    name: string
+    description: string
+    cooldown: Number
+    effectiveness: Number
+    mana_cost: Number
+    interrupted_by: Optional[
+        List[Literal["root", "stun", "sleep", "slow", "damage"]]
+    ] = None
+    cooldown_start: Optional[Number] = None
 
 
 @dataclass
@@ -246,7 +264,7 @@ class Keyframe:
     anchor_y: Optional[float] = None
 
     sprite: Optional[str] = None
-    fill_color: Optional[list[int] | tuple[int]] = None
+    fill_color: Optional[list[int, int, int] | Tuple[int, int, int]] = None
 
 
 @dataclass

@@ -21,9 +21,10 @@ def progress_bar(at: int, top: int, msg: str) -> str:
     percent = round(at / top * 15, 5)
     progress = round(percent)
     line = "█" * progress + " " * (15 - progress)
-    printf.full_line(f" {percent}%|{line}| {at}/{top},", msg, end="\r")
+    printf.full_line(f" {round(at / top * 100)}%|{line}| {at}/{top},", msg, end="\r")
     # time.sleep(0.05)
 
 
 def task_complete():
-    printf.full_line(" Task completed @!successfully$&!")
+    # printf.full_line(" Task completed @!successfully$&!")
+    print("")

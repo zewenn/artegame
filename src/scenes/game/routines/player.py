@@ -5,7 +5,8 @@ from brass.base import *
 from global_routines import (
     projectiles,
     dash,
-    crowd_control
+    crowd_control,
+    spells
 )
 
 from brass import (
@@ -29,7 +30,9 @@ player_light_attack_anim: Optional[AnimationGroup] = None
 player_can_move_save = True
 
 dash_display: Optional[GUIElement] = None
+hp_amount_display: Optional[GUIElement] = None
 hitpoint_display: Optional[GUIElement] = None
+mana_display: Optional[GUIElement] = None
 walk_sound: Optional[Audio] = None
 
 can_attack: bool = True
@@ -41,13 +44,17 @@ def init() -> None:
     global player_hand_holder
     global dash_display
     global hitpoint_display
+    global mana_display
     global walk_sound
     global player_light_attack_anim
+    global hp_amount_display
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
     dash_gui_query = gui.get_element("PlayerDashCounter")
-    hitpoint_bar_query = gui.get_element("TestBarInnerContainer")
+    hitpoint_bar_query = gui.get_element("PlayerHitpointBar")
+    mana_bar_query = gui.get_element("ManaBar")
+    hp_amount_query = gui.get_element("HpAmountDispaly")
 
     # Player
     if player_query.is_err():
@@ -71,7 +78,19 @@ def init() -> None:
     if hitpoint_bar_query.is_err():
         unreachable("Hitpoint display GUIElement does not exist!")
 
-    hitpoint_display = hitpoint_bar_query.ok().children[0]
+    hitpoint_display = hitpoint_bar_query.ok()
+
+    # Mana Bar GUIElement
+    if mana_bar_query.is_err():
+        unreachable("Hitpoint display GUIElement does not exist!")
+
+    mana_display = mana_bar_query.ok()
+
+    # HP Amount Display GUIElement
+    if hp_amount_query.is_err():
+        unreachable("Hitpoint display GUIElement does not exist!")
+
+    hp_amount_display = hp_amount_query.ok()
 
     # Walking audio
     walk_sound = assets.use("walking.mp3", T=Audio)
@@ -85,11 +104,19 @@ def init() -> None:
     player_light_attack_anim = player_light_attack_anim_query.ok()
 
     player.movement_speed = player.base_movement_speed
+    player.attack_speed = player.base_attack_speed
+
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
+
     player.hitpoints = player.max_hitpoints
     player.mana = player.max_mana
+
     player.slowed_by_percent = 0
+
+    if not player.spells:
+        player.spells = [enums.spells.HEALING, enums.spells.GOLIATH]
+
     if not player.dash_time:
         player.dash_time = 150
 
@@ -97,10 +124,19 @@ def init() -> None:
 
 
 def update() -> None:
-    global player_light_attack_anim, hitpoint_display, player_can_move_save
+    global player_light_attack_anim
+    global hitpoint_display
+    global player_can_move_save
+    global mana_display
+    global hp_amount_display
 
-    if inpt.get_button_down("y"):
-        crowd_control.apply(player, "root", 2)
+    if inpt.get_button_down("e"):
+        # crowd_control.apply(player, "root", 2)
+        spells.cast(player.spells[1], player)
+
+    if inpt.get_button_down("q"):
+        # crowd_control.apply(player, "root", 2)
+        spells.cast(player.spells[0], player)
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
         player.can_move = False
@@ -115,8 +151,26 @@ def update() -> None:
     # print(items.rendering)
     handle_combat()
 
-    hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
+    if player.hitpoints < 0:
+        player.hitpoints = 0
 
+    if player.mana < 0:
+        player.mana = 0
+
+    if player.hitpoints > player.max_hitpoints:
+        player.hitpoints = player.max_hitpoints
+
+    if player.mana > player.max_mana:
+        player.mana = player.max_mana
+
+    hitpoint_display.style.width = f"{player.hitpoints / player.max_hitpoints * 100}%"
+    mana_display.style.width = f"{player.mana / player.max_mana * 100}%"
+
+    hp_amount_text = f"{int(player.hitpoints)}/{int(player.max_hitpoints)}"
+    hp_amount_display.style.left = (
+        f"{4.75 * 16 - len(hp_amount_text) * hp_amount_display.style.font_size / 2}x"
+    )
+    hp_amount_display.children[0] = hp_amount_text
 
 
 def allow_attack() -> None:
@@ -169,12 +223,12 @@ def handle_combat() -> None:
         )
         can_attack = False
         # timeout.set()
-        
+
         if not player.rooted and not can_dash:
             can_dash = True
 
         crowd_control.apply(player, "root", 0.1)
-        timeout.set(0.075, allow_attack, ())
+        timeout.set((1 / player.attack_speed), allow_attack, ())
 
     elif heavy_attacking and can_attack and not player.dashing:
         animator.play(player_light_attack_anim)
@@ -193,7 +247,7 @@ def handle_combat() -> None:
         )
         crowd_control.apply(player, "root", 0.25)
         can_attack = False
-        timeout.set(0.25, allow_attack, ())
+        timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
 
 
 def move_player() -> None:

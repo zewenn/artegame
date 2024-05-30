@@ -110,6 +110,7 @@ def spawn() -> None:
             dash_time=200,
             max_hitpoints=100,
             max_mana=100,
+            base_attack_speed=5,
             team="Player",
             inventory={
                 "box_gloves": Weapon(damage=3, damage_area=Vec2(50, 150)),

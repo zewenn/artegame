@@ -4,5 +4,6 @@ from . import (
     animations,
     keybinds,
     scenes,
+    spells,
     gui
 )
