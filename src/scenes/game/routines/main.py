@@ -61,6 +61,7 @@ def update() -> None:
                 effective_range=600,
                 hitpoints=100,
                 max_mana=100,
+                base_attack_speed=4,
                 team="Enemy"
             )
         )
@@ -83,6 +84,7 @@ def update() -> None:
                 effective_range=800,
                 hitpoints=100,
                 max_mana=100,
+                base_attack_speed=4,
                 team="Enemy"
             )
         )

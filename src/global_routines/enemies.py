@@ -48,7 +48,7 @@ def new(item: Item) -> Item:
     if not item.tags.__contains__("enemy"):
         item.tags.append("enemy")
 
-    
+    item.attack_speed = item.base_attack_speed    
     item.movement_speed = item.base_movement_speed
     item.hitpoints = item.max_hitpoints
     item.mana = item.max_mana
@@ -129,25 +129,30 @@ def update() -> None:
 
 
 def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
-    rand = random.randint(0, 1)
+    if not item.attack_speed:
+        return
+    
+    rand = random.randint(0, 3)
 
     # Light Attack
+    if not item.can_attack:
+        return
 
-    if rand == 0:
+    if rand in range(0, 3):
         projectiles.shoot(
             projectiles.new(
                 "light_attack_projectile.png",
                 structured_clone(item.transform.position),
                 Vec2(64, 64),
                 -vector.direction + 90,
-                1,
+                1.5,
                 item.base_movement_speed * 1.2,
                 "Enemy",
                 10,
             )
         )
         item.can_attack = False
-        timeout.set(.5, remove_attack_cooldown, (item,))
+        timeout.set(1 / item.attack_speed, remove_attack_cooldown, (item,))
         return
     
     # Heavy Attack
@@ -158,12 +163,13 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
             structured_clone(item.transform.position),
             Vec2(64, 64),
             -vector.direction + 90,
-            1.5,
+            2.5,
             item.base_movement_speed * 1.1,
             "Enemy",
             20,
+            [Effect("stun", .75, 0, 0)]
         )
     )
     item.can_attack = False
     crowd_control.apply(item, "stun", .5)
-    timeout.set(.75, remove_attack_cooldown, (item,))
+    timeout.set((1 / item.attack_speed * 2), remove_attack_cooldown, (item,))

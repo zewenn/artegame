@@ -233,10 +233,9 @@ def handle_plate_combat() -> None:
 
         can_attack = False
 
-        timeout.set((1 / player.attack_speed * 2.5), allow_attack, ())
+        timeout.set((1 / player.attack_speed), allow_attack, ())
 
     elif light_attacking and can_attack:
-        print(player_light_attack_anim)
         animator.play(player_light_attack_anim)
         projectiles.shoot(
             projectiles.new(

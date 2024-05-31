@@ -63,11 +63,11 @@ def apply(
         to.slowed_by_percent = slow_pecent
         return
 
-    if T == "root" and not to.rooted:
+    if T == "root":
         to.rooted = True
         return
 
-    if T == "stun" and not to.stunned:
+    if T == "stun":
         to.stunned = True
         if show_effect:
             effect_display.summon(
