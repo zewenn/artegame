@@ -41,6 +41,6 @@ def summon(at: Item, sprites: list[string], length: Number, anim_len: Number) ->
         items.remove(effect)
         # del effect
 
-    timeout.set((math.ceil(length / anim_len) * anim_len) * 1.3, del_obj, ())
+    timeout.set(length, del_obj, ())
 
     

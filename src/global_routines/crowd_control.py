@@ -45,7 +45,7 @@ def apply(
     length: Number,
     slow_pecent: Number = 50,
     sleep_countdown: Number = 1,
-    show_effect: bool = False
+    show_effect: bool = False,
 ) -> None:
     if T == "all":
         print("Cannot apply all effects!")
@@ -70,5 +70,15 @@ def apply(
     if T == "stun" and not to.stunned:
         to.stunned = True
         if show_effect:
-            effect_display.summon(to, ["background.png", "gyuri.png", "banana.png"], 1, .3)
+            effect_display.summon(
+                to,
+                [
+                    "stun_effect_1.png",
+                    "stun_effect_2.png",
+                    "stun_effect_3.png",
+                    "stun_effect_4.png",
+                ],
+                1,
+                0.3,
+            )
         return

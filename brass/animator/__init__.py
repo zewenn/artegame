@@ -7,6 +7,7 @@ from . import (
     store
 )
 
+import pgapi
 import enums
 import items
 import time
@@ -82,7 +83,6 @@ def tick_anims() -> None:
     # del finished
     finished = []
 
-    current_time = time.perf_counter()
     for id, play_obj in list(playing_groups.items()):
         if play_obj is None:
             continue
@@ -101,11 +101,11 @@ def tick_anims() -> None:
                 render_keyframe(anim.anim.target, anim.keyframe_list[-1])
                 continue
 
-            if current_time > anim.end_time:
+            if pgapi.TIME.current > anim.end_time:
                 if not play_objects.next(play_obj, anim):
                     continue
 
-            interpolation_factor = (current_time - anim.start_time) / (
+            interpolation_factor = (pgapi.TIME.current - anim.start_time) / (
                 play_obj.group.length
                 * (anim.end_time_multipliers[anim.current_keyframe + 1] + 0.001)
             )
