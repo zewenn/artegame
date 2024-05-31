@@ -24,7 +24,7 @@ def set_anim_duration(play_object: PlayObject, anim: ExpandedAnim):
 
 
 def next(play_object: PlayObject, anim: ExpandedAnim):
-    if anim.current_keyframe + 1 >= len(anim.keyframe_list) - 1:
+    if anim.current_keyframe + 1 == len(anim.keyframe_list) - 1:
         anim.finished = True
         return False
 

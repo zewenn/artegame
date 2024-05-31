@@ -21,11 +21,12 @@ playing_groups: dict[str, PlayObject] = {}
 
 def reset() -> None:
     global playing_groups
-    
+
     for val in playing_groups.values():
         del val
 
     playing_groups = {}
+
 
 def reset_anim(id: string) -> None:
     for anim in playing_groups[id].group.animations:
@@ -92,6 +93,8 @@ def tick_anims() -> None:
 
         finished_count = 0
 
+        # print(play_obj.group.length)
+
         for anim in play_obj.anims:
             if anim.finished:
                 finished_count += 1
@@ -102,17 +105,17 @@ def tick_anims() -> None:
                 if not play_objects.next(play_obj, anim):
                     continue
 
-            t = (current_time - anim.start_time) / (
+            interpolation_factor = (current_time - anim.start_time) / (
                 play_obj.group.length
                 * (anim.end_time_multipliers[anim.current_keyframe + 1] + 0.001)
             )
-            t = max(0, min(1, t))
+            interpolation_factor = max(0, min(1, interpolation_factor))
 
             interpolated_keyframe = interpolation.interpolate_keyframes(
                 play_obj.group.timing_function,
                 anim.keyframe_list[anim.current_keyframe],
                 anim.keyframe_list[anim.current_keyframe + 1],
-                t,
+                interpolation_factor,
             )
 
             render_keyframe(anim.anim.target, interpolated_keyframe)
@@ -129,7 +132,7 @@ def tick_anims() -> None:
 
 
 def play(anim: AnimationGroup) -> None:
-    if (anim.id not in playing_groups):
+    if anim.id not in playing_groups:
         playing_groups[anim.id] = play_objects.new(anim)
 
 
@@ -150,7 +153,7 @@ def render_keyframe(target: str, keyframe: Keyframe) -> None:
         return
 
     if target_o.is_err():
-        printf(f'Target object by the query "{target}" does not exist!')
+        # printf(f'Target object by the query "{target}" does not exist!')
         return
 
     target_obj = target_o.ok()
@@ -160,36 +163,36 @@ def render_keyframe(target: str, keyframe: Keyframe) -> None:
         return
 
     if isinstance(target_obj, Bone):
-        if keyframe.anchor_x is not None:
+        if keyframe.anchor_x != None:
             target_obj.anchor.x = keyframe.anchor_x
-        if keyframe.anchor_y is not None:
+        if keyframe.anchor_y != None:
             target_obj.anchor.y = keyframe.anchor_y
 
-    if keyframe.sprite is not None:
+    if keyframe.sprite != None:
         target_obj.sprite = keyframe.sprite
 
-    if keyframe.fill_color is not None:
+    if keyframe.fill_color != None:
         target_obj.fill_color = keyframe.fill_color
 
-    if keyframe.position_x is not None:
+    if keyframe.position_x != None:
         target_obj.transform.position.x = keyframe.position_x
 
-    if keyframe.position_y is not None:
+    if keyframe.position_y != None:
         target_obj.transform.position.y = keyframe.position_y
 
-    if keyframe.rotation_x is not None:
+    if keyframe.rotation_x != None:
         target_obj.transform.rotation.x = keyframe.rotation_x
 
-    if keyframe.rotation_y is not None:
+    if keyframe.rotation_y != None:
         target_obj.transform.rotation.y = keyframe.rotation_y
 
-    if keyframe.rotation_z is not None:
+    if keyframe.rotation_z != None:
         target_obj.transform.rotation.z = keyframe.rotation_z
 
-    if keyframe.width is not None:
+    if keyframe.width != None:
         target_obj.transform.scale.x = keyframe.width
 
-    if keyframe.height is not None:
+    if keyframe.height != None:
         target_obj.transform.scale.y = keyframe.height
 
 
@@ -206,19 +209,24 @@ def create(
             + f"\n | Recieved: {mode}"
         )
 
-    # if timing_function not in Timing.timing_table:
-    #     unreachable(
-    #         "Incorrect timing function"
-    #         + f"\n | Expected: animator.Timing"
-    #         + f"\n | Recieved: {timing_function}"
-    #     )
+    if timing_function not in [
+        enums.animations.TIMING.EASE_IN,
+        enums.animations.TIMING.EASE_OUT,
+        enums.animations.TIMING.EASE_IN_OUT,
+        enums.animations.TIMING.LINEAR
+    ]:
+        unreachable(
+            "Incorrect timing function"
+            + f"\n | Expected: animator.Timing"
+            + f"\n | Recieved: {timing_function}"
+        )
 
     for anim in animations:
         first_frame = anim.keyframes[list(anim.keyframes)[0]]
 
         anim.keyframes[0] = first_frame
         anim.keyframes = dict(sorted(anim.keyframes.items()))
-        if mode == 0:
+        if mode == enums.animations.MODES.NORMAL:
             # Set the key last key ("-1") to the first frame:
             # anim.keyframes = {
             #   0: first_frame

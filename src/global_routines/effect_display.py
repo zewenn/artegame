@@ -1,50 +1,46 @@
 from brass.base import *
 
 # fmt: off
-from global_routines import projectiles, dash, crowd_control
 from brass import (
-    items, 
-    pgapi, 
-    scene,
-    enums, 
-    vectormath,
-    collision,
+    animator,
     timeout,
-    animator
+    items, 
+    enums
 )
 # fmt: on
 
 
-def summon(at: Item, sprites: list[string], length: Number) -> None:
+def summon(at: Item, sprites: list[string], length: Number, anim_len: Number) -> None:
     uid = "effect:" + uuid()
     effect = Item(
         id=uid, tags=["effect_display"], transform=at.transform, sprite=sprites[0]
     )
     items.add(effect)
 
-    sprites = [sprites[0]] + sprites
+    sprites = sprites * math.ceil(length / anim_len)
 
     num_of_keyframes = len(sprites)
     kf_increment = 100 / num_of_keyframes
 
-    print("kfi:", kf_increment)
-
     keyframes: dict[int, Keyframe] = {}
 
     for i in range(num_of_keyframes):
-        keyframes[round(kf_increment * i)] = Keyframe(sprite=sprites[i])
+        k = round(kf_increment * i)
+        keyframes[k if k > 0 else 1] = Keyframe(sprite=sprites[i])
 
-    animator.play(
-        animator.create(
-            duration_seconds=uid,
-            mode=enums.animations.MODES.NORMAL,
-            timing_function=enums.animations.TIMING.LINEAR,
-            animations=[Animation(effect.id, keyframes)],
-        )
+    anim = animator.create(
+        duration_seconds=length,
+        mode=enums.animations.MODES.FORWARD,
+        timing_function=enums.animations.TIMING.LINEAR,
+        animations=[Animation(uid, keyframes)],
     )
 
-    def deL_obj():
+    animator.play(anim)
+
+    def del_obj():
         items.remove(effect)
         # del effect
 
-    timeout.set(length, deL_obj, ())
+    timeout.set((math.ceil(length / anim_len) * anim_len) * 1.3, del_obj, ())
+
+    

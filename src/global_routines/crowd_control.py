@@ -63,12 +63,12 @@ def apply(
         to.slowed_by_percent = slow_pecent
         return
 
-    if T == "root":
+    if T == "root" and not to.rooted:
         to.rooted = True
         return
 
-    if T == "stun":
+    if T == "stun" and not to.stunned:
         to.stunned = True
         if show_effect:
-            effect_display.summon(to, ["background.png", "gyuri.png"], length)
+            effect_display.summon(to, ["background.png", "gyuri.png", "banana.png"], 1, .3)
         return

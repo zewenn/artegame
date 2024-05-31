@@ -58,7 +58,10 @@ def interpolate_keyframes(
             interpolated_value = timing_fn(value1, value2, interpolation_factor)
             setattr(interpolated_keyframe, field, interpolated_value)
         else:
-            # Handle non-numeric values (e.g., colors, sprites)
-            setattr(interpolated_keyframe, field, value2)
+            if interpolation_factor == 1:
+                # Handle non-numeric values (e.g., colors, sprites)
+                setattr(interpolated_keyframe, field, value2)
+            else:
+                setattr(interpolated_keyframe, field, value1)
 
     return interpolated_keyframe

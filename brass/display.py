@@ -73,9 +73,14 @@ def render_item(item: Item):
 
     same_transform: bool = is_same_transform(item.transform, item.transform_cache)
 
-    if SURFACE_CHACHE.get(item.uuid) == None or not same_transform:
+    if (
+        SURFACE_CHACHE.get(item.uuid) == None
+        or not same_transform
+        or item.sprite != item.sprite_cache
+    ):
         SURFACE_CHACHE[item.uuid] = calculate_transform_cache(item)
         item.transform_cache = structured_clone(item.transform)
+        item.sprite_cache = item.sprite
 
     screen_center_x = pgapi.SETTINGS.screen_size.x / 2
     screen_center_y = pgapi.SETTINGS.screen_size.y / 2
@@ -96,7 +101,9 @@ def render_item(item: Item):
 
     # Blit the rotated image onto the screen
     if item.crop is None:
-        DIRTY_RECTS.append(pgapi.SCREEN.this.blit(SURFACE_CHACHE.get(item.uuid), rotated_rect.topleft))
+        DIRTY_RECTS.append(
+            pgapi.SCREEN.this.blit(SURFACE_CHACHE.get(item.uuid), rotated_rect.topleft)
+        )
         return
 
     crop_start_x = item.crop.start.x * pixel_ratio
@@ -220,7 +227,7 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
         if image.is_err():
             print(image.err().msg)
             return
-        
+
         image = image.ok()
 
         image.fill(bg_color)
@@ -308,10 +315,6 @@ def render_items() -> None:
         # render_thread.join()
         # if bone_thread:
         #     bone_thread.join()
-
-
-
-    
 
 
 def render():

@@ -33,12 +33,12 @@ def spawn() -> None:
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"right-trigger@ctrl#0"}],
-        # "down",
+        "down",
     )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_HEAVY_ATTACK,
         [{"right@mouse"}, {"left-trigger@ctrl#0"}],
-        # "down",
+        "down",
     )
 
     animator.store.add(

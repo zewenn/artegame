@@ -77,6 +77,7 @@ class Item:
     # Transforms
     transform: Optional[Transform] = None
     transform_cache: Optional[Transform] = None
+    sprite_cache: Optional[string] = None
     bones: Optional[dict[str, Bone]] = None
     facing: Number = None
 
