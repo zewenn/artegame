@@ -210,7 +210,7 @@ def handle_plate_combat() -> None:
     light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
     heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
 
-    if light_attacking and player.dashing:
+    if light_attacking and player.dashing and can_attack:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
             projectiles.new(
@@ -231,6 +231,10 @@ def handle_plate_combat() -> None:
         #     ()
         # )
 
+        can_attack = False
+
+        timeout.set((1 / player.attack_speed * 2.5), allow_attack, ())
+
     elif light_attacking and can_attack:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
@@ -239,8 +243,8 @@ def handle_plate_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=0.5,
-                speed=player.base_movement_speed * 1.125,
+                lifetime_seconds=0.85,
+                speed=player.base_movement_speed * 1.4,
                 team="Player",
                 damage=10,
             )
@@ -262,7 +266,7 @@ def handle_plate_combat() -> None:
                 position=structured_clone(player.transform.position),
                 scale=Vec2(64, 64),
                 direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=1.25,
+                lifetime_seconds=2,
                 speed=player.base_movement_speed * 0.75,
                 team="Player",
                 damage=25,
@@ -280,7 +284,7 @@ def handle_gloves_combat() -> None:
     light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
     heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
 
-    if light_attacking and player.dashing:
+    if light_attacking and player.dashing and can_attack:
         animator.play(player_light_attack_anim)
         projectiles.shoot(
             projectiles.new(
@@ -300,6 +304,9 @@ def handle_gloves_combat() -> None:
         #     (player.dash_time * 1.1) / 1000,
         #     ()
         # )
+        can_attack = False
+
+        timeout.set((1 / player.attack_speed * 2.5), allow_attack, ())
 
     elif light_attacking and can_attack:
         animator.play(player_light_attack_anim)
@@ -410,8 +417,20 @@ def move_player() -> None:
     player_hand_holder.transform.position = player.transform.position
     match pgapi.SETTINGS.input_mode:
         case enums.input_modes.CONTROLLER:
-            if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
-                player_hand_holder.transform.rotation.z = -move_math_vec.direction + 90
+            if len(pgapi.CONTROLLERS) == 0:
+                return
+
+            move_vec = vectormath.normalise(
+                vectormath.new(
+                    end=Vec2(
+                        inpt.get_button("right-x@ctrl#0"),
+                        inpt.get_button("right-y@ctrl#0"),
+                    )
+                )
+            )
+
+            if move_vec.end.x != 0 or move_vec.end.y != 0:
+                player_hand_holder.transform.rotation.z = -move_vec.direction + 90
 
         case enums.input_modes.MOUSE_AND_KEYBOARD:
             center = Vec2(pgapi.SCREEN.size.x / 2, pgapi.SCREEN.size.y / 2)

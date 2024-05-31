@@ -16,25 +16,29 @@ from brass import (
 def spawn() -> None:
     pgapi.use_background(assets.use("background3.png"), Vec2(7960, 4320))
 
-    inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_WEAPON_SWITCH, [{"tab"}, {"y@ctrl#0"}], "down"
+        enums.keybinds.PLAYER_DASH,
+        [{"space"}, {"a@ctrl#0"}, {"shoulder-left@ctrl#0"}],
+        "down",
     )
     inpt.bind_buttons(
-        enums.keybinds.SPELLS.SPELL1, [{"q"}, {"shoulder-left@ctrl#0"}], "down"
+        enums.keybinds.PLAYER_WEAPON_SWITCH, [{"tab"}, {"shoulder-right@ctrl#0"}], "down"
     )
     inpt.bind_buttons(
-        enums.keybinds.SPELLS.SPELL2, [{"e"}, {"shoulder-right@ctrl#0"}], "down"
+        enums.keybinds.SPELLS.SPELL1, [{"q"}, {"x@ctrl#0"}], "down"
+    )
+    inpt.bind_buttons(
+        enums.keybinds.SPELLS.SPELL2, [{"e"}, {"y@ctrl#0"}], "down"
     )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"right-trigger@ctrl#0"}],
-        "down",
+        # "down",
     )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_HEAVY_ATTACK,
         [{"right@mouse"}, {"left-trigger@ctrl#0"}],
-        "down",
+        # "down",
     )
 
     animator.store.add(
