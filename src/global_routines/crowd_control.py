@@ -1,7 +1,7 @@
 from brass.base import *
 
 from brass import items, timeout
-from threading import Timer
+from global_routines import effect_display
 
 
 EFFECT_TYPES = Literal["slow", "root", "stun", "sleep", "all"]
@@ -45,6 +45,7 @@ def apply(
     length: Number,
     slow_pecent: Number = 50,
     sleep_countdown: Number = 1,
+    show_effect: bool = False
 ) -> None:
     if T == "all":
         print("Cannot apply all effects!")
@@ -68,4 +69,6 @@ def apply(
 
     if T == "stun":
         to.stunned = True
+        if show_effect:
+            effect_display.summon(to, ["background.png", "gyuri.png"], length)
         return

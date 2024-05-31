@@ -128,6 +128,7 @@ def system_update() -> None:
                             effect.length,
                             effect.slow_strength,
                             effect.sleep_wait_time,
+                            True
                         )
                     if play_name != None:
                         play(item, play_name, length)
