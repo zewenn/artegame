@@ -42,7 +42,7 @@ def cast(spell: Spell, item: Item) -> None:
 
 @spell(enums.spells.HEALING)
 def __spell_fn_heal(this: Spell, item: Item, effectiveness: Number) -> None:
-    if not item.hitpoints:
+    if item.hitpoints == None:
         return
 
     last_hp = item.hitpoints

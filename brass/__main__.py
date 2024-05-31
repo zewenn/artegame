@@ -34,13 +34,14 @@ def init():
         ApplicationSettings(
             application_name=f"Artegame - DEMO",
             # screen_size=Vec2(1600, 900),
-            # screen_size=Vec2(monitor.width, monitor.height),
-            screen_size=Vec2(1920, 1080),
+            screen_size=Vec2(monitor.width, monitor.height),
+            # screen_size=Vec2(1920, 1080),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
             camera=Camera(Vec2(0, 0), 1),
             is_demo=True,
+            axis_rounding=12500
             # axis_rounding=10
             # skip_title_screen=True,
         )
@@ -50,7 +51,7 @@ def init():
 
     inpt.init_controllers()
 
-    inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"back@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"start@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
     inpt.bind_buttons("exit", [{"left shift", "escape"}])

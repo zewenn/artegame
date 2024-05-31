@@ -39,7 +39,7 @@ def update() -> None:
     if menu.SHOWING and inpt.active_bind(enums.keybinds.BACK):
         menu.hide_menu()
 
-    # print("FPS:", 1 / pgapi.TIME.deltatime, end="\r")
+    print("FPS:", 1 / pgapi.TIME.deltatime, end="\r")
 
     if len(enemies.ENEMIES) == 0:
         enemies.new(

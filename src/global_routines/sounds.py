@@ -7,7 +7,7 @@ GAME_MUSIC: Optional[Audio] = None
 MENU_MUSIC: Optional[Audio] = None
 
 
-VOLUME = .05
+VOLUME = .8
 
 @events.awake
 def awk() -> None:

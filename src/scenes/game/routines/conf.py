@@ -14,11 +14,17 @@ from brass import (
 
 
 def spawn() -> None:
-    pgapi.use_background(assets.use("background2.png"), Vec2(3840, 2160))
+    pgapi.use_background(assets.use("background3.png"), Vec2(7960, 4320))
 
     inpt.bind_buttons(enums.keybinds.PLAYER_DASH, [{"space"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(
         enums.keybinds.PLAYER_WEAPON_SWITCH, [{"tab"}, {"y@ctrl#0"}], "down"
+    )
+    inpt.bind_buttons(
+        enums.keybinds.SPELLS.SPELL1, [{"q"}, {"shoulder-left@ctrl#0"}], "down"
+    )
+    inpt.bind_buttons(
+        enums.keybinds.SPELLS.SPELL2, [{"e"}, {"shoulder-right@ctrl#0"}], "down"
     )
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,

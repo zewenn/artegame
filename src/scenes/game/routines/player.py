@@ -143,13 +143,13 @@ def update() -> None:
     global hp_amount_display
     global base_attack_speed_frfr
 
-    if inpt.get_button_down("e"):
-        # crowd_control.apply(player, "root", 2)
-        spells.cast(player.spells[1], player)
-
-    if inpt.get_button_down("q"):
+    if inpt.active_bind(enums.keybinds.SPELLS.SPELL1):
         # crowd_control.apply(player, "root", 2)
         spells.cast(player.spells[0], player)
+
+    if inpt.active_bind(enums.keybinds.SPELLS.SPELL2):
+        # crowd_control.apply(player, "root", 2)
+        spells.cast(player.spells[1], player)
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon == "gloves":
