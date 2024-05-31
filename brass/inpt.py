@@ -338,11 +338,15 @@ def get_mouse_position() -> Vec2:
 
 
 def system_udpate() -> None:
+
     pgapi.LAST_MOUSE_POSITION, pgapi.MOUSE_POSITION = (
         pgapi.MOUSE_POSITION,
         get_mouse_position(),
     )
 
+    if len(pgapi.CONTROLLERS) == 0:
+        return
+    
     distance = vectormath.get_Vec2_distcance(
         pgapi.MOUSE_POSITION, pgapi.LAST_MOUSE_POSITION
     )

@@ -34,7 +34,8 @@ def init():
         ApplicationSettings(
             application_name=f"Artegame - DEMO",
             # screen_size=Vec2(1600, 900),
-            screen_size=Vec2(monitor.width, monitor.height),
+            # screen_size=Vec2(monitor.width, monitor.height),
+            screen_size=Vec2(1920, 1080),
             max_fps=240,
             vsync=0,
             icon="neunyx32x32.png",
