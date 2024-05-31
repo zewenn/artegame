@@ -1,6 +1,6 @@
 import base64, os
 import __config__ as conf
-from util import *
+from deps import *
 
 def get_files_in_directory(directory) -> list[str]:
     file_list = []

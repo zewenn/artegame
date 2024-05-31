@@ -5,7 +5,7 @@ from zenyx import printf
 from uuid import uuid4
 from typing import *
 import time
-from util import *
+from deps import *
 
 import __config__ as conf
 import os, time
@@ -300,3 +300,4 @@ def serialise_imports():
 
 if __name__ == "__main__":
     serialise_imports()
+    
