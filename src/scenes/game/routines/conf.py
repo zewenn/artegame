@@ -120,6 +120,56 @@ def spawn() -> None:
                 base_attack_speed=5,
                 # Inventory
                 inventory=Inventory(),
+                weapons=[
+                    Weapon(
+                        id="gloves",
+                        #
+                        light_sprite="light_attack_projectile.png",
+                        light_lifetime=1,
+                        light_speed=1,
+                        light_damage_multiplier=1,
+                        light_size=Vec2(32, 96),
+                        #
+                        heavy_sprite="heavy_attack_projectile.png",
+                        heavy_lifetime=1.5,
+                        heavy_speed=0.8,
+                        heavy_damage_multiplier=2,
+                        heavy_size=Vec2(32, 96),
+                        #
+                        dash_sprite="light_attack_projectile.png",
+                        dash_lifetime=2.25,
+                        dash_speed=2,
+                        dash_damage_multiplier=1.25,
+                        dash_size=Vec2(64, 256),
+                        #
+                        spell0_effectiveness=5,
+                        spell1_effectiveness=5,
+                    ),
+                    Weapon(
+                        id="plates",
+                        #
+                        light_sprite="light_attack_projectile.png",
+                        light_lifetime=1,
+                        light_damage_multiplier=1,
+                        light_speed=0.9,
+                        light_size=Vec2(64, 64),
+                        #
+                        heavy_sprite="heavy_attack_projectile.png",
+                        heavy_lifetime=1.5,
+                        heavy_damage_multiplier=2,
+                        heavy_speed=0.75,
+                        heavy_size=Vec2(64, 64),
+                        #
+                        dash_sprite="light_attack_projectile.png",
+                        dash_lifetime=2.25,
+                        dash_damage_multiplier=1.25,
+                        dash_speed=1.75,
+                        dash_size=Vec2(256, 64),
+                        #
+                        spell0_effectiveness=5,
+                        spell1_effectiveness=5,
+                    ),
+                ],
             ),
             Item(
                 id="player_hand_holder",

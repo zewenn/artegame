@@ -30,7 +30,7 @@ player_light_attack_anim: Optional[AnimationGroup] = None
 player_can_move_save = True
 
 
-class WEAPONS:
+class DEFAULT_WEAPONS:
     GLOVES = Weapon(
         id="gloves",
         #
@@ -61,13 +61,13 @@ class WEAPONS:
         light_sprite="light_attack_projectile.png",
         light_lifetime=1,
         light_damage_multiplier=1,
-        light_speed=.9,
+        light_speed=0.9,
         light_size=Vec2(64, 64),
         #
         heavy_sprite="heavy_attack_projectile.png",
         heavy_lifetime=1.5,
         heavy_damage_multiplier=2,
-        heavy_speed=.75,
+        heavy_speed=0.75,
         heavy_size=Vec2(64, 64),
         #
         dash_sprite="light_attack_projectile.png",
@@ -174,8 +174,11 @@ def init() -> None:
     if not player.inventory:
         player.inventory = Inventory()
 
+    if not player.weapons:
+        player.weapons = [DEFAULT_WEAPONS.PLATES, DEFAULT_WEAPONS.GLOVES]
+
     if not player.weapon:
-        player.weapon = WEAPONS.PLATES
+        player.weapon = player.weapons[0]
 
     if not player.spells:
         player.spells = [enums.spells.HEALING, enums.spells.GOLIATH]
@@ -209,11 +212,11 @@ def update() -> None:
         spells.cast(player.spells[1], player)
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
-        if player.weapon.id == "gloves":
-            player.weapon = WEAPONS.PLATES
+        if player.weapon.id == player.weapons[0].id:
+            player.weapon = player.weapons[1]
             player.base_attack_speed = default_attack_speed
         else:
-            player.weapon = WEAPONS.GLOVES
+            player.weapon = player.weapons[0]
             player.base_attack_speed = default_attack_speed * 2
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
@@ -254,7 +257,6 @@ def update() -> None:
             # )
 
             can_attack = False
-
             timeout.set((1 / player.attack_speed), allow_attack, ())
 
         elif light_attacking and can_attack:
@@ -271,13 +273,13 @@ def update() -> None:
                     damage=player.base_damage * player.weapon.light_damage_multiplier,
                 )
             )
-            can_attack = False
-            # timeout.set()
 
             if not player.rooted and not can_dash:
                 can_dash = True
 
             crowd_control.apply(player, "root", 0.1)
+
+            can_attack = False
             timeout.set((1 / player.attack_speed), allow_attack, ())
 
         elif heavy_attacking and can_attack and not player.dashing:
@@ -295,7 +297,9 @@ def update() -> None:
                     effects=[Effect("stun", 1)],
                 )
             )
+
             crowd_control.apply(player, "root", 0.25)
+
             can_attack = False
             timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
 

@@ -130,9 +130,10 @@ class Item:
     max_mana: Optional[Number] = None
     base_attack_speed: Optional[Number] = None
     base_damage: Optional[Number] = None
-    weapon: Optional["Weapon"] = None
+    weapons: Optional[list["Weapon"]] = None
 
     # -> In game current stats
+    weapon: Optional["Weapon"] = None
     hitpoints: Optional[Number] = None
     """@runtime"""
     mana: Optional[Number] = None
