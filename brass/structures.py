@@ -100,13 +100,14 @@ class Item:
     # |> Movement -> Dashes -> Cooldown Management
     dash_charge_refill_time: Optional[float] = None
     last_dash_charge_refill: Optional[int] = None
+    dashing: bool = False
     """@runtime"""
 
     # Inventory
     inventory: Optional["Inventory"] = None
     """@player-only"""
-    weapon: Optional[Literal["plates", "gloves"]] = None
-    """@player-only"""
+    # weapon: Optional[Literal["plates", "gloves"]] = None
+    # """@player-only"""
 
     # Collision
     can_collide: bool = False
@@ -123,16 +124,24 @@ class Item:
     projectile_damage: Optional[Number] = None
     projectile_effects: Optional[list["Effect"]] = None
 
-    # Combat // Alive
+    # Combat Stats
+    # -> Base and max stats
     max_hitpoints: Optional[Number] = None
-    hitpoints: Optional[Number] = None
     max_mana: Optional[Number] = None
     base_attack_speed: Optional[Number] = None
-    attack_speed: Optional[Number] = None
+    base_damage: Optional[Number] = None
+    weapon: Optional["Weapon"] = None
+
+    # -> In game current stats
+    hitpoints: Optional[Number] = None
+    """@runtime"""
     mana: Optional[Number] = None
+    """@runtime"""
+    attack_speed: Optional[Number] = None
+    """@runtime"""
+
+    # -> Stats
     invulnerable: bool = False
-    can_attack: bool = False
-    dashing: bool = False
     can_attack: bool = False
 
     # |> Combat -> Crowd Control
@@ -177,6 +186,32 @@ class Dasher:
     speed_multiplier: float
     time: float
     start_time: float
+
+
+@dataclass
+class Weapon:
+    id: Literal["gloves", "plates"]
+
+    light_sprite: Number
+    light_damage_multiplier: Number
+    light_lifetime: Number
+    light_speed: Number
+    light_size: Vec2
+
+    heavy_sprite: Number
+    heavy_damage_multiplier: Number
+    heavy_lifetime: Number
+    heavy_speed: Number
+    heavy_size: Vec2
+
+    dash_sprite: Number
+    dash_damage_multiplier: Number
+    dash_lifetime: Number
+    dash_speed: Number
+    dash_size: Vec2
+
+    spell0_effectiveness: Number
+    spell1_effectiveness: Number
 
 
 @dataclass

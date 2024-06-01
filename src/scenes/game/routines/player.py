@@ -29,13 +29,65 @@ player_hand_holder: Optional[Item] = None
 player_light_attack_anim: Optional[AnimationGroup] = None
 player_can_move_save = True
 
+
+class WEAPONS:
+    GLOVES = Weapon(
+        id="gloves",
+        #
+        light_sprite="light_attack_projectile.png",
+        light_lifetime=1,
+        light_speed=1,
+        light_damage_multiplier=1,
+        light_size=Vec2(32, 96),
+        #
+        heavy_sprite="heavy_attack_projectile.png",
+        heavy_lifetime=1.5,
+        heavy_speed=0.8,
+        heavy_damage_multiplier=2,
+        heavy_size=Vec2(32, 96),
+        #
+        dash_sprite="light_attack_projectile.png",
+        dash_lifetime=2.25,
+        dash_speed=2,
+        dash_damage_multiplier=1.25,
+        dash_size=Vec2(64, 256),
+        #
+        spell0_effectiveness=5,
+        spell1_effectiveness=5,
+    )
+    PLATES = Weapon(
+        id="plates",
+        #
+        light_sprite="light_attack_projectile.png",
+        light_lifetime=1,
+        light_damage_multiplier=1,
+        light_speed=.9,
+        light_size=Vec2(64, 64),
+        #
+        heavy_sprite="heavy_attack_projectile.png",
+        heavy_lifetime=1.5,
+        heavy_damage_multiplier=2,
+        heavy_speed=.75,
+        heavy_size=Vec2(64, 64),
+        #
+        dash_sprite="light_attack_projectile.png",
+        dash_lifetime=2.25,
+        dash_damage_multiplier=1.25,
+        dash_speed=1.75,
+        dash_size=Vec2(256, 64),
+        #
+        spell0_effectiveness=5,
+        spell1_effectiveness=5,
+    )
+
+
 dash_display: Optional[GUIElement] = None
 hp_amount_display: Optional[GUIElement] = None
 hitpoint_display: Optional[GUIElement] = None
 mana_display: Optional[GUIElement] = None
 walk_sound: Optional[Audio] = None
 
-base_attack_speed_frfr: Number = 0
+default_attack_speed: Number = 0
 
 can_attack: bool = True
 can_dash: bool = False
@@ -50,7 +102,7 @@ def init() -> None:
     global walk_sound
     global player_light_attack_anim
     global hp_amount_display
-    global base_attack_speed_frfr
+    global default_attack_speed
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
@@ -117,19 +169,22 @@ def init() -> None:
 
     player.slowed_by_percent = 0
 
-    base_attack_speed_frfr = player.base_attack_speed
+    default_attack_speed = player.base_attack_speed
 
     if not player.inventory:
         player.inventory = Inventory()
 
     if not player.weapon:
-        player.weapon = "plates"
+        player.weapon = WEAPONS.PLATES
 
     if not player.spells:
         player.spells = [enums.spells.HEALING, enums.spells.GOLIATH]
 
     if not player.dash_time:
         player.dash_time = 150
+
+    if not player.base_damage:
+        player.base_damage = 10
 
     print("Player:", player.uuid)
     # hitpoint_display.style.bg_color = (20, 120, 220, 1)
@@ -141,7 +196,9 @@ def update() -> None:
     global player_can_move_save
     global mana_display
     global hp_amount_display
-    global base_attack_speed_frfr
+    global default_attack_speed
+    global can_attack
+    global can_dash
 
     if inpt.active_bind(enums.keybinds.SPELLS.SPELL1):
         # crowd_control.apply(player, "root", 2)
@@ -152,12 +209,12 @@ def update() -> None:
         spells.cast(player.spells[1], player)
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
-        if player.weapon == "gloves":
-            player.weapon = "plates"
-            player.base_attack_speed = base_attack_speed_frfr
+        if player.weapon.id == "gloves":
+            player.weapon = WEAPONS.PLATES
+            player.base_attack_speed = default_attack_speed
         else:
-            player.weapon = "gloves"
-            player.base_attack_speed = base_attack_speed_frfr * 2
+            player.weapon = WEAPONS.GLOVES
+            player.base_attack_speed = default_attack_speed * 2
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
         player.can_move = False
@@ -172,10 +229,75 @@ def update() -> None:
     # print(items.rendering)
 
     if not (player.stunned or player.sleeping):
-        if player.weapon == "plates":
-            handle_plate_combat()
-        else:
-            handle_gloves_combat()
+        light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
+        heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
+
+        if light_attacking and player.dashing and can_attack:
+            animator.play(player_light_attack_anim)
+            projectiles.shoot(
+                projectiles.new(
+                    sprite=player.weapon.dash_sprite,
+                    position=structured_clone(player.transform.position),
+                    scale=player.weapon.dash_size,
+                    direction=player_hand_holder.transform.rotation.z,
+                    lifetime_seconds=player.weapon.dash_lifetime,
+                    speed=player.base_movement_speed
+                    * player.weapon.dash_speed
+                    * player.dash_movement_multiplier,
+                    team="Player",
+                    damage=player.base_damage * player.weapon.dash_damage_multiplier,
+                ),
+            ),
+            # timeout.set(
+            #     (player.dash_time * 1.1) / 1000,
+            #     ()
+            # )
+
+            can_attack = False
+
+            timeout.set((1 / player.attack_speed), allow_attack, ())
+
+        elif light_attacking and can_attack:
+            animator.play(player_light_attack_anim)
+            projectiles.shoot(
+                projectiles.new(
+                    sprite=player.weapon.light_sprite,
+                    position=structured_clone(player.transform.position),
+                    scale=player.weapon.light_size,
+                    direction=player_hand_holder.transform.rotation.z,
+                    lifetime_seconds=player.weapon.light_lifetime,
+                    speed=player.base_movement_speed * player.weapon.light_speed,
+                    team="Player",
+                    damage=player.base_damage * player.weapon.light_damage_multiplier,
+                )
+            )
+            can_attack = False
+            # timeout.set()
+
+            if not player.rooted and not can_dash:
+                can_dash = True
+
+            crowd_control.apply(player, "root", 0.1)
+            timeout.set((1 / player.attack_speed), allow_attack, ())
+
+        elif heavy_attacking and can_attack and not player.dashing:
+            animator.play(player_light_attack_anim)
+            projectiles.shoot(
+                projectiles.new(
+                    sprite=player.weapon.heavy_sprite,
+                    position=structured_clone(player.transform.position),
+                    scale=player.weapon.heavy_size,
+                    direction=player_hand_holder.transform.rotation.z,
+                    lifetime_seconds=2,
+                    speed=player.base_movement_speed * player.weapon.heavy_speed,
+                    team="Player",
+                    damage=player.base_damage * player.weapon.heavy_damage_multiplier,
+                    effects=[Effect("stun", 1)],
+                )
+            )
+            crowd_control.apply(player, "root", 0.25)
+            can_attack = False
+            timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
 
     if player.hitpoints < 0:
         player.hitpoints = 0
@@ -204,151 +326,8 @@ def allow_attack() -> None:
     can_attack = True
 
 
-def handle_plate_combat() -> None:
-    global can_attack, can_dash
-
-    light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
-    heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
-
-    if light_attacking and player.dashing and can_attack:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="dash_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(256, 128),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=1,
-                speed=player.base_movement_speed
-                * 1.5
-                * player.dash_movement_multiplier,
-                team="Player",
-                damage=20,
-            ),
-        ),
-        # timeout.set(
-        #     (player.dash_time * 1.1) / 1000,
-        #     ()
-        # )
-
-        can_attack = False
-
-        timeout.set((1 / player.attack_speed), allow_attack, ())
-
-    elif light_attacking and can_attack:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="light_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(64, 64),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=0.85,
-                speed=player.base_movement_speed * 1.4,
-                team="Player",
-                damage=10,
-            )
-        )
-        can_attack = False
-        # timeout.set()
-
-        if not player.rooted and not can_dash:
-            can_dash = True
-
-        crowd_control.apply(player, "root", 0.1)
-        timeout.set((1 / player.attack_speed), allow_attack, ())
-
-    elif heavy_attacking and can_attack and not player.dashing:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="heavy_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(64, 64),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=2,
-                speed=player.base_movement_speed * 0.75,
-                team="Player",
-                damage=25,
-                effects=[Effect("stun", 1)],
-            )
-        )
-        crowd_control.apply(player, "root", 0.25)
-        can_attack = False
-        timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
-
-
-def handle_gloves_combat() -> None:
-    global can_attack, can_dash
-
-    light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
-    heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
-
-    if light_attacking and player.dashing and can_attack:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="dash_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(32, 256),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=1,
-                speed=player.base_movement_speed
-                * 1.5
-                * player.dash_movement_multiplier,
-                team="Player",
-                damage=20,
-            ),
-        ),
-        # timeout.set(
-        #     (player.dash_time * 1.1) / 1000,
-        #     ()
-        # )
-        can_attack = False
-
-        timeout.set((1 / player.attack_speed * 2.5), allow_attack, ())
-
-    elif light_attacking and can_attack:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="light_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(32, 96),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=1.5,
-                speed=player.base_movement_speed * 1.125,
-                team="Player",
-                damage=20,
-            )
-        )
-        can_attack = False
-        # timeout.set()
-
-        if not player.rooted and not can_dash:
-            can_dash = True
-
-        crowd_control.apply(player, "root", 0.1)
-        timeout.set((1 / player.attack_speed), allow_attack, ())
-
-    elif heavy_attacking and can_attack and not player.dashing:
-        animator.play(player_light_attack_anim)
-        projectiles.shoot(
-            projectiles.new(
-                sprite="heavy_attack_projectile.png",
-                position=structured_clone(player.transform.position),
-                scale=Vec2(32, 96),
-                direction=player_hand_holder.transform.rotation.z,
-                lifetime_seconds=2,
-                speed=player.base_movement_speed * 0.75,
-                team="Player",
-                damage=35,
-                effects=[Effect("stun", 1)],
-            )
-        )
-        crowd_control.apply(player, "root", 0.25)
-        can_attack = False
-        timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
+def handle_combat(options: Weapon) -> None:
+    pass
 
 
 def move_player() -> None:
