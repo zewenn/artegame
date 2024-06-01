@@ -14,6 +14,7 @@ from brass import (
 
 
 def spawn() -> None:
+
     # pgapi.use_background(assets.use("background3.png"), Vec2(7960, 4320))
     pgapi.use_background(assets.use("background4.png"), Vec2(2304, 1536))
     # print(pgapi.SETTINGS.background_size)
@@ -24,14 +25,12 @@ def spawn() -> None:
         "down",
     )
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_WEAPON_SWITCH, [{"tab"}, {"shoulder-right@ctrl#0"}], "down"
+        enums.keybinds.PLAYER_WEAPON_SWITCH,
+        [{"tab"}, {"shoulder-right@ctrl#0"}],
+        "down",
     )
-    inpt.bind_buttons(
-        enums.keybinds.SPELLS.SPELL1, [{"q"}, {"x@ctrl#0"}], "down"
-    )
-    inpt.bind_buttons(
-        enums.keybinds.SPELLS.SPELL2, [{"e"}, {"y@ctrl#0"}], "down"
-    )
+    inpt.bind_buttons(enums.keybinds.SPELLS.SPELL1, [{"q"}, {"x@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.SPELLS.SPELL2, [{"e"}, {"y@ctrl#0"}], "down")
     inpt.bind_buttons(
         enums.keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"right-trigger@ctrl#0"}],
@@ -93,61 +92,114 @@ def spawn() -> None:
     # if res_loaded.is_ok():
     #     return
 
-    # if loaded.is_ok():
-
-    # items.add(
-    #     Item(
-    #         id="CHUNKYBOY",
-    #         tags=["asd", "item"],
-    #         transform=Transform(
-    #             position=Vec2(0, 0), rotation=Vec3(), scale=Vec2(2048, 2048)
-    #         ),
-    #         sprite="test.png",
-    #         render=True
-    #     )
-    # )
+    #                       ITEMS ADD - PLAYER
     items.add(
-        Item(
-            id="player",
-            tags=["player", "item"],
-            transform=Transform(Vec2(0, 0), Vec3(0, 0, 0), Vec2(64, 64)),
-            # fill_color=[20, 20, 20],
-            sprite="gyuri.png",
-            can_move=True,
-            can_collide=True,
-            can_repulse=True,
-            lightness=0.9,
-            base_movement_speed=400,
-            dash_count=2,
-            dash_movement_multiplier=2.5,
-            dash_charge_refill_time=0.5,
-            dash_time=200,
-            max_hitpoints=100,
-            max_mana=100,
-            base_attack_speed=5,
-            team="Player",
-            inventory=Inventory(),
-        )
+        [
+            Item(
+                id="player",
+                tags=["player", "item"],
+                team="Player",
+                transform=Transform(Vec2(), Vec3(), Vec2(64, 64)),
+                # fill_color=[20, 20, 20],
+                sprite="gyuri.png",
+                # Collision
+                can_collide=True,
+                can_repulse=True,
+                lightness=0.9,
+                # Movement
+                can_move=True,
+                base_movement_speed=400,
+                # Dashing
+                dash_count=2,
+                dash_movement_multiplier=2.5,
+                dash_charge_refill_time=0.5,
+                dash_time=200,
+                # Vitals & Stats
+                max_hitpoints=100,
+                max_mana=100,
+                base_attack_speed=5,
+                # Inventory
+                inventory=Inventory(),
+            ),
+            Item(
+                id="player_hand_holder",
+                tags=["player_hand_holder", "item"],
+                transform=Transform(Vec2(-32, -32), Vec3(0, 0, 0), Vec2(64, 64)),
+                bones={
+                    "left_hand": Bone(
+                        transform=Transform(
+                            Vec2(-32, 16), Vec3(0, 0, -40), Vec2(48, 48)
+                        ),
+                        anchor=Vec2(0, 0),
+                        # fill_color=[255, 255, 255]
+                        sprite="weight_plate.png",
+                    ),
+                    "right_hand": Bone(
+                        transform=Transform(Vec2(32, 16), Vec3(0, 0, 40), Vec2(48, 48)),
+                        anchor=Vec2(0, 0),
+                        sprite="weight_plate.png",
+                    ),
+                },
+            ),
+        ]
     )
+
+    #                       ITEMS ADD - WALLS
     items.add(
-        Item(
-            id="player_hand_holder",
-            tags=["player_hand_holder", "item"],
-            transform=Transform(Vec2(-32, -32), Vec3(0, 0, 0), Vec2(64, 64)),
-            bones={
-                "left_hand": Bone(
-                    transform=Transform(Vec2(-32, 16), Vec3(0, 0, -40), Vec2(48, 48)),
-                    anchor=Vec2(0, 0),
-                    # fill_color=[255, 255, 255]
-                    sprite="weight_plate.png",
+        [
+            Item(
+                id="invisible_wall_left",
+                tags=["invisible", "wall", "wall-left"],
+                transform=Transform(
+                    Vec2(
+                        -pgapi.SETTINGS.background_size.x / 2 - 32,
+                        -pgapi.SETTINGS.background_size.y / 2 + 32,
+                    ),
+                    Vec3(),
+                    Vec2(64, pgapi.SETTINGS.background_size.y),
                 ),
-                "right_hand": Bone(
-                    transform=Transform(Vec2(32, 16), Vec3(0, 0, 40), Vec2(48, 48)),
-                    anchor=Vec2(0, 0),
-                    sprite="weight_plate.png",
+                can_collide=True,
+            ),
+            Item(
+                id="invisible_wall_right",
+                tags=["invisible", "wall", "wall-right"],
+                transform=Transform(
+                    Vec2(
+                        pgapi.SETTINGS.background_size.x / 2 + 32,
+                        -pgapi.SETTINGS.background_size.y / 2 + 32,
+                    ),
+                    Vec3(),
+                    Vec2(64, pgapi.SETTINGS.background_size.y),
                 ),
-            },
-        )
+                can_collide=True,
+            ),
+            Item(
+                id="invisible_wall_top",
+                tags=["invisible", "wall", "wall-top"],
+                transform=Transform(
+                    Vec2(
+                        -pgapi.SETTINGS.background_size.x / 2 + 32,
+                        -pgapi.SETTINGS.background_size.y / 2 - 32,
+                    ),
+                    Vec3(),
+                    Vec2(pgapi.SETTINGS.background_size.x, 64),
+                ),
+                can_collide=True,
+            ),
+            Item(
+                id="invisible_wall_bottom",
+                tags=["invisible", "wall", "wall-bottom"],
+                transform=Transform(
+                    Vec2(
+                        -pgapi.SETTINGS.background_size.x / 2 + 32,
+                        pgapi.SETTINGS.background_size.y / 2 + 32,
+                    ),
+                    Vec3(),
+                    Vec2(pgapi.SETTINGS.background_size.x, 64),
+                ),
+                can_collide=True,
+            ),
+        ]
     )
 
     # items.add(
@@ -209,31 +261,31 @@ def spawn() -> None:
     #     )
     # )
 
-    items.add(
-        Item(
-            id="box",
-            tags=["box", "item"],
-            transform=Transform(
-                position=Vec2(64, 0), rotation=Vec3(), scale=Vec2(64, 64)
-            ),
-            can_collide=True,
-            can_repulse=True,
-            lightness=3,
-            fill_color=[20, 20, 20],
-        )
-    )
+    # items.add(
+    #     Item(
+    #         id="box",
+    #         tags=["box", "item"],
+    #         transform=Transform(
+    #             position=Vec2(64, 0), rotation=Vec3(), scale=Vec2(64, 64)
+    #         ),
+    #         can_collide=True,
+    #         can_repulse=True,
+    #         lightness=3,
+    #         fill_color=[20, 20, 20],
+    #     )
+    # )
 
-    items.add(
-        Item(
-            id="asd",
-            tags=["asd", "item"],
-            transform=Transform(
-                position=Vec2(200, 0), rotation=Vec3(), scale=Vec2(64, 64)
-            ),
-            sprite="test.png",
-            render=True,
-            can_collide=True,
-            can_repulse=False,
-            lightness=10,
-        )
-    )
+    # items.add(
+    #     Item(
+    #         id="asd",
+    #         tags=["asd", "item"],
+    #         transform=Transform(
+    #             position=Vec2(200, 0), rotation=Vec3(), scale=Vec2(64, 64)
+    #         ),
+    #         sprite="test.png",
+    #         render=True,
+    #         can_collide=True,
+    #         can_repulse=False,
+    #         lightness=10,
+    #     )
+    # )

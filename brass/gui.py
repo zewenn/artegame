@@ -187,7 +187,7 @@ def system_update() -> None:
 
         if el.style.inherit_display:
             el.current_style.display = parent_style.display
-            print(el.current_style.display)
+            # print(el.current_style.display)
 
         x, y = 0, 0
         w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 0

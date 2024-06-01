@@ -19,7 +19,14 @@ def remove(item: Item) -> Item:
     return item
 
 
-def add(item: Item) -> Item:
+def add(item: Item | list[Item]) -> Item:
+
+    if isinstance(item, list):
+        for it in item:
+            it.uuid = "item:" + uuid()
+            rendering.append(it)
+        return
+
     item.uuid = "item:" + uuid()
     rendering.append(item)
     return item
