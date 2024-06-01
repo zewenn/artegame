@@ -26,6 +26,7 @@ def title_button(
         Text(content),
         style=StyleSheet(
             position=POSITION.RELATIVE,
+            inherit_display=True,
             color=COLOURS.WHITE,
             width=f"{len(content) * FS}x",
             height=f"{FS * 1.25}x",
@@ -50,30 +51,26 @@ def item_display(nth: Number, name: string) -> GUIElement:
     FS = FONT_SIZE.SMALL
     return Element(
         "Inventory-Item-" + name,
-
         Element(
             "Inventory-Item-" + name + "-Counter",
-
             Text("0"),
             style=StyleSheet(
                 position=POSITION.RELATIVE,
                 top=f"{width - FS}x",
                 left=f"{width - FS}x",
                 font_size=FS,
-                font_family=FONTS.PRESS_PLAY
-            )
+                font_family=FONTS.PRESS_PLAY,
+            ),
         ),
-
         style=StyleSheet(
             position=POSITION.RELATIVE,
             left=f"{width * nth - 1 + gap}x",
             top="0x",
             width=width,
             height=width,
-            bg_image=f"{name}.png"
-        ) 
+            bg_image=f"{name}.png",
+        ),
     )
-
 
 
 def awake() -> None:
@@ -83,11 +80,7 @@ def awake() -> None:
             item_display(1, "banana"),
             item_display(2, "strawberry"),
             item_display(3, "blueberry"),
-            style=StyleSheet(
-                position=POSITION.ABSOLUTE,
-                left="80w",
-                top="90h"
-            )
+            style=StyleSheet(position=POSITION.ABSOLUTE, left="80w", top="90h"),
         ),
         Element(
             "PlayerDashCounter",
@@ -194,7 +187,12 @@ def awake() -> None:
                     (FS + GAP) * 2,
                     back_to_main_menu,
                 ),
-                style=StyleSheet(position=POSITION.ABSOLUTE, top="40h", left="50w"),
+                style=StyleSheet(
+                    position=POSITION.ABSOLUTE,
+                    inherit_display=True,
+                    top="40h",
+                    left="50w",
+                ),
             ),
             style=StyleSheet(
                 position=POSITION.ABSOLUTE,

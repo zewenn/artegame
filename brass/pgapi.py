@@ -118,10 +118,11 @@ def use_background(surf: Surface, size: Optional[Vec2] = None) -> None:
     global SETTINGS
 
     if size != None:
-        SETTINGS.background_image = pygame.transform.scale(surf, (size.x, size.y))
-        return
+        surf = pygame.transform.scale(surf, (size.x, size.y))
     
     SETTINGS.background_image = surf
+
+    SETTINGS.background_size = Vec2(surf.get_width(), surf.get_height())
 
 
 def exit() -> Never:

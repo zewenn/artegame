@@ -234,7 +234,8 @@ class ApplicationSettings:
     If enabled dpad jumps between menupoints
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
-    background_image: Surface = None
+    background_image: Optional[Surface] = None
+    background_size: Optional[Vec2] = None
     skip_title_screen: bool = False
 
 
@@ -376,7 +377,8 @@ class Timeout:
 
 @dataclass
 class StyleSheet:
-    display: Literal["block", "none"] = None
+    display: Literal["block", "none"] = "block"
+    inherit_display: bool = False
     position: Literal["absolute", "relative"] = None
 
     bottom: str = None

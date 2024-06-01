@@ -14,7 +14,9 @@ from brass import (
 
 
 def spawn() -> None:
-    pgapi.use_background(assets.use("background3.png"), Vec2(7960, 4320))
+    # pgapi.use_background(assets.use("background3.png"), Vec2(7960, 4320))
+    pgapi.use_background(assets.use("background4.png"), Vec2(2304, 1536))
+    # print(pgapi.SETTINGS.background_size)
 
     inpt.bind_buttons(
         enums.keybinds.PLAYER_DASH,
@@ -108,7 +110,7 @@ def spawn() -> None:
         Item(
             id="player",
             tags=["player", "item"],
-            transform=Transform(Vec2(-32, -32), Vec3(0, 0, 0), Vec2(64, 64)),
+            transform=Transform(Vec2(0, 0), Vec3(0, 0, 0), Vec2(64, 64)),
             # fill_color=[20, 20, 20],
             sprite="gyuri.png",
             can_move=True,

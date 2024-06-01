@@ -177,13 +177,17 @@ def system_update() -> None:
     for el in query_available[::-1]:
         if isinstance(el, str):
             continue
-        
+
         if el.current_style != el.style and hovering != el:
-            el.current_style = el.style
+            el.current_style = structured_clone(el.style)
 
         elstl = el.current_style
         parent = el.parent if el.parent else DOM_El
         parent_style = el.parent.current_style if el.parent else DOM_El.current_style
+
+        if el.style.inherit_display:
+            el.current_style.display = parent_style.display
+            print(el.current_style.display)
 
         x, y = 0, 0
         w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 0
@@ -215,11 +219,15 @@ def system_update() -> None:
 
         elif elstl.position == POSITION.RELATIVE:
             x = (
-                (unit(elstl.left, unit(parent_style.left)) + parent.transform.position.x)
+                (
+                    unit(elstl.left, unit(parent_style.left))
+                    + parent.transform.position.x
+                )
                 if elstl.left is not None and parent_style.left is not None
                 else (
                     (
-                        parent.transform.position.x - unit(elstl.right, unit(parent_style.right))
+                        parent.transform.position.x
+                        - unit(elstl.right, unit(parent_style.right))
                     )
                     if elstl.right is not None and parent_style.right is not None
                     else 0
@@ -230,13 +238,13 @@ def system_update() -> None:
                 if elstl.top is not None and parent_style.top is not None
                 else (
                     (
-                        parent.transform.position.y - unit(elstl.bottom, unit(parent_style.bottom))
+                        parent.transform.position.y
+                        - unit(elstl.bottom, unit(parent_style.bottom))
                     )
                     if elstl.bottom is not None and parent_style.bottom is not None
                     else 0
                 )
             )
-
 
         el.transform.position.x = x
         el.transform.position.y = y
@@ -248,10 +256,10 @@ def system_update() -> None:
             and hovering == None
             and el.button
             and el.id != "DOM"
+            and elstl.display != "none"
         ):
             hovering = el
             continue
-
 
     if hovering == None:
         btn = buttons[selected_button_index]

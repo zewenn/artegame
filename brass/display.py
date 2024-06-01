@@ -326,8 +326,12 @@ def render():
             pgapi.SCREEN.this.blit(
                 pgapi.SETTINGS.background_image,
                 (
-                    -pgapi.CAMERA.position.x * pgapi.CAMERA.pixel_unit_ratio,
-                    -pgapi.CAMERA.position.y * pgapi.CAMERA.pixel_unit_ratio,
+                    pgapi.SCREEN.size.x / 2
+                    + (-pgapi.CAMERA.position.x - pgapi.SETTINGS.background_size.x / 2)
+                    * pgapi.CAMERA.pixel_unit_ratio,
+                    pgapi.SCREEN.size.y / 2
+                    + (-pgapi.CAMERA.position.y - pgapi.SETTINGS.background_size.y / 2)
+                    * pgapi.CAMERA.pixel_unit_ratio,
                 ),
             )
         )
