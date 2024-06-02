@@ -51,7 +51,7 @@ def init():
 
     inpt.init_controllers()
 
-    inpt.bind_buttons(enums.keybinds.SHOW_MENU, [{"escape"}, {"start@ctrl#0"}], "down")
+    inpt.bind_buttons(enums.keybinds.SHOW_PAUSE_MENU, [{"escape"}, {"start@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
     inpt.bind_buttons(enums.keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
     inpt.bind_buttons("exit", [{"left shift", "escape"}])

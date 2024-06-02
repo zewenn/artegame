@@ -2,14 +2,14 @@ from brass.base import *
 from brass.gui import *
 
 from brass import pgapi, scene, saves
-from global_routines import menu
+from global_routines import menus
 
 FS = FONT_SIZE.MEDIUM
 GAP = 40
 
 
 def back_to_main_menu() -> None:
-    menu.hide_menu()
+    menus.toggle("GameMenu")
     err = saves.save()
     if err.is_err():
         print(err.err().msg)
@@ -170,38 +170,42 @@ def awake() -> None:
                 bg_color=(50, 50, 50, 1),
             ),
         ),
-        Element(
-            "GameMenu",
+        menus.new(
             Element(
-                "CenterButtons",
-                title_button("continue-btn", "Játék Folytatása", 0, menu.hide_menu),
-                title_button(
-                    "reload-btn",
-                    "Újratöltés",
-                    FS + GAP,
-                    lambda: scene.load(enums.scenes.GAME),
-                ),
-                title_button(
-                    "exit-btn",
-                    "Főmenü",
-                    (FS + GAP) * 2,
-                    back_to_main_menu,
+                "GameMenu",
+                Element(
+                    "CenterButtons",
+                    title_button(
+                        "continue-btn", "Játék Folytatása", 0, lambda: menus.toggle("GameMenu")
+                    ),
+                    title_button(
+                        "reload-btn",
+                        "Újratöltés",
+                        FS + GAP,
+                        lambda: scene.load(enums.scenes.GAME),
+                    ),
+                    title_button(
+                        "exit-btn",
+                        "Főmenü",
+                        (FS + GAP) * 2,
+                        back_to_main_menu,
+                    ),
+                    style=StyleSheet(
+                        position=POSITION.ABSOLUTE,
+                        inherit_display=True,
+                        top="40h",
+                        left="50w",
+                    ),
                 ),
                 style=StyleSheet(
                     position=POSITION.ABSOLUTE,
-                    inherit_display=True,
-                    top="40h",
-                    left="50w",
+                    display="none",
+                    top="0x",
+                    left="0x",
+                    width="100w",
+                    height="100h",
+                    bg_color=(0, 0, 0, 0.6),
                 ),
-            ),
-            style=StyleSheet(
-                position=POSITION.ABSOLUTE,
-                display="none",
-                top="0x",
-                left="0x",
-                width="100w",
-                height="100h",
-                bg_color=(0, 0, 0, 0.6),
-            ),
+            )
         ),
     )

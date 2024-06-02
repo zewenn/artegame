@@ -14,30 +14,22 @@ from brass import (
     gui
 )
 from global_routines import (
-    menu,
+    menus,
     enemies,
     sounds
 )
 # fmt: on
 
 
-# Runs at the normal start after spawn() and awake()
-def init() -> None:
-    menu_gui = gui.get_element("GameMenu")
-    if menu_gui.is_err():
-        return
-
-    menu.set_menu(menu_gui.ok())
 
 
 
 # Runs every frame
 def update() -> None:
-    if inpt.active_bind(enums.keybinds.SHOW_MENU):
-        menu.show_menu()
-
-    if menu.SHOWING and inpt.active_bind(enums.keybinds.BACK):
-        menu.hide_menu()
+    if inpt.active_bind(enums.keybinds.SHOW_PAUSE_MENU) or (
+        menus.is_showing("GameMenu") and inpt.active_bind(enums.keybinds.BACK)
+    ):
+        menus.toggle("GameMenu")
 
     print("FPS:", round(1 / pgapi.TIME.deltatime), end="\r")
 
@@ -62,7 +54,7 @@ def update() -> None:
                 hitpoints=100,
                 max_mana=100,
                 base_attack_speed=4,
-                team="Enemy"
+                team="Enemy",
             )
         )
         enemies.new(
@@ -85,6 +77,6 @@ def update() -> None:
                 hitpoints=100,
                 max_mana=100,
                 base_attack_speed=4,
-                team="Enemy"
+                team="Enemy",
             )
         )

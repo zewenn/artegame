@@ -42,6 +42,19 @@ def silence(func: Callable):
     return wrap
 
 
+def warn(*msg: string) -> None:
+    print(f"[WARN]", *msg)
+
+
+def deprecated(fn):
+    def wrap(*args, **kwargs):
+        warn("Using deprecared function:", fn.__name__)
+        res = fn(*args, **kwargs)
+        return res
+
+    return wrap
+
+
 def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
     try:
         return Ok(func(*args))
@@ -139,6 +152,7 @@ class Piper(Generic[T, K]):
 
 def uuid() -> string:
     return uuid4().hex
+
 
 def delete(a: Any) -> None:
     pass

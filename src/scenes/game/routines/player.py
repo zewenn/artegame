@@ -244,17 +244,15 @@ def update() -> None:
                     scale=player.weapon.dash_size,
                     direction=player_hand_holder.transform.rotation.z,
                     lifetime_seconds=player.weapon.dash_lifetime,
-                    speed=player.base_movement_speed
-                    * player.weapon.dash_speed
-                    * player.dash_movement_multiplier,
+                    speed=(
+                        player.base_movement_speed
+                        * player.weapon.dash_speed
+                        * player.dash_movement_multiplier
+                    ),
                     team="Player",
                     damage=player.base_damage * player.weapon.dash_damage_multiplier,
                 ),
-            ),
-            # timeout.set(
-            #     (player.dash_time * 1.1) / 1000,
-            #     ()
-            # )
+            )
 
             can_attack = False
             timeout.set((1 / player.attack_speed), allow_attack, ())
@@ -328,10 +326,6 @@ def update() -> None:
 def allow_attack() -> None:
     global can_attack
     can_attack = True
-
-
-def handle_combat(options: Weapon) -> None:
-    pass
 
 
 def move_player() -> None:

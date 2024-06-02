@@ -302,7 +302,7 @@ def bind_buttons(
     T: Optional[Literal["down", "up"]] = None,
 ) -> None:
     if bind_cache.get(name):
-        print(f"[Warn] Couldn't overwrite bind: {name}")
+        # print(f"[Warn] Couldn't overwrite bind: {name}")
         return
 
     def bindf():
