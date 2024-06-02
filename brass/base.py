@@ -62,6 +62,19 @@ def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
         return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
 
+def call(fn: Callable[..., T], args: Tuple) -> None:
+    res = fn(*args)
+    del res
+
+
+def caller(fn: Callable[..., T], args: Tuple) -> None:
+    def wrap() -> None:
+        res = fn(*args)
+        del res
+    return wrap
+
+
+
 @silence
 def quit() -> Never:
     raise Exception("Quit")
@@ -155,4 +168,4 @@ def uuid() -> string:
 
 
 def delete(a: Any) -> None:
-    pass
+    del a

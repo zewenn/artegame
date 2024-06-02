@@ -41,9 +41,9 @@ def init():
             icon="neunyx32x32.png",
             camera=Camera(Vec2(0, 0), 1),
             is_demo=True,
+            skip_title_screen=True,
             axis_rounding=12500
             # axis_rounding=10
-            # skip_title_screen=True,
         )
     )
 

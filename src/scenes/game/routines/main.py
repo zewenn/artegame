@@ -33,7 +33,7 @@ def update() -> None:
 
     print("FPS:", round(1 / pgapi.TIME.deltatime), end="\r")
 
-    if len(enemies.ENEMIES) == 0:
+    if len(enemies.ENEMIES) == -1:
         enemies.new(
             Item(
                 id="enemy1",
