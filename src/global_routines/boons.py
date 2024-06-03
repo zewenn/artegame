@@ -86,3 +86,8 @@ def show_boon_menu() -> None:
     update_setting("blueberry", 0)
 
     menus.toggle("BoonMenu")
+
+def show_boon_selection_menu() -> None:
+    id = "BoonSelectionMenu"
+
+    menus.toggle(id)

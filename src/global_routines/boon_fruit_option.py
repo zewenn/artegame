@@ -52,7 +52,7 @@ def btn(
     )
 
 
-def new(
+def new_setting_adjuster(
     fruit: Literal["banana", "strawberry", "blueberry"], child_num: int
 ) -> GUIElement:
     return Element(
@@ -80,13 +80,15 @@ def new(
                 height=f"{FS}x",
                 width=f"{FS}x",
                 font_size=FS,
-                font_family=FONTS.PRESS_PLAY
+                font_family=FONTS.PRESS_PLAY,
             ),
         ),
         Element(
             "boon_fruit_buttons:" + fruit,
-            btn(fruit, "Add more (+1)", 0, caller(boons.update_setting, (fruit, 1))),
-            btn(fruit, "Remove (-1)", 1, caller(boons.update_setting, (fruit, -1))),
+            btn(fruit, "Hozzáadás (+1)", 0, caller(boons.update_setting, (fruit, 1))),
+            btn(
+                fruit, "Eltávolítás (-1)", 1, caller(boons.update_setting, (fruit, -1))
+            ),
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
@@ -104,4 +106,102 @@ def new(
             height="15h",
             # bg_color=COLOURS.RED,
         ),
+    )
+
+
+def new_boon(
+    fruit: Literal["banana", "strawberry", "blueberry"],
+    boon_icon: string,
+    boon_fn: Callable[..., None],
+    title: string,
+    description: list[string],
+    child_num: int,
+) -> GUIElement:
+    return Element(
+        "boon:" + fruit + ":" + title,
+        Element(
+            "boon_icon:" + fruit + ":" + title,
+            style=StyleSheet(
+                inherit_display=True,
+                position=POSITION.RELATIVE,
+                left=f"{15 * .1}h",
+                top=f"{15 * .1}h",
+                height="80%",
+                width=f"{15 * .8}h",
+                bg_image=boon_icon,
+            ),
+        ),
+        # Element(
+        #     "boon_num_display:" + fruit + ":" + title,
+        #     Text("0"),
+        #     style=StyleSheet(
+        #         inherit_display=True,
+        #         position=POSITION.RELATIVE,
+        #         left=f"{15 * .8}h",
+        #         top=f"{15 * .7}h",
+        #         height=f"{FS}x",
+        #         width=f"{FS}x",
+        #         font_size=FS,
+        #         font_family=FONTS.PRESS_PLAY,
+        #     ),
+        # ),
+        Element(
+            "boon_details:" + fruit + ":" + title,
+            Element(
+                "boon_title:" + fruit + ":" + title,
+                Text(title),
+                style=StyleSheet(
+                    position=POSITION.RELATIVE,
+                    inherit_display=True,
+                    color=COLOURS.WHITE,
+                    width=f"{len(title) * FS}x",
+                    height=f"{FS * 1.25}x",
+                    # left=f"-{len(title) * FS / 2}x",
+                    left="0x",
+                    top="1.25h",
+                    font_size=FONT_SIZE.MEDIUM,
+                    font_family=FONTS.PRESS_PLAY,
+                    # bg_color=COLOURS.RED
+                ),
+            ),
+            Element(
+                "boon_description:" + fruit + ":" + "description",
+                *description,
+                style=StyleSheet(
+                    position=POSITION.RELATIVE,
+                    inherit_display=True,
+                    color=COLOURS.WHITE,
+                    width=f"{len(description) * FS}x",
+                    height=f"{FS * 1.25}x",
+                    # left=f"-{len(description) * FS / 2}x",
+                    left="0x",
+                    top=f"{FONT_SIZE.MEDIUM + 40}x",
+                    font_size=FONT_SIZE.SMALL,
+                    font_family=FONTS.PRESS_PLAY,
+                    gap="20x"
+                    # bg_color=COLOURS.RED
+                ),
+            ),
+            style=StyleSheet(
+                inherit_display=True,
+                position=POSITION.RELATIVE,
+                left="15h",
+                top="0x",
+            ),
+        ),
+        style=StyleSheet(
+            display="block",
+            inherit_display=True,
+            position=POSITION.RELATIVE,
+            top=f"{(child_num - 1) * 16.25 - 7.5}h",
+            left="-30h",
+            width="60h",
+            height="15h",
+            # bg_color=COLOURS.RED,
+        ),
+        hover=StyleSheet(
+            bg_color=(20, 120, 220, 1)
+        ),
+        is_button=True,
+        onclick=boon_fn
     )

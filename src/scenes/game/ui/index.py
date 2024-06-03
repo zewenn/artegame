@@ -198,9 +198,9 @@ def awake() -> None:
                 ),
                 Element(
                     "CenterButtons",
-                    boon_fruit_option.new("banana", 0),
-                    boon_fruit_option.new("strawberry", 1),
-                    boon_fruit_option.new("blueberry", 2),
+                    boon_fruit_option.new_setting_adjuster("banana", 0),
+                    boon_fruit_option.new_setting_adjuster("strawberry", 1),
+                    boon_fruit_option.new_setting_adjuster("blueberry", 2),
                     style=StyleSheet(
                         position=POSITION.ABSOLUTE,
                         inherit_display=True,
@@ -226,6 +226,88 @@ def awake() -> None:
                         position=POSITION.ABSOLUTE,
                         inherit_display=True,
                         top="70h",
+                        left="50w",
+                    ),
+                ),
+                style=StyleSheet(
+                    position=POSITION.ABSOLUTE,
+                    display="none",
+                    top="0x",
+                    left="0x",
+                    width="100w",
+                    height="100h",
+                    bg_color=(0, 0, 0, 0.6),
+                ),
+            )
+        ),
+        menus.new(
+            Element(
+                "BoonSelectionMenu",
+                Element(
+                    "BoonSelectionMenuBackdropContainer",
+                    Element(
+                        "BoonBackdrop2",
+                        style=StyleSheet(
+                            display="block",
+                            inherit_display=True,
+                            position=POSITION.RELATIVE,
+                            top="-25h",
+                            left="-20w",
+                            width="40w",
+                            height="50h",
+                            bg_color=(0, 0, 0, 1),
+                        ),
+                    ),
+                    style=StyleSheet(
+                        display="block",
+                        inherit_display=True,
+                        position=POSITION.ABSOLUTE,
+                        top="50h",
+                        left="50w",
+                    ),
+                ),
+                Element(
+                    "CenterButtons-BoonSelection",
+                    boon_fruit_option.new_boon(
+                        "banana",
+                        "gyuri.png",
+                        lambda: None,
+                        "Haste",
+                        [
+                            "Lorem ipsum dolor sit amet, consectetur.",
+                            "Etiam luctus gravida tortor ullamcorper.",
+                            "Sed eu nisi pellentesque, aliquam quam.",
+                        ],
+                        0,
+                    ),
+                    boon_fruit_option.new_boon(
+                        "banana",
+                        "gyuri.png",
+                        lambda: None,
+                        "Not Haste",
+                        [
+                            "Lorem ipsum dolor sit amet, consectetur.",
+                            "Etiam luctus gravida tortor ullamcorper.",
+                            "Sed eu nisi pellentesque, aliquam quam.",
+                        ],
+                        1,
+                    ),
+                    boon_fruit_option.new_boon(
+                        "banana",
+                        "gyuri.png",
+                        lambda: None,
+                        "Yes Haste",
+                        [
+                            "Lorem ipsum dolor sit amet, consectetur.",
+                            "Etiam luctus gravida tortor ullamcorper.",
+                            "Sed eu nisi pellentesque, aliquam quam.",
+                        ],
+                        2,
+                    ),
+                    style=StyleSheet(
+                        position=POSITION.ABSOLUTE,
+                        inherit_display=True,
+                        top="50h",
                         left="50w",
                     ),
                 ),
@@ -282,7 +364,6 @@ def awake() -> None:
             )
         ),
     )
-    timeout.set(1, boons.show_boon_menu, ())
-    
+    timeout.set(1, boons.show_boon_selection_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)

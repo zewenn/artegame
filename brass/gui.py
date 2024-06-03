@@ -184,8 +184,9 @@ def system_update() -> None:
         if isinstance(el, str):
             continue
 
-        if el.current_style != el.style and hovering != el:
-            el.current_style = structured_clone(el.style)
+        if el.current_style != el.style:
+            if hovering == None or hovering.id != el.id:
+                el.current_style = structured_clone(el.style)
 
         elstl = el.current_style
         parent = el.parent if el.parent else DOM_El
