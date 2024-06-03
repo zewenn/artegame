@@ -63,16 +63,30 @@ def new(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
                 left=f"{15 * .1}h",
-                top=f"{15 * .1}h",
+                top=f"{15 * .0}h",
                 height="80%",
                 width=f"{15 * .8}h",
                 bg_image=f"{fruit}.png",
             ),
         ),
         Element(
+            "boon_fruit_num_display:" + fruit,
+            Text("0"),
+            style=StyleSheet(
+                inherit_display=True,
+                position=POSITION.RELATIVE,
+                left=f"{15 * .8}h",
+                top=f"{15 * .7}h",
+                height=f"{FS}x",
+                width=f"{FS}x",
+                font_size=FS,
+                font_family=FONTS.PRESS_PLAY
+            ),
+        ),
+        Element(
             "boon_fruit_buttons:" + fruit,
-            btn(fruit, "Add more (+1)", 0, lambda: None),
-            btn(fruit, "Remove (-1)", 1, lambda: None),
+            btn(fruit, "Add more (+1)", 0, caller(boons.update_setting, (fruit, 1))),
+            btn(fruit, "Remove (-1)", 1, caller(boons.update_setting, (fruit, -1))),
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,

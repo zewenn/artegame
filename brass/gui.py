@@ -161,8 +161,14 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 def system_update() -> None:
     global hovering, buttons, selected_button_index
 
+    
+    displaying_buttons = [x for x in buttons if x.current_style.display == "block"]
+
+    if selected_button_index >= len(displaying_buttons):
+        selected_button_index = 0
+
     if inpt.get_button_down("dpad-down@ctrl#0"):
-        if selected_button_index + 1 < len(buttons):
+        if selected_button_index + 1 < len(displaying_buttons):
             selected_button_index += 1
 
     if inpt.get_button_down("dpad-up@ctrl#0"):
@@ -261,8 +267,13 @@ def system_update() -> None:
             hovering = el
             continue
 
+
     if hovering == None:
-        btn = buttons[selected_button_index]
+        if len(displaying_buttons) == 0 or selected_button_index >= len(displaying_buttons):
+            selected_button_index = 0
+            return
+        
+        btn = displaying_buttons[selected_button_index]
 
         if (
             not btn.hover

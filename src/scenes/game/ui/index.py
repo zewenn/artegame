@@ -2,7 +2,7 @@ from brass.base import *
 from brass.gui import *
 
 from brass import pgapi, scene, saves, timeout
-from global_routines import menus, boon_fruit_option
+from global_routines import menus, boon_fruit_option, boons
 
 FS = FONT_SIZE.MEDIUM
 GAP = 40
@@ -172,6 +172,76 @@ def awake() -> None:
         ),
         menus.new(
             Element(
+                "BoonMenu",
+                Element(
+                    "BoonMenuBackdropContainer",
+                    Element(
+                        "BoonBackdrop",
+                        style=StyleSheet(
+                            display="block",
+                            inherit_display=True,
+                            position=POSITION.RELATIVE,
+                            top="-25h",
+                            left="-20w",
+                            width="40w",
+                            height="50h",
+                            bg_color=(0, 0, 0, 1),
+                        ),
+                    ),
+                    style=StyleSheet(
+                        display="block",
+                        inherit_display=True,
+                        position=POSITION.ABSOLUTE,
+                        top="40h",
+                        left="50w",
+                    ),
+                ),
+                Element(
+                    "CenterButtons",
+                    boon_fruit_option.new("banana", 0),
+                    boon_fruit_option.new("strawberry", 1),
+                    boon_fruit_option.new("blueberry", 2),
+                    style=StyleSheet(
+                        position=POSITION.ABSOLUTE,
+                        inherit_display=True,
+                        top="40h",
+                        left="50w",
+                    ),
+                ),
+                Element(
+                    "EndBoonSelectionNumber",
+                    title_button(
+                        "confirm-boon-options-btn",
+                        "Elfogadás",
+                        0,
+                        caller(menus.toggle, ("BoonMenu",)),
+                    ),
+                    title_button(
+                        "confirm-boon-options-btn",
+                        "Mégse",
+                        FS + GAP,
+                        caller(menus.toggle, ("BoonMenu",)),
+                    ),
+                    style=StyleSheet(
+                        position=POSITION.ABSOLUTE,
+                        inherit_display=True,
+                        top="70h",
+                        left="50w",
+                    ),
+                ),
+                style=StyleSheet(
+                    position=POSITION.ABSOLUTE,
+                    display="none",
+                    top="0x",
+                    left="0x",
+                    width="100w",
+                    height="100h",
+                    bg_color=(0, 0, 0, 0.6),
+                ),
+            )
+        ),
+        menus.new(
+            Element(
                 "GameMenu",
                 Element(
                     "CenterButtons",
@@ -211,57 +281,8 @@ def awake() -> None:
                 ),
             )
         ),
-        menus.new(
-            Element(
-                "BoonMenu",
-                Element(
-                    "BoonMenuBackdropContainer",
-                    Element(
-                        "BoonBackdrop",
-                        style=StyleSheet(
-                            display="block",
-                            inherit_display=True,
-                            position=POSITION.RELATIVE,
-                            top="-25h",
-                            left="-20w",
-                            width="40w",
-                            height="50h",
-                            bg_color=(0, 0, 0, 1),
-                        ),
-                    ),
-                    style=StyleSheet(
-                        display="block",
-                        inherit_display=True,
-                        position=POSITION.ABSOLUTE,
-                        top="50h",
-                        left="50w",
-                    ),
-                ),
-                Element(
-                    "CenterButtons",
-                    boon_fruit_option.new("banana", 0),
-                    boon_fruit_option.new("strawberry", 1),
-                    boon_fruit_option.new("blueberry", 2),
-                    style=StyleSheet(
-                        position=POSITION.ABSOLUTE,
-                        inherit_display=True,
-                        top="50h",
-                        left="50w",
-                    ),
-                ),
-                style=StyleSheet(
-                    position=POSITION.ABSOLUTE,
-                    display="none",
-                    top="0x",
-                    left="0x",
-                    width="100w",
-                    height="100h",
-                    bg_color=(0, 0, 0, 0.6),
-                ),
-            )
-        ),
     )
-    timeout.set(1, menus.toggle, ("BoonMenu",))
+    timeout.set(1, boons.show_boon_menu, ())
     
 
     # print(get_element("wrapper:banana").ok().transform)

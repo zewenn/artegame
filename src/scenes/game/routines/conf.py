@@ -119,7 +119,7 @@ def spawn() -> None:
                 max_mana=100,
                 base_attack_speed=5,
                 # Inventory
-                inventory=Inventory(),
+                inventory=Inventory(10, 10, 10),
                 weapons=[
                     Weapon(
                         id="gloves",
