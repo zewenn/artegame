@@ -154,6 +154,7 @@ class Item:
 
     # |> Combat -> Spells
     spells: Optional[list["Spell", "Spell"]] = None
+    boons: Optional[list["Boon"]] = None
 
     # Enemies
     effective_range: Optional[Number] = None
@@ -178,6 +179,16 @@ class Spell:
         List[Literal["root", "stun", "sleep", "slow", "damage"]]
     ] = None
     cooldown_start: Optional[Number] = None
+
+
+@dataclass
+class Boon:
+    name: string
+    description: string
+    grant_fn: Callable[[], None]
+    fruit: Literal["banana", "strawberry", "blueberry"]
+    icon: string
+    can_have_multiple: bool = False
 
 
 @dataclass
