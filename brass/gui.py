@@ -139,6 +139,23 @@ def Element(
     return this
 
 
+def Delete(el: GUIElement) -> None:
+    if len(el.children) > 0:
+        # print("Deleting children:",  len(el.children))
+        for x in el.children:
+            if isinstance(x, str):
+                continue
+            # print("\tChild:", x.id)
+            Delete(x)
+    
+    query_available.remove(el)
+    # el.parent.children.remove(el)
+
+    # print("Deleted", el.id)
+
+    del el
+
+
 DOM_El: Optional[GUIElement] = Element("DOM")
 
 

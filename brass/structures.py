@@ -154,7 +154,7 @@ class Item:
 
     # |> Combat -> Spells
     spells: Optional[list["Spell", "Spell"]] = None
-    boons: Optional[list["Boon"]] = None
+    # boons: Optional[list["Boon"]] = None
 
     # Enemies
     effective_range: Optional[Number] = None
@@ -184,11 +184,18 @@ class Spell:
 @dataclass
 class Boon:
     name: string
-    description: string
+    description: list[string]
     grant_fn: Callable[[], None]
     fruit: Literal["banana", "strawberry", "blueberry"]
     icon: string
-    can_have_multiple: bool = False
+    change: Optional[string] = None
+
+
+@dataclass
+class BoonCollection:
+    normal: list[Boon]
+    rare: list[Boon]
+    epic: list[Boon]
 
 
 @dataclass

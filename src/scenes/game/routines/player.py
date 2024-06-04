@@ -6,7 +6,8 @@ from global_routines import (
     projectiles,
     dash,
     crowd_control,
-    spells
+    spells,
+    boons
 )
 
 from brass import (
@@ -180,8 +181,13 @@ def init() -> None:
     if not player.weapon:
         player.weapon = player.weapons[0]
 
-    if not player.spells:
-        player.spells = [enums.spells.HEALING, enums.spells.GOLIATH]
+    empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, [])
+
+    if player.spells == None:
+        player.spells = [empty_spell, empty_spell]
+    elif len(player.spells) < 2:
+        for _ in range(2 - len(player.spells)):
+            player.spells.append(empty_spell)
 
     if not player.dash_time:
         player.dash_time = 150
@@ -190,6 +196,7 @@ def init() -> None:
         player.base_damage = 10
 
     print("Player:", player.uuid)
+    print("Player Spells:", player.spells)
     # hitpoint_display.style.bg_color = (20, 120, 220, 1)
 
 
@@ -203,13 +210,14 @@ def update() -> None:
     global can_attack
     global can_dash
 
-    if inpt.active_bind(enums.keybinds.SPELLS.SPELL1):
-        # crowd_control.apply(player, "root", 2)
+    if inpt.active_bind(enums.keybinds.SPELLS.SPELL1) and player.spells[0] != None:
         spells.cast(player.spells[0], player)
 
-    if inpt.active_bind(enums.keybinds.SPELLS.SPELL2):
-        # crowd_control.apply(player, "root", 2)
+    if inpt.active_bind(enums.keybinds.SPELLS.SPELL2) and player.spells[1] != None:
         spells.cast(player.spells[1], player)
+
+    if inpt.get_button_down("dpad-right@ctrl#0"):
+        boons.show_boon_selection_menu()
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon.id == player.weapons[0].id:

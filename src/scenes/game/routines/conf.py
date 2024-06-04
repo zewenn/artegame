@@ -118,6 +118,7 @@ def spawn() -> None:
                 max_hitpoints=100,
                 max_mana=100,
                 base_attack_speed=5,
+                spells = [],
                 # Inventory
                 inventory=Inventory(10, 10, 10),
                 weapons=[

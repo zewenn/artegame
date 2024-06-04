@@ -2,7 +2,7 @@ from brass.base import *
 from brass.gui import *
 
 from brass import pgapi, scene, saves, timeout
-from global_routines import menus, boon_fruit_option, boons
+from global_routines import menus, boons
 
 FS = FONT_SIZE.MEDIUM
 GAP = 40
@@ -219,9 +219,9 @@ def awake() -> None:
                             font_family=FONTS.PRESS_PLAY,
                         ),
                     ),
-                    boon_fruit_option.new_setting_adjuster("banana", 0),
-                    boon_fruit_option.new_setting_adjuster("strawberry", 1),
-                    boon_fruit_option.new_setting_adjuster("blueberry", 2),
+                    boons.new_setting_adjuster_element("banana", 0),
+                    boons.new_setting_adjuster_element("strawberry", 1),
+                    boons.new_setting_adjuster_element("blueberry", 2),
                     Element(
                         "EndBoonSelectionNumberButtons",
                         title_button(
@@ -291,41 +291,14 @@ def awake() -> None:
                             font_family=FONTS.PRESS_PLAY,
                         ),
                     ),
-                    boon_fruit_option.new_boon(
-                        "banana",
-                        "gyuri.png",
-                        lambda: None,
-                        "Haste",
-                        [
-                            "Lorem ipsum dolor sit amet.",
-                            "Etiam luctus gravida tortor.",
-                            "Sed eu nisi pellentesque.",
-                        ],
-                        0,
-                    ),
-                    boon_fruit_option.new_boon(
-                        "banana",
-                        "gyuri.png",
-                        lambda: None,
-                        "Not Haste",
-                        [
-                            "Lorem ipsum dolor sit amet.",
-                            "Etiam luctus gravida tortor.",
-                            "Sed eu nisi pellentesque.",
-                        ],
-                        1,
-                    ),
-                    boon_fruit_option.new_boon(
-                        "banana",
-                        "gyuri.png",
-                        lambda: None,
-                        "Yes Haste",
-                        [
-                            "Lorem ipsum dolor sit amet.",
-                            "Etiam luctus gravida tortor.",
-                            "Sed eu nisi pellentesque.",
-                        ],
-                        2,
+                    Element(
+                        "BoonSelectionList",
+                        style=StyleSheet(
+                            position=POSITION.ABSOLUTE,
+                            inherit_display=True,
+                            top="50h",
+                            left="50w",
+                        ),
                     ),
                     style=StyleSheet(
                         position=POSITION.ABSOLUTE,
@@ -387,6 +360,6 @@ def awake() -> None:
             )
         ),
     )
-    timeout.set(1, boons.show_boon_menu, ())
+    timeout.set(1, boons.show_boon_selection_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)
