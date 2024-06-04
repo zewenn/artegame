@@ -117,6 +117,7 @@ def new_boon_element(
     title: string,
     description: list[string],
     child_num: int,
+    rarity: Literal["generic", "rare", "epic"] = "generic",
 ) -> GUIElement:
     return Element(
         "boon:" + fruit + ":" + title,
@@ -199,10 +200,10 @@ def new_boon_element(
             width="700x",
             height="200x",
             # bg_color=COLOURS.RED,
-            bg_image="menu_option_generic_bg.png",
+            bg_image=f"menu_option_{rarity}_bg.png",
         ),
         # add_query_selectable=False,
-        hover=StyleSheet(bg_image="menu_option_generic_bg_active.png"),
+        hover=StyleSheet(bg_image=f"menu_option_{rarity}_bg_active.png"),
         is_button=True,
         onclick=boon_fn,
     )
@@ -292,7 +293,7 @@ def awake() -> None:
     global NEXT_BOON_OPTIONS
     global player
 
-    NEXT_BOON_OPTIONS = Inventory()
+    NEXT_BOON_OPTIONS = Inventory(2, 1, 5)
     player_query = items.get("player")
 
     # Player
@@ -407,7 +408,12 @@ def show_boon_selection_menu() -> None:
     set_string_map()
     id = "BoonSelectionMenu"
 
-    rarity = 0
+    rarity_tag = "generic"
+    rarity = (
+        NEXT_BOON_OPTIONS.banana * 3
+        + NEXT_BOON_OPTIONS.blueberry * 2
+        + NEXT_BOON_OPTIONS.strawberry
+    )
 
     boons_list_elem = gui.get_element("BoonSelectionList")
 
@@ -421,18 +427,47 @@ def show_boon_selection_menu() -> None:
 
     boons_list_elem.children = []
 
-    bns = structured_clone(BOONS.normal)
+    bns = []
+
+    if rarity <= 15:
+        bns = structured_clone(BOONS.normal)
+    elif rarity <= 35:
+        bns = structured_clone(BOONS.rare)
+        rarity_tag = "rare"
+    elif rarity <= 50:
+        bns = structured_clone(BOONS.epic)
+        rarity_tag = "epic"
+
+    # print(rarity_tag, [x.name for x in bns])
+
+    available: list[Boon] = []
 
     for bn in bns:
-        if not bn.change or bn.change.startswith("g"):
+        print([x.name for x in bns])
+        print(bn.name)
+        if bn.change == None:
+            available.append(bn)
             continue
+
+
+        if (
+            bn.change.startswith("g")
+            and (bn.change.endswith(player.spells[0].name)
+            or bn.change.endswith(player.spells[1].name))
+        ):
+            # bns.remove(bn)
+            continue
+
 
         if (bn.change == "u:s0" and player.spells[0].name == "Üres") or (
             bn.change == "u:s1" and player.spells[1].name == "Üres"
         ):
-            bns.remove(bn)
+            # bns.remove(bn)
+            continue
 
-    bns = [bns.pop(random.randint(0, len(bns) - 1)) for _ in range(3)]
+        available.append(bn)
+
+    bns = [available.pop(random.randint(0, len(available) - 1)) for _ in range(3)]
 
     def grant_fn(bn: Boon) -> None:
         bn.grant_fn(),
@@ -455,6 +490,7 @@ def show_boon_selection_menu() -> None:
             title=title,
             description=descr,
             child_num=index,
+            rarity=rarity_tag,
         )
         el.parent = boons_list_elem
 
@@ -476,7 +512,7 @@ def show_boon_selection_menu() -> None:
         "Ezt cseréli: %p.s1 (1)",
     ],
     "banana.png",
-    "g:s1",
+    "g:s1:" + enums.spells.HASTE.name,
 )
 def grant_haste() -> None:
     enums.spells.HASTE.effectiveness = 3
@@ -493,7 +529,7 @@ def grant_haste() -> None:
         "Ezt cseréli: %p.s1 (1)",
     ],
     "banana.png",
-    "g:s1",
+    "g:s1:" + enums.spells.Zzzz.name,
 )
 def grant_zzzz() -> None:
     enums.spells.Zzzz.effectiveness = 1
@@ -510,9 +546,9 @@ def grant_zzzz() -> None:
         "Ezt cseréli: %p.s0 (0)",
     ],
     "banana.png",
-    "g:s0",
+    "g:s0:" + enums.spells.HEALING.name,
 )
-def add_hp() -> None:
+def _() -> None:
     enums.spells.HEALING.effectiveness = 5
     player.spells[0] = enums.spells.HEALING
 
@@ -523,7 +559,7 @@ def add_hp() -> None:
     "Góliát",
     ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
     "banana.png",
-    "g:s0",
+    "g:s0:" + enums.spells.GOLIATH.name,
 )
 def grant_goliath() -> None:
     enums.spells.GOLIATH.effectiveness = 1.25
@@ -533,8 +569,63 @@ def grant_goliath() -> None:
 @mk_boon(
     "normal", "banana", "%p.s0 fejlesztése", ["+1 hatékonyság"], "banana.png", "u:s0"
 )
-def add_hp() -> None:
+def _() -> None:
     player.spells[0].effectiveness += 1
+
+
+@mk_boon(
+    "normal", "banana", "%p.s1 fejlesztése", ["+1 hatékonyság"], "banana.png", "u:s1"
+)
+def _() -> None:
+    player.spells[1].effectiveness += 1
+
+
+# |> Rare
+
+
+@mk_boon(
+    "rare", "banana", "%p.s0 fejlesztése", ["+2.5 hatékonyság"], "banana.png", "u:s0"
+)
+def _() -> None:
+    player.spells[0].effectiveness += 2.5
+
+
+@mk_boon(
+    "rare", "banana", "%p.s1 fejlesztése", ["+2.5 hatékonyság"], "banana.png", "u:s1"
+)
+def _() -> None:
+    player.spells[1].effectiveness += 2.5
+
+
+@mk_boon(
+    "rare", "banana", "%p.s0 fejlesztése", ["+3.25 hatékonyság"], "banana.png", "u:s0"
+)
+def _() -> None:
+    player.spells[0].effectiveness += 3.25
+
+
+@mk_boon(
+    "rare", "banana", "%p.s1 fejlesztése", ["+3.25 hatékonyság"], "banana.png", "u:s1"
+)
+def _() -> None:
+    player.spells[1].effectiveness += 3.25
+
+
+# |> Epic
+
+
+@mk_boon(
+    "epic", "banana", "%p.s0 fejlesztése", ["+5 hatékonyság"], "banana.png", "u:s0"
+)
+def _() -> None:
+    player.spells[0].effectiveness += 5
+
+
+@mk_boon(
+    "epic", "banana", "%p.s1 fejlesztése", ["+5 hatékonyság"], "banana.png", "u:s1"
+)
+def _() -> None:
+    player.spells[1].effectiveness += 5
 
 
 # --- Strawberry ---
@@ -547,7 +638,7 @@ def add_hp() -> None:
     ["Megnöveli a mozgási sebességet."],
     "strawberry.png",
 )
-def movement_speed() -> None:
+def _() -> None:
     player.base_movement_speed += 20
 
 
@@ -558,16 +649,37 @@ def movement_speed() -> None:
     ["+25 maximum életerő."],
     "strawberry.png",
 )
-def add_hp() -> None:
-    print("+25hp")
+def _() -> None:
     player.max_hitpoints += 25
     player.hitpoints += 25
 
 
 @mk_boon("normal", "strawberry", "Több mana", ["+10 maximum mana."], "strawberry.png")
-def add_mana() -> None:
+def _() -> None:
     player.max_mana += 10
     player.mana += 10
+
+
+@mk_boon(
+    "rare",
+    "strawberry",
+    "Bónusz ugrás",
+    ["+1 ugrás"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.dash_count += 1
+
+
+@mk_boon(
+    "rare",
+    "strawberry",
+    "Bónusz támadási sebesség",
+    ["+1 támadási sebesség"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.base_attack_speed += 1
 
 
 # --- Blueberry ---
@@ -637,3 +749,141 @@ def _() -> None:
 )
 def _() -> None:
     player.weapons[1].dash_damage_multiplier += 0.1
+
+
+# |> Rare
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+25% szélesség könnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].light_size.x *= 1.25
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+25% szélesség könnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].light_size.x *= 1.25
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+15% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].heavy_size.x *= 1.15
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+15% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].heavy_size.x *= 1.15
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+10% szélesség ugró támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].dash_size.x *= 1.1
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+10% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].dash_size.x *= 1.1
+
+
+# |> Epic
+
+
+@mk_boon(
+    "epic",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+50% szélesség könnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].light_size.x *= 1.5
+
+
+@mk_boon(
+    "epic",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+50% szélesség könnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].light_size.x *= 1.5
+
+
+@mk_boon(
+    "epic",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+35% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].heavy_size.x *= 1.35
+
+
+@mk_boon(
+    "epic",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+35% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].heavy_size.x *= 1.35
+
+
+@mk_boon(
+    "epic",
+    "blueberry",
+    "Széles Súlylemez",
+    ["+25% szélesség ugró támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].dash_size.x *= 1.25
+
+
+@mk_boon(
+    "rare",
+    "blueberry",
+    "Széles Boxkesztyű",
+    ["+25% szélesség nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].dash_size.x *= 1.25

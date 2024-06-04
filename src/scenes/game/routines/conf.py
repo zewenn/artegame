@@ -118,34 +118,10 @@ def spawn() -> None:
                 max_hitpoints=100,
                 max_mana=100,
                 base_attack_speed=5,
-                spells = [],
+                spells=[],
                 # Inventory
                 inventory=Inventory(10, 10, 10),
                 weapons=[
-                    Weapon(
-                        id="gloves",
-                        #
-                        light_sprite="light_attack_projectile.png",
-                        light_lifetime=1,
-                        light_speed=1,
-                        light_damage_multiplier=1,
-                        light_size=Vec2(32, 96),
-                        #
-                        heavy_sprite="heavy_attack_projectile.png",
-                        heavy_lifetime=1.5,
-                        heavy_speed=0.8,
-                        heavy_damage_multiplier=2,
-                        heavy_size=Vec2(32, 96),
-                        #
-                        dash_sprite="light_attack_projectile.png",
-                        dash_lifetime=2.25,
-                        dash_speed=2,
-                        dash_damage_multiplier=1.25,
-                        dash_size=Vec2(64, 256),
-                        #
-                        spell0_effectiveness=5,
-                        spell1_effectiveness=5,
-                    ),
                     Weapon(
                         id="plates",
                         #
@@ -166,6 +142,30 @@ def spawn() -> None:
                         dash_damage_multiplier=1.25,
                         dash_speed=1.75,
                         dash_size=Vec2(256, 64),
+                        #
+                        spell0_effectiveness=5,
+                        spell1_effectiveness=5,
+                    ),
+                    Weapon(
+                        id="gloves",
+                        #
+                        light_sprite="light_attack_projectile.png",
+                        light_lifetime=1,
+                        light_speed=1,
+                        light_damage_multiplier=1,
+                        light_size=Vec2(32, 96),
+                        #
+                        heavy_sprite="heavy_attack_projectile.png",
+                        heavy_lifetime=1.5,
+                        heavy_speed=0.8,
+                        heavy_damage_multiplier=2,
+                        heavy_size=Vec2(32, 96),
+                        #
+                        dash_sprite="light_attack_projectile.png",
+                        dash_lifetime=2.25,
+                        dash_speed=2,
+                        dash_damage_multiplier=1.25,
+                        dash_size=Vec2(64, 256),
                         #
                         spell0_effectiveness=5,
                         spell1_effectiveness=5,

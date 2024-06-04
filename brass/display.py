@@ -336,7 +336,7 @@ def render():
             )
         )
     render_items()
-    render_gui(DOM_El)
+    attempt(render_gui, (DOM_El,))
 
     pygame.display.update(DIRTY_RECTS)
     DIRTY_RECTS = []
