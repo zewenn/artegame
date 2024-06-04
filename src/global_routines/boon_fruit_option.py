@@ -14,7 +14,7 @@ FS = FONT_SIZE.MEDIUM
 def btn(
     id: str, content: string, top: Literal[0, 1] = 0, fn: Callable[..., None] = None
 ):
-    top = f"{top * 2.5 + 6}h"
+    top = f"{top * FS * 2 + 76}x"
 
     return Element(
         id,
@@ -62,10 +62,10 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"12.5x",
-                top=f"12.5x",
-                height="175x",
-                width=f"175x",
+                left=f"60x",
+                top=f"20x",
+                height="160x",
+                width=f"160x",
                 bg_image=f"{fruit}.png",
                 # bg_color=COLOURS.BLUE,
             ),
@@ -76,8 +76,8 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"175x",
-                top=f"175x",
+                left=f"220x",
+                top=f"180x",
                 height=f"{FS}x",
                 width=f"{FS}x",
                 font_size=FS,
@@ -93,7 +93,7 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left="450x",
+                left="480x",
                 top="0x",
             ),
         ),
@@ -101,10 +101,12 @@ def new_setting_adjuster(
             display="block",
             inherit_display=True,
             position=POSITION.RELATIVE,
-            top=f"{(child_num - 1) * 200 - 100}x",
+            top=f"{(child_num - 1) * 225 - 100}x",
             left="-350x",
             width="700x",
             height="200x",
+            # bg_color=COLOURS.RED
+            bg_image="menu_option_generic_bg.png",
         ),
     )
 
@@ -124,10 +126,10 @@ def new_boon(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"{15 * .1}h",
-                top=f"{15 * .1}h",
-                height="80%",
-                width=f"{15 * .8}h",
+                left=f"60x",
+                top=f"20x",
+                height="160x",
+                width=f"160x",
                 bg_image=boon_icon,
             ),
         ),
@@ -158,7 +160,7 @@ def new_boon(
                     height=f"{FS * 1.25}x",
                     # left=f"-{len(title) * FS / 2}x",
                     left="0x",
-                    top="1.25h",
+                    top="40x",
                     font_size=FONT_SIZE.MEDIUM,
                     font_family=FONTS.PRESS_PLAY,
                     # bg_color=COLOURS.RED
@@ -175,7 +177,7 @@ def new_boon(
                     height=f"{FS * 1.25}x",
                     # left=f"-{len(description) * FS / 2}x",
                     left="0x",
-                    top=f"{FONT_SIZE.MEDIUM + 40}x",
+                    top=f"{FONT_SIZE.MEDIUM + 40 + 20}x",
                     font_size=FONT_SIZE.SMALL,
                     font_family=FONTS.PRESS_PLAY,
                     gap="20x",
@@ -185,7 +187,7 @@ def new_boon(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left="15h",
+                left="260x",
                 top="0x",
             ),
         ),
@@ -193,13 +195,14 @@ def new_boon(
             display="block",
             inherit_display=True,
             position=POSITION.RELATIVE,
-            top=f"{(child_num - 1) * 16.25 - 7.5}h",
-            left="-30h",
-            width="60h",
-            height="15h",
+            top=f"{(child_num - 1) * 225 - 100}x",
+            left="-350x",
+            width="700x",
+            height="200x",
             # bg_color=COLOURS.RED,
+            bg_image="menu_option_generic_bg.png",
         ),
-        hover=StyleSheet(bg_color=(20, 120, 220, 1)),
+        hover=StyleSheet(bg_image="menu_option_generic_bg_active.png"),
         is_button=True,
         onclick=boon_fn,
     )
