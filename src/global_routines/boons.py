@@ -421,8 +421,6 @@ def show_boon_selection_menu() -> None:
 
     boons_list_elem.children = []
 
-    printf.full_line(f"{len(gui.query_available)}")
-
     bns = structured_clone(BOONS.normal)
 
     for bn in bns:
@@ -436,12 +434,11 @@ def show_boon_selection_menu() -> None:
 
     bns = [bns.pop(random.randint(0, len(bns) - 1)) for _ in range(3)]
 
+    def grant_fn(bn: Boon) -> None:
+        bn.grant_fn(),
+        menus.toggle(id)
+
     for index, bn in enumerate(bns):
-
-        def grant_fn() -> None:
-            bn.grant_fn(),
-            menus.toggle(id)
-
         descr: list[string] = structured_clone(bn.description)
 
         title = bn.name
@@ -452,12 +449,12 @@ def show_boon_selection_menu() -> None:
                 descr[i] = x.replace(k, v)
 
         el = new_boon_element(
-            bn.fruit,
-            bn.icon,
-            grant_fn,
-            title,
-            descr,
-            index,
+            fruit=bn.fruit,
+            boon_icon=bn.icon,
+            boon_fn=caller(grant_fn, (bn,)),
+            title=title,
+            description=descr,
+            child_num=index,
         )
         el.parent = boons_list_elem
 
@@ -515,7 +512,7 @@ def grant_zzzz() -> None:
     "banana.png",
     "g:s0",
 )
-def grant_healing() -> None:
+def add_hp() -> None:
     enums.spells.HEALING.effectiveness = 5
     player.spells[0] = enums.spells.HEALING
 
@@ -536,8 +533,11 @@ def grant_goliath() -> None:
 @mk_boon(
     "normal", "banana", "%p.s0 fejlesztése", ["+1 hatékonyság"], "banana.png", "u:s0"
 )
-def grant_healing() -> None:
+def add_hp() -> None:
     player.spells[0].effectiveness += 1
+
+
+# --- Strawberry ---
 
 
 @mk_boon(
@@ -558,12 +558,82 @@ def movement_speed() -> None:
     ["+25 maximum életerő."],
     "strawberry.png",
 )
-def grant_healing() -> None:
+def add_hp() -> None:
+    print("+25hp")
     player.max_hitpoints += 25
     player.hitpoints += 25
 
 
 @mk_boon("normal", "strawberry", "Több mana", ["+10 maximum mana."], "strawberry.png")
-def grant_healing() -> None:
+def add_mana() -> None:
     player.max_mana += 10
     player.mana += 10
+
+
+# --- Blueberry ---
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Súlylemez Fejlesztés",
+    ["+10% sebzés künnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].light_damage_multiplier += 0.1
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Súlylemez Fejlesztés",
+    ["+10% sebzés nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].heavy_damage_multiplier += 0.1
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Súlylemez Fejlesztés",
+    ["+10% sebzés ugró támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[0].dash_damage_multiplier += 0.1
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Boxkesztyű Fejlesztés",
+    ["+10% sebzés künnyű támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].light_damage_multiplier += 0.1
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Boxkesztyű Fejlesztés",
+    ["+10% sebzés nehéz támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].heavy_damage_multiplier += 0.1
+
+
+@mk_boon(
+    "normal",
+    "blueberry",
+    "Boxkesztyű Fejlesztés",
+    ["+10% sebzés ugró támadáskor"],
+    "blueberry.png",
+)
+def _() -> None:
+    player.weapons[1].dash_damage_multiplier += 0.1

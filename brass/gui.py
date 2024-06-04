@@ -149,6 +149,8 @@ def Delete(el: GUIElement) -> None:
             Delete(x)
     
     query_available.remove(el)
+    if el.button:
+        buttons.remove(el)
     # el.parent.children.remove(el)
 
     # print("Deleted", el.id)
