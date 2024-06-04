@@ -173,59 +173,80 @@ def awake() -> None:
         menus.new(
             Element(
                 "BoonMenu",
+                # Element(
+                #     "BoonMenuBackdropContainer",
+                #     style=StyleSheet(
+                #         display="block",
+                #         inherit_display=True,
+                #         position=POSITION.ABSOLUTE,
+                #         top="40h",
+                #         left="50w",
+                #     ),
+                # ),
+                # Element(
+                #     "CenterButtons",
+                #     style=StyleSheet(
+                #         position=POSITION.ABSOLUTE,
+                #         inherit_display=True,
+                #         top="40h",
+                #         left="50w",
+                #     ),
+                # ),
                 Element(
-                    "BoonMenuBackdropContainer",
+                    "BoonSelectionCenter",
                     Element(
                         "BoonBackdrop",
                         style=StyleSheet(
                             display="block",
                             inherit_display=True,
                             position=POSITION.RELATIVE,
-                            top="-25h",
-                            left="-20w",
-                            width="40w",
-                            height="50h",
+                            top=f"-350x",
+                            left="-400x",
+                            height="700x",
+                            width="800x",
                             bg_color=(0, 0, 0, 1),
                         ),
                     ),
-                    style=StyleSheet(
-                        display="block",
-                        inherit_display=True,
-                        position=POSITION.ABSOLUTE,
-                        top="40h",
-                        left="50w",
+                    Element(
+                        "BoonTitle",
+                        "Alapanyagok kiválasztása",
+                        style=StyleSheet(
+                            inherit_display=True,
+                            position=POSITION.RELATIVE,
+                            top=f"-{400 + FONT_SIZE.LARGE}x",
+                            left=f"-{len('Alapanyagok kiválasztása') * FONT_SIZE.LARGE / 2}x",
+                            font_size=FONT_SIZE.LARGE,
+                            font_family=FONTS.PRESS_PLAY,
+                        ),
                     ),
-                ),
-                Element(
-                    "CenterButtons",
                     boon_fruit_option.new_setting_adjuster("banana", 0),
                     boon_fruit_option.new_setting_adjuster("strawberry", 1),
                     boon_fruit_option.new_setting_adjuster("blueberry", 2),
+                    Element(
+                        "EndBoonSelectionNumberButtons",
+                        title_button(
+                            "confirm-boon-options-btn",
+                            "Elfogadás",
+                            0,
+                            caller(menus.toggle, ("BoonMenu",)),
+                        ),
+                        title_button(
+                            "confirm-boon-options-btn",
+                            "Mégse",
+                            FS + GAP,
+                            caller(menus.toggle, ("BoonMenu",)),
+                        ),
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            inherit_display=True,
+                            top="400x",
+                            left="0x",
+                        ),
+                    ),
                     style=StyleSheet(
                         position=POSITION.ABSOLUTE,
                         inherit_display=True,
-                        top="40h",
-                        left="50w",
-                    ),
-                ),
-                Element(
-                    "EndBoonSelectionNumber",
-                    title_button(
-                        "confirm-boon-options-btn",
-                        "Elfogadás",
-                        0,
-                        caller(menus.toggle, ("BoonMenu",)),
-                    ),
-                    title_button(
-                        "confirm-boon-options-btn",
-                        "Mégse",
-                        FS + GAP,
-                        caller(menus.toggle, ("BoonMenu",)),
-                    ),
-                    style=StyleSheet(
-                        position=POSITION.ABSOLUTE,
-                        inherit_display=True,
-                        top="70h",
+                        top="50h",
                         left="50w",
                     ),
                 ),
@@ -253,7 +274,7 @@ def awake() -> None:
                             position=POSITION.RELATIVE,
                             top="-25h",
                             left="-20w",
-                            width="40w",
+                            width="45w",
                             height="50h",
                             bg_color=(0, 0, 0, 1),
                         ),
@@ -364,6 +385,6 @@ def awake() -> None:
             )
         ),
     )
-    timeout.set(1, boons.show_boon_selection_menu, ())
+    timeout.set(1, boons.show_boon_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)

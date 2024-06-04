@@ -62,11 +62,12 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"{15 * .1}h",
-                top=f"{15 * .0}h",
-                height="80%",
-                width=f"{15 * .8}h",
+                left=f"12.5x",
+                top=f"12.5x",
+                height="175x",
+                width=f"175x",
                 bg_image=f"{fruit}.png",
+                # bg_color=COLOURS.BLUE,
             ),
         ),
         Element(
@@ -75,8 +76,8 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"{15 * .8}h",
-                top=f"{15 * .7}h",
+                left=f"175x",
+                top=f"175x",
                 height=f"{FS}x",
                 width=f"{FS}x",
                 font_size=FS,
@@ -92,7 +93,7 @@ def new_setting_adjuster(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left="30h",
+                left="450x",
                 top="0x",
             ),
         ),
@@ -100,11 +101,10 @@ def new_setting_adjuster(
             display="block",
             inherit_display=True,
             position=POSITION.RELATIVE,
-            top=f"{(child_num - 1) * 16.25 - 7.5}h",
-            left="-22.5h",
-            width="45h",
-            height="15h",
-            # bg_color=COLOURS.RED,
+            top=f"{(child_num - 1) * 200 - 100}x",
+            left="-350x",
+            width="700x",
+            height="200x",
         ),
     )
 
@@ -178,7 +178,7 @@ def new_boon(
                     top=f"{FONT_SIZE.MEDIUM + 40}x",
                     font_size=FONT_SIZE.SMALL,
                     font_family=FONTS.PRESS_PLAY,
-                    gap="20x"
+                    gap="20x",
                     # bg_color=COLOURS.RED
                 ),
             ),
@@ -199,9 +199,7 @@ def new_boon(
             height="15h",
             # bg_color=COLOURS.RED,
         ),
-        hover=StyleSheet(
-            bg_color=(20, 120, 220, 1)
-        ),
+        hover=StyleSheet(bg_color=(20, 120, 220, 1)),
         is_button=True,
-        onclick=boon_fn
+        onclick=boon_fn,
     )
