@@ -3,7 +3,7 @@ import random
 from brass.base import *
 
 # fmt: off
-from global_routines import projectiles, dash, crowd_control, interact
+from global_routines import projectiles, dash, crowd_control, interact, sounds
 from brass import (
     items, 
     pgapi, 
@@ -13,6 +13,7 @@ from brass import (
     collision,
     timeout,
     animator,
+    audio,
     inpt
 )
 # fmt: on
@@ -29,7 +30,6 @@ FRUIT_HUN_DICT = {
     "blueberry": "Áfonya"
 }
 
-
 def drop_fruit(at_item: Item) -> None:
     fruit = random.choice(["banana", "strawberry", "blueberry"])
 
@@ -37,13 +37,13 @@ def drop_fruit(at_item: Item) -> None:
         id="fruit:" + uuid(),
         tags=[fruit, "fruit"],
         transform=Transform(
-            Vec2(at_item.transform.position.x - 64, at_item.transform.position.y - 64),
+            Vec2(at_item.transform.position.x - 96, at_item.transform.position.y - 96),
             Vec3(),
-            Vec2(128, 128),
+            Vec2(192, 192),
         ),
         bones={
             "display_bone": Bone(
-                transform=Transform(Vec2(), Vec3(), Vec2(64, 64)),
+                transform=Transform(Vec2(96, 96), Vec3(), Vec2(64, 64)),
                 sprite=f"{fruit}.png",
                 anchor=Vec2(),
             )
@@ -205,22 +205,23 @@ def update() -> None:
 
     for index, frt in enumerate(DROPPED_FRUITS):
         if collision.collides(frt.transform, player.transform):
-            interact.show(f"Felvétel: {FRUIT_HUN_DICT.get(frt.tags[0])}", 100000 + index)
-            if inpt.active_bind(enums.keybinds.INTERACT):
-                if frt.tags[0] == "banana":
-                    player.inventory.banana += 1
+            # interact.show(f"Felvétel: {FRUIT_HUN_DICT.get(frt.tags[0])}", 100000 + index)
+            # if inpt.active_bind(enums.keybinds.INTERACT):
+            audio.play(audio.clone(sounds.PICKUP))
+            if frt.tags[0] == "banana":
+                player.inventory.banana += 1
 
-                if frt.tags[0] == "strawberry":
-                    player.inventory.strawberry += 1
+            if frt.tags[0] == "strawberry":
+                player.inventory.strawberry += 1
 
-                if frt.tags[0] == "blueberry":
-                    player.inventory.blueberry += 1
+            if frt.tags[0] == "blueberry":
+                player.inventory.blueberry += 1
 
-                items.remove(frt)
-                DROPPED_FRUITS.remove(frt)
-                interact.hide(200000)
-        elif interact.current_priority >= 100000 + index:
-             interact.hide(100000 + index)
+            items.remove(frt)
+            DROPPED_FRUITS.remove(frt)
+                # interact.hide(200000)
+        # elif interact.current_priority >= 100000 + index:
+        #      interact.hide(100000 + index)
 
 
 def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:

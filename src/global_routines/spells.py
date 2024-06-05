@@ -112,8 +112,8 @@ def __spell_fn_goliath(this: Spell, item: Item, effectiveness: Number) -> None:
         item.transform.scale = original_scale
         item.max_hitpoints = original_max_hp
 
-    item.transform.scale.x *= effectiveness
-    item.transform.scale.y *= effectiveness
+    item.transform.scale.x *= 1 + (effectiveness / 5)
+    item.transform.scale.y *= 1 + (effectiveness / 5)
 
     item.max_hitpoints *= effectiveness * 1.5
     item.hitpoints *= effectiveness * 1.5

@@ -1,7 +1,7 @@
 from base import *
 
 HEALING = Spell(
-    "Gyógyítás",
+    "Vitamin-mix",
     "Másodpercenként visszatölti at életerőd egy részét.",
     20,
     5,
@@ -10,7 +10,7 @@ HEALING = Spell(
 )
 
 HASTE = Spell(
-    "Sietség",
+    "Pre workout",
     "Gyorsabb mozgás és nagyobb támadási sebesség.",
     10,
     3,
@@ -19,7 +19,7 @@ HASTE = Spell(
 )
 
 GOLIATH = Spell(
-    "Góliát",
+    "Kreatin",
     "Nagyobb méret és több életerő.",
     15,
     1.25,
@@ -28,7 +28,7 @@ GOLIATH = Spell(
 )
 
 Zzzz = Spell(
-    "Zzzz...",
+    "Ashwaganda",
     "Ellenfelek elaltatása.",
     15,
     1,

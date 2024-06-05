@@ -22,6 +22,7 @@ def get_random_spawn_pos() -> Vec2:
 
 
 def spawn_melee() -> None:
+    global ROUND
     enemies.new(
         Item(
             id="enemy:" + uuid(),
@@ -33,10 +34,10 @@ def spawn_melee() -> None:
             can_collide=True,
             can_repulse=True,
             lightness=1,
-            base_movement_speed=300,
+            base_movement_speed=300 + 300 * 0.01 * ROUND,
             dash_movement_multiplier=10,
             dash_charge_refill_time=0.25,
-            max_hitpoints=100,
+            max_hitpoints=150,
             effective_range=random.randint(200, 500),
             hitpoints=100,
             max_mana=100,
@@ -47,6 +48,7 @@ def spawn_melee() -> None:
 
 
 def spawn_ranged() -> None:
+    global ROUND
     enemies.new(
         Item(
             id="enemy:" + uuid(),
@@ -58,10 +60,10 @@ def spawn_ranged() -> None:
             can_collide=True,
             can_repulse=True,
             lightness=1,
-            base_movement_speed=300,
+            base_movement_speed=300 + 300 * 0.01 * ROUND,
             dash_movement_multiplier=10,
             dash_charge_refill_time=0.25,
-            max_hitpoints=100,
+            max_hitpoints=95,
             effective_range=random.randint(600, 1000),
             hitpoints=100,
             max_mana=100,
@@ -79,8 +81,9 @@ def start_round() -> None:
 
     ROUND_STATE = "Fight"
     ROUND += 1
+    print(ROUND)
 
-    enemy_count = random.randint(2, 2 + ROUND)
+    enemy_count = 2 + random.randint(ROUND, round(1.5 * ROUND))
     melee_count = range(round(enemy_count * 0.66))
     ranged_count = range(round(enemy_count * 0.66))
 

@@ -275,6 +275,8 @@ def set_string_map() -> None:
 
     STRING_MAP["%p.s0"] = player.spells[0].name
     STRING_MAP["%p.s1"] = player.spells[1].name
+    STRING_MAP["%w0"] = "Súlylemez"
+    STRING_MAP["%w1"] = "Boxkesztyű"
 
     # %s - Spell Level
     # STRING_MAP["%s.lvl.haste"] = enums.spells.HASTE.effectiveness
@@ -908,7 +910,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Új pr",
+    "Új pr (%w0)",
     ["+10% sebzés künnyű támadáskor"],
     "blueberry.png",
 )
@@ -919,7 +921,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Új pr",
+    "Új pr (%w0)",
     ["+10% sebzés nehéz támadáskor"],
     "blueberry.png",
 )
@@ -930,7 +932,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Új pr",
+    "Új pr (%w0)",
     ["+10% sebzés ugró támadáskor"],
     "blueberry.png",
 )

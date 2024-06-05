@@ -264,8 +264,8 @@ def init() -> None:
     empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, [])
 
     if player.spells == None:
-        # player.spells = [empty_spell, structured_clone(empty_spell)]
-        player.spells = [enums.spells.HEALING, enums.spells.Zzzz]
+        player.spells = [empty_spell, structured_clone(empty_spell)]
+        # player.spells = [enums.spells.HEALING, enums.spells.Zzzz]
     elif len(player.spells) < 2:
         for _ in range(2 - len(player.spells)):
             player.spells.append(empty_spell)
@@ -313,6 +313,7 @@ def update() -> None:
         interact.show("Következő kör", 10000)
         if inpt.active_bind(enums.keybinds.INTERACT):
             round_manager.start_round()
+            round_manager.ROUND_STATE = "Fight"
             interact.hide(10000)
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
