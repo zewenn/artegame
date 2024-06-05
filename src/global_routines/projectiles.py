@@ -9,9 +9,11 @@ from brass import (
     animator,
     enums,
     timeout,
-    scene
+    scene,
+    audio,
+    timeout
 )
-from global_routines import crowd_control
+from global_routines import crowd_control, sounds
 
 PROJECTILES: list[Item] = []
 
@@ -118,6 +120,11 @@ def system_update() -> None:
                     play_name = "get_hit"
 
                 if item.hitpoints > 0:
+                    pnch = audio.clone(sounds.PUNCH)
+                    audio.play(pnch, 1)
+                    timeout.set(
+                        audio.get_length(pnch), audio.stop, (pnch,)
+                    )
                     length = 0.1
                     for effect in projectile.projectile_effects:
                         if effect.T == "stun":
@@ -128,7 +135,7 @@ def system_update() -> None:
                             effect.length,
                             effect.slow_strength,
                             effect.sleep_wait_time,
-                            True
+                            True,
                         )
                     if play_name != None:
                         play(item, play_name, length)

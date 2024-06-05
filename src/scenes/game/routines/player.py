@@ -163,8 +163,8 @@ def init() -> None:
     hp_amount_display = hp_amount_query.ok()
 
     # Walking audio
-    walk_sound = assets.use("walking.mp3", T=Audio)
-    audio.set_volume(walk_sound, 0.1)
+    # walk_sound = assets.use("walking.mp3", T=Audio)
+    # audio.set_volume(walk_sound, 0.1)
 
     player_light_attack_anim_query = animator.store.get("hit")
 
@@ -412,10 +412,10 @@ def move_player() -> None:
         vectormath.new(Vec2(inpt.horizontal(), inpt.vertical()))
     )
 
-    if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
-        audio.fade_in(walk_sound, 100, 1)
-    else:
-        audio.fade_out(walk_sound, 100)
+    # if move_math_vec.end.x != 0 or move_math_vec.end.y != 0:
+    #     audio.fade_in(walk_sound, 100, 1)
+    # else:
+    #     audio.fade_out(walk_sound, 100)
 
     if (
         inpt.active_bind(enums.keybinds.PLAYER_DASH)

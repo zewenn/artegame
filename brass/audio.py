@@ -39,7 +39,7 @@ def get_volume(audio: Audio):
 
 
 def get_length(audio: Audio):
-    return audio.sound.get_length
+    return audio.sound.get_length()
 
 
 def fade_in(audio: Audio, timeMS: int = 0, loop=0, maxtime=0):
@@ -60,3 +60,10 @@ def fade_out(audio: Audio, timeMS: int = 0):
     audio.playing = False
 
     audio.sound.fadeout(timeMS)
+
+
+def clone(audio: Audio) -> Audio:
+    sound_data = audio.sound.get_raw()
+    new_sound = pygame.mixer.Sound(buffer=sound_data)
+
+    return Audio(new_sound, audio.volume, audio.playing, audio.maxtimeMS)

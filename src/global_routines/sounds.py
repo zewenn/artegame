@@ -1,25 +1,29 @@
-
 from brass.base import *
 
 from brass import audio, scene, enums, assets, events
 
 GAME_MUSIC: Optional[Audio] = None
 MENU_MUSIC: Optional[Audio] = None
+PUNCH: Optional[Audio] = None
 
 
-VOLUME = .05
+VOLUME = 0.05
+
 
 @events.awake
 def awk() -> None:
-    global GAME_MUSIC, MENU_MUSIC
+    global GAME_MUSIC, MENU_MUSIC, PUNCH
 
     GAME_MUSIC = assets.use("doom.mp3")
     MENU_MUSIC = assets.use("menu.mp3")
+    PUNCH = assets.use("punch.mp3")
+
+    audio.set_volume(PUNCH, VOLUME)
 
 
 @scene.spawn(enums.scenes.GAME)
 def game_spawn() -> None:
-    global GAME_MUSIC, MENU_MUSIC
+    global GAME_MUSIC, MENU_MUSIC, PUNCH
 
     audio.fade_out(MENU_MUSIC, 1000)
 
@@ -35,3 +39,11 @@ def game_spawn() -> None:
 
     audio.set_volume(MENU_MUSIC, VOLUME)
     audio.fade_in(MENU_MUSIC, 500, 1)
+
+
+@events.update
+def update() -> None:
+    global GAME_MUSIC, MENU_MUSIC, PUNCH
+    audio.set_volume(PUNCH, VOLUME)
+    audio.set_volume(MENU_MUSIC, VOLUME)
+    audio.set_volume(GAME_MUSIC, VOLUME)
