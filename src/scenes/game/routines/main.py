@@ -16,12 +16,15 @@ from brass import (
 from global_routines import (
     menus,
     enemies,
-    sounds
+    sounds,
+    round_manager
 )
 # fmt: on
 
 
 
+def init() -> None:
+    round_manager.start_round()
 
 
 # Runs every frame

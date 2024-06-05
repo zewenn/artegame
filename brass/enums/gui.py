@@ -18,7 +18,9 @@ class FONTS:
 class COLOURS:
     WHITE: Colour = (255, 255, 255, 1)
     BLACK: Colour = (0, 0, 0, 1)
-    RED: Colour = (255, 0, 0, 1)
+    RED: Colour = (225, 40, 40, 1)
+    CUSTOM_RED: Colour = (154, 3, 20, 1)
+    YELLOW: Colour = (251, 139, 36, 1)
     GREEN: Colour = (0, 255, 0, 1)
     BLUE: Colour = (0, 0, 255, 1)
     LIGHTBLUE: Colour = (20, 120, 220, 1)

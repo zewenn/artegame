@@ -12,6 +12,7 @@ PLAYER_WEAPON_SWITCH = "player-weapon-switch"
 
 
 ACCEPT_MENU = "accept-menu"
+INTERACT = "interact"
 SHOW_PAUSE_MENU = "show-menu"
 BACK = "back"
     

@@ -25,6 +25,11 @@ def spawn() -> None:
         "down",
     )
     inpt.bind_buttons(
+        enums.keybinds.INTERACT,
+        [{"f"}, {"b@ctrl#0"}],
+        "down",
+    )
+    inpt.bind_buttons(
         enums.keybinds.PLAYER_WEAPON_SWITCH,
         [{"tab"}, {"shoulder-right@ctrl#0"}],
         "down",
@@ -191,6 +196,35 @@ def spawn() -> None:
                         sprite="weight_plate.png",
                     ),
                 },
+            ),
+        ]
+    )
+    #                       ITEMS ADD - MIXER
+    items.add(
+        [
+            Item(
+                id="arteglaive_mixer",
+                tags=["mixer", "item"],
+                transform=Transform(
+                    Vec2(
+                        0,
+                        -196
+                    ),
+                    Vec3(),
+                    Vec2(64, 64),
+                ),
+                bones={
+                    "display": Bone(
+                        transform=Transform(
+                            Vec2(0, -32),
+                            Vec3(),
+                            Vec2(64, 128),
+                        ),
+                        anchor=Vec2(),
+                        sprite="mixer.png"
+                    )
+                },
+                can_collide=True,
             ),
         ]
     )

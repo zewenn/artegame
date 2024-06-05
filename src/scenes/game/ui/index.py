@@ -83,6 +83,58 @@ def awake() -> None:
             style=StyleSheet(position=POSITION.ABSOLUTE, left="80w", top="90h"),
         ),
         Element(
+            "InteractionShower",
+            # "B",
+            Element(
+                "InteractionShower:Picture",
+                Element(
+                    "InteractionShower:Picture:Letter",
+                    Text("B"),
+                    style=StyleSheet(
+                        inherit_display=True,
+                        position=POSITION.RELATIVE,
+                        top="24x",
+                        left="24x",
+                        width=f"{FS}x",
+                        height=f"{FS}x",
+                        # bg_image="interaction_shower.png",
+                        color=COLOURS.RED,
+                        font_family=FONTS.PRESS_PLAY,
+                    ),
+                ),
+                style=StyleSheet(
+                    inherit_display=True,
+                    position=POSITION.RELATIVE,
+                    top="-32x",
+                    left="32x",
+                    width="64x",
+                    height="64x",
+                    bg_image="interaction_shower.png",
+                ),
+            ),
+            Element(
+                "InteractionShower:Text",
+                Text("Interakció: Mixer"),
+                style=StyleSheet(
+                    inherit_display=True,
+                    position=POSITION.RELATIVE,
+                    top=f"-{FS/2}x",
+                    left="96x",
+                    width=f"{FS}x",
+                    height=f"{FS}x",
+                    # bg_image="interaction_shower.png",
+                    color=COLOURS.WHITE,
+                    font_family=FONTS.PRESS_PLAY,
+                ),
+            ),
+            style=StyleSheet(
+                display="block",
+                position=POSITION.ABSOLUTE,
+                top="50h",
+                left="50w",
+            ),
+        ),
+        Element(
             "PlayerDashCounter",
             Text("[×] [×] "),
             style=StyleSheet(
@@ -360,6 +412,6 @@ def awake() -> None:
             )
         ),
     )
-    timeout.set(1, boons.show_boon_menu, ())
+    # timeout.set(1, boons.show_boon_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)
