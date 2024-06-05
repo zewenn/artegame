@@ -75,8 +75,8 @@ def new_setting_adjuster_element(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left=f"220x",
-                top=f"180x",
+                left=f"200x",
+                top=f"160x",
                 height=f"{FS}x",
                 width=f"{FS}x",
                 font_size=FS,
@@ -187,7 +187,7 @@ def new_boon_element(
             style=StyleSheet(
                 inherit_display=True,
                 position=POSITION.RELATIVE,
-                left="260x",
+                left="250x",
                 top="0x",
             ),
         ),
@@ -404,9 +404,23 @@ def show_boon_menu() -> None:
     BOONS.normal[0].grant_fn()
 
 
+
+def close_boon_menu() -> None:
+    menus.toggle("BoonMenu")
+    
+    player.inventory.banana -= NEXT_BOON_OPTIONS.banana
+    player.inventory.strawberry -= NEXT_BOON_OPTIONS.strawberry
+    player.inventory.blueberry -= NEXT_BOON_OPTIONS.blueberry
+    
+    show_boon_selection_menu()
+
+
+
 def show_boon_selection_menu() -> None:
     set_string_map()
     id = "BoonSelectionMenu"
+
+    print(player.spells)
 
     rarity_tag = "generic"
     rarity = (
@@ -434,7 +448,7 @@ def show_boon_selection_menu() -> None:
     elif rarity <= 35:
         bns = structured_clone(BOONS.rare)
         rarity_tag = "rare"
-    elif rarity <= 50:
+    else:
         bns = structured_clone(BOONS.epic)
         rarity_tag = "epic"
 
@@ -443,29 +457,29 @@ def show_boon_selection_menu() -> None:
     available: list[Boon] = []
 
     for bn in bns:
-        print([x.name for x in bns])
-        print(bn.name)
         if bn.change == None:
             available.append(bn)
             continue
 
-
-        if (
-            bn.change.startswith("g")
-            and (bn.change.endswith(player.spells[0].name)
-            or bn.change.endswith(player.spells[1].name))
+        if bn.change.startswith("g") and (
+            bn.change.endswith(player.spells[0].name)
+            or bn.change.endswith(player.spells[1].name)
         ):
             # bns.remove(bn)
+            # print(f"Removed {bn.name}")
             continue
-
 
         if (bn.change == "u:s0" and player.spells[0].name == "Üres") or (
             bn.change == "u:s1" and player.spells[1].name == "Üres"
         ):
             # bns.remove(bn)
+            # print(f"Removed {bn.name}")
             continue
 
         available.append(bn)
+
+    if len(available) == 0:
+        unreachable("Not enough boons to create boon menu")
 
     bns = [available.pop(random.randint(0, len(available) - 1)) for _ in range(3)]
 
@@ -505,7 +519,7 @@ def show_boon_selection_menu() -> None:
 @mk_boon(
     "normal",
     "banana",
-    "Gyorsulás Képesség",
+    "Sietség Képesség",
     [
         "Bónusz mozgási- és támadási",
         "sebesség 5 másodpercig.",
@@ -514,7 +528,7 @@ def show_boon_selection_menu() -> None:
     "banana.png",
     "g:s1:" + enums.spells.HASTE.name,
 )
-def grant_haste() -> None:
+def _() -> None:
     enums.spells.HASTE.effectiveness = 3
     player.spells[1] = enums.spells.HASTE
 
@@ -531,7 +545,7 @@ def grant_haste() -> None:
     "banana.png",
     "g:s1:" + enums.spells.Zzzz.name,
 )
-def grant_zzzz() -> None:
+def _() -> None:
     enums.spells.Zzzz.effectiveness = 1
     player.spells[1] = enums.spells.Zzzz
 
@@ -584,6 +598,71 @@ def _() -> None:
 
 
 @mk_boon(
+    "rare",
+    "banana",
+    "Sietség Képesség",
+    [
+        "Bónusz mozgási- és támadási",
+        "sebesség 5 másodpercig.",
+        "Ezt cseréli: %p.s1 (1)",
+        # "Alapvető hatékonyság: 6"
+    ],
+    "banana.png",
+    "g:s1:" + enums.spells.HASTE.name,
+)
+def _() -> None:
+    enums.spells.HASTE.effectiveness = 6
+    player.spells[1] = enums.spells.HASTE
+
+
+@mk_boon(
+    "rare",
+    "banana",
+    "ZzZz...",
+    [
+        "A körülötted lévő ellenfelek",
+        "elaltatása 2 másodperc után.",
+        "Ezt cseréli: %p.s1 (1)",
+    ],
+    "banana.png",
+    "g:s1:" + enums.spells.Zzzz.name,
+)
+def _() -> None:
+    enums.spells.Zzzz.effectiveness = 2
+    player.spells[1] = enums.spells.Zzzz
+
+
+@mk_boon(
+    "rare",
+    "banana",
+    "Gyógyulás",
+    [
+        "Másodpercenként visszatölti",
+        "at életerőd egy részét.",
+        "Ezt cseréli: %p.s0 (0)",
+    ],
+    "banana.png",
+    "g:s0:" + enums.spells.HEALING.name,
+)
+def _() -> None:
+    enums.spells.HEALING.effectiveness = 10
+    player.spells[0] = enums.spells.HEALING
+
+
+@mk_boon(
+    "rare",
+    "banana",
+    "Góliát",
+    ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
+    "banana.png",
+    "g:s0:" + enums.spells.GOLIATH.name,
+)
+def grant_goliath() -> None:
+    enums.spells.GOLIATH.effectiveness = 2.5
+    player.spells[0] = enums.spells.GOLIATH
+
+
+@mk_boon(
     "rare", "banana", "%p.s0 fejlesztése", ["+2.5 hatékonyság"], "banana.png", "u:s0"
 )
 def _() -> None:
@@ -615,6 +694,71 @@ def _() -> None:
 
 
 @mk_boon(
+    "epic",
+    "banana",
+    "Sietség Képesség",
+    [
+        "Bónusz mozgási- és támadási",
+        "sebesség 5 másodpercig.",
+        "Ezt cseréli: %p.s1 (1)",
+        # "Alapvető hatékonyság: 6"
+    ],
+    "banana.png",
+    "g:s1:" + enums.spells.HASTE.name,
+)
+def _() -> None:
+    enums.spells.HASTE.effectiveness = 9
+    player.spells[1] = enums.spells.HASTE
+
+
+@mk_boon(
+    "epic",
+    "banana",
+    "ZzZz...",
+    [
+        "A körülötted lévő ellenfelek",
+        "elaltatása 2 másodperc után.",
+        "Ezt cseréli: %p.s1 (1)",
+    ],
+    "banana.png",
+    "g:s1:" + enums.spells.Zzzz.name,
+)
+def _() -> None:
+    enums.spells.Zzzz.effectiveness = 4
+    player.spells[1] = enums.spells.Zzzz
+
+
+@mk_boon(
+    "epic",
+    "banana",
+    "Gyógyulás",
+    [
+        "Másodpercenként visszatölti",
+        "at életerőd egy részét.",
+        "Ezt cseréli: %p.s0 (0)",
+    ],
+    "banana.png",
+    "g:s0:" + enums.spells.HEALING.name,
+)
+def _() -> None:
+    enums.spells.HEALING.effectiveness = 25
+    player.spells[0] = enums.spells.HEALING
+
+
+@mk_boon(
+    "epic",
+    "banana",
+    "Góliát",
+    ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
+    "banana.png",
+    "g:s0:" + enums.spells.GOLIATH.name,
+)
+def grant_goliath() -> None:
+    enums.spells.GOLIATH.effectiveness = 5
+    player.spells[0] = enums.spells.GOLIATH
+
+
+@mk_boon(
     "epic", "banana", "%p.s0 fejlesztése", ["+5 hatékonyság"], "banana.png", "u:s0"
 )
 def _() -> None:
@@ -628,6 +772,20 @@ def _() -> None:
     player.spells[1].effectiveness += 5
 
 
+@mk_boon(
+    "epic", "banana", "%p.s0 fejlesztése", ["+7.5 hatékonyság"], "banana.png", "u:s0"
+)
+def _() -> None:
+    player.spells[0].effectiveness += 7.5
+
+
+@mk_boon(
+    "epic", "banana", "%p.s1 fejlesztése", ["+7.5 hatékonyság"], "banana.png", "u:s1"
+)
+def _() -> None:
+    player.spells[1].effectiveness += 7.5
+
+
 # --- Strawberry ---
 
 
@@ -635,11 +793,23 @@ def _() -> None:
     "normal",
     "strawberry",
     "Gyors mozgás",
-    ["Megnöveli a mozgási sebességet."],
+    ["Megnöveli a mozgási sebességet.", "+20 mozgási sebesség"],
     "strawberry.png",
 )
 def _() -> None:
     player.base_movement_speed += 20
+    player.movement_speed = player.base_movement_speed
+
+
+@mk_boon(
+    "normal",
+    "strawberry",
+    "Hústorony",
+    ["+20 sebzés"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.base_damage += 20
 
 
 @mk_boon(
@@ -658,6 +828,32 @@ def _() -> None:
 def _() -> None:
     player.max_mana += 10
     player.mana += 10
+
+
+# |> Rare
+
+
+@mk_boon(
+    "rare",
+    "strawberry",
+    "Nagyobb életerő",
+    ["+50 maximum életerő."],
+    "strawberry.png",
+)
+def _() -> None:
+    player.max_hitpoints += 50
+    player.hitpoints += 50
+
+
+@mk_boon(
+    "rare",
+    "strawberry",
+    "Csábító Hústorony",
+    ["+35 sebzés"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.base_damage += 35
 
 
 @mk_boon(
@@ -680,6 +876,48 @@ def _() -> None:
 )
 def _() -> None:
     player.base_attack_speed += 1
+
+
+# |> Epic
+
+
+@mk_boon(
+    "epic",
+    "strawberry",
+    "Nagyobb életerő",
+    ["+100 maximum életerő."],
+    "strawberry.png",
+)
+def _() -> None:
+    player.max_hitpoints += 100
+    player.hitpoints += 100
+
+
+@mk_boon(
+    "epic",
+    "strawberry",
+    "Bónusz ugrás",
+    ["+1 ugrás", "+100 mozgási sebesség"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.dash_count += 1
+    if player.base_movement_speed < 600:
+        player.base_movement_speed += 100
+        return
+    player.base_movement_speed += 50
+    player.movement_speed = player.base_movement_speed
+
+
+@mk_boon(
+    "epic",
+    "strawberry",
+    "Ellenállhatatlan Hústorony",
+    ["+50 sebzés"],
+    "strawberry.png",
+)
+def _() -> None:
+    player.base_damage += 50
 
 
 # --- Blueberry ---

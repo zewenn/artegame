@@ -93,6 +93,10 @@ default_attack_speed: Number = 0
 can_attack: bool = True
 can_dash: bool = False
 
+inventory_display_banana: Optional[GUIElement]
+inventory_display_strawberry: Optional[GUIElement]
+inventory_display_blueberry: Optional[GUIElement]
+
 
 def init() -> None:
     global player
@@ -104,6 +108,9 @@ def init() -> None:
     global player_light_attack_anim
     global hp_amount_display
     global default_attack_speed
+    global inventory_display_banana
+    global inventory_display_strawberry
+    global inventory_display_blueberry
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
@@ -111,6 +118,10 @@ def init() -> None:
     hitpoint_bar_query = gui.get_element("PlayerHitpointBar")
     mana_bar_query = gui.get_element("ManaBar")
     hp_amount_query = gui.get_element("HpAmountDispaly")
+    hp_amount_query = gui.get_element("HpAmountDispaly")
+    inv_d_banana_query = gui.get_element("Inventory-Item-banana-Counter")
+    inv_d_strawberry_query = gui.get_element("Inventory-Item-strawberry-Counter")
+    inv_d_blueberry_query = gui.get_element("Inventory-Item-blueberry-Counter")
 
     # Player
     if player_query.is_err():
@@ -159,6 +170,24 @@ def init() -> None:
 
     player_light_attack_anim = player_light_attack_anim_query.ok()
 
+    # Inventory |> Banana
+    if inv_d_banana_query.is_err():
+        unreachable("Banana inventory display does not exist!")
+
+    inventory_display_banana = inv_d_banana_query.ok()
+
+    # Inventory |> Strawberry
+    if inv_d_strawberry_query.is_err():
+        unreachable("Strawberry inventory display does not exist!")
+
+    inventory_display_strawberry = inv_d_strawberry_query.ok()
+
+    # Inventory |> Blueberry
+    if inv_d_blueberry_query.is_err():
+        unreachable("Blueberry inventory display does not exist!")
+
+    inventory_display_blueberry = inv_d_blueberry_query.ok()
+
     player.movement_speed = player.base_movement_speed
     player.attack_speed = player.base_attack_speed
 
@@ -184,7 +213,7 @@ def init() -> None:
     empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, [])
 
     if player.spells == None:
-        player.spells = [empty_spell, empty_spell]
+        player.spells = [empty_spell, structured_clone(empty_spell)]
     elif len(player.spells) < 2:
         for _ in range(2 - len(player.spells)):
             player.spells.append(empty_spell)
@@ -217,7 +246,7 @@ def update() -> None:
         spells.cast(player.spells[1], player)
 
     if inpt.get_button_down("dpad-right@ctrl#0"):
-        boons.show_boon_selection_menu()
+        boons.show_boon_menu()
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon.id == player.weapons[0].id:
@@ -329,6 +358,10 @@ def update() -> None:
         f"{4.75 * 16 - len(hp_amount_text) * hp_amount_display.style.font_size / 2}x"
     )
     hp_amount_display.children[0] = hp_amount_text
+
+    inventory_display_banana.children[0] = str(player.inventory.banana)
+    inventory_display_strawberry.children[0] = str(player.inventory.strawberry)
+    inventory_display_blueberry.children[0] = str(player.inventory.blueberry)
 
 
 def allow_attack() -> None:

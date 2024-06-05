@@ -228,7 +228,7 @@ def awake() -> None:
                             "confirm-boon-options-btn",
                             "Elfogadás",
                             0,
-                            caller(menus.toggle, ("BoonMenu",)),
+                            caller(boons.close_boon_menu, ()),
                         ),
                         title_button(
                             "confirm-boon-options-btn",
@@ -360,6 +360,6 @@ def awake() -> None:
             )
         ),
     )
-    timeout.set(1, boons.show_boon_selection_menu, ())
+    timeout.set(1, boons.show_boon_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)
