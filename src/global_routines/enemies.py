@@ -12,6 +12,7 @@ from brass import (
     vectormath,
     collision,
     timeout,
+    animator,
     inpt
 )
 # fmt: on
@@ -98,6 +99,39 @@ def remove_attack_cooldown(item: Item) -> None:
     item.can_attack = True
 
 
+walk_anims: dict[string, bool] = {}
+
+
+def reset_anim(anim: AnimationGroup, id: string) -> None:
+    del anim
+    del walk_anims[id]
+
+def play(item: Item, dir: Literal["right", "left"]) -> None:
+    if walk_anims.get(item.id):
+        return
+    
+    walk_anims[item.id] = True
+    dur = .5
+    anim = animator.create(
+        duration_seconds=dur,
+        mode=enums.animations.MODES.NORMAL,
+        timing_function=enums.animations.TIMING.EASE_IN_OUT,
+        animations=[
+            Animation(
+                item.id,
+                {
+                    1: Keyframe(sprite=f"enemy_melee_{dir}_1.png"),
+                    50: Keyframe(sprite=f"enemy_melee_{dir}_2.png"),
+                    100: Keyframe(sprite=f"enemy_melee_{dir}_1.png"),
+                },
+            )
+        ],
+    )
+    animator.play(anim)
+    timeout.set(dur + 0.02, reset_anim, (anim, item.id))
+
+
+
 @scene.update(enums.scenes.GAME)
 def update() -> None:
     vec = None
@@ -132,12 +166,20 @@ def update() -> None:
                 * pgapi.TIME.deltatime
                 * vec.end.y
             )
-            enemy.transform.position.x += (
+            x = (
                 enemy.movement_speed
                 * (1 - (enemy.slowed_by_percent / 100))
                 * pgapi.TIME.deltatime
                 * vec.end.x
             )
+            enemy.transform.position.x += x
+            if enemy.tags.__contains__("ranged"):
+                if x < 0:
+                    enemy.sprite = "enemy_ranged_left.png"
+                else:
+                    enemy.sprite = "enemy_ranged_right.png"
+            elif enemy.tags.__contains__("melee"):
+                play(enemy, "left" if x < 0 else "right")
 
         if random.randint(0, 400) == 0 and enemy.can_move:
             dash.apply_dash_effect(
@@ -194,7 +236,7 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
     if rand in range(0, 3):
         projectiles.shoot(
             projectiles.new(
-                "light_attack_projectile.png",
+                "enemy_light_projectile.png",
                 structured_clone(item.transform.position),
                 Vec2(64, 64),
                 -vector.direction + 90,
@@ -212,7 +254,7 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
 
     projectiles.shoot(
         projectiles.new(
-            "heavy_attack_projectile.png",
+            "enemy_heavy_projectile.png",
             structured_clone(item.transform.position),
             Vec2(64, 64),
             -vector.direction + 90,

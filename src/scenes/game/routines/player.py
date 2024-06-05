@@ -216,7 +216,8 @@ def init() -> None:
     empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, [])
 
     if player.spells == None:
-        player.spells = [empty_spell, structured_clone(empty_spell)]
+        # player.spells = [empty_spell, structured_clone(empty_spell)]
+        player.spells = [enums.spells.HEALING, enums.spells.Zzzz]
     elif len(player.spells) < 2:
         for _ in range(2 - len(player.spells)):
             player.spells.append(empty_spell)
@@ -227,8 +228,8 @@ def init() -> None:
     if not player.base_damage:
         player.base_damage = 10
 
-    print("Player:", player.uuid)
-    print("Player Spells:", player.spells)
+    # print("Player:", player.uuid)
+    # print("Player Spells:", player.spells)
     # hitpoint_display.style.bg_color = (20, 120, 220, 1)
 
 

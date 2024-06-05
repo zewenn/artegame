@@ -37,6 +37,14 @@ def apply_sleep(to: Item, length: Number) -> None:
     to.sleeping = True
     # print("Sleeping", to.id, to.sleeping)
     timeout.set(length, cleanse, (to, "sleep"))
+    effect_display.summon(
+        to.transform,
+        [
+            "sleep_effect.png",
+        ],
+        length,
+        length,
+    )
 
 
 def apply(
@@ -71,7 +79,7 @@ def apply(
         to.stunned = True
         if show_effect:
             effect_display.summon(
-                to,
+                to.transform,
                 [
                     "stun_effect_1.png",
                     "stun_effect_2.png",

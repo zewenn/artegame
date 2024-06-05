@@ -1,7 +1,17 @@
 from brass.base import *
 
-from brass import scene, enums, assets, events, timeout, pgapi, items, collision
-from global_routines import crowd_control, projectiles
+from brass import (
+    scene,
+    enums,
+    assets,
+    events,
+    timeout,
+    pgapi,
+    items,
+    collision,
+    animator
+)
+from global_routines import crowd_control, projectiles, effect_display
 
 
 SPELL_DICT: Dict[string, Callable[[Spell, Item, Number], None]] = {}
@@ -65,6 +75,12 @@ def __spell_fn_heal(this: Spell, item: Item, effectiveness: Number) -> None:
             return
 
         timeout.set(1, heal, ())
+        effect_display.summon(item.transform, [
+            "heal_effect_0.png",
+            "heal_effect_1.png",
+            "heal_effect_0.png",
+            # "heal_effect_2.png",
+        ], 1, .5)
 
     heal()
 
@@ -115,16 +131,38 @@ def __spell_fn_Zzzz(this: Spell, item: Item, effectiveness: Number) -> None:
     trs.scale.x *= 3
     trs.scale.y = trs.scale.x
 
-    projectiles.shoot(
-        projectiles.new(
-            "gyuri.png",
-            trs.position,
-            trs.scale,
-            0,
-            1,
-            0,
-            item.team,
-            0,
-            [Effect("sleep", 2, 0, 2)]
-        )
+    duration = 1
+
+    proj = projectiles.new(
+        "sleep_puddle_0.png",
+        trs.position,
+        trs.scale,
+        0,
+        duration,
+        0,
+        item.team,
+        0,
+        [Effect("sleep", 2, 0, 2)],
     )
+
+    anim: AnimationGroup = animator.create(
+        duration,
+        enums.animations.MODES.NORMAL,
+        enums.animations.TIMING.LINEAR,
+        [
+            Animation(
+                proj.id,
+                {
+                    0: Keyframe(sprite="sleep_puddle_0.png"),
+                    33: Keyframe(sprite="sleep_puddle_1.png"),
+                    66: Keyframe(sprite="sleep_puddle_2.png"),
+                    100: Keyframe(sprite="sleep_puddle_0.png"),
+                },
+            )
+        ],
+    )
+
+    projectiles.shoot(proj)
+    animator.play(anim)
+
+    timeout.set(duration + 0.02, delete, (anim,))

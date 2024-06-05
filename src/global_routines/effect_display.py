@@ -10,10 +10,10 @@ from brass import (
 # fmt: on
 
 
-def summon(at: Item, sprites: list[string], length: Number, anim_len: Number) -> None:
+def summon(at: Transform, sprites: list[string], length: Number, anim_len: Number) -> None:
     uid = "effect:" + uuid()
     effect = Item(
-        id=uid, tags=["effect_display"], transform=at.transform, sprite=sprites[0]
+        id=uid, tags=["effect_display"], transform=at, sprite=sprites[0]
     )
     items.add(effect)
 
