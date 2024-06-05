@@ -11,7 +11,10 @@ element: Optional[GUIElement] = None
 text_element: Optional[GUIElement] = None
 
 
-@scene.awake(enums.scenes.GAME)
+current_priority: int = 0
+
+
+@scene.init(enums.scenes.GAME)
 def awake() -> None:
     global element
     global text_element
@@ -37,9 +40,13 @@ def update() -> None:
     )
 
 
-def show(text: string) -> None:
+def show(text: string, prio: int = 0) -> None:
     global element
     global text_element
+    global current_priority
+
+    if prio < current_priority:
+        return
 
     if len(text_element.children) > 0:
         text_element.children[0] = text
@@ -48,6 +55,13 @@ def show(text: string) -> None:
 
     element.style.display = "block"
 
+    current_priority = prio
 
-def hide() -> None:
-    element.style.display = "none"
+
+def hide(prio: int = 0) -> None:
+    global current_priority
+    
+    if prio >= current_priority:
+        element.style.display = "none"
+        current_priority = 0
+

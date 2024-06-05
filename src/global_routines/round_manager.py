@@ -1,6 +1,6 @@
 from brass.base import *
 
-from brass import items, timeout, scene, enums, gui, pgapi
+from brass import items, timeout, scene, enums, gui, pgapi, saves
 from global_routines import effect_display, menus, enemies
 
 import random
@@ -74,6 +74,8 @@ def spawn_ranged() -> None:
 def start_round() -> None:
     global ROUND_STATE
     global ROUND
+
+    saves.save()
 
     ROUND_STATE = "Fight"
     ROUND += 1

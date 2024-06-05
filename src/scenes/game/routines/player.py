@@ -250,17 +250,17 @@ def update() -> None:
 
     if collision.collides(player.transform, round_manager.MIXER_TRANSFORM):
         if round_manager.ROUND_STATE == "BoonSelection":
-            interact.show("Mixer")
+            interact.show("Mixer", 10000)
             if inpt.active_bind(enums.keybinds.INTERACT):
                 boons.show_boon_menu()
     else:
-        interact.hide()
+        interact.hide(10000)
 
     if round_manager.ROUND_STATE == "Wait":
-        interact.show("Következő kör")
+        interact.show("Következő kör", 10000)
         if inpt.active_bind(enums.keybinds.INTERACT):
             round_manager.start_round()
-            interact.hide()
+            interact.hide(10000)
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon.id == player.weapons[0].id:
