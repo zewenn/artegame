@@ -50,7 +50,7 @@ def spawn() -> None:
     animator.store.add(
         "plates_anim",
         animator.create(
-            duration_seconds=.15,
+            duration_seconds=0.15,
             mode=enums.animations.MODES.FORWARD,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
             animations=[
@@ -76,7 +76,7 @@ def spawn() -> None:
     animator.store.add(
         "gloves_anim",
         animator.create(
-            duration_seconds=.2,
+            duration_seconds=0.2,
             mode=enums.animations.MODES.FORWARD,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
             animations=[
@@ -99,6 +99,42 @@ def spawn() -> None:
             ],
         ),
     )
+    animator.store.add(
+        "player_walk_anim_left",
+        animator.create(
+            duration_seconds=0.25,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.LINEAR,
+            animations=[
+                Animation(
+                    "player",
+                    {
+                        1: Keyframe(sprite="player_left_0.png"),
+                        50: Keyframe(sprite="player_left_1.png"),
+                        100: Keyframe(sprite="player_left_0.png"),
+                    },
+                )
+            ],
+        ),
+    )
+    animator.store.add(
+        "player_walk_anim_right",
+        animator.create(
+            duration_seconds=0.25,
+            mode=enums.animations.MODES.NORMAL,
+            timing_function=enums.animations.TIMING.LINEAR,
+            animations=[
+                Animation(
+                    "player",
+                    {
+                        1: Keyframe(sprite="player_right_0.png"),
+                        50: Keyframe(sprite="player_right_1.png"),
+                        100: Keyframe(sprite="player_right_0.png"),
+                    },
+                )
+            ],
+        ),
+    )
 
     # res_loaded: Result[None, Mishap] = saves.load()
     # if res_loaded.is_ok():
@@ -113,7 +149,7 @@ def spawn() -> None:
                 team="Player",
                 transform=Transform(Vec2(), Vec3(), Vec2(64, 64)),
                 # fill_color=[20, 20, 20],
-                sprite="gyuri.png",
+                sprite="player_right_0.png",
                 # Collision
                 can_collide=True,
                 can_repulse=True,
@@ -213,10 +249,7 @@ def spawn() -> None:
                 id="arteglaive_mixer",
                 tags=["mixer", "item"],
                 transform=Transform(
-                    Vec2(
-                        0,
-                        -196
-                    ),
+                    Vec2(0, -196),
                     Vec3(),
                     Vec2(64, 64),
                 ),
@@ -228,15 +261,12 @@ def spawn() -> None:
                             Vec2(64, 128),
                         ),
                         anchor=Vec2(),
-                        sprite="mixer.png"
+                        sprite="mixer.png",
                     )
                 },
                 can_collide=True,
             ),
-            Item(
-                id="RoundSaver",
-                tags=["Wait"]
-            )
+            Item(id="RoundSaver", tags=["Wait"]),
         ]
     )
 

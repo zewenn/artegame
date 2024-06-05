@@ -32,6 +32,8 @@ player: Optional[Item] = None
 player_hand_holder: Optional[Item] = None
 player_plates_attack_anim: Optional[AnimationGroup] = None
 player_gloves_attack_anim: Optional[AnimationGroup] = None
+player_walk_left_anim: Optional[AnimationGroup] = None
+player_walk_right_anim: Optional[AnimationGroup] = None
 player_can_move_save = True
 
 
@@ -122,6 +124,8 @@ def init() -> None:
     global inventory_display_blueberry
     global weapon_display_0
     global weapon_display_1
+    global player_walk_left_anim
+    global player_walk_right_anim
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
@@ -138,6 +142,8 @@ def init() -> None:
 
     player_plates_attack_anim_query = animator.store.get("plates_anim")
     player_gloves_attack_anim_query = animator.store.get("gloves_anim")
+    player_walk_left_anim_q = animator.store.get("player_walk_anim_left")
+    player_walk_right_anim_q = animator.store.get("player_walk_anim_right")
 
     # Player
     if player_query.is_err():
@@ -181,15 +187,27 @@ def init() -> None:
 
     # Plates
     if player_plates_attack_anim_query.is_err():
-        unreachable('"hit" animation does not exist')
+        unreachable('plates animation does not exist')
 
     player_plates_attack_anim = player_plates_attack_anim_query.ok()
 
     # Gloves
     if player_gloves_attack_anim_query.is_err():
-        unreachable('"hit" animation does not exist')
+        unreachable('gloves animation does not exist')
 
     player_gloves_attack_anim = player_gloves_attack_anim_query.ok()
+
+    # Walk left
+    if player_walk_left_anim_q.is_err():
+        unreachable('walk_left animation does not exist')
+
+    player_walk_left_anim = player_walk_left_anim_q.ok()
+
+    # Walk right
+    if player_walk_right_anim_q.is_err():
+        unreachable('walk_left animation does not exist')
+
+    player_walk_right_anim = player_walk_right_anim_q.ok()
 
     # Inventory |> Banana
     if inv_d_banana_query.is_err():
@@ -431,6 +449,9 @@ def allow_attack() -> None:
 
 def move_player() -> None:
     global can_dash
+    global player_walk_left_anim
+    global player_walk_right_anim
+
     # global dash_display
     # global player_hand_holder
 
@@ -479,18 +500,26 @@ def move_player() -> None:
             can_dash = False
 
     if player.can_move:
-        player.transform.position.y += (
+        y = (
             player.movement_speed
             * (1 - (player.slowed_by_percent / 100))
             * pgapi.TIME.deltatime
             * move_math_vec.end.y
         )
-        player.transform.position.x += (
+        x = (
             player.movement_speed
             * (1 - (player.slowed_by_percent / 100))
             * pgapi.TIME.deltatime
             * move_math_vec.end.x
         )
+        player.transform.position.y += y
+        player.transform.position.x += x
+        if x < 0:
+            animator.stop(player_walk_right_anim)
+            animator.play(player_walk_left_anim)
+        elif x > 0 or y != 0:
+            animator.stop(player_walk_left_anim)
+            animator.play(player_walk_right_anim)
 
     player_hand_holder.transform.position = player.transform.position
     match pgapi.SETTINGS.input_mode:

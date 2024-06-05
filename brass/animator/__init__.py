@@ -137,6 +137,9 @@ def play(anim: AnimationGroup) -> None:
 
 
 def stop(anim: AnimationGroup) -> None:
+    if playing_groups.get(anim.id) == None:
+        return
+
     if playing_groups[anim.id].group.mode == enums.animations.MODES.NORMAL:
         reset_anim(anim.id)
     del playing_groups[anim.id]
