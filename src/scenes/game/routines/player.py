@@ -101,6 +101,10 @@ inventory_display_strawberry: Optional[GUIElement]
 inventory_display_blueberry: Optional[GUIElement]
 
 
+weapon_display_0: Optional[Bone] = None
+weapon_display_1: Optional[Bone] = None
+
+
 def init() -> None:
     global player
     global player_hand_holder
@@ -114,6 +118,8 @@ def init() -> None:
     global inventory_display_banana
     global inventory_display_strawberry
     global inventory_display_blueberry
+    global weapon_display_0
+    global weapon_display_1
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
@@ -125,6 +131,8 @@ def init() -> None:
     inv_d_banana_query = gui.get_element("Inventory-Item-banana-Counter")
     inv_d_strawberry_query = gui.get_element("Inventory-Item-strawberry-Counter")
     inv_d_blueberry_query = gui.get_element("Inventory-Item-blueberry-Counter")
+    w_d_0 = items.get("player_hand_holder->left_hand")
+    w_d_1 = items.get("player_hand_holder->right_hand")
 
     # Player
     if player_query.is_err():
@@ -191,6 +199,18 @@ def init() -> None:
 
     inventory_display_blueberry = inv_d_blueberry_query.ok()
 
+    # Weapon Display 0
+    if w_d_0.is_err():
+        unreachable("Weapon 0 display does not exist!")
+
+    weapon_display_0 = w_d_0.ok()
+
+    # Weapon Display 1
+    if w_d_1.is_err():
+        unreachable("Weapon 1 display does not exist!")
+
+    weapon_display_1 = w_d_1.ok()
+
     player.movement_speed = player.base_movement_speed
     player.attack_speed = player.base_attack_speed
 
@@ -243,6 +263,10 @@ def update() -> None:
     global can_attack
     global can_dash
 
+    
+    weapon_display_0.sprite = f"{player.weapon.id}_0.png"
+    weapon_display_1.sprite = f"{player.weapon.id}_1.png"
+
     if inpt.active_bind(enums.keybinds.SPELLS.SPELL1) and player.spells[0] != None:
         spells.cast(player.spells[0], player)
 
@@ -270,7 +294,6 @@ def update() -> None:
         else:
             player.weapon = player.weapons[0]
             player.base_attack_speed = default_attack_speed * 2
-        
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
         player.can_move = False
