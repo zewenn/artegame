@@ -2,7 +2,7 @@ from brass.base import *
 from brass.gui import *
 
 from brass import items, timeout, scene, enums, gui
-from global_routines import effect_display, menus
+from global_routines import effect_display, menus, round_manager
 
 import random
 
@@ -401,8 +401,6 @@ def show_boon_menu() -> None:
 
     menus.toggle("BoonMenu")
 
-    BOONS.normal[0].grant_fn()
-
 
 
 def close_boon_menu() -> None:
@@ -486,6 +484,7 @@ def show_boon_selection_menu() -> None:
     def grant_fn(bn: Boon) -> None:
         bn.grant_fn(),
         menus.toggle(id)
+        round_manager.ROUND_STATE = "Wait"
 
     for index, bn in enumerate(bns):
         descr: list[string] = structured_clone(bn.description)
@@ -519,24 +518,7 @@ def show_boon_selection_menu() -> None:
 @mk_boon(
     "normal",
     "banana",
-    "Sietség Képesség",
-    [
-        "Bónusz mozgási- és támadási",
-        "sebesség 5 másodpercig.",
-        "Ezt cseréli: %p.s1 (1)",
-    ],
-    "banana.png",
-    "g:s1:" + enums.spells.HASTE.name,
-)
-def _() -> None:
-    enums.spells.HASTE.effectiveness = 3
-    player.spells[1] = enums.spells.HASTE
-
-
-@mk_boon(
-    "normal",
-    "banana",
-    "ZzZz...",
+    "Ashwaganda",
     [
         "A körülötted lévő ellenfelek",
         "elaltatása 2 másodperc után.",
@@ -553,7 +535,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "banana",
-    "Gyógyulás",
+    "Vitamin-mix",
     [
         "Másodpercenként visszatölti",
         "at életerőd egy részét.",
@@ -570,7 +552,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "banana",
-    "Góliát",
+    "Kreatin",
     ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
     "banana.png",
     "g:s0:" + enums.spells.GOLIATH.name,
@@ -600,7 +582,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "banana",
-    "Sietség Képesség",
+    "Pre workout",
     [
         "Bónusz mozgási- és támadási",
         "sebesség 5 másodpercig.",
@@ -618,7 +600,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "banana",
-    "ZzZz...",
+    "Ashwaganda x2",
     [
         "A körülötted lévő ellenfelek",
         "elaltatása 2 másodperc után.",
@@ -635,7 +617,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "banana",
-    "Gyógyulás",
+    "Vitamin-mix x2",
     [
         "Másodpercenként visszatölti",
         "at életerőd egy részét.",
@@ -652,7 +634,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "banana",
-    "Góliát",
+    "Kreatin x2",
     ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
     "banana.png",
     "g:s0:" + enums.spells.GOLIATH.name,
@@ -696,7 +678,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "banana",
-    "Sietség Képesség",
+    "Pre workout + monster",
     [
         "Bónusz mozgási- és támadási",
         "sebesség 5 másodpercig.",
@@ -714,7 +696,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "banana",
-    "ZzZz...",
+    "Ashwaganda x3",
     [
         "A körülötted lévő ellenfelek",
         "elaltatása 2 másodperc után.",
@@ -731,7 +713,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "banana",
-    "Gyógyulás",
+    "Vitamin mix x3",
     [
         "Másodpercenként visszatölti",
         "at életerőd egy részét.",
@@ -748,7 +730,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "banana",
-    "Góliát",
+    "Kreatin x3",
     ["Nagyobb méret és több életerő", "15 másodpercig.", "Ezt cseréli: %p.s0 (0)"],
     "banana.png",
     "g:s0:" + enums.spells.GOLIATH.name,
@@ -792,7 +774,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "strawberry",
-    "Gyors mozgás",
+    "Aluljárós gyros",
     ["Megnöveli a mozgási sebességet.", "+20 mozgási sebesség"],
     "strawberry.png",
 )
@@ -815,7 +797,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "strawberry",
-    "Nagyobb életerő",
+    "Anabolyc Tren",
     ["+25 maximum életerő."],
     "strawberry.png",
 )
@@ -836,7 +818,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "strawberry",
-    "Nagyobb életerő",
+    "Steroid shot",
     ["+50 maximum életerő."],
     "strawberry.png",
 )
@@ -859,7 +841,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "strawberry",
-    "Bónusz ugrás",
+    "Nike Blazer",
     ["+1 ugrás"],
     "strawberry.png",
 )
@@ -870,7 +852,7 @@ def _() -> None:
 @mk_boon(
     "rare",
     "strawberry",
-    "Bónusz támadási sebesség",
+    "Asszonyverő atléta",
     ["+1 támadási sebesség"],
     "strawberry.png",
 )
@@ -884,7 +866,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "strawberry",
-    "Nagyobb életerő",
+    "Anabolyc Tren",
     ["+100 maximum életerő."],
     "strawberry.png",
 )
@@ -896,7 +878,7 @@ def _() -> None:
 @mk_boon(
     "epic",
     "strawberry",
-    "Bónusz ugrás",
+    "Nike ow blazer",
     ["+1 ugrás", "+100 mozgási sebesség"],
     "strawberry.png",
 )
@@ -926,7 +908,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Súlylemez Fejlesztés",
+    "Új pr",
     ["+10% sebzés künnyű támadáskor"],
     "blueberry.png",
 )
@@ -937,7 +919,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Súlylemez Fejlesztés",
+    "Új pr",
     ["+10% sebzés nehéz támadáskor"],
     "blueberry.png",
 )
@@ -948,7 +930,7 @@ def _() -> None:
 @mk_boon(
     "normal",
     "blueberry",
-    "Súlylemez Fejlesztés",
+    "Új pr",
     ["+10% sebzés ugró támadáskor"],
     "blueberry.png",
 )

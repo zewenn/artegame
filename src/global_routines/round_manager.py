@@ -5,9 +5,10 @@ from global_routines import effect_display, menus, enemies
 
 import random
 
-
+round_saver_entity: Optional[Item] = None
 ROUND_STATE: Literal["BoonSelection", "Wait", "Fight"]
 ROUND: int = 0
+MIXER_TRANSFORM: Transform = Transform(Vec2(-128, -196 - 128), Vec3(), Vec2(256, 256))
 
 
 def get_random_spawn_pos() -> Vec2:
@@ -92,14 +93,29 @@ def start_round() -> None:
 def awake() -> None:
     global ROUND_STATE
     global ROUND
+    global round_saver_entity
 
     ROUND_STATE = None
     ROUND = 0
+
+    round_saver_entity_query = items.get("RoundSaver")
+    if round_saver_entity_query.is_err():
+        unreachable("RoundSaver entity does not exist!")
+    
+    round_saver_entity = round_saver_entity_query.ok()
+
+    try:
+        ROUND_STATE = round_saver_entity.tags[0]
+    except:
+        round_saver_entity.tags = ["Wait"]
+        ROUND_STATE = "Wait"
 
 
 @scene.update(enums.scenes.GAME)
 def update() -> None:
     global ROUND_STATE
+
+    round_saver_entity.tags = [ROUND_STATE]
 
     if ROUND_STATE == "Fight" and len(enemies.ENEMIES) == 0:
         ROUND_STATE = "BoonSelection"

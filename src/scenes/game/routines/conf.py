@@ -226,6 +226,10 @@ def spawn() -> None:
                 },
                 can_collide=True,
             ),
+            Item(
+                id="RoundSaver",
+                tags=["Wait"]
+            )
         ]
     )
 

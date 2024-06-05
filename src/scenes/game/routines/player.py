@@ -14,6 +14,7 @@ from global_routines import (
 
 from brass import (
     vectormath, 
+    collision,
     animator,
     timeout,
     assets,
@@ -247,8 +248,19 @@ def update() -> None:
     if inpt.active_bind(enums.keybinds.SPELLS.SPELL2) and player.spells[1] != None:
         spells.cast(player.spells[1], player)
 
-    if inpt.get_button_down("dpad-right@ctrl#0"):
-        boons.show_boon_menu()
+    if collision.collides(player.transform, round_manager.MIXER_TRANSFORM):
+        if round_manager.ROUND_STATE == "BoonSelection":
+            interact.show("Mixer")
+            if inpt.active_bind(enums.keybinds.INTERACT):
+                boons.show_boon_menu()
+    else:
+        interact.hide()
+
+    if round_manager.ROUND_STATE == "Wait":
+        interact.show("Következő kör")
+        if inpt.active_bind(enums.keybinds.INTERACT):
+            round_manager.start_round()
+            interact.hide()
 
     if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon.id == player.weapons[0].id:
@@ -257,6 +269,7 @@ def update() -> None:
         else:
             player.weapon = player.weapons[0]
             player.base_attack_speed = default_attack_speed * 2
+        
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
         player.can_move = False

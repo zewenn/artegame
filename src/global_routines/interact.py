@@ -17,7 +17,7 @@ def awake() -> None:
     global text_element
 
     element = gui.get_element(element_id)
-    text_element = gui.get_element(element_id)
+    text_element = gui.get_element(text_element_id)
 
     if element.is_err():
         unreachable("Interaction shower does not exist!")
@@ -38,6 +38,9 @@ def update() -> None:
 
 
 def show(text: string) -> None:
+    global element
+    global text_element
+
     if len(text_element.children) > 0:
         text_element.children[0] = text
     else:
