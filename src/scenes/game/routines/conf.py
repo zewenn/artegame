@@ -48,47 +48,54 @@ def spawn() -> None:
     )
 
     animator.store.add(
-        "hit",
+        "plates_anim",
         animator.create(
-            duration_seconds=0.2,
-            mode=enums.animations.MODES.NORMAL,
+            duration_seconds=.15,
+            mode=enums.animations.MODES.FORWARD,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
             animations=[
                 Animation(
                     "player_hand_holder->left_hand",
                     {
-                        1: Keyframe(position_y=16),
-                        30: Keyframe(position_y=64),
-                        60: Keyframe(position_y=16),
+                        1: Keyframe(position_y=16, position_x=-32, rotation_z=-40),
+                        50: Keyframe(position_y=64, position_x=-16, rotation_z=40),
+                        100: Keyframe(position_y=16, position_x=-32, rotation_z=-40),
                     },
                 ),
                 Animation(
                     "player_hand_holder->right_hand",
                     {
-                        20: Keyframe(position_y=16),
-                        50: Keyframe(position_y=64),
-                        80: Keyframe(position_y=16),
+                        1: Keyframe(position_y=16, position_x=32, rotation_z=40),
+                        50: Keyframe(position_y=64, position_x=16, rotation_z=-40),
+                        100: Keyframe(position_y=16, position_x=32, rotation_z=40),
                     },
                 ),
             ],
         ),
     )
     animator.store.add(
-        "player_get_hit",
+        "gloves_anim",
         animator.create(
-            duration_seconds=0.1,
-            mode=enums.animations.MODES.NORMAL,
+            duration_seconds=.2,
+            mode=enums.animations.MODES.FORWARD,
             timing_function=enums.animations.TIMING.EASE_IN_OUT,
             animations=[
                 Animation(
-                    "player",
+                    "player_hand_holder->left_hand",
                     {
-                        1: Keyframe(rotation_z=0),
-                        30: Keyframe(rotation_z=20),
-                        60: Keyframe(rotation_z=-20),
-                        100: Keyframe(rotation_z=0),
+                        1: Keyframe(position_y=16, position_x=-16, rotation_z=0),
+                        25: Keyframe(position_y=64, position_x=-16, rotation_z=0),
+                        50: Keyframe(position_y=16, position_x=-16, rotation_z=0),
                     },
-                )
+                ),
+                Animation(
+                    "player_hand_holder->right_hand",
+                    {
+                        40: Keyframe(position_y=16, position_x=16, rotation_z=0),
+                        65: Keyframe(position_y=64, position_x=16, rotation_z=0),
+                        90: Keyframe(position_y=16, position_x=16, rotation_z=0),
+                    },
+                ),
             ],
         ),
     )

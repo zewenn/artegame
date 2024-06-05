@@ -30,7 +30,8 @@ from brass import (
 
 player: Optional[Item] = None
 player_hand_holder: Optional[Item] = None
-player_light_attack_anim: Optional[AnimationGroup] = None
+player_plates_attack_anim: Optional[AnimationGroup] = None
+player_gloves_attack_anim: Optional[AnimationGroup] = None
 player_can_move_save = True
 
 
@@ -112,7 +113,8 @@ def init() -> None:
     global hitpoint_display
     global mana_display
     global walk_sound
-    global player_light_attack_anim
+    global player_plates_attack_anim
+    global player_gloves_attack_anim
     global hp_amount_display
     global default_attack_speed
     global inventory_display_banana
@@ -133,6 +135,9 @@ def init() -> None:
     inv_d_blueberry_query = gui.get_element("Inventory-Item-blueberry-Counter")
     w_d_0 = items.get("player_hand_holder->left_hand")
     w_d_1 = items.get("player_hand_holder->right_hand")
+
+    player_plates_attack_anim_query = animator.store.get("plates_anim")
+    player_gloves_attack_anim_query = animator.store.get("gloves_anim")
 
     # Player
     if player_query.is_err():
@@ -174,12 +179,17 @@ def init() -> None:
     # walk_sound = assets.use("walking.mp3", T=Audio)
     # audio.set_volume(walk_sound, 0.1)
 
-    player_light_attack_anim_query = animator.store.get("hit")
-
-    if player_light_attack_anim_query.is_err():
+    # Plates
+    if player_plates_attack_anim_query.is_err():
         unreachable('"hit" animation does not exist')
 
-    player_light_attack_anim = player_light_attack_anim_query.ok()
+    player_plates_attack_anim = player_plates_attack_anim_query.ok()
+
+    # Gloves
+    if player_gloves_attack_anim_query.is_err():
+        unreachable('"hit" animation does not exist')
+
+    player_gloves_attack_anim = player_gloves_attack_anim_query.ok()
 
     # Inventory |> Banana
     if inv_d_banana_query.is_err():
@@ -254,7 +264,8 @@ def init() -> None:
 
 
 def update() -> None:
-    global player_light_attack_anim
+    global player_plates_attack_anim
+    global player_gloves_attack_anim
     global hitpoint_display
     global player_can_move_save
     global mana_display
@@ -263,7 +274,6 @@ def update() -> None:
     global can_attack
     global can_dash
 
-    
     weapon_display_0.sprite = f"{player.weapon.id}_0.png"
     weapon_display_1.sprite = f"{player.weapon.id}_1.png"
 
@@ -294,6 +304,11 @@ def update() -> None:
         else:
             player.weapon = player.weapons[0]
             player.base_attack_speed = default_attack_speed * 2
+        
+        if player.weapon.id == "gloves":
+            animator.play(player_gloves_attack_anim)
+        else:
+            animator.play(player_plates_attack_anim)
 
     if (player.rooted or player.stunned or player.sleeping) and player.can_move:
         player.can_move = False
@@ -308,11 +323,17 @@ def update() -> None:
     # print(items.rendering)
 
     if not (player.stunned or player.sleeping):
+        attack_anim = (
+            player_gloves_attack_anim
+            if player.weapon.id == "gloves"
+            else player_plates_attack_anim
+        )
+
         light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
         heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
 
         if light_attacking and player.dashing and can_attack:
-            animator.play(player_light_attack_anim)
+            animator.play(attack_anim)
             projectiles.shoot(
                 projectiles.new(
                     sprite=player.weapon.dash_sprite,
@@ -334,7 +355,7 @@ def update() -> None:
             timeout.set((1 / player.attack_speed), allow_attack, ())
 
         elif light_attacking and can_attack:
-            animator.play(player_light_attack_anim)
+            animator.play(attack_anim)
             projectiles.shoot(
                 projectiles.new(
                     sprite=player.weapon.light_sprite,
@@ -357,7 +378,7 @@ def update() -> None:
             timeout.set((1 / player.attack_speed), allow_attack, ())
 
         elif heavy_attacking and can_attack and not player.dashing:
-            animator.play(player_light_attack_anim)
+            animator.play(attack_anim)
             projectiles.shoot(
                 projectiles.new(
                     sprite=player.weapon.heavy_sprite,
