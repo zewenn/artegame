@@ -19,6 +19,7 @@ from brass import (
     timeout,
     assets,
     audio,
+    scene,
     enums, 
     items, 
     pgapi, 
@@ -449,8 +450,10 @@ def update() -> None:
             can_attack = False
             timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
 
-    if player.hitpoints < 0:
+    if player.hitpoints <= 0:
         player.hitpoints = 0
+        scene.pause()
+        timeout.set(1, scene.load, (enums.scenes.DEFEAT,))
 
     if player.mana < 0:
         player.mana = 0

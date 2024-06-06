@@ -45,7 +45,7 @@ def use(filename: string, T: Optional[UT] = None) -> UT:
     return res
 
 
-def create_runtime_objects():
+def create_runtime_objects(ratio: int = 1):
     for filename, b64_value in b64_ref_table.items():
         if not filename.endswith(".ttf"):
             ASSETS[filename] = load(filename, b64_value)
@@ -54,20 +54,20 @@ def create_runtime_objects():
         # Handling font size, since the pygame can't
 
         ASSETS[f"font-{FONT_SIZE.EXTRA_SMALL}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.EXTRA_SMALL
+            filename, b64_value, round(FONT_SIZE.EXTRA_SMALL * ratio)
         )
         ASSETS[f"font-{FONT_SIZE.SMALL}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.SMALL
+            filename, b64_value, round(FONT_SIZE.SMALL * ratio)
         )
         ASSETS[f"font-{FONT_SIZE.MEDIUM}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.MEDIUM
+            filename, b64_value, round(FONT_SIZE.MEDIUM * ratio)
         )
         ASSETS[f"font-{FONT_SIZE.BIG}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.BIG
+            filename, b64_value, round(FONT_SIZE.BIG * ratio)
         )
         ASSETS[f"font-{FONT_SIZE.LARGE}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.LARGE
+            filename, b64_value, round(FONT_SIZE.LARGE * ratio)
         )
         ASSETS[f"font-{FONT_SIZE.EXTRA_LARGE}-{filename}"] = load(
-            filename, b64_value, FONT_SIZE.EXTRA_LARGE
+            filename, b64_value, round(FONT_SIZE.EXTRA_LARGE * ratio)
         )

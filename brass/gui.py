@@ -7,8 +7,6 @@ import copy
 import inpt
 
 
-GUI_SIZE = 1
-
 
 def unit(u: str, in_relation_to: float = None) -> float:
     # print(GUI_SIZE)
@@ -61,7 +59,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
 
     match u[-1]:
         case "x":
-            return num * GUI_SIZE
+            return num * pgapi.GUI_PIXEL_RATIO
 
         case "h":
             return pgapi.get_screen_size().y * (num / 100)
@@ -70,7 +68,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
             return pgapi.get_screen_size().x * (num / 100)
 
         case "u":
-            return num * 16 * GUI_SIZE
+            return num * 16 * pgapi.GUI_PIXEL_RATIO
 
         case "%":
             return (
@@ -186,15 +184,7 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 
 
 def system_update() -> None:
-    global hovering, buttons, selected_button_index, GUI_SIZE
-
-    GUI_SIZE = (
-        #
-        # 0.5 * pgapi.SCREEN.size.x / 1920
-        #
-        # + 0.5 * 
-        pgapi.SCREEN.size.y / 1080
-    )
+    global hovering, buttons, selected_button_index
 
     displaying_buttons = [x for x in buttons if x.current_style.display == "block"]
 

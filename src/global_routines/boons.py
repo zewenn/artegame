@@ -420,8 +420,6 @@ def show_boon_selection_menu() -> None:
     set_string_map()
     id = "BoonSelectionMenu"
 
-    print(player.spells)
-
     rarity_tag = "generic"
     rarity = (
         NEXT_BOON_OPTIONS.banana * 3

@@ -15,13 +15,15 @@ CONTROLLERS: list[pycontroller.Controller] = []
 NEXT_CAMERA_POS: Optional[Vec2] = None
 MOUSE_POSITION: Vec2 = Vec2()
 LAST_MOUSE_POSITION: Vec2 = Vec2()
+GUI_PIXEL_RATIO = 1
+
 
 fps_list = []
 last_fps = time.perf_counter()
 
 
 def use(settings: ApplicationSettings):
-    global SETTINGS, SCREEN, CLOCK, CAMERA, CONTROLLERS
+    global SETTINGS, SCREEN, CLOCK, CAMERA, CONTROLLERS, GUI_PIXEL_RATIO
 
     if settings.max_fps > 240:
         settings.max_fps = 240
@@ -49,6 +51,9 @@ def use(settings: ApplicationSettings):
         SETTINGS.move_keys = [["a", "d"], ["w", "s"]]
 
     pygame.key.set_repeat(SETTINGS.key_repeat)
+
+    
+    GUI_PIXEL_RATIO = SCREEN.size.y / 1080
 
 
 def system_camera() -> None:

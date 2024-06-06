@@ -81,11 +81,10 @@ def start_round() -> None:
 
     ROUND_STATE = "Fight"
     ROUND += 1
-    print(ROUND)
 
-    enemy_count = 2 + random.randint(ROUND, round(1.5 * ROUND))
+    enemy_count = random.randint(ROUND, ROUND + 2)
     melee_count = range(round(enemy_count * 0.66))
-    ranged_count = range(round(enemy_count * 0.66))
+    ranged_count = range(round(enemy_count * 0.33))
 
     for _ in melee_count:
         spawn_melee()
@@ -124,4 +123,3 @@ def update() -> None:
 
     if ROUND_STATE == "Fight" and len(enemies.ENEMIES) == 0:
         ROUND_STATE = "BoonSelection"
-        print("Boon Selection Phase")

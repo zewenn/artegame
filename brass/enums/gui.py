@@ -25,6 +25,7 @@ class COLOURS:
     BLUE: Colour = (0, 0, 255, 1)
     LIGHTBLUE: Colour = (20, 120, 220, 1)
     NIGHT_BLUE: Colour = (34, 34, 59, 1)
+    MENUS_BACKDROP: Colour = (0, 0, 0, .8) 
 
 
 class POSITION:
