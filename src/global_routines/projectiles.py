@@ -83,6 +83,14 @@ def play(
         return
 
 
+@scene.awake(enums.scenes.GAME)
+def awk() -> None:
+    projs = items.get_all("projectile")
+
+    for p in projs:
+        items.remove(p)
+
+
 @scene.update(enums.scenes.GAME)
 def system_update() -> None:
     global PROJECTILES

@@ -9,6 +9,7 @@ round_saver_entity: Optional[Item] = None
 ROUND_STATE: Literal["BoonSelection", "Wait", "Fight"]
 ROUND: int = 0
 MIXER_TRANSFORM: Transform = Transform(Vec2(-128, -196 - 128), Vec3(), Vec2(256, 256))
+round_display_el: Optional[GUIElement] = None
 
 
 def get_random_spawn_pos() -> Vec2:
@@ -77,7 +78,6 @@ def start_round() -> None:
     global ROUND_STATE
     global ROUND
 
-
     ROUND_STATE = "Fight"
     ROUND += 1
 
@@ -92,11 +92,12 @@ def start_round() -> None:
         spawn_ranged()
 
 
-@scene.awake(enums.scenes.GAME)
-def awake() -> None:
+@scene.init(enums.scenes.GAME)
+def init() -> None:
     global ROUND_STATE
     global ROUND
     global round_saver_entity
+    global round_display_el
 
     ROUND_STATE = None
     ROUND = 0
@@ -107,8 +108,14 @@ def awake() -> None:
 
     round_saver_entity = round_saver_entity_query.ok()
 
+    rdq = gui.get_element("RoundDisplay")
+    if rdq.is_err():
+        unreachable("RoundDisplay does not exist!")
+    round_display_el = rdq.ok()
+
     try:
         ROUND_STATE = round_saver_entity.tags[0]
+        ROUND = round_saver_entity.transform.position.x
     except:
         round_saver_entity.tags = ["Wait"]
         ROUND_STATE = "Wait"
@@ -116,11 +123,16 @@ def awake() -> None:
 
 @scene.update(enums.scenes.GAME)
 def update() -> None:
-    global ROUND_STATE
+    global ROUND_STATE, round_display_el
 
+    if round_display_el.children[0] != f"{ROUND}. Kör":
+        t = f"{ROUND}. Kör"
+        round_display_el.children[0] = t
+        round_display_el.style.left = f"-{len(t) / 2 * 16}x"
 
     if ROUND_STATE == "Fight" and len(enemies.ENEMIES) == 0:
         saves.save()
         ROUND_STATE = "BoonSelection"
 
     round_saver_entity.tags = [ROUND_STATE]
+    round_saver_entity.transform.position.x = ROUND

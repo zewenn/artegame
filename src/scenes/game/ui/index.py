@@ -10,9 +10,9 @@ GAP = 40
 
 def back_to_main_menu() -> None:
     menus.toggle("GameMenu")
-    # err = saves.save()
-    # if err.is_err():
-    #     print(err.err().msg)
+    err = saves.save()
+    if err.is_err():
+        print(err.err().msg)
     scene.load(enums.scenes.DEFAULT)
 
 
@@ -324,6 +324,26 @@ def awake() -> None:
                 display="block",
                 position=POSITION.ABSOLUTE,
                 top="100h",
+                left="50w",
+            ),
+        ),
+        Element(
+            "RoundDisplay:Container",
+            Element(
+                "RoundDisplay",
+                "1. Kör",
+                style=StyleSheet(
+                    position=POSITION.RELATIVE,
+                    font_family=FONTS.PRESS_PLAY,
+                    font_size=FONT_SIZE.MEDIUM,
+                    left=f"-{3 * FONT_SIZE.MEDIUM}x",
+                    top="0x"
+                )
+            ),
+            style=StyleSheet(
+                display="block",
+                position=POSITION.ABSOLUTE,
+                top="32x",
                 left="50w",
             ),
         ),

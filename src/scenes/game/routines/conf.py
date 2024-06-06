@@ -262,12 +262,12 @@ def spawn() -> None:
                             Vec2(64, 128),
                         ),
                         anchor=Vec2(),
-                        sprite="mixer.png",
+                        sprite="turmix2000.png",
                     )
                 },
                 can_collide=True,
             ),
-            Item(id="RoundSaver", tags=["Wait"]),
+            Item(id="RoundSaver", tags=["Wait"], transform=Transform(Vec2(), Vec3(), Vec2())),
         ]
     )
 

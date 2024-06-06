@@ -55,9 +55,10 @@ def drop_fruit(at_item: Item) -> None:
 
 @scene.awake(enums.scenes.GAME)
 def awake() -> None:
-    global ENEMIES, player
+    global ENEMIES, player, DROPPED_FRUITS
 
     ENEMIES = items.get_all("enemy")
+    DROPPED_FRUITS = items.get_all("fruit")
     # print(ENEMIES)
 
     for item in ENEMIES:

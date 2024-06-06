@@ -23,8 +23,8 @@ from global_routines import (
 
 
 
-def init() -> None:
-    round_manager.ROUND_STATE = "Wait"
+# def issnit() -> None:
+#     round_manager.ROUND_STATE = "Wait"
 
 
 # Runs every frame
