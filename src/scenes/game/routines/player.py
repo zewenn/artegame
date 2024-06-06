@@ -106,6 +106,7 @@ inventory_display_blueberry: Optional[GUIElement]
 
 weapon_display_0: Optional[Bone] = None
 weapon_display_1: Optional[Bone] = None
+weapons_swap_display: Optional[GUIElement] = None
 
 
 def init() -> None:
@@ -126,10 +127,11 @@ def init() -> None:
     global weapon_display_1
     global player_walk_left_anim
     global player_walk_right_anim
+    global weapons_swap_display
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
-    dash_gui_query = gui.get_element("PlayerDashCounter")
+    dash_gui_query = gui.get_element("DashBar")
     hitpoint_bar_query = gui.get_element("PlayerHitpointBar")
     mana_bar_query = gui.get_element("ManaBar")
     hp_amount_query = gui.get_element("HpAmountDispaly")
@@ -139,6 +141,7 @@ def init() -> None:
     inv_d_blueberry_query = gui.get_element("Inventory-Item-blueberry-Counter")
     w_d_0 = items.get("player_hand_holder->left_hand")
     w_d_1 = items.get("player_hand_holder->right_hand")
+    weapon_swap_q = gui.get_element("WeaponSwapDisplay")
 
     player_plates_attack_anim_query = animator.store.get("plates_anim")
     player_gloves_attack_anim_query = animator.store.get("gloves_anim")
@@ -171,9 +174,15 @@ def init() -> None:
 
     # Mana Bar GUIElement
     if mana_bar_query.is_err():
-        unreachable("Hitpoint display GUIElement does not exist!")
+        unreachable("Mana display GUIElement does not exist!")
 
     mana_display = mana_bar_query.ok()
+
+    # Weapon Swap GUIElement
+    if weapon_swap_q.is_err():
+        unreachable("Weapon Swap display GUIElement does not exist!")
+
+    weapons_swap_display = weapon_swap_q.ok()
 
     # HP Amount Display GUIElement
     if hp_amount_query.is_err():
@@ -187,25 +196,25 @@ def init() -> None:
 
     # Plates
     if player_plates_attack_anim_query.is_err():
-        unreachable('plates animation does not exist')
+        unreachable("plates animation does not exist")
 
     player_plates_attack_anim = player_plates_attack_anim_query.ok()
 
     # Gloves
     if player_gloves_attack_anim_query.is_err():
-        unreachable('gloves animation does not exist')
+        unreachable("gloves animation does not exist")
 
     player_gloves_attack_anim = player_gloves_attack_anim_query.ok()
 
     # Walk left
     if player_walk_left_anim_q.is_err():
-        unreachable('walk_left animation does not exist')
+        unreachable("walk_left animation does not exist")
 
     player_walk_left_anim = player_walk_left_anim_q.ok()
 
     # Walk right
     if player_walk_right_anim_q.is_err():
-        unreachable('walk_left animation does not exist')
+        unreachable("walk_left animation does not exist")
 
     player_walk_right_anim = player_walk_right_anim_q.ok()
 
@@ -261,7 +270,7 @@ def init() -> None:
     if not player.weapon:
         player.weapon = player.weapons[0]
 
-    empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, [])
+    empty_spell = Spell("Üres", "Üres képesség hely.", 0, 0, 0, "empty_icon.png", [])
 
     if player.spells == None:
         player.spells = [empty_spell, structured_clone(empty_spell)]
@@ -291,9 +300,12 @@ def update() -> None:
     global default_attack_speed
     global can_attack
     global can_dash
+    global weapons_swap_display
 
     weapon_display_0.sprite = f"{player.weapon.id}_0.png"
     weapon_display_1.sprite = f"{player.weapon.id}_1.png"
+
+
 
     if inpt.active_bind(enums.keybinds.SPELLS.SPELL1) and player.spells[0] != None:
         spells.cast(player.spells[0], player)
@@ -323,7 +335,9 @@ def update() -> None:
         else:
             player.weapon = player.weapons[0]
             player.base_attack_speed = default_attack_speed * 2
-        
+
+        weapons_swap_display.style.bg_image = f"weapon_switch_{player.weapon.id}.png"
+
         if player.weapon.id == "gloves":
             animator.play(player_gloves_attack_anim)
         else:
@@ -434,13 +448,22 @@ def update() -> None:
 
     hp_amount_text = f"{int(player.hitpoints)}/{int(player.max_hitpoints)}"
     hp_amount_display.style.left = (
-        f"{4.75 * 16 - len(hp_amount_text) * hp_amount_display.style.font_size / 2}x"
+        f"{300 - len(hp_amount_text) * hp_amount_display.style.font_size / 2}x"
     )
     hp_amount_display.children[0] = hp_amount_text
 
     inventory_display_banana.children[0] = str(player.inventory.banana)
     inventory_display_strawberry.children[0] = str(player.inventory.strawberry)
     inventory_display_blueberry.children[0] = str(player.inventory.blueberry)
+
+    if pgapi.SETTINGS.input_mode == "Controller":
+        if weapons_swap_display.children[0].children[0] != "RB":
+            weapons_swap_display.children[0].children[0] = "RB"
+            weapons_swap_display.children[0].style.left = f"{32 - 12}x"
+    else:
+        if weapons_swap_display.children[0].children[0] != "Tab":
+            weapons_swap_display.children[0].children[0] = "Tab"
+            weapons_swap_display.children[0].style.left = f"{32 - 12 * 1.5}x"
 
 
 def allow_attack() -> None:
@@ -461,11 +484,15 @@ def move_player() -> None:
 
     # print(player.dashes_remaining)
 
-    dash_display.children[0] = (
-        " ".join(["[×]" for _ in range(player.dashes_remaining)])
-        + (" " if player.dashes_remaining != 0 else "")
-        + " ".join(["[ ]" for _ in range(player.dash_count - player.dashes_remaining)])
+    dash_display.style.width = (
+        f"{round(player.dashes_remaining / player.dash_count, 2) * 100}%"
     )
+
+    # .children[0] = (
+    #     " ".join(["[×]" for _ in range(player.dashes_remaining)])
+    #     + (" " if player.dashes_remaining != 0 else "")
+    #     + " ".join(["[ ]" for _ in range(player.dash_count - player.dashes_remaining)])
+    # )
 
     if player.dashes_remaining < player.dash_count and player.can_move:
         if (

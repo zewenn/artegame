@@ -7,7 +7,11 @@ import copy
 import inpt
 
 
+GUI_SIZE = 1
+
+
 def unit(u: str, in_relation_to: float = None) -> float:
+    # print(GUI_SIZE)
     """
     ## Units
     x   - pixel\n
@@ -57,7 +61,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
 
     match u[-1]:
         case "x":
-            return num
+            return num * GUI_SIZE
 
         case "h":
             return pgapi.get_screen_size().y * (num / 100)
@@ -66,10 +70,14 @@ def unit(u: str, in_relation_to: float = None) -> float:
             return pgapi.get_screen_size().x * (num / 100)
 
         case "u":
-            return num * 16
+            return num * 16 * GUI_SIZE
 
         case "%":
-            return (in_relation_to if in_relation_to != None else 0) * num // 100
+            return (
+                (in_relation_to if in_relation_to != None else 0)
+                * num
+                // 100
+            )
 
 
 query_available: list[GUIElement] = []
@@ -128,7 +136,7 @@ def Element(
         current_style=styl,
         hover=hover,
         onclick=onclick,
-        transform=Transform(Vec2(), Vec3(), Vec2()),
+        transform=None,
         button=is_button,
     )
 
@@ -147,7 +155,7 @@ def Delete(el: GUIElement) -> None:
                 continue
             # print("\tChild:", x.id)
             Delete(x)
-    
+
     query_available.remove(el)
     if el.button:
         buttons.remove(el)
@@ -178,9 +186,16 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 
 
 def system_update() -> None:
-    global hovering, buttons, selected_button_index
+    global hovering, buttons, selected_button_index, GUI_SIZE
 
-    
+    GUI_SIZE = (
+        #
+        # 0.5 * pgapi.SCREEN.size.x / 1920
+        #
+        # + 0.5 * 
+        pgapi.SCREEN.size.y / 1080
+    )
+
     displaying_buttons = [x for x in buttons if x.current_style.display == "block"]
 
     if selected_button_index >= len(displaying_buttons):
@@ -214,6 +229,9 @@ def system_update() -> None:
         if el.style.inherit_display:
             el.current_style.display = parent_style.display
             # print(el.current_style.display)
+
+        if el.transform == None:
+            el.transform = Transform(Vec2(), Vec3(), Vec2())
 
         x, y = 0, 0
         w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 0
@@ -287,12 +305,13 @@ def system_update() -> None:
             hovering = el
             continue
 
-
     if hovering == None:
-        if len(displaying_buttons) == 0 or selected_button_index >= len(displaying_buttons):
+        if len(displaying_buttons) == 0 or selected_button_index >= len(
+            displaying_buttons
+        ):
             selected_button_index = 0
             return
-        
+
         btn = displaying_buttons[selected_button_index]
 
         if (

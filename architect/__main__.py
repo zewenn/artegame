@@ -6,6 +6,8 @@ import os
 
 
 def main() -> None:
+    # print("\033[4A")
+    # deps.full_line("")
     deps.title("Initalising")
     print("Performing a dependecy check...\n")
 

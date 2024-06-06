@@ -175,6 +175,7 @@ class Spell:
     cooldown: Number
     effectiveness: Number
     mana_cost: Number
+    icon: string
     interrupted_by: Optional[
         List[Literal["root", "stun", "sleep", "slow", "damage"]]
     ] = None

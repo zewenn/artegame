@@ -6,7 +6,8 @@ HEALING = Spell(
     20,
     5,
     75,
-    ["damage"]
+    "heal_icon.png",
+    ["damage"],
 )
 
 HASTE = Spell(
@@ -15,7 +16,8 @@ HASTE = Spell(
     10,
     3,
     15,
-    []
+    "haste_icon.png",
+    [],
 )
 
 GOLIATH = Spell(
@@ -24,7 +26,8 @@ GOLIATH = Spell(
     15,
     1.25,
     35,
-    []
+    "goliath_icon.png",
+    [],
 )
 
 Zzzz = Spell(
@@ -33,5 +36,6 @@ Zzzz = Spell(
     15,
     1,
     45,
-    []
+    "sleep_icon.png",
+    [],
 )

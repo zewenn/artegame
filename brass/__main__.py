@@ -37,7 +37,7 @@ def init():
             screen_size=Vec2(monitor.width, monitor.height),
             # screen_size=Vec2(1920, 1080),
             max_fps=240,
-            vsync=0,
+            vsync=1,
             icon="neunyx32x32.png",
             camera=Camera(Vec2(0, 0), 1),
             is_demo=True,

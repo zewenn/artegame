@@ -135,91 +135,164 @@ def awake() -> None:
             ),
         ),
         Element(
-            "PlayerDashCounter",
-            Text("[×] [×] "),
-            style=StyleSheet(
-                position=POSITION.ABSOLUTE,
-                top="5.5u",
-                left="1u",
-                font_size=FONT_SIZE.MEDIUM,
-                font_family=FONTS.PRESS_PLAY,
-                color=COLOURS.WHITE,
-            ),
-        ),
-        Element(
-            "HitpointBarBackground",
+            "HudContainer",
             Element(
-                "HitpointBarInnerContainer",
+                "Hud",
                 Element(
-                    "PlayerHitpointBar",
+                    "HitpointBarBackground",
+                    Element(
+                        "PlayerHitpointBar",
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            left="0u",
+                            top="0u",
+                            width="75%",
+                            height="100%",
+                            bg_color=(255, 80, 50, 1),
+                        ),
+                    ),
+                    Element(
+                        "HpAmountDispaly",
+                        Text("100/100"),
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            top=f"{15 - FONT_SIZE.MEDIUM / 2}x",
+                            left="4.75u",
+                            font_size=FONT_SIZE.MEDIUM,
+                            font_family=FONTS.PRESS_PLAY,
+                            color=COLOURS.WHITE,
+                        ),
+                    ),
                     style=StyleSheet(
                         position=POSITION.RELATIVE,
-                        left="0u",
-                        top="0u",
-                        width="75%",
-                        height="100%",
-                        bg_color=(255, 80, 50, 1),
+                        top="20x",
+                        left="20x",
+                        width="600x",
+                        height="30x",
+                        bg_color=COLOURS.NIGHT_BLUE,
                     ),
                 ),
                 Element(
-                    "HpAmountDispaly",
-                    Text("100/100"),
+                    "ManaBarBackground",
+                    Element(
+                        "ManaBar",
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            left="0u",
+                            top="0u",
+                            width="100%",
+                            height="100%",
+                            bg_color=(20, 120, 220, 1),
+                        ),
+                    ),
                     style=StyleSheet(
                         position=POSITION.RELATIVE,
-                        top=f"{(1.5 - (FONT_SIZE.SMALL / 16)) / 2}u",
-                        left="4.75u",
-                        font_size=FONT_SIZE.SMALL,
-                        font_family=FONTS.PRESS_PLAY,
-                        color=COLOURS.WHITE,
+                        top="60x",
+                        left="20x",
+                        width="600x",
+                        height="20x",
+                        bg_color=COLOURS.NIGHT_BLUE,
                     ),
+                ),
+                Element(
+                    "DashBarBackground",
+                    Element(
+                        "DashBar",
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            left="0u",
+                            top="0u",
+                            width="100%",
+                            height="100%",
+                            bg_color=COLOURS.WHITE,
+                        ),
+                    ),
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        top="90x",
+                        left="20x",
+                        width="600x",
+                        height="5x",
+                        bg_color=COLOURS.NIGHT_BLUE,
+                    ),
+                ),
+                Element(
+                    "Hud:Icons-Abilities:Container",
+                    Element(
+                        "WeaponSwapDisplay",
+                        Element(
+                            "WeaponSwapDisplay:Keybind",
+                            Text("Tab"),
+                            style=StyleSheet(
+                                position=POSITION.RELATIVE,
+                                inherit_display=True,
+                                top="74x",
+                                left=f"{32 - 1.5 * FS}x",
+                                width=f"{3 * FS}x",
+                                height=f"{FS}x",
+                                font_size=FS,
+                                font_family=FONTS.PRESS_PLAY
+                            )
+                        ),
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            inherit_display=True,
+                            top="0x",
+                            left="0x",
+                            width="64x",
+                            height="64x",
+                            bg_image="weapon_switch_plates.png"
+                        )
+                    ),
+                    Element(
+                        "Separator",
+                        Element(
+                            "Separator:Keybind",
+                            style=StyleSheet(
+                                position=POSITION.RELATIVE,
+                                inherit_display=True,
+                                top="74x",
+                                left=f"0x",
+                                width=f"4x",
+                                height=f"{FS}x",
+                                # font_size=FS,
+                                # font_family=FONTS.PRESS_PLAY
+                                bg_color=COLOURS.NIGHT_BLUE
+                            )
+                        ),
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            inherit_display=True,
+                            top="0x",
+                            left="74x",
+                            width="4x",
+                            height="64x",
+                            bg_color=COLOURS.NIGHT_BLUE 
+                        )
+                    ),
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        inherit_display=True,
+                        top="105x",
+                        left="20x",
+                    )
                 ),
                 style=StyleSheet(
                     position=POSITION.RELATIVE,
-                    top=".25u",
-                    left=".25u",
-                    width="9.5u",
-                    height="1.5u",
+                    inherit_display=True,
+                    left="-320x",
+                    width="640x",
+                    top="-200x",
+                    height="200x",
+                    bg_color=(10, 9, 8, 1),
+                    # bg_image="hud_bg.png",
                 ),
             ),
             style=StyleSheet(
+                display="block",
                 position=POSITION.ABSOLUTE,
-                top="1u",
-                left="1u",
-                width="10u",
-                height="2u",
-                bg_color=(50, 50, 50, 1),
-            ),
-        ),
-        Element(
-            "ManaBarBackground",
-            Element(
-                "ManaBarInnerContainer",
-                Element(
-                    "ManaBar",
-                    style=StyleSheet(
-                        position=POSITION.RELATIVE,
-                        left="0u",
-                        top="0u",
-                        width="100%",
-                        height="100%",
-                        bg_color=(20, 120, 220, 1),
-                    ),
-                ),
-                style=StyleSheet(
-                    position=POSITION.RELATIVE,
-                    top=".25u",
-                    left=".25u",
-                    width="7u",
-                    height="1u",
-                ),
-            ),
-            style=StyleSheet(
-                position=POSITION.ABSOLUTE,
-                top="3.5u",
-                left="1u",
-                width="7.5u",
-                height="1.5u",
-                bg_color=(50, 50, 50, 1),
+                top="100h",
+                left="50w",
             ),
         ),
         menus.new(
