@@ -1,0 +1,49 @@
+Date : 2024-06-05 20:34:46
+Directory : d:\_code\py\artegame
+Total : 16 files,  1296 codes, 148 comments, 299 blanks, all 1743 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Python   |         16 |      1,296 |        148 |        299 |      1,743 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                      | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                         |         16 |      1,296 |        148 |        299 |      1,743 |
+| brass                                                     |          7 |         61 |          7 |         30 |         98 |
+| brass (Files)                                             |          5 |         58 |          7 |         30 |         95 |
+| brass\enums                                               |          2 |          3 |          0 |          0 |          3 |
+| src                                                       |          9 |      1,235 |        141 |        269 |      1,645 |
+| src\global_routines                                       |          5 |        960 |        110 |        265 |      1,335 |
+| src\scenes                                                |          4 |        275 |         31 |          4 |        310 |
+| src\scenes\game                                           |          4 |        275 |         31 |          4 |        310 |
+| src\scenes\game\routines                                  |          3 |         90 |          7 |          3 |        100 |
+| src\scenes\game\ui                                        |          1 |        185 |         24 |          1 |        210 |
++-----------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                  | language | code       | comment    | blank      | total      |
++-----------------------------------------------------------+----------+------------+------------+------------+------------+
+| d:\_code\py\artegame\brass\__main__.py                    | Python   |          1 |         -1 |          0 |          0 |
+| d:\_code\py\artegame\brass\base.py                        | Python   |         16 |          0 |         12 |         28 |
+| d:\_code\py\artegame\brass\enums\gui.py                   | Python   |          2 |          0 |          0 |          2 |
+| d:\_code\py\artegame\brass\enums\keybinds.py              | Python   |          1 |          0 |          0 |          1 |
+| d:\_code\py\artegame\brass\gui.py                         | Python   |         17 |          4 |         10 |         31 |
+| d:\_code\py\artegame\brass\inpt.py                        | Python   |         -1 |          1 |          0 |          0 |
+| d:\_code\py\artegame\brass\structures.py                  | Python   |         25 |          3 |          8 |         36 |
+| d:\_code\py\artegame\src\global_routines\boons.py         | Python   |        813 |        106 |        209 |      1,128 |
+| d:\_code\py\artegame\src\global_routines\interact.py      | Python   |         32 |          0 |         19 |         51 |
+| d:\_code\py\artegame\src\global_routines\menu.py          | Python   |        -25 |          0 |        -13 |        -38 |
+| d:\_code\py\artegame\src\global_routines\menus.py         | Python   |         58 |          2 |         27 |         87 |
+| d:\_code\py\artegame\src\global_routines\round_manager.py | Python   |         82 |          2 |         23 |        107 |
+| d:\_code\py\artegame\src\scenes\game\routines\conf.py     | Python   |         76 |          9 |          0 |         85 |
+| d:\_code\py\artegame\src\scenes\game\routines\main.py     | Python   |         -2 |         -1 |         -2 |         -5 |
+| d:\_code\py\artegame\src\scenes\game\routines\player.py   | Python   |         16 |         -1 |          5 |         20 |
+| d:\_code\py\artegame\src\scenes\game\ui\index.py          | Python   |        185 |         24 |          1 |        210 |
+| Total                                                     |          |      1,296 |        148 |        299 |      1,743 |
++-----------------------------------------------------------+----------+------------+------------+------------+------------+

@@ -168,7 +168,16 @@ def get_button(key: str) -> bool | int:
 
         if device[0] == "2":
             return resolve(controller.get_button(event))
-        return controller.get_axis(event)
+        
+        r = controller.get_axis(event)
+        ar = abs(r)
+        
+        if ar > pgapi.SETTINGS.axis_rounding or (
+            key in ["right-trigger@ctrl#0", "left-trigger@ctrl#0"]
+            and ar > pgapi.SETTINGS.axis_rounding * 0.3
+        ):
+            return resolve(controller.get_axis(event))
+        return resolve(False)
 
 
 def get_button_down(key: str) -> bool:
@@ -183,6 +192,9 @@ def get_button_down(key: str) -> bool:
 
     in_list = key in keys_down
     is_down = get_button(key)
+
+    if typeof(is_down) == "int":
+        is_down = is_down > pgapi.SETTINGS.axis_rounding
 
     if not is_down or in_list:
         return False
@@ -203,6 +215,9 @@ def get_button_up(key: str) -> bool:
 
     in_list = key in keys_down
     is_down = get_button(key)
+
+    if typeof(is_down) == "int":
+        is_down = is_down > pgapi.SETTINGS.axis_rounding
 
     if in_list or is_down:
         return True
@@ -287,7 +302,7 @@ def bind_buttons(
     T: Optional[Literal["down", "up"]] = None,
 ) -> None:
     if bind_cache.get(name):
-        print(f"[Warn] Couldn't overwrite bind: {name}")
+        # print(f"[Warn] Couldn't overwrite bind: {name}")
         return
 
     def bindf():
@@ -308,7 +323,10 @@ def bind_buttons(
         for _set in key_set_list:
             set_good = 0
             for key in _set:
-                if getfn(key):
+                r = getfn(key)
+                if typeof(r) == "int":
+                    r = r > pgapi.SETTINGS.axis_rounding
+                if r:
                     set_good += 1
             if set_good == len(_set):
                 all_down_any = True
@@ -329,10 +347,14 @@ def get_mouse_position() -> Vec2:
 
 
 def system_udpate() -> None:
+
     pgapi.LAST_MOUSE_POSITION, pgapi.MOUSE_POSITION = (
         pgapi.MOUSE_POSITION,
         get_mouse_position(),
     )
+
+    if len(pgapi.CONTROLLERS) == 0:
+        return
 
     distance = vectormath.get_Vec2_distcance(
         pgapi.MOUSE_POSITION, pgapi.LAST_MOUSE_POSITION
@@ -354,22 +376,34 @@ def system_udpate() -> None:
     if len(keys_down) == 0:
         return
 
-    key = keys_down[0]
+    # key = keys_down[0]
 
-    if any(
-        [
-            "mouse" in key,
-            "ms" in key,
-            "cursor" in key,
-            "crs" in key,
-            "keyboard" in key,
-            "kb" in key,
-            "kybrd" in key,
-        ]
-    ):
-        pgapi.SETTINGS.input_mode = enums.input_modes.MOUSE_AND_KEYBOARD
-        return
+    for key in keys_down:
 
-    if any(["controller" in key, "ctrl" in key, "joystick" in key, "jstick" in key]):
-        pgapi.SETTINGS.input_mode = enums.input_modes.CONTROLLER
-        return
+        if any(
+            [
+                "mouse" in key,
+                "ms" in key,
+                "cursor" in key,
+                "crs" in key,
+                "keyboard" in key,
+                "kb" in key,
+                "kybrd" in key,
+            ]
+        ):
+            pgapi.SETTINGS.input_mode = enums.input_modes.MOUSE_AND_KEYBOARD
+            return
+
+        if any(
+            ["controller" in key, "ctrl" in key, "joystick" in key, "jstick" in key]
+        ):
+            if key in [
+                "left-x@ctrl#0",
+                "right-x@ctrl#0",
+                "left-y@ctrl#0",
+                "right-y@ctrl#0",
+            ]:
+                continue
+            # print(key)
+            pgapi.SETTINGS.input_mode = enums.input_modes.CONTROLLER
+            return

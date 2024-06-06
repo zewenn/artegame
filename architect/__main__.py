@@ -1,19 +1,22 @@
-from deps import *
+import deps
 from typing import *
 import sys
 import __config__ as conf
+import os
 
 
 def main() -> None:
-    title("Initalising")
+    # print("\033[4A")
+    # deps.full_line("")
+    deps.title("Initalising")
     print("Performing a dependecy check...\n")
 
-    res = handle_dep_stack(conf.DEPENDENCIES)
+    res = deps.handle_dep_stack(conf.DEPENDENCIES)
     if isinstance(res, Exception):
         print("\nunreachable: Critical dependency not found!")
         return
 
-    success, err = run_python_command(
+    success, err = deps.run_python_command(
         [os.path.join(os.path.dirname(__file__), "cli.py"), *sys.argv[1:]]
     )
 

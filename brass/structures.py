@@ -54,12 +54,6 @@ class Bone:
 
 
 @dataclass
-class Weapon:
-    damage: int
-    damage_area: Vec2
-
-
-@dataclass
 class Collider:
     transform: Transform
     trigger: bool = False
@@ -83,13 +77,14 @@ class Item:
     # Transforms
     transform: Optional[Transform] = None
     transform_cache: Optional[Transform] = None
+    sprite_cache: Optional[string] = None
     bones: Optional[dict[str, Bone]] = None
     facing: Number = None
 
     # Shiny render
     render: bool = True
     sprite: Optional[str] = None
-    surface: Optional[Surface] = None
+    # surface: Optional[Surface] = None
     crop: Optional[Crop] = None
     fill_color: Optional[list[int] | tuple[int]] = None
 
@@ -105,10 +100,14 @@ class Item:
     # |> Movement -> Dashes -> Cooldown Management
     dash_charge_refill_time: Optional[float] = None
     last_dash_charge_refill: Optional[int] = None
+    dashing: bool = False
     """@runtime"""
 
     # Inventory
-    inventory: Optional[dict[str, Weapon | int]] = None
+    inventory: Optional["Inventory"] = None
+    """@player-only"""
+    # weapon: Optional[Literal["plates", "gloves"]] = None
+    # """@player-only"""
 
     # Collision
     can_collide: bool = False
@@ -125,16 +124,25 @@ class Item:
     projectile_damage: Optional[Number] = None
     projectile_effects: Optional[list["Effect"]] = None
 
-    # Combat // Alive
+    # Combat Stats
+    # -> Base and max stats
     max_hitpoints: Optional[Number] = None
-    hitpoints: Optional[Number] = None
     max_mana: Optional[Number] = None
     base_attack_speed: Optional[Number] = None
-    attack_speed: Optional[Number] = None
+    base_damage: Optional[Number] = None
+    weapons: Optional[list["Weapon"]] = None
+
+    # -> In game current stats
+    weapon: Optional["Weapon"] = None
+    hitpoints: Optional[Number] = None
+    """@runtime"""
     mana: Optional[Number] = None
+    """@runtime"""
+    attack_speed: Optional[Number] = None
+    """@runtime"""
+
+    # -> Stats
     invulnerable: bool = False
-    can_attack: bool = False
-    dashing: bool = False
     can_attack: bool = False
 
     # |> Combat -> Crowd Control
@@ -146,6 +154,7 @@ class Item:
 
     # |> Combat -> Spells
     spells: Optional[list["Spell", "Spell"]] = None
+    # boons: Optional[list["Boon"]] = None
 
     # Enemies
     effective_range: Optional[Number] = None
@@ -166,10 +175,28 @@ class Spell:
     cooldown: Number
     effectiveness: Number
     mana_cost: Number
+    icon: string
     interrupted_by: Optional[
         List[Literal["root", "stun", "sleep", "slow", "damage"]]
     ] = None
     cooldown_start: Optional[Number] = None
+
+
+@dataclass
+class Boon:
+    name: string
+    description: list[string]
+    grant_fn: Callable[[], None]
+    fruit: Literal["banana", "strawberry", "blueberry"]
+    icon: string
+    change: Optional[string] = None
+
+
+@dataclass
+class BoonCollection:
+    normal: list[Boon]
+    rare: list[Boon]
+    epic: list[Boon]
 
 
 @dataclass
@@ -179,6 +206,39 @@ class Dasher:
     speed_multiplier: float
     time: float
     start_time: float
+
+
+@dataclass
+class Weapon:
+    id: Literal["gloves", "plates"]
+
+    light_sprite: Number
+    light_damage_multiplier: Number
+    light_lifetime: Number
+    light_speed: Number
+    light_size: Vec2
+
+    heavy_sprite: Number
+    heavy_damage_multiplier: Number
+    heavy_lifetime: Number
+    heavy_speed: Number
+    heavy_size: Vec2
+
+    dash_sprite: Number
+    dash_damage_multiplier: Number
+    dash_lifetime: Number
+    dash_speed: Number
+    dash_size: Vec2
+
+    spell0_effectiveness: Number
+    spell1_effectiveness: Number
+
+
+@dataclass
+class Inventory:
+    banana: int = 0
+    strawberry: int = 0
+    blueberry: int = 0
 
 
 # ------------------------- Audio System --------------------------
@@ -229,7 +289,8 @@ class ApplicationSettings:
     If enabled dpad jumps between menupoints
     """
     input_mode: Literal["Controller", "MouseAndKeyboard"] = "MouseAndKeyboard"
-    background_image: Surface = None
+    background_image: Optional[Surface] = None
+    background_size: Optional[Vec2] = None
     skip_title_screen: bool = False
 
 
@@ -371,7 +432,8 @@ class Timeout:
 
 @dataclass
 class StyleSheet:
-    display: Literal["block", "none"] = None
+    display: Literal["block", "none"] = "block"
+    inherit_display: bool = False
     position: Literal["absolute", "relative"] = None
 
     bottom: str = None

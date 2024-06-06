@@ -1,0 +1,9 @@
+"filename", "language", "Python", "comment", "blank", "total"
+"d:\_code\py\artegame\src\global_routines\boons.py", "Python", -15, 0, -4, -19
+"d:\_code\py\artegame\src\global_routines\enemies.py", "Python", 43, 0, 10, 53
+"d:\_code\py\artegame\src\global_routines\interact.py", "Python", 10, 0, 7, 17
+"d:\_code\py\artegame\src\global_routines\round_manager.py", "Python", 14, 0, 4, 18
+"d:\_code\py\artegame\src\scenes\game\routines\conf.py", "Python", 4, 0, 0, 4
+"d:\_code\py\artegame\src\scenes\game\routines\main.py", "Python", -45, -2, -2, -49
+"d:\_code\py\artegame\src\scenes\game\routines\player.py", "Python", 11, 0, 2, 13
+"Total", "-", 22, -2, 17, 37

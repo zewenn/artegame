@@ -6,6 +6,49 @@ import sys, os, io, time
 T = TypeVar("T")
 
 
+def shorten(filename: str) -> str:
+    return filename[:16] + ("..." if len(filename) > 16 else "")
+
+
+def task(task_name: str):
+    def wrap(fn):
+        def res(*args, **kwargs):
+            full_line(f"\n[Task : {task_name}]")
+            r = fn(*args, **kwargs)
+            return r
+
+        return res
+
+    return wrap
+
+
+def progress_bar(at: int, top: int, msg: str) -> str:
+    percent = round(at / top * 15, 5)
+    progress = round(percent)
+    line = "█" * progress + " " * (15 - progress)
+    full_line(f" {round(at / top * 100)}%|{line}| {at}/{top},", msg, end="\r")
+    # time.sleep(0.05)
+
+
+def task_complete():
+    # printf.full_line(" Task completed @!successfully$&!")
+    print("")
+
+
+def full_line(*args, **kwargs) -> None:
+    terminal_width: int = os.get_terminal_size().columns
+    joiner = " "
+    if kwargs.get("sep"):
+        joiner = kwargs.get("sep")
+
+    content = joiner.join(args)
+
+    print(
+        f'{content}{" "*(terminal_width - len(content))}',
+        **kwargs,
+    )
+
+
 def attempt(
     func: Callable[..., T], args: Tuple = ()
 ) -> Tuple[Optional[T], Optional[str]]:
@@ -54,7 +97,6 @@ def silence(func: Callable):
     return wrap
 
 
-
 @silence
 def imprt(name: str) -> None:
     __import__(name)
@@ -71,12 +113,12 @@ def is_installed(name: str) -> bool:
         return False
 
 
-def install(name: str) -> bool:
-    if is_installed(name):
+def install(name: str, lazy: bool = True) -> bool:
+    if is_installed(name) and lazy:
         return True
 
     try:
-        print(f"[GET]\u001b[38;5;215m {name}\u001b[0m", end="\r")
+        # print(f"[GET]\u001b[38;5;215m {name}\u001b[0m", end="\r")
         with open(os.devnull, "wb") as shutup:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--upgrade", name],
@@ -96,6 +138,7 @@ def is_stack_installed(deps: list[str]) -> bool:
     return True
 
 
+@task("lazy check dependencies")
 def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
     failed: bool = False
 
@@ -113,11 +156,14 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
 
         depname = str(dep)[: len(longest_dep_name)]
 
-        print(
-            f"[{index + 1}/{len(deps)}]\u001b[38;5;215m {depname.ljust(14)}\u001b[0m",
-            f"\u001b[38;5;236m {round(time.perf_counter() - start, 5)}s\u001b[0m",
-            # sep="    ",
-        )
+        progress_bar(index + 1, len(deps), depname)
+
+        # print(
+        #     f"[{index + 1}/{len(deps)}]\u001b[38;5;215m {depname.ljust(14)}\u001b[0m",
+        #     f"\u001b[38;5;236m {round(time.perf_counter() - start, 5)}s\u001b[0m",
+        #     # sep="    ",
+        # )
+    task_complete()
 
     if failed:
         return Exception("deps was unable to install some packag(es).")

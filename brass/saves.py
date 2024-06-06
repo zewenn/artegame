@@ -72,11 +72,11 @@ def load() -> Result[None, Mishap]:
     items_loaded: Result[list[Item], Mishap] = attempt(
         zenyx.pyon.load, (item_file,)
     )
-    gui_loaded: Result[list[GUIElement], Mishap] = attempt(
-        zenyx.pyon.load, (gui_file,)
-    )
+    # gui_loaded: Result[list[GUIElement], Mishap] = attempt(
+    #     zenyx.pyon.load, (gui_file,)
+    # )
 
-    if items_loaded.is_err() or gui_loaded.is_err():
+    if items_loaded.is_err():
         return Err(Mishap("Couldn't load save files!", True))
     
     items.rendering = items_loaded.ok()
@@ -86,6 +86,30 @@ def load() -> Result[None, Mishap]:
     # gui.DOM(*(gui_loaded.ok()))
 
     return Ok(None)
+
+
+def delete_files_in_directory(directory_path):
+    try:
+        files = os.listdir(directory_path)
+        for index, filename in enumerate(files):
+            file_path = os.path.join(directory_path, filename)
+
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            
+    except OSError as e:
+        print("Error occurred while deleting files: \n", e)
+
+
+def delete_save() -> None:
+    create_res = create_save_dir()
+    if create_res.is_err():
+        res = create_res.err()
+        if res.is_fatal():
+            return
+
+    del_dir = os.path.join(SAVES_DIR, f"slot_{SLOT}")
+    delete_files_in_directory(del_dir)
 
 
 def save() -> Result[None, Mishap]:

@@ -7,7 +7,9 @@ import copy
 import inpt
 
 
+
 def unit(u: str, in_relation_to: float = None) -> float:
+    # print(GUI_SIZE)
     """
     ## Units
     x   - pixel\n
@@ -57,7 +59,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
 
     match u[-1]:
         case "x":
-            return num
+            return num * pgapi.GUI_PIXEL_RATIO
 
         case "h":
             return pgapi.get_screen_size().y * (num / 100)
@@ -66,10 +68,14 @@ def unit(u: str, in_relation_to: float = None) -> float:
             return pgapi.get_screen_size().x * (num / 100)
 
         case "u":
-            return num * 16
+            return num * 16 * pgapi.GUI_PIXEL_RATIO
 
         case "%":
-            return (in_relation_to if in_relation_to != None else 0) * num // 100
+            return (
+                (in_relation_to if in_relation_to != None else 0)
+                * num
+                // 100
+            )
 
 
 query_available: list[GUIElement] = []
@@ -128,7 +134,7 @@ def Element(
         current_style=styl,
         hover=hover,
         onclick=onclick,
-        transform=Transform(Vec2(), Vec3(), Vec2()),
+        transform=None,
         button=is_button,
     )
 
@@ -137,6 +143,25 @@ def Element(
     if is_button:
         buttons.append(this)
     return this
+
+
+def Delete(el: GUIElement) -> None:
+    if len(el.children) > 0:
+        # print("Deleting children:",  len(el.children))
+        for x in el.children:
+            if isinstance(x, str):
+                continue
+            # print("\tChild:", x.id)
+            Delete(x)
+
+    query_available.remove(el)
+    if el.button:
+        buttons.remove(el)
+    # el.parent.children.remove(el)
+
+    # print("Deleted", el.id)
+
+    del el
 
 
 DOM_El: Optional[GUIElement] = Element("DOM")
@@ -161,8 +186,13 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 def system_update() -> None:
     global hovering, buttons, selected_button_index
 
+    displaying_buttons = [x for x in buttons if x.current_style.display == "block"]
+
+    if selected_button_index >= len(displaying_buttons):
+        selected_button_index = 0
+
     if inpt.get_button_down("dpad-down@ctrl#0"):
-        if selected_button_index + 1 < len(buttons):
+        if selected_button_index + 1 < len(displaying_buttons):
             selected_button_index += 1
 
     if inpt.get_button_down("dpad-up@ctrl#0"):
@@ -177,13 +207,21 @@ def system_update() -> None:
     for el in query_available[::-1]:
         if isinstance(el, str):
             continue
-        
-        if el.current_style != el.style and hovering != el:
-            el.current_style = el.style
+
+        if el.current_style != el.style:
+            if hovering == None or hovering.id != el.id:
+                el.current_style = structured_clone(el.style)
 
         elstl = el.current_style
         parent = el.parent if el.parent else DOM_El
         parent_style = el.parent.current_style if el.parent else DOM_El.current_style
+
+        if el.style.inherit_display:
+            el.current_style.display = parent_style.display
+            # print(el.current_style.display)
+
+        if el.transform == None:
+            el.transform = Transform(Vec2(), Vec3(), Vec2())
 
         x, y = 0, 0
         w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 0
@@ -215,11 +253,15 @@ def system_update() -> None:
 
         elif elstl.position == POSITION.RELATIVE:
             x = (
-                (unit(elstl.left, unit(parent_style.left)) + parent.transform.position.x)
+                (
+                    unit(elstl.left, unit(parent_style.left))
+                    + parent.transform.position.x
+                )
                 if elstl.left is not None and parent_style.left is not None
                 else (
                     (
-                        parent.transform.position.x - unit(elstl.right, unit(parent_style.right))
+                        parent.transform.position.x
+                        - unit(elstl.right, unit(parent_style.right))
                     )
                     if elstl.right is not None and parent_style.right is not None
                     else 0
@@ -230,13 +272,13 @@ def system_update() -> None:
                 if elstl.top is not None and parent_style.top is not None
                 else (
                     (
-                        parent.transform.position.y - unit(elstl.bottom, unit(parent_style.bottom))
+                        parent.transform.position.y
+                        - unit(elstl.bottom, unit(parent_style.bottom))
                     )
                     if elstl.bottom is not None and parent_style.bottom is not None
                     else 0
                 )
             )
-
 
         el.transform.position.x = x
         el.transform.position.y = y
@@ -248,13 +290,19 @@ def system_update() -> None:
             and hovering == None
             and el.button
             and el.id != "DOM"
+            and elstl.display != "none"
         ):
             hovering = el
             continue
 
-
     if hovering == None:
-        btn = buttons[selected_button_index]
+        if len(displaying_buttons) == 0 or selected_button_index >= len(
+            displaying_buttons
+        ):
+            selected_button_index = 0
+            return
+
+        btn = displaying_buttons[selected_button_index]
 
         if (
             not btn.hover
