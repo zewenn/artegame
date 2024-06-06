@@ -273,10 +273,13 @@ def init() -> None:
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
 
-    player.hitpoints = player.max_hitpoints
-    player.mana = player.max_mana
+    if player.hitpoints == None:
+        player.hitpoints = player.max_hitpoints
+    if player.mana == None:
+        player.mana = player.max_mana
 
-    player.slowed_by_percent = 0
+    if player.slowed_by_percent == None:
+        player.slowed_by_percent = 0
 
     default_attack_speed = player.base_attack_speed
 
@@ -480,16 +483,38 @@ def update() -> None:
     spell0_icon_display.style.bg_image = player.spells[0].icon
     spell1_icon_display.style.bg_image = player.spells[1].icon
 
+    spell0_cond = True
+    spell1_cond = True
+
+
+    if player.spells[0].cooldown_start != None:
+        spell0_cond = False
+        t = f"{round(player.spells[0].cooldown_start + player.spells[0].cooldown - pgapi.TIME.current)}s"
+        spell0_icon_display.children[0].children[0] = t
+        spell0_icon_display.children[0].style.left = f"{32 - len(t) * 12 / 2}x"
+
+    if player.spells[1].cooldown_start != None:
+        spell1_cond = False
+        t = f"{round(player.spells[1].cooldown_start + player.spells[1].cooldown - pgapi.TIME.current)}s"
+        spell1_icon_display.children[0].children[0] = t
+        spell1_icon_display.children[0].style.left = f"{32 - len(t) * 12 / 2}x"
+
     if pgapi.SETTINGS.input_mode == "Controller":
         if weapons_swap_display.children[0].children[0] != "RB":
             weapons_swap_display.children[0].style.left = f"{32 - 12}x"
             weapons_swap_display.children[0].children[0] = "RB"
 
-        if spell0_icon_display.children[0].children[0] != "X":
+        if (
+            spell0_icon_display.children[0].children[0] != "X"
+            and spell0_cond
+        ):
             spell0_icon_display.children[0].children[0] = "X"
             spell0_icon_display.children[0].style.left = f"{32 - 6}x"
 
-        if spell1_icon_display.children[0].children[0] != "Y":
+        if (
+            spell1_icon_display.children[0].children[0] != "Y"
+            and spell1_cond
+        ):
             spell1_icon_display.children[0].children[0] = "Y"
             spell1_icon_display.children[0].style.left = f"{32 - 6}x"
     else:
@@ -497,11 +522,17 @@ def update() -> None:
             weapons_swap_display.children[0].style.left = f"{32 - 1.5 * 12}x"
             weapons_swap_display.children[0].children[0] = "Tab"
 
-        if spell0_icon_display.children[0].children[0] != "Q":
+        if (
+            spell0_icon_display.children[0].children[0] != "Q"
+            and spell0_cond
+        ):
             spell0_icon_display.children[0].children[0] = "Q"
             spell0_icon_display.children[0].style.left = f"{32 - 6}x"
 
-        if spell1_icon_display.children[0].children[0] != "E":
+        if (
+            spell1_icon_display.children[0].children[0] != "E"
+            and spell1_cond
+        ):
             spell1_icon_display.children[0].children[0] = "E"
             spell1_icon_display.children[0].style.left = f"{32 - 6}x"
 
