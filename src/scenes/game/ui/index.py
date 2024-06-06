@@ -46,8 +46,8 @@ def title_button(
 
 
 def item_display(nth: Number, name: string) -> GUIElement:
-    width = 48
-    gap = 32
+    width = 64
+    gap = 10
     FS = FONT_SIZE.SMALL
     return Element(
         "Inventory-Item-" + name,
@@ -56,15 +56,15 @@ def item_display(nth: Number, name: string) -> GUIElement:
             Text("0"),
             style=StyleSheet(
                 position=POSITION.RELATIVE,
-                top=f"{width - FS}x",
-                left=f"{width - FS}x",
+                top=f"{width + gap}x",
+                left=f"{width / 2 - FS / 2}x",
                 font_size=FS,
                 font_family=FONTS.PRESS_PLAY,
             ),
         ),
         style=StyleSheet(
             position=POSITION.RELATIVE,
-            left=f"{width * nth - 1 + gap}x",
+            left=f"{(width + gap) * (nth - 1)}x",
             top="0x",
             width=width,
             height=width,
@@ -75,13 +75,6 @@ def item_display(nth: Number, name: string) -> GUIElement:
 
 def awake() -> None:
     DOM(
-        Element(
-            "InventoryDisplay",
-            item_display(1, "banana"),
-            item_display(2, "strawberry"),
-            item_display(3, "blueberry"),
-            style=StyleSheet(position=POSITION.ABSOLUTE, left="80w", top="90h"),
-        ),
         Element(
             "InteractionShower",
             # "B",
@@ -227,12 +220,13 @@ def awake() -> None:
                                 position=POSITION.RELATIVE,
                                 inherit_display=True,
                                 top="74x",
-                                left=f"{32 - 1.5 * FS}x",
+                                # left=f"{32 - 1.5 * FS}x",
+                                left="8x",
                                 width=f"{3 * FS}x",
                                 height=f"{FS}x",
                                 font_size=FS,
-                                font_family=FONTS.PRESS_PLAY
-                            )
+                                font_family=FONTS.PRESS_PLAY,
+                            ),
                         ),
                         style=StyleSheet(
                             position=POSITION.RELATIVE,
@@ -241,41 +235,79 @@ def awake() -> None:
                             left="0x",
                             width="64x",
                             height="64x",
-                            bg_image="weapon_switch_plates.png"
-                        )
+                            bg_image="weapon_switch_plates.png",
+                        ),
                     ),
                     Element(
-                        "Separator",
+                        "Spell0Display",
                         Element(
-                            "Separator:Keybind",
+                            "Spell0Display:Keybind",
+                            Text("Q"),
                             style=StyleSheet(
                                 position=POSITION.RELATIVE,
                                 inherit_display=True,
                                 top="74x",
-                                left=f"0x",
-                                width=f"4x",
+                                left=f"{32 - .5 * FS}x",
+                                width=f"{3 * FS}x",
                                 height=f"{FS}x",
-                                # font_size=FS,
-                                # font_family=FONTS.PRESS_PLAY
-                                bg_color=COLOURS.NIGHT_BLUE
-                            )
+                                font_size=FS,
+                                font_family=FONTS.PRESS_PLAY,
+                            ),
                         ),
                         style=StyleSheet(
                             position=POSITION.RELATIVE,
                             inherit_display=True,
                             top="0x",
-                            left="74x",
-                            width="4x",
+                            left="88x",
+                            width="64x",
                             height="64x",
-                            bg_color=COLOURS.NIGHT_BLUE 
-                        )
+                            bg_image="empty_icon.png",
+                        ),
+                    ),
+                    Element(
+                        "Spell1Display",
+                        Element(
+                            "Spell1Display:Keybind",
+                            Text("E"),
+                            style=StyleSheet(
+                                position=POSITION.RELATIVE,
+                                inherit_display=True,
+                                top="74x",
+                                left=f"{32 - .5 * FS}x",
+                                width=f"{3 * FS}x",
+                                height=f"{FS}x",
+                                font_size=FS,
+                                font_family=FONTS.PRESS_PLAY,
+                            ),
+                        ),
+                        style=StyleSheet(
+                            position=POSITION.RELATIVE,
+                            inherit_display=True,
+                            top="0x",
+                            left="162x",
+                            width="64x",
+                            height="64x",
+                            bg_image="empty_icon.png",
+                        ),
                     ),
                     style=StyleSheet(
                         position=POSITION.RELATIVE,
                         inherit_display=True,
                         top="105x",
                         left="20x",
-                    )
+                    ),
+                ),
+                Element(
+                    "Hud:Fruits:Container",
+                    item_display(1, "banana"),
+                    item_display(2, "strawberry"),
+                    item_display(3, "blueberry"),
+                    style=StyleSheet(
+                        position=POSITION.RELATIVE,
+                        # inherit_display=True,
+                        top="105x",
+                        left="418x",
+                    ),
                 ),
                 style=StyleSheet(
                     position=POSITION.RELATIVE,
@@ -284,8 +316,8 @@ def awake() -> None:
                     width="640x",
                     top="-200x",
                     height="200x",
-                    bg_color=(10, 9, 8, 1),
-                    # bg_image="hud_bg.png",
+                    # bg_color=(10, 9, 8, 1),
+                    bg_image="hud_bg.png",
                 ),
             ),
             style=StyleSheet(
@@ -488,3 +520,4 @@ def awake() -> None:
     # timeout.set(1, boons.show_boon_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)
+

@@ -107,6 +107,8 @@ inventory_display_blueberry: Optional[GUIElement]
 weapon_display_0: Optional[Bone] = None
 weapon_display_1: Optional[Bone] = None
 weapons_swap_display: Optional[GUIElement] = None
+spell0_icon_display: Optional[GUIElement] = None
+spell1_icon_display: Optional[GUIElement] = None
 
 
 def init() -> None:
@@ -128,6 +130,8 @@ def init() -> None:
     global player_walk_left_anim
     global player_walk_right_anim
     global weapons_swap_display
+    global spell0_icon_display
+    global spell1_icon_display
 
     player_query = items.get("player")
     player_hand_holder_query = items.get("player_hand_holder")
@@ -142,6 +146,8 @@ def init() -> None:
     w_d_0 = items.get("player_hand_holder->left_hand")
     w_d_1 = items.get("player_hand_holder->right_hand")
     weapon_swap_q = gui.get_element("WeaponSwapDisplay")
+    sp0_i_d = gui.get_element("Spell0Display")
+    sp1_i_d = gui.get_element("Spell1Display")
 
     player_plates_attack_anim_query = animator.store.get("plates_anim")
     player_gloves_attack_anim_query = animator.store.get("gloves_anim")
@@ -183,6 +189,18 @@ def init() -> None:
         unreachable("Weapon Swap display GUIElement does not exist!")
 
     weapons_swap_display = weapon_swap_q.ok()
+
+    # Spell 0 Display element
+    if sp0_i_d.is_err():
+        unreachable("spell0 icon display GUIElement does not exist!")
+
+    spell0_icon_display = sp0_i_d.ok()
+
+    # Spell 1 Display element
+    if sp1_i_d.is_err():
+        unreachable("spell0 icon display GUIElement does not exist!")
+
+    spell1_icon_display = sp1_i_d.ok()
 
     # HP Amount Display GUIElement
     if hp_amount_query.is_err():
@@ -301,11 +319,11 @@ def update() -> None:
     global can_attack
     global can_dash
     global weapons_swap_display
+    global spell0_icon_display
+    global spell1_icon_display
 
     weapon_display_0.sprite = f"{player.weapon.id}_0.png"
     weapon_display_1.sprite = f"{player.weapon.id}_1.png"
-
-
 
     if inpt.active_bind(enums.keybinds.SPELLS.SPELL1) and player.spells[0] != None:
         spells.cast(player.spells[0], player)
@@ -456,14 +474,33 @@ def update() -> None:
     inventory_display_strawberry.children[0] = str(player.inventory.strawberry)
     inventory_display_blueberry.children[0] = str(player.inventory.blueberry)
 
+    spell0_icon_display.style.bg_image = player.spells[0].icon
+    spell1_icon_display.style.bg_image = player.spells[1].icon
+
     if pgapi.SETTINGS.input_mode == "Controller":
         if weapons_swap_display.children[0].children[0] != "RB":
-            weapons_swap_display.children[0].children[0] = "RB"
             weapons_swap_display.children[0].style.left = f"{32 - 12}x"
+            weapons_swap_display.children[0].children[0] = "RB"
+
+        if spell0_icon_display.children[0].children[0] != "X":
+            spell0_icon_display.children[0].children[0] = "X"
+            spell0_icon_display.children[0].style.left = f"{32 - 6}x"
+
+        if spell1_icon_display.children[0].children[0] != "Y":
+            spell1_icon_display.children[0].children[0] = "Y"
+            spell1_icon_display.children[0].style.left = f"{32 - 6}x"
     else:
         if weapons_swap_display.children[0].children[0] != "Tab":
+            weapons_swap_display.children[0].style.left = f"{32 - 1.5 * 12}x"
             weapons_swap_display.children[0].children[0] = "Tab"
-            weapons_swap_display.children[0].style.left = f"{32 - 12 * 1.5}x"
+
+        if spell0_icon_display.children[0].children[0] != "Q":
+            spell0_icon_display.children[0].children[0] = "Q"
+            spell0_icon_display.children[0].style.left = f"{32 - 6}x"
+
+        if spell1_icon_display.children[0].children[0] != "E":
+            spell1_icon_display.children[0].children[0] = "E"
+            spell1_icon_display.children[0].style.left = f"{32 - 6}x"
 
 
 def allow_attack() -> None:
