@@ -30,8 +30,8 @@ def init():
 
     monitor = screeninfo.get_monitors()[0]
 
-    SCREEN_SIZE = Vec2(1600, 900)
-    # SCREEN_SIZE = Vec2(monitor.width, monitor.height)
+    # SCREEN_SIZE = Vec2(1600, 900)
+    SCREEN_SIZE = Vec2(monitor.width, monitor.height)
     UI_RATIO = SCREEN_SIZE.y / 1080
 
     assets.create_runtime_objects(UI_RATIO)

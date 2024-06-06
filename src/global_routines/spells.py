@@ -47,7 +47,11 @@ def cast(spell: Spell, item: Item) -> None:
 
     item.mana -= spell.mana_cost
 
+    def clear_cd_start():
+        spell.cooldown_start = None
+
     spell_fn(spell, item, spell.effectiveness)
+    timeout.set(spell.cooldown, clear_cd_start, ())
 
 
 @spell(enums.spells.HEALING)

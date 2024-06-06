@@ -180,6 +180,7 @@ class Spell:
         List[Literal["root", "stun", "sleep", "slow", "damage"]]
     ] = None
     cooldown_start: Optional[Number] = None
+    cooldown_remaining: Optional[Number] = None
 
 
 @dataclass
