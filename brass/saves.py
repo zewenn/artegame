@@ -72,11 +72,11 @@ def load() -> Result[None, Mishap]:
     items_loaded: Result[list[Item], Mishap] = attempt(
         zenyx.pyon.load, (item_file,)
     )
-    gui_loaded: Result[list[GUIElement], Mishap] = attempt(
-        zenyx.pyon.load, (gui_file,)
-    )
+    # gui_loaded: Result[list[GUIElement], Mishap] = attempt(
+    #     zenyx.pyon.load, (gui_file,)
+    # )
 
-    if items_loaded.is_err() or gui_loaded.is_err():
+    if items_loaded.is_err():
         return Err(Mishap("Couldn't load save files!", True))
     
     items.rendering = items_loaded.ok()

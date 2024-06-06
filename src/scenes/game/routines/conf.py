@@ -136,9 +136,10 @@ def spawn() -> None:
         ),
     )
 
-    # res_loaded: Result[None, Mishap] = saves.load()
-    # if res_loaded.is_ok():
-    #     return
+    res_loaded: Result[None, Mishap] = saves.load()
+    # print(res_loaded.err().msg)
+    if res_loaded.is_ok():
+        return
 
     #                       ITEMS ADD - PLAYER
     items.add(
@@ -168,7 +169,7 @@ def spawn() -> None:
                 base_attack_speed=5,
                 # spells=[],
                 # Inventory
-                inventory=Inventory(10, 10, 10),
+                inventory=Inventory(),
                 weapons=[
                     Weapon(
                         id="plates",

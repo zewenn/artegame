@@ -92,6 +92,7 @@ def init():
         display.render()
 
         if inpt.active_bind("exit"):
+            saves.save()
             pgapi.exit()
 
         pgapi.TIME.deltatime = pgapi.CLOCK.tick(pgapi.SETTINGS.max_fps) / 1000

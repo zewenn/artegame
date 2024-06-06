@@ -29,15 +29,15 @@ def spawn_melee() -> None:
             tags=["enemy", "item", "melee"],
             transform=Transform(get_random_spawn_pos(), Vec3(0, 0, 0), Vec2(64, 64)),
             # fill_color=[20, 20, 20],
-            sprite="test.png",
+            sprite="enemy_melee_left_1.png",
             can_move=True,
             can_collide=True,
             can_repulse=True,
             lightness=1,
             base_movement_speed=300 + 300 * 0.01 * ROUND,
-            dash_movement_multiplier=10,
-            dash_charge_refill_time=0.25,
-            max_hitpoints=150,
+            dash_movement_multiplier=5 + 0.1 * ROUND,
+            dash_time=0.15,
+            max_hitpoints=150 + 5 * ROUND,
             effective_range=random.randint(200, 500),
             hitpoints=100,
             max_mana=100,
@@ -55,15 +55,15 @@ def spawn_ranged() -> None:
             tags=["enemy", "item", "ranged"],
             transform=Transform(get_random_spawn_pos(), Vec3(0, 0, 0), Vec2(64, 64)),
             # fill_color=[20, 20, 20],
-            sprite="test.png",
+            sprite="enemy_ranged_left.png",
             can_move=True,
             can_collide=True,
             can_repulse=True,
             lightness=1,
             base_movement_speed=300 + 300 * 0.01 * ROUND,
-            dash_movement_multiplier=10,
-            dash_charge_refill_time=0.25,
-            max_hitpoints=95,
+            dash_movement_multiplier=5 + 0.1 * ROUND,
+            dash_time=0.15,
+            max_hitpoints=95 + 95 * 0.01 * ROUND,
             effective_range=random.randint(600, 1000),
             hitpoints=100,
             max_mana=100,
@@ -77,7 +77,6 @@ def start_round() -> None:
     global ROUND_STATE
     global ROUND
 
-    saves.save()
 
     ROUND_STATE = "Fight"
     ROUND += 1
@@ -105,7 +104,7 @@ def awake() -> None:
     round_saver_entity_query = items.get("RoundSaver")
     if round_saver_entity_query.is_err():
         unreachable("RoundSaver entity does not exist!")
-    
+
     round_saver_entity = round_saver_entity_query.ok()
 
     try:
@@ -119,7 +118,9 @@ def awake() -> None:
 def update() -> None:
     global ROUND_STATE
 
-    round_saver_entity.tags = [ROUND_STATE]
 
     if ROUND_STATE == "Fight" and len(enemies.ENEMIES) == 0:
+        saves.save()
         ROUND_STATE = "BoonSelection"
+
+    round_saver_entity.tags = [ROUND_STATE]

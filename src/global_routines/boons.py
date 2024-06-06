@@ -1,7 +1,7 @@
 from brass.base import *
 from brass.gui import *
 
-from brass import items, timeout, scene, enums, gui
+from brass import items, timeout, scene, enums, gui, saves
 from global_routines import effect_display, menus, round_manager
 
 import random
@@ -485,6 +485,8 @@ def show_boon_selection_menu() -> None:
         bn.grant_fn(),
         menus.toggle(id)
         round_manager.ROUND_STATE = "Wait"
+        
+        saves.save()
 
     for index, bn in enumerate(bns):
         descr: list[string] = structured_clone(bn.description)

@@ -41,6 +41,7 @@ def game_spawn() -> None:
     audio.set_volume(MENU_MUSIC, VOLUME)
     audio.fade_in(MENU_MUSIC, 500, 1)
 
+
 @scene.spawn(enums.scenes.DEFEAT)
 def game_spawn() -> None:
     global GAME_MUSIC, MENU_MUSIC
@@ -54,7 +55,7 @@ def game_spawn() -> None:
 @events.update
 def update() -> None:
     global GAME_MUSIC, MENU_MUSIC, PUNCH, PI
-    audio.set_volume(PUNCH, VOLUME)
     audio.set_volume(MENU_MUSIC, VOLUME)
     audio.set_volume(GAME_MUSIC, VOLUME)
-    audio.set_volume(PICKUP, VOLUME)
+    audio.set_volume(PUNCH, VOLUME * 0.5)
+    audio.set_volume(PICKUP, VOLUME * 0.5)

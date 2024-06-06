@@ -181,7 +181,7 @@ def update() -> None:
             elif enemy.tags.__contains__("melee"):
                 play(enemy, "left" if x < 0 else "right")
 
-        if random.randint(0, 400) == 0 and enemy.can_move:
+        if random.randint(0, 100) == 0 and enemy.can_move:
             dash.apply_dash_effect(
                 enemy,
                 vectormath.new(
