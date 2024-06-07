@@ -160,8 +160,8 @@ def multiline_to_singleline_imports(python_code: str) -> str:
 def replace_imports(contents: str) -> str:
     contents = contents.replace("from brass ", "")
     contents = contents.replace("from brass.", "from ")
-    contents = contents.replace("from global_routines ", "from src.global_routines ")
-    contents = contents.replace("from global_routines.", "from src.global_routines.")
+    contents = contents.replace("from global_routines ", "from temp_global ")
+    contents = contents.replace("from global_routines.", "from temp_global.")
     contents = multiline_to_singleline_imports(contents)
     return contents
 
@@ -246,6 +246,9 @@ def build_global_routines() -> None:
             encoding="utf-8",
         ) as rf:
             contents = rf.read()
+            
+        contents = contents.replace("from global_routines ", "from . ")   
+        contents = contents.replace("from global_routines.", "from .")   
         contents = replace_imports(contents)
         with open(
             os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH, global_rtn),
