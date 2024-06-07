@@ -6,6 +6,7 @@ from global_routines import effect_display, menus, enemies
 import random
 
 round_saver_entity: Optional[Item] = None
+player: Optional[Item] = None
 ROUND_STATE: Literal["BoonSelection", "Wait", "Fight"]
 ROUND: int = 0
 MIXER_TRANSFORM: Transform = Transform(Vec2(-128, -196 - 128), Vec3(), Vec2(256, 256))
@@ -13,12 +14,33 @@ round_display_el: Optional[GUIElement] = None
 
 
 def get_random_spawn_pos() -> Vec2:
+    global player
+
     x = random.randint(
         -pgapi.SETTINGS.background_size.x / 2, pgapi.SETTINGS.background_size.x / 2
     )
     y = random.randint(
         -pgapi.SETTINGS.background_size.y / 2, pgapi.SETTINGS.background_size.y / 2
     )
+
+    if (
+        x > player.transform.position.x - 256
+        and x < player.transform.position.x + (256 + 64)
+    ) and (
+        y > player.transform.position.y - 256
+        and y < player.transform.position.y + (256 + 64)
+    ):
+        x = (
+            player.transform.position.x - 256
+            if player.transform.position.x > -pgapi.SETTINGS.background_size.x / 2
+            else player.transform.position.x - (256 + 64)
+        )
+        y = (
+            player.transform.position.y - 256
+            if player.transform.position.y > -pgapi.SETTINGS.background_size.y / 2
+            else player.transform.position.y - (256 + 64)
+        )
+
     return Vec2(x, y)
 
 
@@ -98,6 +120,7 @@ def init() -> None:
     global ROUND
     global round_saver_entity
     global round_display_el
+    global player
 
     ROUND_STATE = None
     ROUND = 0
@@ -107,6 +130,12 @@ def init() -> None:
         unreachable("RoundSaver entity does not exist!")
 
     round_saver_entity = round_saver_entity_query.ok()
+
+    player_q = items.get("player")
+    if player_q.is_err():
+        unreachable("player entity does not exist!")
+
+    player = player_q.ok()
 
     rdq = gui.get_element("RoundDisplay")
     if rdq.is_err():

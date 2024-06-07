@@ -164,4 +164,5 @@ cython_debug/
 brass/src/temp/
 brass/src/
 brass/temp/
+brass/temp_global/
 architect/@build_counter.txt

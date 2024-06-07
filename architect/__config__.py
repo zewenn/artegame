@@ -30,7 +30,7 @@ ROUTINE_PATH = ["brass", "src", "temp"]
 SCENES_PATH = ["src", "scenes"]
 SCENES_ENUM_FILE = ["brass", "enums", "scenes.py"]
 GLOBAL_ROUTINES_DIR_PATH = ["src", "global_routines"]
-GLOBAL_ROUTINES_DIR_DIST_PATH = ["brass", "src", "global_routines"]
+GLOBAL_ROUTINES_DIR_DIST_PATH = ["brass", "temp_global"]
 
 
 class ROUTINE_EVENTS:

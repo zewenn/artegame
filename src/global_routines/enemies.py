@@ -91,8 +91,9 @@ def new(item: Item) -> Item:
     item.can_attack = True
     item.slowed_by_percent = 0
 
-    ENEMIES.append(item)
     items.add(item)
+    timeout.set(.25, ENEMIES.append, (item,))
+    # ENEMIES.append(item)
     return item
 
 
