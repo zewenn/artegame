@@ -96,9 +96,6 @@ def start_round() -> None:
     global ROUND_STATE
     global ROUND
 
-    ROUND_STATE = "Fight"
-    ROUND += 1
-
     enemy_count = random.randint(ROUND, ROUND + 2)
     melee_count = range(round(enemy_count * 0.66))
     ranged_count = range(round(enemy_count * 0.33))
@@ -108,6 +105,9 @@ def start_round() -> None:
 
     for _ in ranged_count:
         spawn_ranged()
+
+    ROUND_STATE = "Fight"
+    ROUND += 1
 
 
 @scene.init(enums.scenes.GAME)
@@ -150,12 +150,14 @@ def init() -> None:
 def update() -> None:
     global ROUND_STATE
 
+    ens = items.get_all("enemy")
+
     if round_display_el.children[0] != f"{ROUND}. Kör":
         t = f"{ROUND}. Kör"
         round_display_el.children[0] = t
         round_display_el.style.left = f"-{len(t) / 2 * 16}x"
 
-    if ROUND_STATE == "Fight" and len(enemies.ENEMIES) == 0:
+    if ROUND_STATE == "Fight" and len(ens) == 0:
         saves.save()
         ROUND_STATE = "BoonSelection"
 
