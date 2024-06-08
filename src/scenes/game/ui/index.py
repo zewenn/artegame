@@ -2,7 +2,7 @@ from brass.base import *
 from brass.gui import *
 
 from brass import pgapi, scene, saves, timeout
-from global_routines import menus, boons
+from src.global_routines import menus, boons
 
 FS = FONT_SIZE.MEDIUM
 GAP = 40
@@ -537,7 +537,7 @@ def awake() -> None:
             )
         ),
     )
-    # timeout.set(1, boons.show_boon_menu, ())
+    # timeout.new(1, boons.show_boon_menu, ())
 
     # print(get_element("wrapper:banana").ok().transform)
 

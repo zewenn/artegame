@@ -1,6 +1,9 @@
-import base64, os
 import __config__ as conf
 from deps import *
+
+import base64
+import os
+
 
 def get_files_in_directory(directory) -> list[str]:
     file_list = []
@@ -27,25 +30,23 @@ def serialize_file_to_b64string(filepath) -> str:
 
     return base64_string
 
+
 @task("Serialising Assets")
 def serialise() -> None:
-    images: list = get_files_in_directory(os.path.join(*conf.ASSETS_DIR_PATH))
-    img_dict: dict = {}
+    assets: list = get_files_in_directory(os.path.join(*conf.ASSETS_DIR_PATH))
+    asset_dict: dict = {}
 
-    for index, image in enumerate(images):
+    for index, image in enumerate(assets):
         basename: str = os.path.basename(image)
-        img_dict[basename] = serialize_file_to_b64string(image)
-        
-        progress_bar(index + 1, len(images), shorten(basename))
+        asset_dict[basename] = serialize_file_to_b64string(image)
+
+        progress_bar(index + 1, len(assets), shorten(basename))
     task_complete()
 
-    if not os.path.isdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR)):
-        os.mkdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR))
+    make_dir_walk(conf.ASSETS_FILE_DIST_PATH)
 
-    with open(
-        os.path.join(*conf.SERIALISED_OUTPUT_DIR, f"{conf.ASSETS_FILE_DIST_NAME}"), "w"
-    ) as wf:
-        wf.write(f"REFERENCE_TABLE: dict[str, str] = {img_dict}")
+    with open(os.path.join(*conf.ASSETS_FILE_DIST_PATH), "w", encoding="utf-8") as wf:
+        wf.write(f"REFERENCE_TABLE: dict[str, str] = {asset_dict}")
 
 
 if __name__ == "__main__":

@@ -23,9 +23,7 @@ def awk() -> None:
 
 
 @scene.spawn(enums.scenes.GAME)
-def game_spawn() -> None:
-    global GAME_MUSIC, MENU_MUSIC, PUNCH
-
+def _() -> None:
     audio.fade_out(MENU_MUSIC, 1000)
 
     audio.set_volume(GAME_MUSIC, VOLUME)
@@ -33,9 +31,7 @@ def game_spawn() -> None:
 
 
 @scene.spawn(enums.scenes.DEFAULT)
-def game_spawn() -> None:
-    global GAME_MUSIC, MENU_MUSIC
-
+def _() -> None:
     audio.fade_out(GAME_MUSIC, 1000)
 
     audio.set_volume(MENU_MUSIC, VOLUME)
@@ -43,9 +39,7 @@ def game_spawn() -> None:
 
 
 @scene.spawn(enums.scenes.DEFEAT)
-def game_spawn() -> None:
-    global GAME_MUSIC, MENU_MUSIC
-
+def _() -> None:
     audio.fade_out(GAME_MUSIC, 1000)
 
     audio.set_volume(MENU_MUSIC, VOLUME)
@@ -54,7 +48,6 @@ def game_spawn() -> None:
 
 @events.update
 def update() -> None:
-    global GAME_MUSIC, MENU_MUSIC, PUNCH, PI
     audio.set_volume(MENU_MUSIC, VOLUME)
     audio.set_volume(GAME_MUSIC, VOLUME)
     audio.set_volume(PUNCH, VOLUME * 0.5)

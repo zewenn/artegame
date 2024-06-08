@@ -103,7 +103,7 @@ def awake() -> None:
             "CenterButtons",
             title_button("StartGame-Btn", "Új Játék", 0, load_game_scene),
             # title_button("Options-Btn", "Beállítások", FS + gap, caller(scene.load, (enums.scenes.DEFEAT,))),
-            title_button("Exit-Btn", "Kilépés", (FS + gap) * 1, lambda: pgapi.exit()),
+            title_button("Exit-Btn", "Kilépés", (FS + gap) * 1, pgapi.end),
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )

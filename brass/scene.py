@@ -1,11 +1,12 @@
-from base import *
+from .base import *
 
-import events
-import pgapi
-import items
-import animator
-import gui
-
+from . import (
+    animator,
+    pgapi,
+    items,
+    events,
+    gui
+)
 
 def spawn(scene: str) -> None:
     def wrap(fn: Callable):
@@ -35,7 +36,7 @@ def update(scene: str) -> None:
     return wrap
 
 
-def quit(scene: str) -> None:
+def scene_quit(scene: str) -> None:
     def wrap(fn: Callable):
         events.on(f"{scene}::quit", fn)
 

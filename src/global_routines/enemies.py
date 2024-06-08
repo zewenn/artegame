@@ -3,7 +3,7 @@ import random
 from brass.base import *
 
 # fmt: off
-from global_routines import projectiles, dash, crowd_control, interact, sounds
+from . import projectiles, dash, crowd_control, interact, sounds
 from brass import (
     items, 
     pgapi, 
@@ -17,8 +17,6 @@ from brass import (
     inpt
 )
 # fmt: on
-
-import random
 
 
 ENEMIES: list[Item] = []
@@ -68,7 +66,7 @@ def awake() -> None:
         item.team = "Enemy"
         item.can_attack = True
         item.slowed_by_percent = 0
-        if item.effective_range == None:
+        if item.effective_range is None:
             item.effective_range = 200
 
     player_q = items.get("player")
@@ -79,8 +77,7 @@ def awake() -> None:
 
 
 def new(item: Item) -> Item:
-    global ENEMIES
-    if not item.tags.__contains__("enemy"):
+    if not "enemy" in item.tags:
         item.tags.append("enemy")
 
     item.attack_speed = item.base_attack_speed
@@ -92,7 +89,7 @@ def new(item: Item) -> Item:
     item.slowed_by_percent = 0
 
     items.add(item)
-    timeout.set(.25, ENEMIES.append, (item,))
+    timeout.new(.25, ENEMIES.append, (item,))
     # ENEMIES.append(item)
     return item
 
@@ -104,33 +101,33 @@ def remove_attack_cooldown(item: Item) -> None:
 walk_anims: dict[string, bool] = {}
 
 
-def reset_anim(anim: AnimationGroup, id: string) -> None:
+def reset_anim(anim: AnimationGroup, name: string) -> None:
     del anim
-    del walk_anims[id]
+    del walk_anims[name]
 
-def play(item: Item, dir: Literal["right", "left"]) -> None:
+def play(item: Item, direction: Literal["right", "left"]) -> None:
     if walk_anims.get(item.id):
         return
     
     walk_anims[item.id] = True
-    dur = .5
+    duration = .5
     anim = animator.create(
-        duration_seconds=dur,
+        duration_seconds=duration,
         mode=enums.animations.MODES.NORMAL,
         timing_function=enums.animations.TIMING.EASE_IN_OUT,
         animations=[
             Animation(
                 item.id,
                 {
-                    1: Keyframe(sprite=f"enemy_melee_{dir}_1.png"),
-                    50: Keyframe(sprite=f"enemy_melee_{dir}_2.png"),
-                    100: Keyframe(sprite=f"enemy_melee_{dir}_1.png"),
+                    1: Keyframe(sprite=f"enemy_melee_{direction}_1.png"),
+                    50: Keyframe(sprite=f"enemy_melee_{direction}_2.png"),
+                    100: Keyframe(sprite=f"enemy_melee_{direction}_1.png"),
                 },
             )
         ],
     )
     animator.play(anim)
-    timeout.set(dur + 0.02, reset_anim, (anim, item.id))
+    timeout.new(duration + 0.02, reset_anim, (anim, item.id))
 
 
 
@@ -175,12 +172,12 @@ def update() -> None:
                 * vec.end.x
             )
             enemy.transform.position.x += x
-            if enemy.tags.__contains__("ranged"):
+            if "ranged" in enemy.tags:
                 if x < 0:
                     enemy.sprite = "enemy_ranged_left.png"
                 else:
                     enemy.sprite = "enemy_ranged_right.png"
-            elif enemy.tags.__contains__("melee"):
+            elif "melee" in enemy.tags:
                 play(enemy, "left" if x < 0 else "right")
 
         if random.randint(0, 100) == 0 and enemy.can_move:
@@ -205,7 +202,7 @@ def update() -> None:
         ):
             shoot_random_projectile(or_vec, enemy)
 
-    for index, frt in enumerate(DROPPED_FRUITS):
+    for frt in DROPPED_FRUITS:
         if collision.collides(frt.transform, player.transform):
             # interact.show(f"Felvétel: {FRUIT_HUN_DICT.get(frt.tags[0])}", 100000 + index)
             # if inpt.active_bind(enums.keybinds.INTERACT):
@@ -250,7 +247,7 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
             )
         )
         item.can_attack = False
-        timeout.set(1 / item.attack_speed, remove_attack_cooldown, (item,))
+        timeout.new(1 / item.attack_speed, remove_attack_cooldown, (item,))
         return
 
     # Heavy Attack
@@ -270,4 +267,4 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
     )
     item.can_attack = False
     crowd_control.apply(item, "stun", 0.5)
-    timeout.set((1 / item.attack_speed * 2), remove_attack_cooldown, (item,))
+    timeout.new((1 / item.attack_speed * 2), remove_attack_cooldown, (item,))

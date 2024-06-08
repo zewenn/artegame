@@ -1,14 +1,14 @@
-from base import *
+from .base import *
 
-import items
+from . import items
 
 
 
 def is_smaller_than(distance: float, other: list[float]):
     if distance <= other[0] and distance <= other[1] and distance <= other[2]:
         return True
-    else:
-        return False
+    
+    return False
 
 
 def get_smallest(dists: Distances) -> float:

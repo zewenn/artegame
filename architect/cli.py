@@ -53,32 +53,32 @@ def update_read_build_counter() -> str:
         return str(res)
 
 
-def new_routine(T: Literal["gui"] | Literal["routine"] | Literal["config"]) -> str:
+def new_routine(T_type: Literal["gui"] | Literal["routine"] | Literal["config"]) -> str:
     filepath_dict: dict[str, str] = {
-        "gui" : os.path.join(*conf.TEMPLATE_FILES_DIR, "gui.tpy"),
-        "routine" : os.path.join(*conf.TEMPLATE_FILES_DIR, "rtn.tpy"),
-        "config" : os.path.join(*conf.TEMPLATE_FILES_DIR, "cnf.tpy"),
+        "gui": os.path.join(*conf.TEMPLATE_FILES_DIR, "gui.tpy"),
+        "routine": os.path.join(*conf.TEMPLATE_FILES_DIR, "rtn.tpy"),
+        "config": os.path.join(*conf.TEMPLATE_FILES_DIR, "cnf.tpy"),
     }
-    
+
     res = ""
-    with open(filepath_dict[T], "r", encoding="utf-8") as rf:
+    with open(filepath_dict[T_type], "r", encoding="utf-8") as rf:
         res = rf.read()
     return res
 
 
-def main(args):
+def main(arguments):
     # printf.clear_screen()
 
-    if args[0] != "architect":
-        args[0] = "architect"
+    if arguments[0] != "architect":
+        arguments[0] = "architect"
 
-    if len(args) == 0:
-        args = ["architect", "-r"]
+    if len(arguments) == 0:
+        arguments = ["architect", "-r"]
 
-    if len(args) < 2:
-        args.append("-h")
+    if len(arguments) < 2:
+        arguments.append("-h")
 
-    if args[1] in ["--new-scene", "-ns"]:
+    if arguments[1] in ["--new-scene", "-ns"]:
         printf.title("Creating New Scene")
 
         usr_input = input("Scene name: ").lower()
@@ -102,7 +102,7 @@ def main(args):
         make_file(os.path.join(new_scene_routines, "conf.py"), new_routine("config"))
         make_file(os.path.join(new_scene_ui, "index.py"), new_routine("gui"))
 
-    if args[1] in ["--new-routine", "-nr"]:
+    if arguments[1] in ["--new-routine", "-nr"]:
         printf.title("Creating New Routine")
 
         usr_input = input("Scene name: ").lower()
@@ -142,12 +142,16 @@ def main(args):
 
     # Need to serialise these, so that the game can use the files
     # Mostly auto import
+    print("[Task : Removing wrapped]")
+    deps.delete_files_in_directory(conf.BASE_PATH)
+
     b64encoder.serialise()
+    # return
     import_generator.serialise_imports()
 
     build_count_res = attempt(update_read_build_counter, ())
 
-    if args[1] in ["--help", "-h"]:
+    if arguments[1] in ["--help", "-h"]:
         printf.title("Architect Help Menu")
         printf.full_line("Architect is the build system for @!Brass$&.")
         printf.full_line("\n@!Command usage:$&")
@@ -174,29 +178,32 @@ def main(args):
 
         return
 
-    if args[1] in ["--run", "-r"]:
+    if arguments[1] in ["--run", "-r"]:
         printf.title(f"Run")
         # os.system(f"python {main_file_dir}")
-        pth = os.path.realpath(os.path.join(conf.MAIN_FILE_DIR, "__main__.py"))
+        pth = os.path.join(*conf.MAIN_FILE_PATH)
         # print(pth)
         deps.run_python_command((pth,))
         return
 
-    if args[1] in ["--build", "-b"]:
+    if arguments[1] in ["--build", "-b"]:
 
         # Build case
         printf.title("Building Executable")
 
-        APP_NAME = f"{conf.PROJECT_NAME}-{conf.VERSION}" + (
+        APP_NAME = f"{conf.PROJECT_NAME.lower()}-v{conf.VERSION.replace('.', '_')}" + (
             f".b{build_count_res.ok()}" if build_count_res.is_ok() else ""
         )
 
         build_start_time: float = time.perf_counter()
+        
+        deps.delete_files_in_directory(conf.BUILD_OUTPUT_DIR)
+
         build_success, build_error = deps.run_python_command(
             [
                 "-m",
                 "nuitka",
-                os.path.join(f"{conf.MAIN_FILE_DIR}", "__main__.py"),
+                os.path.join(*conf.MAIN_FILE_PATH),
                 "--standalone",
                 "--follow-imports",
                 # "--plugin-enable=pygame",
@@ -204,11 +211,22 @@ def main(args):
                 # "--windows-disable-console",
                 # "--windows-disable-console",
                 "--remove-output",
-                "--run" if "-r" in args[2:] else ""
-                f"--output-dir={os.path.realpath(os.path.join(*conf.BUILD_OUTPUT_DIR))}",
+                (
+                    "--run"
+                    if "-r" in arguments[2:]
+                    else ""
+                    f"--output-dir={os.path.realpath(os.path.join(*conf.BUILD_OUTPUT_DIR))}"
+                ),
                 # "-n",
                 # APP_NAME,
             ]
+        )
+
+        os.rename(
+            os.path.join(
+                *conf.BUILD_OUTPUT_DIR, conf.MAIN_FILE_PATH[-1].replace(".py", ".dist")
+            ),
+            os.path.join(*conf.BUILD_OUTPUT_DIR, APP_NAME),
         )
 
         printf.title("Build Report")

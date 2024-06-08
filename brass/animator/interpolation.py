@@ -1,10 +1,11 @@
-from base import *
-
 """
 `interpolation_factor` or `t`:  represents how far we are in the 
                                 interpolation process. In other words 
                                 it's like a percentage: .5 is 50%.
 """
+
+from ..base import *
+
 
 
 def lerp(start: Number, end: Number, interpolation_factor: Number) -> Number:

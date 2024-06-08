@@ -1,4 +1,4 @@
-from base import *
+from ..base import *
 
 
 def new(group: AnimationGroup) -> PlayObject:
@@ -23,7 +23,7 @@ def set_anim_duration(play_object: PlayObject, anim: ExpandedAnim):
     )
 
 
-def next(play_object: PlayObject, anim: ExpandedAnim):
+def next_keframe(play_object: PlayObject, anim: ExpandedAnim):
     if anim.current_keyframe + 1 == len(anim.keyframe_list) - 1:
         anim.finished = True
         return False
@@ -33,5 +33,3 @@ def next(play_object: PlayObject, anim: ExpandedAnim):
     set_anim_duration(play_object, anim)
     anim.end_time = anim.start_time + anim.duration
     return True
-
-

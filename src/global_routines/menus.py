@@ -17,20 +17,19 @@ def set_menu(gui_el: GUIElement) -> None:
 
 
 def new(gui_element: GUIElement) -> GUIElement:
-    global MENUS
     MENUS[gui_element.id] = gui_element
     return gui_element
 
 
 def toggle(
-    id: string,
+    name: string,
     to: Optional[Literal["block", "none"]] = None,
     scn: string = enums.scenes.GAME,
 ) -> None:
-    element = MENUS.get(id)
+    element = MENUS.get(name)
 
     if not element:
-        print(f'Menu by the id "{id}" does not exist!')
+        print(f'Menu by the id "{name}" does not exist!')
         return
 
     # Mode :: "block" -> "none"
@@ -49,11 +48,11 @@ def toggle(
     scene.pause()
 
 
-def is_showing(id: string) -> bool:
-    element = MENUS.get(id)
+def is_showing(name: string) -> bool:
+    element = MENUS.get(name)
 
     if not element:
-        print(f'Menu by the id "{id}" does not exist!')
+        print(f'Menu by the id "{name}" does not exist!')
         return False
 
     return element.style.display == "block"
@@ -61,7 +60,7 @@ def is_showing(id: string) -> bool:
 
 @deprecated
 def show_menu() -> None:
-    global SHOWING, MENU
+    global SHOWING
 
     if not MENU:
         return
@@ -74,7 +73,7 @@ def show_menu() -> None:
 
 @deprecated
 def hide_menu() -> None:
-    global SHOWING, MENU
+    global SHOWING
 
     if not MENU:
         return

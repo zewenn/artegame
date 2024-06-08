@@ -1,7 +1,7 @@
 from brass.base import *
 
 from brass import items, timeout
-from global_routines import effect_display
+from . import effect_display
 
 
 EFFECT_TYPES = Literal["slow", "root", "stun", "sleep", "all"]
@@ -36,7 +36,7 @@ def cleanse(item: Item, effect: EFFECT_TYPES) -> None:
 def apply_sleep(to: Item, length: Number) -> None:
     to.sleeping = True
     # print("Sleeping", to.id, to.sleeping)
-    timeout.set(length, cleanse, (to, "sleep"))
+    timeout.new(length, cleanse, (to, "sleep"))
     effect_display.summon(
         to.transform,
         [
@@ -49,33 +49,33 @@ def apply_sleep(to: Item, length: Number) -> None:
 
 def apply(
     to: Item,
-    T: EFFECT_TYPES,
+    T_type: EFFECT_TYPES,
     length: Number,
     slow_pecent: Number = 50,
     sleep_countdown: Number = 1,
     show_effect: bool = False,
 ) -> None:
-    if T == "all":
+    if T_type == "all":
         print("Cannot apply all effects!")
         return
 
     # print(T, to.id, to.uuid)
 
-    if T == "sleep":
-        timeout.set(sleep_countdown, apply_sleep, (to, length))
+    if T_type == "sleep":
+        timeout.new(sleep_countdown, apply_sleep, (to, length))
         return
 
-    timeout.set(length, cleanse, (to, T))
+    timeout.new(length, cleanse, (to, T_type))
 
-    if T == "slow":
+    if T_type == "slow":
         to.slowed_by_percent = slow_pecent
         return
 
-    if T == "root":
+    if T_type == "root":
         to.rooted = True
         return
 
-    if T == "stun":
+    if T_type == "stun":
         to.stunned = True
         if show_effect:
             effect_display.summon(

@@ -1,4 +1,4 @@
-from base import *
+from .base import *
 
 # class Items:
 # selector_map: dict[str, Optional[Item | Bone]] = {}
@@ -13,24 +13,34 @@ def reset() -> None:
 
 def remove(item: Item) -> Item:
     # global rendering
-    global rendering
     if item in rendering:
         rendering.remove(item)
     return item
 
 
-def add(item: Item | list[Item]) -> Item:
+ADD_RET_TYPE = TypeVar("ADD_RET_TYPE", Item, List[Item])
+
+
+def add(item: ADD_RET_TYPE) -> ADD_RET_TYPE:
+    """
+    ## Create new item(s)
+
+    Args:
+        item (Item | list[Item]): _description_
+
+    Returns:
+        Item: _description_
+    """
 
     if isinstance(item, list):
         for it in item:
             it.uuid = "item:" + uuid()
             rendering.append(it)
-        return
+        return item
 
     item.uuid = "item:" + uuid()
     rendering.append(item)
     return item
-
 
 
 # def add_to_selector_map(selector: str, item: Optional[Item]) -> None:
@@ -41,7 +51,7 @@ def add(item: Item | list[Item]) -> Item:
 
 
 def __inner_get__(
-    id: Optional[str] = None, tags: Optional[list[str]] = None
+    name: Optional[string] = None, tags: Optional[list[string]] = None
 ) -> Optional[Item]:
     """Query an item by its id or tags
 
@@ -53,7 +63,7 @@ def __inner_get__(
         Item or None: REFERENCE
     """
 
-    if id is None and tags is None:
+    if name is None and tags is None:
         return None
 
     if tags is None:
@@ -65,10 +75,12 @@ def __inner_get__(
         if item.tags is None:
             item.tags = []
 
-        if item.id == id or (
-            all([item in item.tags for item in tag_set]) and len(tags) != 0
+        if item.id == name or (
+            all(item in item.tags for item in tag_set) and len(tags) != 0
         ):
             return item
+
+    return None
 
 
 def get(selector: str) -> Result[Item | Bone, Mishap]:
@@ -109,22 +121,20 @@ def get(selector: str) -> Result[Item | Bone, Mishap]:
     else:
         item_tags = enity_selector_list
 
-    item: Optional[Item] = __inner_get__(id=item_id, tags=item_tags)
+    item: Optional[Item] = __inner_get__(name=item_id, tags=item_tags)
 
-    if bone_id is None:
-        # add_to_selector_map(selector, item)
-        if item:
-            return Ok(item)
+    if item is None:
         return Err(Mishap(f"Couldn't find item: {selector}"))
 
-    if hasattr(item, "bones"):
-        # add_to_selector_map(selector, item.bones.get(bone_id))
+    if hasattr(item, "bones") and bone_id is not None:
         res = item.bones.get(bone_id)
 
-        if res == None:
+        if res is None:
             return Err(Mishap(f"Couldn't find item: {selector}"))
 
         return Ok(res)
+
+    return Ok(item)
 
 
 def get_all(tag: string) -> list[Item]:

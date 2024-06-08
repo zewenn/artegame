@@ -4,7 +4,7 @@ from brass.base import *
 # Import generic utilities
 from brass.gui import *
 from brass import pgapi, saves, scene
-from global_routines import round_manager
+from src.global_routines import round_manager
 
 FS = FONT_SIZE.MEDIUM
 
