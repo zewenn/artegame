@@ -1,7 +1,7 @@
 from brass.base import *
 from brass.gui import *
 
-from brass import pgapi, scene, saves, enums
+from brass import pgapi, scene, saves
 
 MENU: Optional[GUIElement] = None
 SHOWING: bool = False

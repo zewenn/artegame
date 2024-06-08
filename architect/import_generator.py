@@ -329,6 +329,18 @@ def serialise_imports():
             )
         )
 
+    with open(os.path.join(*conf.BASE_PATH[0:-1], "__init__.py"), "w", encoding="utf-8") as wf:
+        wf.write(
+            "\n".join(
+                [
+                    "from . import (",
+                    "\t" + conf.BASE_PATH[-1] + ",",
+                    "\t" + conf.MAIN_FILE_PATH[-1].replace(".py", ""),
+                    ")"
+                ]
+            )
+        )
+
     make_dir_walk(conf.PROJ_ENUMS_DIR_DIST_PATH)
     copy_directory(conf.MAIN_FILE_DIR, os.path.join(*conf.BASE_PATH))
     copy_directory(
