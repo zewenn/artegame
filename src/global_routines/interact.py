@@ -1,7 +1,7 @@
 from brass.base import *
 
 from brass import items, timeout, scene, enums, gui, pgapi
-from global_routines import effect_display, menus
+from . import effect_display, menus
 
 
 element_id = "InteractionShower"
@@ -41,8 +41,6 @@ def update() -> None:
 
 
 def show(text: string, prio: int = 0) -> None:
-    global element
-    global text_element
     global current_priority
 
     if prio < current_priority:

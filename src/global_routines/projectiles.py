@@ -3,17 +3,15 @@ from brass.base import *
 from brass import (
     vectormath,
     collision,
-    events,
     pgapi,
     items,
     animator,
     enums,
     timeout,
     scene,
-    audio,
-    timeout
+    audio
 )
-from global_routines import crowd_control, sounds
+from . import crowd_control, sounds
 
 PROJECTILES: list[Item] = []
 
@@ -46,7 +44,7 @@ def play(
             ],
         )
         animator.play(anim)
-        timeout.set(0.12, delete, (anim,))
+        timeout.new(0.12, delete, (anim,))
         return
 
     if anim == "get_stunned":
@@ -79,7 +77,7 @@ def play(
             ],
         )
         animator.play(anim)
-        timeout.set(0.12, delete, (anim,))
+        timeout.new(0.12, delete, (anim,))
         return
 
 
@@ -93,8 +91,6 @@ def awk() -> None:
 
 @scene.update(enums.scenes.GAME)
 def system_update() -> None:
-    global PROJECTILES
-
     for projectile in PROJECTILES:
         if pgapi.TIME.current > projectile.life_start + projectile.lifetime_seconds:
             rm_projectile(projectile)
@@ -130,7 +126,7 @@ def system_update() -> None:
                 if item.hitpoints > 0:
                     pnch = audio.clone(sounds.PUNCH)
                     audio.play(pnch, 1)
-                    timeout.set(
+                    timeout.new(
                         audio.get_length(pnch), audio.stop, (pnch,)
                     )
                     length = 0.1
@@ -145,7 +141,7 @@ def system_update() -> None:
                             effect.sleep_wait_time,
                             True,
                         )
-                    if play_name != None:
+                    if play_name is not None:
                         play(item, play_name, length)
                 rm_projectile(projectile)
 
@@ -169,7 +165,7 @@ def new(
     damage: Number,
     effects: list[Effect] = None,
 ) -> Item:
-    effects = [] if effects == None else effects
+    effects = [] if effects is None else effects
     return Item(
         id=f"Projectile-{uuid()}",
         tags=["projectile", "item"],

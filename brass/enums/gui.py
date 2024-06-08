@@ -1,4 +1,4 @@
-from base import *
+from ..base import *
 
 class FONT_SIZE:
     EXTRA_SMALL = 8
@@ -13,6 +13,7 @@ class FONTS:
     DEFAULT: str = "inter.ttf"
     INTER: str = "inter.ttf"
     PRESS_PLAY: str = "press_play.ttf"
+    JETBRAINSMONO: str = "JetBrainsMono.ttf"
 
 
 class COLOURS:

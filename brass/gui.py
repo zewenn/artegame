@@ -1,10 +1,13 @@
-from enums.gui import *
-import enums
-from base import *
-import collision
-import pgapi
-import copy
-import inpt
+from .base import *
+from .enums.gui import *
+
+from . import (
+    collision,
+    pgapi,
+    enums,
+    inpt
+)
+
 
 
 
@@ -35,7 +38,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
 
     try:
         num_res = attempt(float, (u[:-1],))
-    except Exception as e:
+    except:
         if typeof(u) in ["int", "float", "Number"]:
             num_res = Ok(u)
             u = str(u) + "x"
@@ -72,7 +75,7 @@ def unit(u: str, in_relation_to: float = None) -> float:
 
         case "%":
             return (
-                (in_relation_to if in_relation_to != None else 0)
+                (in_relation_to if in_relation_to is not None else 0)
                 * num
                 // 100
             )
@@ -95,23 +98,22 @@ def reset() -> None:
     buttons = []
 
 
-def get_element(id: str) -> Result[GUIElement, None]:
+def get_element(name: string) -> Result[GUIElement, None]:
     for el in query_available:
-        if el.id == id:
+        if el.id == name:
             return Ok(el)
     return Err(None)
 
 
 def add_parent(to: GUIElement, prnt: GUIElement) -> GUIElement:
-    if isinstance(to, str):
-        return to
+    if not isinstance(to, str):
+        to.parent = prnt
 
-    to.parent = prnt
     return to
 
 
 def Element(
-    id: str,
+    name: string,
     *children: GUIElement,
     style: Optional[StyleSheet] = None,
     hover: Optional[StyleSheet] = None,
@@ -121,14 +123,14 @@ def Element(
 
     if typeof(onclick) not in ["NoneType", "function", "compiled_function"]:
         unreachable(
-            f'"{id}": GUIElement\'s onclick is not of the required type!'
+            f'"{name}": GUIElement\'s onclick is not of the required type!'
             + "\n | Expected:\t[None, Callable[[], None]]"
             + f"\n | Type Given:\t{typeof(onclick)}"
         )
 
     styl = style if style else StyleSheet()
     this = GUIElement(
-        id=id,
+        id=name,
         children=list(children),
         style=styl,
         current_style=styl,
@@ -167,12 +169,8 @@ def Delete(el: GUIElement) -> None:
 DOM_El: Optional[GUIElement] = Element("DOM")
 
 
-def Text(t: str) -> str:
-    return t
-
 
 def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None:
-    global DOM_El
     DOM_El.children = children
     DOM_El.style = (
         style
@@ -184,7 +182,7 @@ def DOM(*children: GUIElement | str, style: Optional[StyleSheet] = None) -> None
 
 
 def system_update() -> None:
-    global hovering, buttons, selected_button_index
+    global hovering, selected_button_index
 
     displaying_buttons = [x for x in buttons if x.current_style.display == "block"]
 
@@ -209,7 +207,7 @@ def system_update() -> None:
             continue
 
         if el.current_style != el.style:
-            if hovering == None or hovering.id != el.id:
+            if hovering is None or hovering.id != el.id:
                 el.current_style = structured_clone(el.style)
 
         elstl = el.current_style
@@ -220,14 +218,14 @@ def system_update() -> None:
             el.current_style.display = parent_style.display
             # print(el.current_style.display)
 
-        if el.transform == None:
+        if el.transform is None:
             el.transform = Transform(Vec2(), Vec3(), Vec2())
 
         x, y = 0, 0
-        w = unit(elstl.width, unit(parent_style.width)) if elstl.width != None else 0
-        h = unit(elstl.height, unit(parent_style.height)) if elstl.height != None else 0
+        w = unit(elstl.width, unit(parent_style.width)) if elstl.width is not None else 0
+        h = unit(elstl.height, unit(parent_style.height)) if elstl.height is not None else 0
 
-        if elstl.position == None:
+        if elstl.position is None:
             y = next_no_pos_y
             next_no_pos_y += h
 
@@ -287,7 +285,7 @@ def system_update() -> None:
 
         if (
             collision.collides(mouse_transform, el.transform)
-            and hovering == None
+            and hovering is None
             and el.button
             and el.id != "DOM"
             and elstl.display != "none"
@@ -295,12 +293,14 @@ def system_update() -> None:
             hovering = el
             continue
 
-    if hovering == None:
+    if hovering is None:
         if len(displaying_buttons) == 0 or selected_button_index >= len(
             displaying_buttons
         ):
             selected_button_index = 0
             return
+        
+        assert isinstance(selected_button_index, int)
 
         btn = displaying_buttons[selected_button_index]
 
@@ -315,7 +315,7 @@ def system_update() -> None:
         if merge_res.is_ok():
             btn.current_style = merge_res.ok()
 
-        if btn.onclick != None and inpt.active_bind(enums.keybinds.ACCEPT_MENU):
+        if btn.onclick is not None and inpt.active_bind(enums.keybinds.ACCEPT_MENU):
             btn.onclick()
 
         return

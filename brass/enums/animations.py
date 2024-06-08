@@ -1,4 +1,4 @@
-from animator import interpolation
+from ..animator import interpolation
 
 
 class MODES:

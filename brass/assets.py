@@ -1,10 +1,18 @@
-from base import *
-from enums.gui import FONT_SIZE
+from .enums.gui import FONT_SIZE
 from io import BytesIO
 import base64
 import pygame
 
-from src.b64_asset_ref_table import REFERENCE_TABLE as b64_ref_table
+from .base import *
+
+# pylint: disable=import-error, no-name-in-module
+# pyright: reportMissingImports=false
+from .temp.b64_asset_ref_table import REFERENCE_TABLE as original_b64_ref_table
+
+# pylint: enable=import-error
+
+
+b64_ref_table: dict[string, string] = original_b64_ref_table
 
 
 def load(name: string, base64_string: string, font_size=12):
@@ -33,20 +41,34 @@ ASSETS: dict[string, Surface | Audio | Font] = {}
 UT = TypeVar("UT", type[Surface], type[Audio], type[Font])
 
 
-def use(filename: string, T: Optional[UT] = None) -> UT:
+def use(filename: string, T_type: Optional[UT] = None) -> UT:
     res = ASSETS.get(filename)
 
-    if res == None:
+    if res is None:
         unreachable(f'Asset "{filename}" does not exist!')
-    
-    if T != None and type(res) != T:
-        unreachable(f'Asset "{filename}" cannot fit constaints: {T}')
+
+    if T_type is not None and isinstance(res, T_type):
+        unreachable(f'Asset "{filename}" cannot fit constaints: {T_type}')
 
     return res
 
 
 def create_runtime_objects(ratio: int = 1):
     for filename, b64_value in b64_ref_table.items():
+
+        # if (
+        #     not filename.endswith(".mp3")
+        #     or not filename.endswith(".wav")
+        #     or not filename.endswith(".png")
+        #     or not filename.endswith(".ttf")
+        # ):
+            
+        #     unreachable(
+        #         f"Invalid file type: " + "'." + filename.split(".")[1] + "'"
+        #         if "." in filename
+        #         else filename
+        #     )
+
         if not filename.endswith(".ttf"):
             ASSETS[filename] = load(filename, b64_value)
             continue

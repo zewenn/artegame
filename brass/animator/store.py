@@ -1,18 +1,14 @@
-from base import *
+from ..base import *
 
 STORE: dict[string, AnimationGroup] = {}
 
-def add(id: string, anim: AnimationGroup) -> None:
-    global STORE
+def add(name: string, anim: AnimationGroup) -> None:
+    STORE[name] = anim
 
-    STORE[id] = anim
-
-def get(id: string) -> Result[AnimationGroup, Mishap]:
-    global STORE
-
-    query_res: Optional[AnimationGroup] = STORE.get(id)
+def get(name: string) -> Result[AnimationGroup, Mishap]:
+    query_res: Optional[AnimationGroup] = STORE.get(name)
 
     if query_res:
         return Ok(query_res)
     
-    Err(Mishap("Animation does not exist!"))
+    return Err(Mishap("Animation does not exist!"))

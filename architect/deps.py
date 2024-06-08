@@ -1,7 +1,9 @@
 # Dependency manager
 from typing import *
 import subprocess
-import sys, os, io, time
+import sys
+import os
+import time
 
 T = TypeVar("T")
 
@@ -20,6 +22,29 @@ def task(task_name: str):
         return res
 
     return wrap
+
+
+# @task("Delete Files")
+def delete_files_in_directory(directory_path: list[str], display: bool = True):
+    make_dir_walk(directory_path)
+    directory_path = os.path.join(*directory_path)
+    try:
+        files = os.listdir(directory_path)
+        for index, filename in enumerate(files):
+            file_path: str = os.path.join(directory_path, filename)
+
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            if os.path.isdir(file_path):
+                delete_files_in_directory(file_path.split(os.sep), display=False)
+                os.rmdir(file_path)
+
+            if display:
+                progress_bar(index + 1, len(files), shorten(filename))
+        if display:
+            task_complete()
+    except OSError as e:
+        print("Error occurred while deleting files: \n", e)
 
 
 def progress_bar(at: int, top: int, msg: str) -> str:
@@ -148,7 +173,6 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
             longest_dep_name = dep
 
     for index, dep in enumerate(deps):
-        start = time.perf_counter()
         install_res = install(dep)
 
         if not install_res:
@@ -168,6 +192,8 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
     if failed:
         return Exception("deps was unable to install some packag(es).")
 
+    return None
+
 
 def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
     try:
@@ -179,3 +205,19 @@ def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
             return False, f"\tExit code: {x}"
     except Exception as e:
         return False, e
+
+
+def make_dir_walk(pth: list[str]) -> None:
+    if os.path.isdir(os.path.join(*pth)):
+        return
+
+    if "." in pth[-1]:
+        pth = pth[0:-1]
+
+    for index in range(len(pth)):
+        current = pth[0 : index + 1]
+
+        if os.path.isdir(os.path.join(*current)):
+            continue
+
+        os.mkdir(os.path.join(*current))

@@ -41,6 +41,6 @@ def summon(at: Transform, sprites: list[string], length: Number, anim_len: Numbe
         items.remove(effect)
         # del effect
 
-    timeout.set(length, del_obj, ())
+    timeout.new(length, del_obj, ())
 
     

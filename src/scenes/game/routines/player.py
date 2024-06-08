@@ -2,7 +2,7 @@ from brass.base import *
 
 
 # fmt: off
-from global_routines import (
+from src.global_routines import (
     projectiles,
     dash,
     crowd_control,
@@ -11,6 +11,7 @@ from global_routines import (
     interact,
     round_manager
 )
+from src.enums import keybinds
 
 from brass import (
     vectormath, 
@@ -20,9 +21,9 @@ from brass import (
     assets,
     audio,
     scene,
-    enums, 
     items, 
-    pgapi, 
+    pgapi,
+    enums, 
     inpt, 
     gui
 )
@@ -273,7 +274,7 @@ def init() -> None:
     player.dashes_remaining = player.dash_count
     player.last_dash_charge_refill = pgapi.TIME.current
 
-    if player.hitpoints == None:
+    if player.hitpoints is None:
         player.hitpoints = player.max_hitpoints
     if player.mana == None:
         player.mana = player.max_mana
@@ -329,28 +330,28 @@ def update() -> None:
     weapon_display_0.sprite = f"{player.weapon.id}_0.png"
     weapon_display_1.sprite = f"{player.weapon.id}_1.png"
 
-    if inpt.active_bind(enums.keybinds.SPELLS.SPELL1) and player.spells[0] != None:
-        spells.cast(player.spells[0], player)
+    if inpt.active_bind(keybinds.SPELLS.SPELL1) and player.spells[0] != None:
+        spells.fire(player.spells[0], player)
 
-    if inpt.active_bind(enums.keybinds.SPELLS.SPELL2) and player.spells[1] != None:
-        spells.cast(player.spells[1], player)
+    if inpt.active_bind(keybinds.SPELLS.SPELL2) and player.spells[1] != None:
+        spells.fire(player.spells[1], player)
 
     if collision.collides(player.transform, round_manager.MIXER_TRANSFORM):
         if round_manager.ROUND_STATE == "BoonSelection":
             interact.show("Mixer", 10000)
-            if inpt.active_bind(enums.keybinds.INTERACT):
+            if inpt.active_bind(keybinds.INTERACT):
                 boons.show_boon_menu()
     else:
         interact.hide(10000)
 
     if round_manager.ROUND_STATE == "Wait":
         interact.show("Következő kör", 10000)
-        if inpt.active_bind(enums.keybinds.INTERACT):
+        if inpt.active_bind(keybinds.INTERACT):
             round_manager.start_round()
             round_manager.ROUND_STATE = "Fight"
             interact.hide(10000)
 
-    if inpt.active_bind(enums.keybinds.PLAYER_WEAPON_SWITCH):
+    if inpt.active_bind(keybinds.PLAYER_WEAPON_SWITCH):
         if player.weapon.id == player.weapons[0].id:
             player.weapon = player.weapons[1]
             player.base_attack_speed = default_attack_speed
@@ -384,8 +385,8 @@ def update() -> None:
             else player_plates_attack_anim
         )
 
-        light_attacking = inpt.active_bind(enums.keybinds.PLAYER_LIGHT_ATTACK)
-        heavy_attacking = inpt.active_bind(enums.keybinds.PLAYER_HEAVY_ATTACK)
+        light_attacking = inpt.active_bind(keybinds.PLAYER_LIGHT_ATTACK)
+        heavy_attacking = inpt.active_bind(keybinds.PLAYER_HEAVY_ATTACK)
 
         if light_attacking and player.dashing and can_attack:
             animator.play(attack_anim)
@@ -407,7 +408,7 @@ def update() -> None:
             )
 
             can_attack = False
-            timeout.set((1 / player.attack_speed), allow_attack, ())
+            timeout.new((1 / player.attack_speed), allow_attack, ())
 
         elif light_attacking and can_attack:
             animator.play(attack_anim)
@@ -430,7 +431,7 @@ def update() -> None:
             crowd_control.apply(player, "root", 0.1)
 
             can_attack = False
-            timeout.set((1 / player.attack_speed), allow_attack, ())
+            timeout.new((1 / player.attack_speed), allow_attack, ())
 
         elif heavy_attacking and can_attack and not player.dashing:
             animator.play(attack_anim)
@@ -451,12 +452,12 @@ def update() -> None:
             crowd_control.apply(player, "root", 0.25)
 
             can_attack = False
-            timeout.set((1 / player.attack_speed) * 2, allow_attack, ())
+            timeout.new((1 / player.attack_speed) * 2, allow_attack, ())
 
     if player.hitpoints <= 0:
         player.hitpoints = 0
         scene.pause()
-        timeout.set(1, scene.load, (enums.scenes.DEFEAT,))
+        timeout.new(1, scene.load, (enums.scenes.DEFEAT,))
 
     if player.mana < 0:
         player.mana = 0
@@ -583,7 +584,7 @@ def move_player() -> None:
     #     audio.fade_out(walk_sound, 100)
 
     if (
-        inpt.active_bind(enums.keybinds.PLAYER_DASH)
+        inpt.active_bind(keybinds.PLAYER_DASH)
         and player.dashes_remaining > 0
         and (move_math_vec.end.x != 0 or move_math_vec.end.y != 0)
         and (player.can_move or can_dash)

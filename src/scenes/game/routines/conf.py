@@ -10,6 +10,7 @@ from brass import (
     animator,
     assets
 )
+from src.enums import keybinds
 # fmt: on
 
 
@@ -20,29 +21,29 @@ def spawn() -> None:
     # print(pgapi.SETTINGS.background_size)
 
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_DASH,
+        keybinds.PLAYER_DASH,
         [{"space"}, {"a@ctrl#0"}, {"shoulder-left@ctrl#0"}],
         "down",
     )
     inpt.bind_buttons(
-        enums.keybinds.INTERACT,
+        keybinds.INTERACT,
         [{"f"}, {"b@ctrl#0"}],
         "down",
     )
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_WEAPON_SWITCH,
+        keybinds.PLAYER_WEAPON_SWITCH,
         [{"tab"}, {"shoulder-right@ctrl#0"}],
         "down",
     )
-    inpt.bind_buttons(enums.keybinds.SPELLS.SPELL1, [{"q"}, {"x@ctrl#0"}], "down")
-    inpt.bind_buttons(enums.keybinds.SPELLS.SPELL2, [{"e"}, {"y@ctrl#0"}], "down")
+    inpt.bind_buttons(keybinds.SPELLS.SPELL1, [{"q"}, {"x@ctrl#0"}], "down")
+    inpt.bind_buttons(keybinds.SPELLS.SPELL2, [{"e"}, {"y@ctrl#0"}], "down")
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_LIGHT_ATTACK,
+        keybinds.PLAYER_LIGHT_ATTACK,
         [{"left@mouse"}, {"right-trigger@ctrl#0"}],
         "down",
     )
     inpt.bind_buttons(
-        enums.keybinds.PLAYER_HEAVY_ATTACK,
+        keybinds.PLAYER_HEAVY_ATTACK,
         [{"right@mouse"}, {"left-trigger@ctrl#0"}],
         "down",
     )

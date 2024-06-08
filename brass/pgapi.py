@@ -1,7 +1,7 @@
-from base import *
+from .base import *
+from . import assets
 
 import pygame._sdl2.controller as pycontroller
-import assets
 import time
 
 
@@ -23,7 +23,7 @@ last_fps = time.perf_counter()
 
 
 def use(settings: ApplicationSettings):
-    global SETTINGS, SCREEN, CLOCK, CAMERA, CONTROLLERS, GUI_PIXEL_RATIO
+    global SETTINGS, SCREEN, CLOCK, CAMERA, GUI_PIXEL_RATIO
 
     if settings.max_fps > 240:
         settings.max_fps = 240
@@ -57,8 +57,6 @@ def use(settings: ApplicationSettings):
 
 
 def system_camera() -> None:
-    global NEXT_CAMERA_POS
-
     if NEXT_CAMERA_POS is None:
         return
 
@@ -67,8 +65,6 @@ def system_camera() -> None:
 
 
 def set_screen_mode() -> None:
-    global SCREEN
-
     SCREEN.this = pygame.display.set_mode(
         size=(SCREEN.size.x, SCREEN.size.y),
         flags=SCREEN.flags,
@@ -77,21 +73,16 @@ def set_screen_mode() -> None:
 
 
 def set_screen_flags(to: int) -> None:
-    global SCREEN
-
     SCREEN.flags = to
     set_screen_mode()
 
 
 def set_screen_size(to: Vec2):
-    global SCREEN
-
     SCREEN.size = to
     set_screen_mode()
 
 
 def get_screen_size() -> Vec2:
-    global SCREEN
     return SCREEN.size
 
 
@@ -111,18 +102,14 @@ def get_fps() -> Optional[float]:
 
 
 def as_menu() -> None:
-    global SETTINGS
-
-    if SETTINGS == None:
+    if SETTINGS is None:
         return
 
     SETTINGS.menu_mode = True
 
 
 def use_background(surf: Surface, size: Optional[Vec2] = None) -> None:
-    global SETTINGS
-
-    if size != None:
+    if size is not None:
         surf = pygame.transform.scale(surf, (size.x, size.y))
     
     SETTINGS.background_image = surf
@@ -130,6 +117,7 @@ def use_background(surf: Surface, size: Optional[Vec2] = None) -> None:
     SETTINGS.background_size = Vec2(surf.get_width(), surf.get_height())
 
 
-def exit() -> Never:
+def end() -> Never:
     global RUN
     RUN = False
+    

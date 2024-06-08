@@ -1,8 +1,7 @@
-from base import *
+from .base import *
 
-import vectormath
-import pgapi
-import enums
+from . import vectormath, pgapi, enums
+
 
 controller_codes: dict[str, int] = {
     # normals
@@ -140,13 +139,14 @@ def get_button(key: str) -> bool | int:
     """
 
     def resolve(value):
-        if bool(value) == True and key in keys_down:
+        if bool(value) is True and key in keys_down:
             return value
 
-        elif bool(value) == True:
+        if bool(value) is True:
             keys_down.append(key)
+            return value
 
-        elif key in keys_down:
+        if key in keys_down:
             keys_down.remove(key)
 
         return value
@@ -168,10 +168,10 @@ def get_button(key: str) -> bool | int:
 
         if device[0] == "2":
             return resolve(controller.get_button(event))
-        
+
         r = controller.get_axis(event)
         ar = abs(r)
-        
+
         if ar > pgapi.SETTINGS.axis_rounding or (
             key in ["right-trigger@ctrl#0", "left-trigger@ctrl#0"]
             and ar > pgapi.SETTINGS.axis_rounding * 0.3
@@ -203,7 +203,6 @@ def get_button_down(key: str) -> bool:
 
 
 def get_button_up(key: str) -> bool:
-    global last_keys_down_len
     """Checks for button release
 
     Args:
@@ -226,24 +225,32 @@ def get_button_up(key: str) -> bool:
 
 
 def any_button() -> bool:
-    global last_keys_down_len
-    """_summary_
+    """
+    ## `[UNDOCUMENTED]`
+    This function has not been documented yet!
+    Be careful using it!
 
     Returns:
         bool: _description_
     """
+
     if len(keys_down) > 0:
         return True
     return False
 
 
 def any_button_down() -> bool:
-    global last_keys_down_len
-    """_summary_
+    """
+    ## `[UNDOCUMENTED]`
+    This function has not been documented yet!
+    Be careful using it!
 
     Returns:
         bool: _description_
     """
+
+    global last_keys_down_len
+
     if len(keys_down) > last_keys_down_len:
         last_keys_down_len = len(keys_down)
         return True
@@ -253,17 +260,21 @@ def any_button_down() -> bool:
 
 
 def any_button_up() -> bool:
-    global last_keys_down_len
-    """_summary_
+    """
+    ## `[UNDOCUMENTED]`
+    This function has not been documented yet!
+    Be careful using it!
 
     Returns:
         bool: _description_
     """
-    if len(keys_down) < last_keys_down_len:
+
+    global last_keys_down_len
+
+    if len(keys_down) != last_keys_down_len:
         last_keys_down_len = len(keys_down)
         return True
-    elif len(keys_down) > last_keys_down_len:
-        last_keys_down_len = len(keys_down)
+    
     return False
 
 
@@ -299,7 +310,7 @@ def vertical(controller: int = 0) -> Literal[1, 0, -1]:
 def bind_buttons(
     name: str,
     key_set_list: list[set[str]],
-    T: Optional[Literal["down", "up"]] = None,
+    T_type: Optional[Literal["down", "up"]] = None,
 ) -> None:
     if bind_cache.get(name):
         # print(f"[Warn] Couldn't overwrite bind: {name}")
@@ -307,18 +318,20 @@ def bind_buttons(
 
     def bindf():
         getfn: Callable[[str], bool]
-        if T == None:
+        if T_type is None:
             getfn = get_button
-        elif T == "down":
+        elif T_type == "down":
             getfn = get_button_down
-        elif T == "up":
+        elif T_type == "up":
             getfn = get_button_up
 
         all_down_any = False
 
+        # pylint: disable=consider-using-enumerate
         for i in range(len(key_set_list)):
-            if type(key_set_list[i]) is str:
+            if isinstance(key_set_list[i], str):
                 key_set_list[i] = set([key_set_list[i]])
+        # pylint: enable=consider-using-enumerate
 
         for _set in key_set_list:
             set_good = 0

@@ -5,20 +5,21 @@ from brass.base import *
 # fmt: off
 from brass import (
     vectormath,
-    enums, 
     items, 
     pgapi, 
     audio,
     assets,
+    enums,
     inpt, 
     gui
 )
-from global_routines import (
+from src.global_routines import (
     menus,
     enemies,
     sounds,
     round_manager
 )
+from src.enums import keybinds
 # fmt: on
 
 
@@ -29,8 +30,8 @@ from global_routines import (
 
 # Runs every frame
 def update() -> None:
-    if inpt.active_bind(enums.keybinds.SHOW_PAUSE_MENU) or (
-        menus.is_showing("GameMenu") and inpt.active_bind(enums.keybinds.BACK)
+    if inpt.active_bind(enums.base_keybinds.SHOW_PAUSE_MENU) or (
+        menus.is_showing("GameMenu") and inpt.active_bind(enums.base_keybinds.BACK)
     ):
         menus.toggle("GameMenu")
 

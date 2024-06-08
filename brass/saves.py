@@ -1,16 +1,17 @@
-from base import *
+from .base import *
 
 from copy import deepcopy
 from result import *
 import zenyx
-import pgapi
-import items
-import gui
+from . import (
+    pgapi,
+    items,
+    gui
+)
 import os
 
-
-def path(path: str) -> str:
-    pth: list[str] = path.split("/")
+def path(pth_string: str) -> str:
+    pth: list[str] = pth_string.split("/")
 
     for index, pth_part in enumerate(pth):
         if pth_part == "~":
@@ -28,7 +29,7 @@ def create_save_dir() -> Result[None, Mishap]:
     global SAVES_DIR
 
     try:
-        if SAVES_DIR == None:
+        if SAVES_DIR is None:
             SAVES_DIR = (
                 path(pgapi.SETTINGS.demo_save_path)
                 if pgapi.SETTINGS.is_demo
@@ -67,7 +68,7 @@ def load() -> Result[None, Mishap]:
             return Err(Mishap("Couldn't create the save dir!", True))
 
     item_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "items.json")
-    gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
+    # gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
 
     items_loaded: Result[list[Item], Mishap] = attempt(
         zenyx.pyon.load, (item_file,)
@@ -91,7 +92,7 @@ def load() -> Result[None, Mishap]:
 def delete_files_in_directory(directory_path):
     try:
         files = os.listdir(directory_path)
-        for index, filename in enumerate(files):
+        for filename in files:
             file_path = os.path.join(directory_path, filename)
 
             if os.path.isfile(file_path):
@@ -121,7 +122,7 @@ def save() -> Result[None, Mishap]:
             return Err(Mishap("Couldn't create the save dir!", True))
 
     item_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "items.json")
-    gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
+    # gui_file = os.path.join(SAVES_DIR, f"slot_{SLOT}", "gui.json")
 
     zenyx.pyon.dump(deepcopy(items.rendering), item_file)
     # IF YOU ENABLE THIS IT WON'T HELP

@@ -1,4 +1,4 @@
-from base import *
+from ..base import *
 
 # fmt: off
 from . import (
@@ -7,11 +7,14 @@ from . import (
     store
 )
 
-import pgapi
-import enums
-import items
-import time
+from .. import(
+    pgapi,
+    enums,
+    items,
+)
 # fmt: on
+
+import time
 
 
 # --------------------------- Public ---------------------------
@@ -29,8 +32,8 @@ def reset() -> None:
     playing_groups = {}
 
 
-def reset_anim(id: string) -> None:
-    for anim in playing_groups[id].group.animations:
+def reset_anim(identifier: string) -> None:
+    for anim in playing_groups[identifier].group.animations:
         render_keyframe(anim.target, list(anim.keyframes.values())[0])
 
 
@@ -83,12 +86,12 @@ def tick_anims() -> None:
     # del finished
     finished = []
 
-    for id, play_obj in list(playing_groups.items()):
+    for identifier, play_obj in list(playing_groups.items()):
         if play_obj is None:
             continue
 
         if play_obj.finished:
-            finished.append((id, play_obj))
+            finished.append((identifier, play_obj))
             continue
 
         finished_count = 0
@@ -102,7 +105,7 @@ def tick_anims() -> None:
                 continue
 
             if pgapi.TIME.current > anim.end_time:
-                if not play_objects.next(play_obj, anim):
+                if not play_objects.next_keframe(play_obj, anim):
                     continue
 
             interpolation_factor = (pgapi.TIME.current - anim.start_time) / (
@@ -123,11 +126,11 @@ def tick_anims() -> None:
         if finished_count == len(play_obj.anims):
             play_obj.finished = True
 
-    for id, po in finished:
+    for identifier, po in finished:
         if po.group.mode == enums.animations.MODES.NORMAL:
-            reset_anim(id)
-        del playing_groups[id]
-        del po
+            reset_anim(identifier)
+        del playing_groups[identifier]
+    del finished[::]
     del finished
 
 
@@ -137,7 +140,7 @@ def play(anim: AnimationGroup) -> None:
 
 
 def stop(anim: AnimationGroup) -> None:
-    if playing_groups.get(anim.id) == None:
+    if playing_groups.get(anim.id) is None:
         return
 
     if playing_groups[anim.id].group.mode == enums.animations.MODES.NORMAL:
@@ -166,36 +169,36 @@ def render_keyframe(target: str, keyframe: Keyframe) -> None:
         return
 
     if isinstance(target_obj, Bone):
-        if keyframe.anchor_x != None:
+        if keyframe.anchor_x is not None:
             target_obj.anchor.x = keyframe.anchor_x
-        if keyframe.anchor_y != None:
+        if keyframe.anchor_y is not None:
             target_obj.anchor.y = keyframe.anchor_y
 
-    if keyframe.sprite != None:
+    if keyframe.sprite is not None:
         target_obj.sprite = keyframe.sprite
 
-    if keyframe.fill_color != None:
+    if keyframe.fill_color is not None:
         target_obj.fill_color = keyframe.fill_color
 
-    if keyframe.position_x != None:
+    if keyframe.position_x is not None:
         target_obj.transform.position.x = keyframe.position_x
 
-    if keyframe.position_y != None:
+    if keyframe.position_y is not None:
         target_obj.transform.position.y = keyframe.position_y
 
-    if keyframe.rotation_x != None:
+    if keyframe.rotation_x is not None:
         target_obj.transform.rotation.x = keyframe.rotation_x
 
-    if keyframe.rotation_y != None:
+    if keyframe.rotation_y is not None:
         target_obj.transform.rotation.y = keyframe.rotation_y
 
-    if keyframe.rotation_z != None:
+    if keyframe.rotation_z is not None:
         target_obj.transform.rotation.z = keyframe.rotation_z
 
-    if keyframe.width != None:
+    if keyframe.width is not None:
         target_obj.transform.scale.x = keyframe.width
 
-    if keyframe.height != None:
+    if keyframe.height is not None:
         target_obj.transform.scale.y = keyframe.height
 
 

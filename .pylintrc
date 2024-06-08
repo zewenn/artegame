@@ -1,0 +1,34 @@
+
+[MAIN]
+
+py-version = 3.11.9
+
+disable = 
+    missing-docstring,
+    wildcard-import,
+    unused-import,
+    unused-wildcard-import,
+    trailing-whitespace,
+    wrong-import-order,
+    broad-exception-caught,
+    broad-exception-raised,
+    f-string-without-interpolation,
+    invalid-name,
+    global-statement,
+    c-extension-no-member,
+    too-few-public-methods,
+    no-member,
+    trailing-newlines,
+    bare-except,
+    too-many-branches,
+    too-many-statements,
+    assignment-from-none,
+    no-self-argument,
+    ungrouped-imports,
+    line-too-long,
+    too-many-lines,
+    too-many-arguments
+
+[VARIABLES]
+
+init-import=no

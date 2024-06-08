@@ -1,17 +1,9 @@
 from brass.base import *
 
-from brass import (
-    scene,
-    enums,
-    assets,
-    events,
-    timeout,
-    pgapi,
-    items,
-    collision,
-    animator
-)
-from global_routines import crowd_control, projectiles, effect_display
+from src import enums
+
+from brass import scene, assets, events, timeout, pgapi, items, collision, animator
+from . import crowd_control, projectiles, effect_display
 
 
 SPELL_DICT: Dict[string, Callable[[Spell, Item, Number], None]] = {}
@@ -27,36 +19,35 @@ def spell(name: string | Spell):
     return decorator
 
 
-def cast(spell: Spell, item: Item) -> None:
-    global SPELL_DICT
-    spell_fn = SPELL_DICT.get(spell.name)
+def fire(spell_object: Spell, item: Item) -> None:
+    spell_fn = SPELL_DICT.get(spell_object.name)
 
     if not spell_fn:
         return
 
-    if item.mana < spell.mana_cost:
+    if item.mana < spell_object.mana_cost:
         return
 
     if (
-        spell.cooldown_start == None
-        or spell.cooldown_start + spell.cooldown < pgapi.TIME.current
+        spell_object.cooldown_start is None
+        or spell_object.cooldown_start + spell_object.cooldown < pgapi.TIME.current
     ):
-        spell.cooldown_start = pgapi.TIME.current
+        spell_object.cooldown_start = pgapi.TIME.current
     else:
         return
 
-    item.mana -= spell.mana_cost
+    item.mana -= spell_object.mana_cost
 
     def clear_cd_start():
-        spell.cooldown_start = None
+        spell_object.cooldown_start = None
 
-    spell_fn(spell, item, spell.effectiveness)
-    timeout.set(spell.cooldown, clear_cd_start, ())
+    spell_fn(spell_object, item, spell_object.effectiveness)
+    timeout.new(spell_object.cooldown, clear_cd_start, ())
 
 
-@spell(enums.spells.HEALING)
-def __spell_fn_heal(this: Spell, item: Item, effectiveness: Number) -> None:
-    if item.hitpoints == None:
+@spell(enums.spell_enum.HEALING)
+def __spell_fn_heal(_: Spell, item: Item, effectiveness: Number) -> None:
+    if item.hitpoints is None:
         return
 
     last_hp = item.hitpoints
@@ -78,19 +69,24 @@ def __spell_fn_heal(this: Spell, item: Item, effectiveness: Number) -> None:
             item.hitpoints = item.max_hitpoints
             return
 
-        timeout.set(1, heal, ())
-        effect_display.summon(item.transform, [
-            "heal_effect_0.png",
-            "heal_effect_1.png",
-            "heal_effect_0.png",
-            # "heal_effect_2.png",
-        ], 1, .5)
+        timeout.new(1, heal, ())
+        effect_display.summon(
+            item.transform,
+            [
+                "heal_effect_0.png",
+                "heal_effect_1.png",
+                "heal_effect_0.png",
+                # "heal_effect_2.png",
+            ],
+            1,
+            0.5,
+        )
 
     heal()
 
 
-@spell(enums.spells.HASTE)
-def __spell_fn_haste(this: Spell, item: Item, effectiveness: Number) -> None:
+@spell(enums.spell_enum.HASTE)
+def __spell_fn_haste(_: Spell, item: Item, effectiveness: Number) -> None:
     if not item.movement_speed or not item.attack_speed:
         return
 
@@ -101,11 +97,11 @@ def __spell_fn_haste(this: Spell, item: Item, effectiveness: Number) -> None:
     item.movement_speed *= effectiveness
     item.attack_speed *= effectiveness
 
-    timeout.set(5, reset, ())
+    timeout.new(5, reset, ())
 
 
-@spell(enums.spells.GOLIATH)
-def __spell_fn_goliath(this: Spell, item: Item, effectiveness: Number) -> None:
+@spell(enums.spell_enum.GOLIATH)
+def __spell_fn_goliath(_: Spell, item: Item, effectiveness: Number) -> None:
     if not item.transform or not item.max_hitpoints:
         return
 
@@ -122,11 +118,11 @@ def __spell_fn_goliath(this: Spell, item: Item, effectiveness: Number) -> None:
     item.max_hitpoints *= effectiveness * 1.5
     item.hitpoints *= effectiveness * 1.5
 
-    timeout.set(15, reset, ())
+    timeout.new(15, reset, ())
 
 
-@spell(enums.spells.Zzzz)
-def __spell_fn_Zzzz(this: Spell, item: Item, effectiveness: Number) -> None:
+@spell(enums.spell_enum.Zzzz)
+def __spell_fn_Zzzz(_: Spell, item: Item, _2: Number) -> None:
     trs: Transform = structured_clone(item.transform)
 
     trs.position.x -= trs.scale.x
@@ -169,4 +165,4 @@ def __spell_fn_Zzzz(this: Spell, item: Item, effectiveness: Number) -> None:
     projectiles.shoot(proj)
     animator.play(anim)
 
-    timeout.set(duration + 0.02, delete, (anim,))
+    timeout.new(duration + 0.02, delete, (anim,))

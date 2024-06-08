@@ -1,13 +1,15 @@
-from base import *
+from .base import *
 
 import threading
-import pgapi
-from assets import ASSETS
-from gui import *
+from . import (
+    pgapi,
+    items,
+    events
+)
+from .assets import ASSETS
+from .gui import *
 import pygame
 import math
-import items
-import events
 
 DIRTY_RECTS: list[pygame.Rect] = []
 
@@ -16,7 +18,7 @@ SURFACE_CHACHE: dict[string, Surface] = {}
 
 
 def is_same_transform(a: Transform, b: Transform) -> bool:
-    if a == None or b == None:
+    if a is None or b is None:
         return False
 
     if (
@@ -66,15 +68,13 @@ def calculate_transform_cache(item: Item) -> None:
 
 
 def render_item(item: Item):
-    global SURFACE_CHACHE
-
     if item.transform is None or (item.sprite is None and item.fill_color is None):
         return
 
     same_transform: bool = is_same_transform(item.transform, item.transform_cache)
 
     if (
-        SURFACE_CHACHE.get(item.uuid) == None
+        SURFACE_CHACHE.get(item.uuid) is None
         or not same_transform
         or item.sprite != item.sprite_cache
     ):
@@ -222,7 +222,9 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
 
     # Create image surface
     if not elstl.bg_image:
+        # pylint: disable=no-member
         image = attempt(pygame.Surface, ((w, h), pygame.SRCALPHA))
+        # pylint: enable=no-member
 
         if image.is_err():
             print(image.err().msg)
@@ -319,9 +321,8 @@ def render_items() -> None:
 
 def render():
     global DIRTY_RECTS
-
     # render_background(BACKGROUND, NUM_TILES_X)
-    if pgapi.SETTINGS.background_image != None:
+    if pgapi.SETTINGS.background_image is not None:
         DIRTY_RECTS.append(
             pgapi.SCREEN.this.blit(
                 pgapi.SETTINGS.background_image,

@@ -1,7 +1,7 @@
-from base import *
+from .base import *
 
 from dataclasses import fields
-import math, copy
+import math
 
 
 def get_Vec2_distcance(point1: Vec2, point2: Vec2):
@@ -214,7 +214,8 @@ def dot_product(mv1: CompleteMathVector, mv2: CompleteMathVector) -> float:
     Returns:
         float: the dot product
     """
-    displacement = Vec2(x=(mv1.start.x - mv2.start.x), y=(mv1.start.y - mv2.start.y))
+
+    displacement = Vec2(x=mv1.start.x - mv2.start.x, y=mv1.start.y - mv2.start.y)
 
     mv1_a = Vec2(mv1.end.x - displacement.x, mv1.end.y - displacement.y)
 
@@ -241,7 +242,7 @@ def normalise(mv: CompleteMathVector) -> CompleteMathVector:
     return divide(mv, mv.magnitude)
 
 
-def limit(mv: CompleteMathVector, limit: float) -> CompleteMathVector:
+def limit(mv: CompleteMathVector, max_magnitude: float) -> CompleteMathVector:
     """Limits the magnitude of the vector
 
     Args:
@@ -251,12 +252,12 @@ def limit(mv: CompleteMathVector, limit: float) -> CompleteMathVector:
     Returns:
         CompleteMathVector: the updated vector
     """
-    if mv.magnitude <= limit:
+    if mv.magnitude <= max_magnitude:
         return cloning.MathVector(mv)
 
     return new(
         start=cloning.Vector2(mv.start),
-        magnitude=limit,
+        magnitude=max_magnitude,
         direction=mv.direction,
     )
 

@@ -1,7 +1,9 @@
 from types import UnionType
 from zenyx import printf
-from structures import *
 from uuid import uuid4
+
+from .structures import *
+
 import inspect
 import copy
 import time
@@ -17,7 +19,7 @@ T = TypeVar("T")
 K = TypeVar("K")
 
 
-class DummyFile(object):
+class DummyFile:
     def write(self, x):
         pass
 
@@ -62,11 +64,6 @@ def attempt(func: Callable[..., T], args: Tuple = ()) -> Result[T, Mishap]:
         return Err(Mishap(" ".join([str(x) for x in e.args]), True))
 
 
-def call(fn: Callable[..., T], args: Tuple) -> None:
-    res = fn(*args)
-    del res
-
-
 def caller(fn: Callable[..., T], args: Tuple) -> None:
     def wrap() -> None:
         res = fn(*args)
@@ -76,7 +73,7 @@ def caller(fn: Callable[..., T], args: Tuple) -> None:
 
 
 @silence
-def quit() -> Never:
+def exception_quit() -> Never:
     raise Exception("Quit")
 
 
@@ -88,25 +85,25 @@ def unreachable(msg: str) -> Never:
     )
     printf(f"\n@!Error Message:$&\n{msg}")
     printf()
-    quit()
+    exception_quit()
 
 
 def typeof(a: Any) -> str:
     return str(a.__class__.__name__)
 
 
-def istype(a: Any, T: type) -> bool:
-    if isinstance(a, T):
+def istype(a: Any, T_type: type) -> bool:
+    if isinstance(a, T_type):
         return True
 
-    if type(a) == T:
+    if isinstance(a, T_type):
         return True
 
     try:
-        if a.__name__ == T.__name__:
+        if a.__name__ == T_type.__name__:
             return True
     except AttributeError:
-        if a.__class__.__name__ == T.__name__:
+        if a.__class__.__name__ == T_type.__name__:
             return True
 
     return False
@@ -131,15 +128,17 @@ def merge(a: T, b: T) -> Result[T, Mishap]:
     dict_a: dict[str, Any] = structured_clone(a.__dict__)
     dict_b: dict[str, Any] = structured_clone(b.__dict__)
 
-    constructor: T = a.__class__
+    constructor: Callable[..., T] = a.__class__
 
     for key, value in dict_b.items():
-        if value == None:
+        if value is None:
             continue
 
         dict_a[key] = value
 
-    return Ok(constructor(**dict_a))
+    res: T = constructor(**dict_a)
+
+    return Ok(res)
 
 
 class Piper(Generic[T, K]):

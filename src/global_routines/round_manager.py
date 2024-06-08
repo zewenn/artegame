@@ -1,7 +1,7 @@
 from brass.base import *
 
 from brass import items, timeout, scene, enums, gui, pgapi, saves
-from global_routines import effect_display, menus, enemies
+from . import effect_display, menus, enemies
 
 import random
 
@@ -14,8 +14,6 @@ round_display_el: Optional[GUIElement] = None
 
 
 def get_random_spawn_pos() -> Vec2:
-    global player
-
     x = random.randint(
         -pgapi.SETTINGS.background_size.x / 2, pgapi.SETTINGS.background_size.x / 2
     )
@@ -45,7 +43,6 @@ def get_random_spawn_pos() -> Vec2:
 
 
 def spawn_melee() -> None:
-    global ROUND
     enemies.new(
         Item(
             id="enemy:" + uuid(),
@@ -71,7 +68,6 @@ def spawn_melee() -> None:
 
 
 def spawn_ranged() -> None:
-    global ROUND
     enemies.new(
         Item(
             id="enemy:" + uuid(),
@@ -152,7 +148,7 @@ def init() -> None:
 
 @scene.update(enums.scenes.GAME)
 def update() -> None:
-    global ROUND_STATE, round_display_el
+    global ROUND_STATE
 
     ens = items.get_all("enemy")
 
