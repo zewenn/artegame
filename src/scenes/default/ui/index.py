@@ -9,12 +9,13 @@ FS = FONT_SIZE.MEDIUM
 
 
 def title_button(
-    id: str, content: string, top: Number = 0, fn: Callable[..., None] = None
+    name: str, content: string, top: Number = 0, fn: Callable[..., None] = None
 ):
-    top = f"{top}x"
+
+    content = " " + content + " "
 
     return Element(
-        id,
+        name,
         Text(content),
         style=StyleSheet(
             position=POSITION.RELATIVE,
@@ -22,14 +23,16 @@ def title_button(
             width=f"{len(content) * FS}x",
             height=f"{FS * 1.25}x",
             left=f"-{len(content) * FS / 2}x",
-            top=top,
+            top=f"{top}x",
             font_size=FS,
             font_family=FONTS.PRESS_PLAY,
             # bg_color=COLOURS.RED
         ),
         hover=StyleSheet(
-            color=COLOURS.LIGHTBLUE,
+            # color=COLOURS.LIGHTBLUE,
             font_variant=["bold", "italic"],
+            color=COLOURS.BLACK,
+            bg_color=COLOURS.WHITE
         ),
         is_button=True,
         onclick=fn,
@@ -45,8 +48,6 @@ def load_game_scene() -> None:
 def awake() -> None:
     gap = 40
 
-    title_card_len = len("| | | | |  | ||  __/ (_| | (_| | | | | | |  __/")
-
     # DOM creates a new document object model
     DOM(
         Element(
@@ -57,7 +58,7 @@ def awake() -> None:
                 top="0x",
                 width="100w",
                 height="100h",
-                bg_image="background.png",
+                bg_image="background2.png",
             ),
             is_button=False,
         ),
@@ -77,22 +78,15 @@ def awake() -> None:
             "TitleCard",
             Element(
                 "TitleCard Text",
-                Text("  ___       _"),
-                Text(" / _ \     | |"),
-                Text("/ /_\ \_ __| |_ ___  __ _  __ _ _ __ ___   ___ "),
-                Text("|  _  | '__| __/ _ \/ _` |/ _` | '_ ` _ \ / _ \\"),
-                Text("| | | | |  | ||  __/ (_| | (_| | | | | | |  __/"),
-                Text("\_| |_/_|   \__\___|\__, |\__,_|_| |_| |_|\___|"),
-                Text("                     __/ |   "),
-                Text("                    |___/   "),
                 style=StyleSheet(
                     font_family=FONTS.PRESS_PLAY,
                     position=POSITION.RELATIVE,
-                    width=f"{title_card_len * FS}x",
-                    left=f"-{title_card_len * FS / 2}x",
-                    height=f"{FS * 8}x",
+                    width=f"512x",
+                    left=f"-256x",
+                    height=f"128x",
                     top="0x",
                     font_size=FS,
+                    bg_image="artegame_goofy_logo.png"
                     # bg_color=COLOURS.RED
                 ),
             ),

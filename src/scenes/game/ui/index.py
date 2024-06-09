@@ -17,28 +17,30 @@ def back_to_main_menu() -> None:
 
 
 def title_button(
-    id: str, content: string, top: Number = 0, fn: Callable[..., None] = None
+    name: str, content: string, top: Number = 0, fn: Callable[..., None] = None
 ):
-    top = f"{top}x"
+
+    content = " " + content + " "
 
     return Element(
-        id,
+        name,
         Text(content),
         style=StyleSheet(
             position=POSITION.RELATIVE,
-            inherit_display=True,
             color=COLOURS.WHITE,
             width=f"{len(content) * FS}x",
             height=f"{FS * 1.25}x",
             left=f"-{len(content) * FS / 2}x",
-            top=top,
+            top=f"{top}x",
             font_size=FS,
             font_family=FONTS.PRESS_PLAY,
             # bg_color=COLOURS.RED
         ),
         hover=StyleSheet(
-            color=COLOURS.LIGHTBLUE,
+            # color=COLOURS.LIGHTBLUE,
             font_variant=["bold", "italic"],
+            color=COLOURS.BLACK,
+            bg_color=COLOURS.WHITE
         ),
         is_button=True,
         onclick=fn,
