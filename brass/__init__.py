@@ -38,7 +38,7 @@ def init():
 
     pgapi.use(
         ApplicationSettings(
-            application_name=f"Artegame - DEMO",
+            application_name=f"Artegame v2.0.5",
             screen_size=SCREEN_SIZE,
             # screen_size=Vec2(monitor.width, monitor.height),
             # screen_size=Vec2(1920, 1080),
