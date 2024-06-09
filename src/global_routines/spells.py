@@ -1,8 +1,8 @@
 from brass.base import *
 
-from src import enums
+from src.enums import spell_enum
 
-from brass import scene, assets, events, timeout, pgapi, items, collision, animator
+from brass import scene, assets, events, timeout, pgapi, items, collision, animator, enums
 from . import crowd_control, projectiles, effect_display
 
 
@@ -45,7 +45,7 @@ def fire(spell_object: Spell, item: Item) -> None:
     timeout.new(spell_object.cooldown, clear_cd_start, ())
 
 
-@spell(enums.spell_enum.HEALING)
+@spell(spell_enum.HEALING)
 def __spell_fn_heal(_: Spell, item: Item, effectiveness: Number) -> None:
     if item.hitpoints is None:
         return
@@ -85,7 +85,7 @@ def __spell_fn_heal(_: Spell, item: Item, effectiveness: Number) -> None:
     heal()
 
 
-@spell(enums.spell_enum.HASTE)
+@spell(spell_enum.HASTE)
 def __spell_fn_haste(_: Spell, item: Item, effectiveness: Number) -> None:
     if not item.movement_speed or not item.attack_speed:
         return
@@ -100,7 +100,7 @@ def __spell_fn_haste(_: Spell, item: Item, effectiveness: Number) -> None:
     timeout.new(5, reset, ())
 
 
-@spell(enums.spell_enum.GOLIATH)
+@spell(spell_enum.GOLIATH)
 def __spell_fn_goliath(_: Spell, item: Item, effectiveness: Number) -> None:
     if not item.transform or not item.max_hitpoints:
         return
@@ -121,12 +121,12 @@ def __spell_fn_goliath(_: Spell, item: Item, effectiveness: Number) -> None:
     timeout.new(15, reset, ())
 
 
-@spell(enums.spell_enum.Zzzz)
+@spell(spell_enum.Zzzz)
 def __spell_fn_Zzzz(_: Spell, item: Item, _2: Number) -> None:
     trs: Transform = structured_clone(item.transform)
 
-    trs.position.x -= trs.scale.x
-    trs.position.y -= trs.scale.x
+    trs.position.x -= trs.scale.x / 2
+    trs.position.y -= trs.scale.x / 2
 
     trs.scale.x *= 3
     trs.scale.y = trs.scale.x

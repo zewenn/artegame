@@ -1,8 +1,8 @@
 # Diff Summary
 
-Date : 2024-06-01 13:20:57
+Date : 2024-06-09 21:23:15
 
-Directory d:\\_code\\py\\artegame
+Directory d:\\_code\\python\\24 - Summer\\artegame
 
 Total : 0 files,  0 codes, 0 comments, 0 blanks, all 0 lines
 

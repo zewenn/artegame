@@ -1,11 +1,7 @@
 from .base import *
 
 import threading
-from . import (
-    pgapi,
-    items,
-    events
-)
+from . import pgapi, items, events
 from .assets import ASSETS
 from .gui import *
 import pygame
@@ -256,18 +252,25 @@ def render_gui(element: GUIElement, parent_style: StyleSheet = None) -> None:
     for child in element.children:
         if not isinstance(child, str):
             render_gui(child, p_style)
-        else:
-            font = ASSETS[f"font-{font_size}-{font_family}"]
-            font.italic = italic
-            font.bold = bold
-            text_surf = font.render(child, True, color)
-            text_surf.set_alpha(color[3])
-            DIRTY_RECTS.append(
-                pgapi.SCREEN.this.blit(
-                    text_surf, (x, y + (font_size + gap) * child_strings_count)
-                )
+            continue
+
+        font = ASSETS[f"font-{font_size}-{font_family}"]
+        font.italic = italic
+        font.bold = bold
+        text_surf = font.render(child, True, color)
+        text_surf.set_alpha(color[3])
+        DIRTY_RECTS.append(
+            pgapi.SCREEN.this.blit(
+                text_surf,
+                (
+                    x,
+                    y
+                    + max((h - font_size) / 2, 0)
+                    + ((font_size + gap) * child_strings_count),
+                ),
             )
-            child_strings_count += 1
+        )
+        child_strings_count += 1
 
 
 def load_tiles(image: Surface, tile_width: int, tile_height: int) -> list[Surface]:
