@@ -26,6 +26,7 @@ def title_button(
         name,
         Text(content),
         style=StyleSheet(
+            inherit_display=True,
             position=POSITION.RELATIVE,
             color=COLOURS.WHITE,
             width=f"{len(content) * FS}x",
