@@ -50,7 +50,7 @@ def awake() -> None:
     saves.delete_save()
     gap = 40
 
-    title_card_len = len("| | __ / _` | '_ ` _ \ / _ \ | | | \ \ / / _ \ '__|")
+    title_card_len = len("| | __ / _` | '_ ` _ \\ / _ \\ | | | \\ \\ / / _ \\ '__|")
     rounds_survived = f"{round_manager.ROUND} Túlélt kör"
 
     # DOM creates a new document object model
@@ -86,11 +86,11 @@ def awake() -> None:
                 Element(
                     "TitleCard Text",
                     " _____                        _____                ",
-                    "|  __ \                      |  _  |               ",
-                    "| |  \/ __ _ _ __ ___   ___  | | | |_   _____ _ __ ",
-                    "| | __ / _` | '_ ` _ \ / _ \ | | | \ \ / / _ \ '__|",
-                    "| |_\ \ (_| | | | | | |  __/ \ \_/ /\ V /  __/ |   ",
-                    " \____/\__,_|_| |_| |_|\___|  \___/  \_/ \___|_|   ",
+                    "|  __ \\                      |  _  |               ",
+                    "| |  \\/ __ _ _ __ ___   ___  | | | |_   _____ _ __ ",
+                    "| | __ / _` | '_ ` _ \\ / _ \\ | | | \\ \\ / / _ \\ '__|",
+                    "| |_\\ \\ (_| | | | | | |  __/ \\ \\_/ /\\ V /  __/ |   ",
+                    " \\____/\\__,_|_| |_| |_|\\___|  \\___/  \\_/ \\___|_|   ",
                     Text(""),
                     Text(
                         f"{' ' * round(title_card_len / 2 - len(rounds_survived) / 2)}{rounds_survived}"

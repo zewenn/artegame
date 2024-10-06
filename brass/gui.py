@@ -315,7 +315,7 @@ def system_update() -> None:
         if merge_res.is_ok():
             btn.current_style = merge_res.ok()
 
-        if btn.onclick is not None and inpt.active_bind(enums.keybinds.ACCEPT_MENU):
+        if btn.onclick is not None and inpt.active_bind(enums.base_keybinds.ACCEPT_MENU):
             btn.onclick()
 
         return

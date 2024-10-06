@@ -6,9 +6,12 @@ import os
 
 
 def main() -> None:
-    # print("\033[4A")
-    # deps.full_line("")
+    if not (sys.version_info.major == 3 and sys.version_info.minor >= 12):
+        print("Architect needs at least python version 3.12 to run!")
+        return
+
     deps.title("Initalising")
+    print(f"Running Architect on Python {sys.version}")
     print("Performing a dependecy check...\n")
 
     res = deps.handle_dep_stack(conf.DEPENDENCIES)
