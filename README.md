@@ -1,10 +1,13 @@
 
-# Artegame
-
-Az **Artegame** az Arteglaive csapat játéka a NJIT 2023-2024-es tanévének negyedik IKT projekt kiírásra.
+<p align="center">
+    <img src="src/assets/artegame_goofy_logo_large.png" alt="Artegame">
+</p>
 
 > [!IMPORTANT]
-> A projekt csak python 3.12-es verzión (vagy masgasabbon) fut.
+> A projekt a jövőben (vaószínűleg) nem kap frissítéseket, maximum szintentartás céljából.
+> Jelenleg python 3.12 kell ahhoz, hogy hiba nélkül fusson a játék.
+
+Az **Artegame** az Arteglaive csapat játéka a NJIT 2023-2024-es tanévének negyedik IKT projekt kiírásra.
 
 ## Command Line Interface (CLI)
 
