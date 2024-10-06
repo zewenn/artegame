@@ -26,6 +26,7 @@ def title_button(
         name,
         Text(content),
         style=StyleSheet(
+            inherit_display=True,
             position=POSITION.RELATIVE,
             color=COLOURS.WHITE,
             width=f"{len(content) * FS}x",
@@ -50,7 +51,7 @@ def title_button(
 def item_display(nth: Number, name: string) -> GUIElement:
     width = 64
     gap = 10
-    FS = FONT_SIZE.SMALL
+    FSize = FONT_SIZE.SMALL
     return Element(
         "Inventory-Item-" + name,
         Element(
@@ -59,8 +60,8 @@ def item_display(nth: Number, name: string) -> GUIElement:
             style=StyleSheet(
                 position=POSITION.RELATIVE,
                 top=f"{width + gap}x",
-                left=f"{width / 2 - FS / 2}x",
-                font_size=FS,
+                left=f"{width / 2 - FSize / 2}x",
+                font_size=FSize,
                 font_family=FONTS.PRESS_PLAY,
             ),
         ),

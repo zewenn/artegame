@@ -1,8 +1,3 @@
-# pylint: disable = deprecated-module
-from distutils.dir_util import copy_tree
-
-# pylint: enable = deprecated-module
-
 from result import Result, Ok, Err
 from dataclasses import dataclass
 from zenyx import printf
@@ -329,14 +324,16 @@ def serialise_imports():
             )
         )
 
-    with open(os.path.join(*conf.BASE_PATH[0:-1], "__init__.py"), "w", encoding="utf-8") as wf:
+    with open(
+        os.path.join(*conf.BASE_PATH[0:-1], "__init__.py"), "w", encoding="utf-8"
+    ) as wf:
         wf.write(
             "\n".join(
                 [
                     "from . import (",
                     "\t" + conf.BASE_PATH[-1] + ",",
                     "\t" + conf.MAIN_FILE_PATH[-1].replace(".py", ""),
-                    ")"
+                    ")",
                 ]
             )
         )
@@ -347,11 +344,6 @@ def serialise_imports():
         os.path.join(*conf.PROJ_ENUMS_DIR_PATH),
         os.path.join(*conf.PROJ_ENUMS_DIR_DIST_PATH),
     )
-
-    # copy_tree(
-    #     os.path.join(conf.MAIN_FILE_DIR),
-    #     os.path.join(*conf.BASE_PATH),
-    # )
 
     delete_files_in_directory(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
     build_global_routines()

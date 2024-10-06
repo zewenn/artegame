@@ -428,7 +428,7 @@ def update() -> None:
             if not player.rooted and not can_dash:
                 can_dash = True
 
-            crowd_control.apply(player, "root", 0.1)
+            crowd_control.apply(player, "root", 0.05)
 
             can_attack = False
             timeout.new((1 / player.attack_speed), allow_attack, ())
@@ -449,7 +449,7 @@ def update() -> None:
                 )
             )
 
-            crowd_control.apply(player, "root", 0.25)
+            crowd_control.apply(player, "root", 0.15)
 
             can_attack = False
             timeout.new((1 / player.attack_speed) * 2, allow_attack, ())

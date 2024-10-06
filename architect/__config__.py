@@ -6,7 +6,7 @@ VERSION = "2.0.5"
 DEPENDENCIES = [
     "pygame",
     "termcolor",
-    "recordclass",
+    "recordclass==0.21.1",
     "zenyx",
     "result",
     "nuitka",

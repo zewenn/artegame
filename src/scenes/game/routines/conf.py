@@ -110,9 +110,9 @@ def spawn() -> None:
                 Animation(
                     "player",
                     {
-                        1: Keyframe(sprite="player_left_0.png"),
-                        50: Keyframe(sprite="player_left_1.png"),
-                        100: Keyframe(sprite="player_left_0.png"),
+                        1: Keyframe(sprite="player_left_0.png", rotation_z=0),
+                        50: Keyframe(sprite="player_left_1.png", rotation_z=5),
+                        100: Keyframe(sprite="player_left_0.png", rotation_z=0),
                     },
                 )
             ],
@@ -128,9 +128,9 @@ def spawn() -> None:
                 Animation(
                     "player",
                     {
-                        1: Keyframe(sprite="player_right_0.png"),
-                        50: Keyframe(sprite="player_right_1.png"),
-                        100: Keyframe(sprite="player_right_0.png"),
+                        1: Keyframe(sprite="player_right_0.png", rotation_z=0),
+                        50: Keyframe(sprite="player_right_1.png", rotation_z=-5),
+                        100: Keyframe(sprite="player_right_0.png", rotation_z=0),
                     },
                 )
             ],
