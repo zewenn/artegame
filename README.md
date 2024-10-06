@@ -4,7 +4,7 @@
 </p>
 
 > [!IMPORTANT]
-> A projekt a jövőben (vaószínűleg) nem kap frissítéseket, maximum szintentartás céljából.
+> A projekt a jövőben (valószínűleg) nem kap frissítéseket, maximum szintentartás céljából.
 > Jelenleg python 3.12 kell ahhoz, hogy hiba nélkül fusson a játék.
 
 Az **Artegame** az Arteglaive csapat játéka a NJIT 2023-2024-es tanévének negyedik IKT projekt kiírásra.
