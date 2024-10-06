@@ -45,6 +45,9 @@ def serialise() -> None:
 
     make_dir_walk(conf.ASSETS_FILE_DIST_PATH)
 
+    if not (os.path.exists(os.path.abspath(os.path.join(*conf.SERIALISED_OUTPUT_DIR)))):
+        os.mkdir(os.path.abspath(os.path.join(*conf.SERIALISED_OUTPUT_DIR)))
+
     with open(os.path.join(*conf.ASSETS_FILE_DIST_PATH), "w", encoding="utf-8") as wf:
         wf.write(f"REFERENCE_TABLE: dict[str, str] = {asset_dict}")
 

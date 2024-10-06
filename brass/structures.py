@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from zenyx import Pipe
 from result import *
 from typing import *
+import os
 
 import pygame
 
@@ -283,7 +284,7 @@ class ApplicationSettings:
     move_keys: list[list[str], list[str]] = None
     key_repeat: int = 1000000
     sprite_scaling: Literal["GENERIC"] = "GENERIC"
-    save_path: str = "~/artegame"
+    save_path: str = os.path.join(os.path.expanduser("~"), "artegame")
     demo_save_path: str = "./@artegame-demo-saves"
     menu_mode: bool = False
     """

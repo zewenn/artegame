@@ -15,10 +15,12 @@ round_display_el: Optional[GUIElement] = None
 
 def get_random_spawn_pos() -> Vec2:
     x = random.randint(
-        -pgapi.SETTINGS.background_size.x / 2, pgapi.SETTINGS.background_size.x / 2
+        math.floor(-pgapi.SETTINGS.background_size.x / 2),
+        math.floor(pgapi.SETTINGS.background_size.x / 2),
     )
     y = random.randint(
-        -pgapi.SETTINGS.background_size.y / 2, pgapi.SETTINGS.background_size.y / 2
+        math.floor(-pgapi.SETTINGS.background_size.y / 2),
+        math.floor(pgapi.SETTINGS.background_size.y / 2),
     )
 
     if (

@@ -220,4 +220,11 @@ def make_dir_walk(pth: list[str]) -> None:
         if os.path.isdir(os.path.join(*current)):
             continue
 
-        os.mkdir(os.path.join(*current))
+        path = os.path.abspath(os.path.join(*current))
+
+        if not (os.access(path, os.W_OK)):
+            continue
+
+        print("<", os.path.abspath(os.path.join(*current)), ">")
+
+        os.mkdir(os.path.abspath(os.path.join(*current)), 751)

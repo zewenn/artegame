@@ -16,9 +16,10 @@ from . import (
     scene,
     structures,
     timeout,
-    vectormath
+    vectormath,
 )
 import screeninfo
+
 
 def init():
     # Setting up pygame
@@ -32,7 +33,7 @@ def init():
 
     # SCREEN_SIZE = Vec2(1600, 900)
     SCREEN_SIZE = Vec2(monitor.width, monitor.height)
-    UI_RATIO = SCREEN_SIZE.y / 1080
+    UI_RATIO = (SCREEN_SIZE.x / SCREEN_SIZE.y) / (1920 / 1080)
 
     assets.create_runtime_objects(UI_RATIO)
 
@@ -54,7 +55,8 @@ def init():
     )
 
     # pylint: disable=no-member
-    pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED | pygame.DOUBLEBUF)
+    # pgapi.set_screen_flags(pygame.NOFRAME | pygame.SCALED | pygame.DOUBLEBUF)
+    pgapi.set_screen_flags(pygame.FULLSCREEN | pygame.SCALED | pygame.DOUBLEBUF)
     # pylint: enable=no-member
     # pgapi.set_screen_flags(pygame.FULLSCREEN | pygame.SCALED | pygame.DOUBLEBUF)
 
@@ -63,7 +65,9 @@ def init():
     inpt.bind_buttons(
         enums.base_keybinds.SHOW_PAUSE_MENU, [{"escape"}, {"start@ctrl#0"}], "down"
     )
-    inpt.bind_buttons(enums.base_keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down")
+    inpt.bind_buttons(
+        enums.base_keybinds.ACCEPT_MENU, [{"enter"}, {"a@ctrl#0"}], "down"
+    )
     inpt.bind_buttons(enums.base_keybinds.BACK, [{"escape"}, {"b@ctrl#0"}], "down")
     inpt.bind_buttons("exit", [{"left shift", "escape"}])
 
@@ -108,4 +112,3 @@ def init():
     pygame.quit()
     # pylint: enable=no-member
     # saves.save()
-    
