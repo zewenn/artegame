@@ -53,7 +53,7 @@ def use(settings: ApplicationSettings):
     pygame.key.set_repeat(SETTINGS.key_repeat)
 
     
-    GUI_PIXEL_RATIO = SCREEN.size.y / 1080
+    GUI_PIXEL_RATIO = (SCREEN.size.x / 1920 + SCREEN.size.y / 1080) / 2
 
 
 def system_camera() -> None:

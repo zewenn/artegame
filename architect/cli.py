@@ -7,6 +7,7 @@ from termcolor import colored, cprint
 import __config__ as conf
 from result import *
 from typing import *
+from platform import system
 
 
 def parse_int(string: str) -> Result[int, str]:
@@ -196,7 +197,7 @@ def main(arguments):
         )
 
         build_start_time: float = time.perf_counter()
-        
+
         deps.delete_files_in_directory(conf.BUILD_OUTPUT_DIR)
 
         build_success, build_error = deps.run_python_command(
@@ -217,6 +218,7 @@ def main(arguments):
                     else ""
                     f"--output-dir={os.path.realpath(os.path.join(*conf.BUILD_OUTPUT_DIR))}"
                 ),
+                ("--macos-create-app-bundle" if (system() == "Darwin") else ""),
                 # "-n",
                 # APP_NAME,
             ]
