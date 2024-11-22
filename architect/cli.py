@@ -145,10 +145,31 @@ def main(arguments):
     # Mostly auto import
     print("[Task : Removing wrapped]")
     deps.delete_files_in_directory(conf.BASE_PATH)
+    
+    if not os.path.exists(os.path.join(*conf.SERIALISED_OUTPUT_DIR)):
+        try: 
+            os.mkdir("dist")
+        except:
+            ""
+            
+        try:
+            os.mkdir("dist/wrapped")
+        except:
+            ""
+        
+        try:    
+            os.mkdir("dist/wrapped/brass")
+        except:
+            ""
+        
+        try:
+            os.mkdir("dist/wrapped/brass/temp")
+        except:
+            ""
 
     b64encoder.serialise()
-    # return
     import_generator.serialise_imports()
+    # return
 
     build_count_res = attempt(update_read_build_counter, ())
 

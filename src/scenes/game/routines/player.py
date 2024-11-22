@@ -487,7 +487,6 @@ def update() -> None:
     spell0_cond = True
     spell1_cond = True
 
-
     if player.spells[0].cooldown_start != None:
         spell0_cond = False
         t = f"{round(player.spells[0].cooldown_start + player.spells[0].cooldown - pgapi.TIME.current)}s"
@@ -505,17 +504,11 @@ def update() -> None:
             weapons_swap_display.children[0].style.left = f"{32 - 12}x"
             weapons_swap_display.children[0].children[0] = "RB"
 
-        if (
-            spell0_icon_display.children[0].children[0] != "X"
-            and spell0_cond
-        ):
+        if spell0_icon_display.children[0].children[0] != "X" and spell0_cond:
             spell0_icon_display.children[0].children[0] = "X"
             spell0_icon_display.children[0].style.left = f"{32 - 6}x"
 
-        if (
-            spell1_icon_display.children[0].children[0] != "Y"
-            and spell1_cond
-        ):
+        if spell1_icon_display.children[0].children[0] != "Y" and spell1_cond:
             spell1_icon_display.children[0].children[0] = "Y"
             spell1_icon_display.children[0].style.left = f"{32 - 6}x"
     else:
@@ -523,17 +516,11 @@ def update() -> None:
             weapons_swap_display.children[0].style.left = f"{32 - 1.5 * 12}x"
             weapons_swap_display.children[0].children[0] = "Tab"
 
-        if (
-            spell0_icon_display.children[0].children[0] != "Q"
-            and spell0_cond
-        ):
+        if spell0_icon_display.children[0].children[0] != "Q" and spell0_cond:
             spell0_icon_display.children[0].children[0] = "Q"
             spell0_icon_display.children[0].style.left = f"{32 - 6}x"
 
-        if (
-            spell1_icon_display.children[0].children[0] != "E"
-            and spell1_cond
-        ):
+        if spell1_icon_display.children[0].children[0] != "E" and spell1_cond:
             spell1_icon_display.children[0].children[0] = "E"
             spell1_icon_display.children[0].style.left = f"{32 - 6}x"
 

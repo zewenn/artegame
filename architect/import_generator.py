@@ -263,10 +263,6 @@ def build_global_routines() -> None:
 
     for index, global_rtn in enumerate(global_rtns):
         progress_bar(index + 1, len(global_rtns), shorten(global_rtn))
-        # printf.full_line(
-        #     f"[{index + 1}/{len(global_rtns)}] Binding GLOBAL Routines: {shorten(global_rtn)} ",
-        #     end="\r",
-        # )
 
         contents: str = ""
         with open(
@@ -298,6 +294,9 @@ def serialise_imports():
     thus the script runs when the file is loaded.\n
     This is needed with the use event decorators, which - on load - bind functions to events.
     """
+
+    if not os.path.exists(os.path.join(*conf.SERIALISED_OUTPUT_DIR)):
+        os.mkdir(os.path.join(*conf.SERIALISED_OUTPUT_DIR))
 
     with open(
         os.path.join(*conf.SERIALISED_OUTPUT_DIR, "__init__.py"), "w", encoding="utf-8"
