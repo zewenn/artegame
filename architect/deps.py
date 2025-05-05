@@ -176,6 +176,7 @@ def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
         install_res = install(dep)
 
         if not install_res:
+            print("dep:", dep)
             failed = True
 
         depname = str(dep)[: len(longest_dep_name)]

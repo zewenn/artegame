@@ -1,21 +1,25 @@
 {
-    "workbench.colorTheme": "Black Italic",
-    "workbench.sideBar.location": "right",
-    "workbench.activityBar.location": "top",
-    "editor.smoothScrolling": true,
-    "editor.cursorSmoothCaretAnimation": "on",
-    "editor.cursorBlinking": "smooth",
-    "editor.cursorStyle": "block",
-    "editor.lineNumbers": "relative",
-    "files.exclude": {
-        "**/.git/objects/**": true,
-        "**/.git/subtree-cache/**": true,
-        "**/node_modules/*/**": true,
-        "**/.hg/store/**": true,
-        "**/__pycache__": true
-    },
-    "files.associations": {
-        // For .t(emplate)py(thon)
-        "*.tpy": "python"
-    }
+  "workbench.colorTheme": "Black Italic",
+  "workbench.sideBar.location": "right",
+  "workbench.activityBar.location": "top",
+  "editor.smoothScrolling": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorStyle": "block",
+  "editor.lineNumbers": "relative",
+  "files.exclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.hg/store/**": true,
+    "**/__pycache__": true
+  },
+  "files.associations": {
+    // For .t(emplate)py(thon)
+    "*.tpy": "python"
+  },
+  "workbench.colorCustomizations": {
+    "minimap.background": "#00000000",
+    "scrollbar.shadow": "#00000000"
+  }
 }

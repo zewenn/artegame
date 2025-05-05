@@ -22,11 +22,8 @@ from brass import (
 ENEMIES: list[Item] = []
 DROPPED_FRUITS: list[Item] = []
 player: Optional[Item] = None
-FRUIT_HUN_DICT = {
-    "banana": "Banán",
-    "strawberry": "Eper",
-    "blueberry": "Áfonya"
-}
+FRUIT_HUN_DICT = {"banana": "Banán", "strawberry": "Eper", "blueberry": "Áfonya"}
+
 
 def drop_fruit(at_item: Item) -> None:
     fruit = random.choice(["banana", "strawberry", "blueberry"])
@@ -89,7 +86,7 @@ def new(item: Item) -> Item:
     item.slowed_by_percent = 0
 
     items.add(item)
-    timeout.new(.25, ENEMIES.append, (item,))
+    timeout.new(0.25, ENEMIES.append, (item,))
     # ENEMIES.append(item)
     return item
 
@@ -105,12 +102,13 @@ def reset_anim(anim: AnimationGroup, name: string) -> None:
     del anim
     del walk_anims[name]
 
+
 def play(item: Item, direction: Literal["right", "left"]) -> None:
     if walk_anims.get(item.id):
         return
-    
+
     walk_anims[item.id] = True
-    duration = .5
+    duration = 0.5
     anim = animator.create(
         duration_seconds=duration,
         mode=enums.animations.MODES.NORMAL,
@@ -128,7 +126,6 @@ def play(item: Item, direction: Literal["right", "left"]) -> None:
     )
     animator.play(anim)
     timeout.new(duration + 0.02, reset_anim, (anim, item.id))
-
 
 
 @scene.update(enums.scenes.GAME)
@@ -218,7 +215,7 @@ def update() -> None:
 
             items.remove(frt)
             DROPPED_FRUITS.remove(frt)
-                # interact.hide(200000)
+            # interact.hide(200000)
         # elif interact.current_priority >= 100000 + index:
         #      interact.hide(100000 + index)
 
@@ -262,7 +259,8 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
             item.base_movement_speed * 1.1,
             "Enemy",
             20,
-            [Effect("stun", 0.75, 0, 0)],
+            # [Effect("stun", 0.75, 0, 0)],
+            [],
         )
     )
     item.can_attack = False
