@@ -123,7 +123,4 @@ def awake() -> None:
         ),
     )
 
-    # if pgapi.SETTINGS.skip_title_screen:
-    #     load_game_scene()
-    # else:
     pgapi.as_menu()

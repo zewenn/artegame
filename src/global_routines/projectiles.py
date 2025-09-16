@@ -42,13 +42,13 @@ def play(
                     },
                 )
             ],
-        )
-        animator.play(anim)
+        ) # type: ignore
+        animator.play(anim) # type: ignore
         timeout.new(0.12, delete, (anim,))
         return
 
     if anim == "get_stunned":
-        original_h = item.transform.scale.y
+        original_h = item.transform.scale.y # type: ignore
 
         anim = animator.create(
             duration_seconds=length,
@@ -75,8 +75,8 @@ def play(
                     },
                 )
             ],
-        )
-        animator.play(anim)
+        ) # type: ignore
+        animator.play(anim) # type: ignore
         timeout.new(0.12, delete, (anim,))
         return
 

@@ -1,0 +1,110 @@
+Date : 2025-09-16 15:03:39
+Directory : /Users/zoltantakacs/Projects/artegame
+Total : 62 files,  6323 codes, 873 comments, 1849 blanks, all 9045 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Python   |         58 |      6,226 |        873 |      1,829 |      8,928 |
+| Markdown |          1 |         53 |          0 |         10 |         63 |
+| Ini      |          1 |         30 |          0 |          7 |         37 |
+| TOML     |          1 |         10 |          0 |          2 |         12 |
+| JSON     |          1 |          4 |          0 |          1 |          5 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                        | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                           |         62 |      6,323 |        873 |      1,849 |      9,045 |
+| . (Files)                                                                   |          4 |         97 |          0 |         20 |        117 |
+| architect                                                                   |          6 |        723 |         58 |        252 |      1,033 |
+| brass                                                                       |         26 |      2,164 |        446 |        861 |      3,471 |
+| brass (Files)                                                               |         16 |      1,896 |        384 |        744 |      3,024 |
+| brass/animator                                                              |          4 |        213 |         60 |         98 |        371 |
+| brass/enums                                                                 |          6 |         55 |          2 |         19 |         76 |
+| src                                                                         |         26 |      3,339 |        369 |        716 |      4,424 |
+| src (Files)                                                                 |          1 |          4 |          0 |          1 |          5 |
+| src/enums                                                                   |          3 |         50 |          0 |         11 |         61 |
+| src/global_routines                                                         |         12 |      1,761 |        133 |        494 |      2,388 |
+| src/scenes                                                                  |         10 |      1,524 |        236 |        210 |      1,970 |
+| src/scenes/default                                                          |          3 |        112 |         22 |         24 |        158 |
+| src/scenes/default/routines                                                 |          2 |         22 |         11 |         10 |         43 |
+| src/scenes/default/ui                                                       |          1 |         90 |         11 |         14 |        115 |
+| src/scenes/defeat                                                           |          3 |        128 |         18 |         24 |        170 |
+| src/scenes/defeat/routines                                                  |          2 |         22 |         11 |         10 |         43 |
+| src/scenes/defeat/ui                                                        |          1 |        106 |          7 |         14 |        127 |
+| src/scenes/game                                                             |          4 |      1,284 |        196 |        162 |      1,642 |
+| src/scenes/game/routines                                                    |          3 |        781 |        167 |        147 |      1,095 |
+| src/scenes/game/ui                                                          |          1 |        503 |         29 |         15 |        547 |
++-----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                    | language | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/zoltantakacs/Projects/artegame/.pylintrc                             | Ini      |         30 |          0 |          7 |         37 |
+| /Users/zoltantakacs/Projects/artegame/README.md                             | Markdown |         53 |          0 |         10 |         63 |
+| /Users/zoltantakacs/Projects/artegame/architect/__config__.py               | Python   |         33 |          6 |         13 |         52 |
+| /Users/zoltantakacs/Projects/artegame/architect/__main__.py                 | Python   |         24 |          0 |          9 |         33 |
+| /Users/zoltantakacs/Projects/artegame/architect/b64encoder.py               | Python   |         35 |          6 |         19 |         60 |
+| /Users/zoltantakacs/Projects/artegame/architect/cli.py                      | Python   |        195 |         19 |         67 |        281 |
+| /Users/zoltantakacs/Projects/artegame/architect/deps.py                     | Python   |        159 |         11 |         62 |        232 |
+| /Users/zoltantakacs/Projects/artegame/architect/import_generator.py         | Python   |        277 |         16 |         82 |        375 |
+| /Users/zoltantakacs/Projects/artegame/brass/__init__.py                     | Python   |         87 |          7 |         22 |        116 |
+| /Users/zoltantakacs/Projects/artegame/brass/animator/__init__.py            | Python   |        138 |         48 |         65 |        251 |
+| /Users/zoltantakacs/Projects/artegame/brass/animator/interpolation.py       | Python   |         41 |         12 |         16 |         69 |
+| /Users/zoltantakacs/Projects/artegame/brass/animator/play_objects.py        | Python   |         25 |          0 |         11 |         36 |
+| /Users/zoltantakacs/Projects/artegame/brass/animator/store.py               | Python   |          9 |          0 |          6 |         15 |
+| /Users/zoltantakacs/Projects/artegame/brass/assets.py                       | Python   |         50 |         18 |         28 |         96 |
+| /Users/zoltantakacs/Projects/artegame/brass/audio.py                        | Python   |         41 |          1 |         28 |         70 |
+| /Users/zoltantakacs/Projects/artegame/brass/base.py                         | Python   |        103 |          3 |         53 |        159 |
+| /Users/zoltantakacs/Projects/artegame/brass/collision.py                    | Python   |        127 |          3 |         34 |        164 |
+| /Users/zoltantakacs/Projects/artegame/brass/display.py                      | Python   |        243 |         35 |         69 |        347 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/__init__.py               | Python   |          7 |          1 |          1 |          9 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/animations.py             | Python   |         10 |          0 |          5 |         15 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/base_keybinds.py          | Python   |          3 |          0 |          1 |          4 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/gui.py                    | Python   |         30 |          0 |          8 |         38 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/input_modes.py            | Python   |          2 |          0 |          2 |          4 |
+| /Users/zoltantakacs/Projects/artegame/brass/enums/scenes.py                 | Python   |          3 |          1 |          2 |          6 |
+| /Users/zoltantakacs/Projects/artegame/brass/events.py                       | Python   |         30 |          0 |         20 |         50 |
+| /Users/zoltantakacs/Projects/artegame/brass/gui.py                          | Python   |        238 |         23 |         69 |        330 |
+| /Users/zoltantakacs/Projects/artegame/brass/inpt.py                         | Python   |        249 |         80 |         94 |        423 |
+| /Users/zoltantakacs/Projects/artegame/brass/items.py                        | Python   |         61 |         42 |         39 |        142 |
+| /Users/zoltantakacs/Projects/artegame/brass/pgapi.py                        | Python   |         86 |          0 |         49 |        135 |
+| /Users/zoltantakacs/Projects/artegame/brass/saves.py                        | Python   |         68 |         17 |         35 |        120 |
+| /Users/zoltantakacs/Projects/artegame/brass/scene.py                        | Python   |         47 |          6 |         30 |         83 |
+| /Users/zoltantakacs/Projects/artegame/brass/structures.py                   | Python   |        302 |         59 |        112 |        473 |
+| /Users/zoltantakacs/Projects/artegame/brass/timeout.py                      | Python   |         16 |          2 |          8 |         26 |
+| /Users/zoltantakacs/Projects/artegame/brass/vectormath.py                   | Python   |        148 |         88 |         54 |        290 |
+| /Users/zoltantakacs/Projects/artegame/pyproject.toml                        | TOML     |         10 |          0 |          2 |         12 |
+| /Users/zoltantakacs/Projects/artegame/pyrightconfig.json                    | JSON     |          4 |          0 |          1 |          5 |
+| /Users/zoltantakacs/Projects/artegame/src/__init__.py                       | Python   |          4 |          0 |          1 |          5 |
+| /Users/zoltantakacs/Projects/artegame/src/enums/__init__.py                 | Python   |          4 |          0 |          1 |          5 |
+| /Users/zoltantakacs/Projects/artegame/src/enums/keybinds.py                 | Python   |          9 |          0 |          6 |         15 |
+| /Users/zoltantakacs/Projects/artegame/src/enums/spell_enum.py               | Python   |         37 |          0 |          4 |         41 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/__init__.py       | Python   |         13 |          0 |          1 |         14 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/boons.py          | Python   |        797 |        106 |        202 |      1,105 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/crowd_control.py  | Python   |         72 |          0 |         21 |         93 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/dash.py           | Python   |         37 |          2 |         14 |         53 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/effect_display.py | Python   |         30 |          3 |         13 |         46 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/enemies.py        | Python   |        234 |          7 |         51 |        292 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/interact.py       | Python   |         40 |          0 |         25 |         65 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/menus.py          | Python   |         57 |          2 |         27 |         86 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/projectiles.py    | Python   |        160 |         10 |         26 |        196 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/round_manager.py  | Python   |        135 |          2 |         34 |        171 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/sounds.py         | Python   |         65 |          0 |         33 |         98 |
+| /Users/zoltantakacs/Projects/artegame/src/global_routines/spells.py         | Python   |        121 |          1 |         47 |        169 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/default/routines/conf.py   | Python   |          9 |          5 |          4 |         18 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/default/routines/main.py   | Python   |         13 |          6 |          6 |         25 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/default/ui/index.py        | Python   |         90 |         11 |         14 |        115 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/defeat/routines/conf.py    | Python   |          9 |          5 |          4 |         18 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/defeat/routines/main.py    | Python   |         13 |          6 |          6 |         25 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/defeat/ui/index.py         | Python   |        106 |          7 |         14 |        127 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/game/routines/conf.py      | Python   |        298 |        109 |         13 |        420 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/game/routines/main.py      | Python   |         23 |          7 |          6 |         36 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/game/routines/player.py    | Python   |        460 |         51 |        128 |        639 |
+| /Users/zoltantakacs/Projects/artegame/src/scenes/game/ui/index.py           | Python   |        503 |         29 |         15 |        547 |
+| Total                                                                       |          |      6,323 |        873 |      1,849 |      9,045 |
++-----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
