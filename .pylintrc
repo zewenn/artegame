@@ -27,8 +27,10 @@ disable =
     ungrouped-imports,
     line-too-long,
     too-many-lines,
-    too-many-arguments
+    too-many-arguments,
+    optional-call
 
 [VARIABLES]
 
 init-import=no
+

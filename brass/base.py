@@ -68,8 +68,8 @@ def caller(fn: Callable[..., T], args: Tuple) -> None:
     def wrap() -> None:
         res = fn(*args)
         del res
-    return wrap
 
+    return wrap
 
 
 @silence
@@ -141,30 +141,18 @@ def merge(a: T, b: T) -> Result[T, Mishap]:
     return Ok(res)
 
 
-class Piper(Generic[T, K]):
-    def __init__(self, value: T) -> None:
-        self.value = value
-        self.next_args: list[Any] = []
-        self.next_kwargs: dict[str, Any] = {}
-
-    def __or__(self, func: Callable[..., K]) -> "Piper[K]":
-        self.value = func(self.value, *self.next_args, **self.next_kwargs)
-
-    def __rshift__(self, kwargs: dict[str, Any]) -> None:
-        self.next_kwargs = kwargs
-        return self
-
-    def __add__(self, args: list[Any]) -> None:
-        self.next_args = args
-        return self
-
-    def __call__(self, *args: Any, **kwds: Any) -> K:
-        return self.value
-
-
 def uuid() -> string:
     return uuid4().hex
 
 
 def delete(a: Any) -> None:
     del a
+
+
+def orelse(value: Optional[T], default: T) -> T:
+    return value if value is not None else default
+
+
+def ensure(value: Optional[T]) -> T:
+    assert value is not None
+    return value

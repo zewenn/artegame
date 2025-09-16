@@ -203,7 +203,7 @@ def render_keyframe(target: str, keyframe: Keyframe) -> None:
 
 
 def create(
-    duration_seconds: int,
+    duration_seconds: float,
     mode: Literal["Normal", "Forwards"],
     timing_function: Callable[[Number, Number, Number], Number],
     animations: list[Animation],

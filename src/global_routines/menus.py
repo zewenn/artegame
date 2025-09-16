@@ -35,7 +35,7 @@ def toggle(
     # Mode :: "block" -> "none"
     if element.style.display == "block" and to != "block":
         element.style.display = "none"
-        pgapi.SETTINGS.menu_mode = False
+        ensure(pgapi.SETTINGS).menu_mode = False
         scene.resume(scn)
         return
 

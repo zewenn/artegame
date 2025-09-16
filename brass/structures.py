@@ -147,7 +147,7 @@ class Item:
     can_attack: bool = False
 
     # |> Combat -> Crowd Control
-    slowed_by_percent: Optional[int] = None
+    slowed_by_percent: Optional[float] = None
     rooted: bool = False
     stunned: bool = False
     sleeping: bool = False

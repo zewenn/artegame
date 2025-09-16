@@ -8,7 +8,6 @@ EFFECT_TYPES = Literal["slow", "root", "stun", "sleep", "all"]
 
 
 def cleanse(item: Item, effect: EFFECT_TYPES) -> None:
-    # print(f"Removing \"{effect}\" from \"{item.id}\" item")
     if effect == "all":
         item.slowed_by_percent = 0
         item.rooted = False
@@ -35,7 +34,10 @@ def cleanse(item: Item, effect: EFFECT_TYPES) -> None:
 
 def apply_sleep(to: Item, length: Number) -> None:
     to.sleeping = True
-    # print("Sleeping", to.id, to.sleeping)
+
+    if to.transform is None:
+        return
+
     timeout.new(length, cleanse, (to, "sleep"))
     effect_display.summon(
         to.transform,
@@ -59,8 +61,6 @@ def apply(
         print("Cannot apply all effects!")
         return
 
-    # print(T, to.id, to.uuid)
-
     if T_type == "sleep":
         timeout.new(sleep_countdown, apply_sleep, (to, length))
         return
@@ -68,7 +68,7 @@ def apply(
     timeout.new(length, cleanse, (to, T_type))
 
     if T_type == "slow":
-        to.slowed_by_percent = slow_pecent
+        to.slowed_by_percent = float(slow_pecent)
         return
 
     if T_type == "root":
@@ -77,7 +77,7 @@ def apply(
 
     if T_type == "stun":
         to.stunned = True
-        if show_effect:
+        if show_effect and to.transform is not None:
             effect_display.summon(
                 to.transform,
                 [

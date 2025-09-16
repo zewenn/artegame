@@ -29,7 +29,7 @@ def summon(at: Transform, sprites: list[string], length: Number, anim_len: Numbe
         keyframes[k if k > 0 else 1] = Keyframe(sprite=sprites[i])
 
     anim = animator.create(
-        duration_seconds=length,
+        duration_seconds=int(length),
         mode=enums.animations.MODES.FORWARD,
         timing_function=enums.animations.TIMING.LINEAR,
         animations=[Animation(uid, keyframes)],

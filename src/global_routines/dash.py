@@ -12,12 +12,19 @@ def remove_invulnerable(item: Item) -> None:
 @scene.update(enums.scenes.GAME)
 def upd_dash():
     for dsh_obj in copy.copy(DASH_OBJECTS):
+        if dsh_obj.this.transform is None or dsh_obj.this.movement_speed is None:
+            continue
+
         if pgapi.TIME.current > dsh_obj.start_time + dsh_obj.time:
             DASH_OBJECTS.remove(dsh_obj)
             dsh_obj.this.can_move = True
-            dsh_obj.this.movement_speed = dsh_obj.this.base_movement_speed
+            dsh_obj.this.movement_speed = int(
+                dsh_obj.this.base_movement_speed
+                if dsh_obj.this.base_movement_speed is not None
+                else 335
+            )
             # dsh_obj.this.invulnerable = False
-            timeout.new(.1, remove_invulnerable, (dsh_obj.this,))
+            timeout.new(0.1, remove_invulnerable, (dsh_obj.this,))
             dsh_obj.this.dashing = False
             continue
 
@@ -36,7 +43,7 @@ def apply_dash_effect(
 
     this.can_move = False
     this.dashing = True
-    this.movement_speed = this.base_movement_speed * speed_multiplier
+    this.movement_speed = int((this.base_movement_speed if this.base_movement_speed is not None else 300) * speed_multiplier)
 
     start_t = pgapi.TIME.current
 

@@ -7,3 +7,5 @@ description = "A school project and a pretty fun game too!"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 classifiers = ["Programming Language :: Python"]
+
+[tool.pyright]

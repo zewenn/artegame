@@ -26,6 +26,9 @@ FRUIT_HUN_DICT = {"banana": "Banán", "strawberry": "Eper", "blueberry": "Áfony
 
 
 def drop_fruit(at_item: Item) -> None:
+    if at_item.transform is None:
+        return
+
     fruit = random.choice(["banana", "strawberry", "blueberry"])
 
     fruit_item = Item(
@@ -57,7 +60,7 @@ def awake() -> None:
     # print(ENEMIES)
 
     for item in ENEMIES:
-        item.movement_speed = item.base_movement_speed
+        item.movement_speed = int(orelse(item.base_movement_speed, 335))
         item.hitpoints = item.max_hitpoints
         item.mana = item.max_mana
         item.team = "Enemy"
@@ -70,15 +73,18 @@ def awake() -> None:
     if player_q.is_err():
         unreachable("Player does not exist in the game scene!")
 
-    player = player_q.ok()
+    player = player_q.ok()  # type: ignore
 
 
 def new(item: Item) -> Item:
+    if item.tags is None:
+        return item
+
     if not "enemy" in item.tags:
         item.tags.append("enemy")
 
     item.attack_speed = item.base_attack_speed
-    item.movement_speed = item.base_movement_speed
+    item.movement_speed = int(orelse(item.base_movement_speed, 335))
     item.hitpoints = item.max_hitpoints
     item.mana = item.max_mana
     item.team = "Enemy"
@@ -133,6 +139,18 @@ def update() -> None:
     vec = None
 
     for enemy in ENEMIES:
+        if (
+            enemy.hitpoints is None
+            or player is None
+            or player.mana is None
+            or player.transform is None
+            or enemy.movement_speed is None
+            or enemy.slowed_by_percent is None
+            or enemy.tags is None
+            or enemy.effective_range is None
+        ):
+            continue
+
         if enemy.hitpoints <= 0:
             player.mana += 10
             drop_fruit(enemy)
@@ -200,10 +218,18 @@ def update() -> None:
             shoot_random_projectile(or_vec, enemy)
 
     for frt in DROPPED_FRUITS:
+        if (
+            not frt.tags
+            or not player
+            or not player.inventory
+            or not player.transform
+            or not frt.transform
+        ):
+            continue
+
         if collision.collides(frt.transform, player.transform):
-            # interact.show(f"Felvétel: {FRUIT_HUN_DICT.get(frt.tags[0])}", 100000 + index)
-            # if inpt.active_bind(enums.keybinds.INTERACT):
-            audio.play(audio.clone(sounds.PICKUP))
+            if sounds.PICKUP:
+                audio.play(audio.clone(sounds.PICKUP))
             if frt.tags[0] == "banana":
                 player.inventory.banana += 1
 
@@ -215,13 +241,10 @@ def update() -> None:
 
             items.remove(frt)
             DROPPED_FRUITS.remove(frt)
-            # interact.hide(200000)
-        # elif interact.current_priority >= 100000 + index:
-        #      interact.hide(100000 + index)
 
 
 def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
-    if not item.attack_speed:
+    if not item.attack_speed or not item.transform:
         return
 
     rand = random.randint(0, 3)
@@ -238,7 +261,7 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
                 Vec2(64, 64),
                 -vector.direction + 90,
                 1.5,
-                item.base_movement_speed * 1.2,
+                orelse(item.base_movement_speed, 355) * 1.2,
                 "Enemy",
                 10,
             )
@@ -256,7 +279,7 @@ def shoot_random_projectile(vector: CompleteMathVector, item: Item) -> None:
             Vec2(64, 64),
             -vector.direction + 90,
             2.5,
-            item.base_movement_speed * 1.1,
+            orelse(item.base_movement_speed, 335) * 1.1,
             "Enemy",
             20,
             # [Effect("stun", 0.75, 0, 0)],
