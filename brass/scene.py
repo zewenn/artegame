@@ -8,7 +8,7 @@ from . import (
     gui
 )
 
-def spawn(scene: str) -> None:
+def spawn(scene: str):
     def wrap(fn: Callable):
         events.on(f"{scene}::spawn", fn)
 

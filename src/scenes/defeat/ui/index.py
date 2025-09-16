@@ -33,7 +33,7 @@ def title_button(
             # color=COLOURS.LIGHTBLUE,
             font_variant=["bold", "italic"],
             color=COLOURS.BLACK,
-            bg_color=COLOURS.WHITE
+            bg_color=COLOURS.WHITE,
         ),
         is_button=True,
         onclick=fn,
@@ -65,7 +65,7 @@ def awake() -> None:
                     top="0x",
                     width="100w",
                     height="100h",
-                    bg_image="background.png",
+                    bg_image="background4_576x384.png",
                 ),
                 is_button=False,
             ),

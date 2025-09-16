@@ -38,6 +38,9 @@ def serialise() -> None:
 
     for index, image in enumerate(assets):
         basename: str = os.path.basename(image)
+        if basename == ".DS_Store":
+            continue
+
         asset_dict[basename] = serialize_file_to_b64string(image)
 
         progress_bar(index + 1, len(assets), shorten(basename))

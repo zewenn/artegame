@@ -1,6 +1,6 @@
 
 <p align="center">
-    <img src="src/assets/artegame_goofy_logo_large.png" alt="Artegame">
+    <img src="src/assets/artegame_logo.png" alt="Artegame">
 </p>
 
 > [!IMPORTANT]

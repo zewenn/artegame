@@ -1,7 +1,7 @@
 from brass.base import *
 
 from brass import items, timeout, scene, enums, gui, pgapi, saves
-from . import effect_display, menus, enemies
+from . import effect_display, menus, enemies, sounds
 
 import random
 
@@ -98,6 +98,8 @@ def start_round() -> None:
     global ROUND_STATE
     global ROUND
 
+    sounds.start_combat_round()
+
     enemy_count = random.randint(ROUND, ROUND + 2)
     melee_count = range(round(enemy_count * 0.66))
     ranged_count = range(round(enemy_count * 0.33))
@@ -161,6 +163,7 @@ def update() -> None:
 
     if ROUND_STATE == "Fight" and len(ens) == 0:
         saves.save()
+        sounds.end_combat_round()
         ROUND_STATE = "BoonSelection"
 
     round_saver_entity.tags = [ROUND_STATE]
