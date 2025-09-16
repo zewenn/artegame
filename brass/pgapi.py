@@ -31,7 +31,7 @@ def use(settings: ApplicationSettings):
     SETTINGS = settings
 
     SCREEN = Screen(
-        this=None, size=SETTINGS.screen_size, flags=(pygame.SCALED), vsync=False
+        this=None, size=SETTINGS.screen_size, flags=(pygame.SCALED), vsync=False  # type: ignore
     )
     set_screen_mode()
 
@@ -48,11 +48,10 @@ def use(settings: ApplicationSettings):
         CAMERA = settings.camera
 
     if settings.move_keys is None:
-        SETTINGS.move_keys = [["a", "d"], ["w", "s"]]
+        SETTINGS.move_keys = (["a", "d"], ["w", "s"])
 
     pygame.key.set_repeat(SETTINGS.key_repeat)
 
-    
     GUI_PIXEL_RATIO = (SCREEN.size.x / 1920 + SCREEN.size.y / 1080) / 2
 
 
@@ -60,33 +59,43 @@ def system_camera() -> None:
     if NEXT_CAMERA_POS is None:
         return
 
+    if CAMERA.position is None:
+        return
+
     CAMERA.position.x = NEXT_CAMERA_POS.x
     CAMERA.position.y = NEXT_CAMERA_POS.y
 
 
 def set_screen_mode() -> None:
+    if SCREEN is None:
+        return
+
     SCREEN.this = pygame.display.set_mode(
         size=(SCREEN.size.x, SCREEN.size.y),
-        flags=SCREEN.flags,
+        flags=pygame.RESIZABLE,
         vsync=1 if SCREEN.vsync else 0,
     )
 
 
-def set_screen_flags(to: int) -> None:
-    SCREEN.flags = to
-    set_screen_mode()
-
-
 def set_screen_size(to: Vec2):
+    if SCREEN is None:
+        return
+
     SCREEN.size = to
     set_screen_mode()
 
 
 def get_screen_size() -> Vec2:
+    if SCREEN is None:
+        return Vec2(0, 0)
+
     return SCREEN.size
 
 
 def get_camera() -> Camera:
+    if SETTINGS is None:
+        return CAMERA
+
     return CAMERA if not SETTINGS.camera else SETTINGS.camera
 
 
@@ -109,15 +118,17 @@ def as_menu() -> None:
 
 
 def use_background(surf: Surface, size: Optional[Vec2] = None) -> None:
+    if SETTINGS is None:
+        return
+
     if size is not None:
         surf = pygame.transform.scale(surf, (size.x, size.y))
-    
+
     SETTINGS.background_image = surf
 
     SETTINGS.background_size = Vec2(surf.get_width(), surf.get_height())
 
 
-def end() -> Never:
+def end() -> None:
     global RUN
     RUN = False
-    

@@ -167,3 +167,7 @@ brass/temp/
 brass/temp_global/
 architect/@build_counter.txt
 /nuitka-crash-report.xml
+
+.vscode/
+.vs/
+.idea/

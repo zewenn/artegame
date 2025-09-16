@@ -53,7 +53,7 @@ def use(filename: string, T_type: Optional[UT] = None) -> UT:
     return res
 
 
-def create_runtime_objects(ratio: int = 1):
+def create_runtime_objects(ratio: float = 1):
     for filename, b64_value in b64_ref_table.items():
 
         # if (

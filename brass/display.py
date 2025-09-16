@@ -33,12 +33,12 @@ def is_on_screen(item: Item) -> bool:
         item.transform.position.x >= 0
         and (
             item.transform.position.x + item.transform.scale.x
-            <= pgapi.SETTINGS.screen_size.x
+            <= pgapi.SCREEN.size.x
         )
         and item.transform.position.y >= 0
         and (
             item.transform.position.y + item.transform.scale.y
-            <= pgapi.SETTINGS.screen_size.y
+            <= pgapi.SCREEN.size.y
         )
     ):
         return True
@@ -78,8 +78,8 @@ def render_item(item: Item):
         item.transform_cache = structured_clone(item.transform)
         item.sprite_cache = item.sprite
 
-    screen_center_x = pgapi.SETTINGS.screen_size.x / 2
-    screen_center_y = pgapi.SETTINGS.screen_size.y / 2
+    screen_center_x = pgapi.SCREEN.size.x / 2
+    screen_center_y = pgapi.SCREEN.size.y / 2
 
     camera_pos_x = pgapi.CAMERA.position.x * -1
     camera_pos_y = pgapi.CAMERA.position.y * -1
@@ -146,8 +146,8 @@ def render_bone(bone: Bone, parent: Item):
     sin_theta = math.sin(math.radians(-parent_rotation))
 
     # Calculate the rotated rect position
-    screen_center_x = pgapi.SETTINGS.screen_size.x / 2
-    screen_center_y = pgapi.SETTINGS.screen_size.y / 2
+    screen_center_x = pgapi.SCREEN.size.x / 2
+    screen_center_y = pgapi.SCREEN.size.y / 2
     camera_pos_x = pgapi.CAMERA.position.x * -1
     camera_pos_y = pgapi.CAMERA.position.y * -1
     parent_pos_x = parent.transform.position.x

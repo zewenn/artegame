@@ -1,5 +1,5 @@
 import deps
-from typing import *
+from typing import * # type: ignore
 import sys
 import __config__ as conf
 import os
@@ -8,6 +8,7 @@ import os
 def main() -> None:
     if not (sys.version_info.major == 3 and sys.version_info.minor >= 12):
         print("Architect needs at least python version 3.12 to run!")
+        print("\tNote: only python3 is supported")
         return
 
     deps.title("Initalising")

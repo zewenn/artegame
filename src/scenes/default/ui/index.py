@@ -2,10 +2,11 @@
 from brass.base import *
 
 # Import generic utilities
-from brass.gui import *
-from brass import pgapi, saves, scene
+from brass.gui import *  # type: ignore
+from brass import pgapi, saves, scene, items
 
 FS = FONT_SIZE.MEDIUM
+continue_game: bool = False
 
 
 def title_button(
@@ -32,7 +33,7 @@ def title_button(
             # color=COLOURS.LIGHTBLUE,
             font_variant=["bold", "italic"],
             color=COLOURS.BLACK,
-            bg_color=COLOURS.WHITE
+            bg_color=COLOURS.WHITE,
         ),
         is_button=True,
         onclick=fn,
@@ -46,7 +47,13 @@ def load_game_scene() -> None:
 
 # Runs after spawn()
 def awake() -> None:
+    global continue_game
     gap = 40
+
+    load_res = saves.load()
+    if load_res.is_ok():
+        continue_game = True
+        items.reset()
 
     # DOM creates a new document object model
     DOM(
@@ -86,7 +93,7 @@ def awake() -> None:
                     height=f"128x",
                     top="0x",
                     font_size=FS,
-                    bg_image="artegame_goofy_logo.png"
+                    bg_image="artegame_goofy_logo.png",
                     # bg_color=COLOURS.RED
                 ),
             ),
@@ -95,15 +102,13 @@ def awake() -> None:
         ),
         Element(
             "CenterButtons",
-            title_button("StartGame-Btn", "Új Játék", 0, load_game_scene),
-            # title_button("Options-Btn", "Beállítások", FS + gap, caller(scene.load, (enums.scenes.DEFEAT,))),
+            title_button("StartGame-Btn", "Új Játék" if not continue_game else "Folytatás", 0, load_game_scene),
             title_button("Exit-Btn", "Kilépés", (FS + gap) * 1, pgapi.end),
             style=StyleSheet(position=POSITION.ABSOLUTE, top="60h", left="50w"),
         ),
     )
-    
+
     # if pgapi.SETTINGS.skip_title_screen:
     #     load_game_scene()
     # else:
     pgapi.as_menu()
-

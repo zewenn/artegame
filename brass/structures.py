@@ -73,14 +73,14 @@ class Item:
     # Item identty
     id: string
     tags: Optional[list[string]] = None
-    uuid: string = None
+    uuid: Optional[string] = None
 
     # Transforms
     transform: Optional[Transform] = None
     transform_cache: Optional[Transform] = None
     sprite_cache: Optional[string] = None
     bones: Optional[dict[str, Bone]] = None
-    facing: Number = None
+    facing: Optional[Number] = None
 
     # Shiny render
     render: bool = True
@@ -154,7 +154,7 @@ class Item:
     vulnerable: bool = False
 
     # |> Combat -> Spells
-    spells: Optional[list["Spell", "Spell"]] = None
+    spells: Optional[Tuple["Spell", "Spell"]] = None
     # boons: Optional[list["Boon"]] = None
 
     # Enemies
@@ -281,10 +281,10 @@ class ApplicationSettings:
     icon: Optional[str] = None
     camera: Optional[Camera] = None
     axis_rounding: Optional[int] = 20000
-    move_keys: list[list[str], list[str]] = None
+    move_keys: Optional[Tuple[list[str], list[str]]] = None
     key_repeat: int = 1000000
     sprite_scaling: Literal["GENERIC"] = "GENERIC"
-    save_path: str = os.path.join(os.path.expanduser("~"), "artegame")
+    save_path: str = os.path.join(".", "artegame")
     demo_save_path: str = "./@artegame-demo-saves"
     menu_mode: bool = False
     """
@@ -327,7 +327,7 @@ class Keyframe:
     anchor_y: Optional[float] = None
 
     sprite: Optional[str] = None
-    fill_color: Optional[list[int, int, int] | Tuple[int, int, int]] = None
+    fill_color: Optional[Tuple[int, int, int]] = None
 
 
 @dataclass
@@ -348,7 +348,7 @@ class AnimationGroup:
     id: string
     length: float = 1
     mode: Literal["Normal", "Forwards"] = "Normal"
-    timing_function: Callable[[Number, Number, Number], Number] = None
+    timing_function: Optional[Callable[[Number, Number, Number], Number]] = None
     animations: Optional[list[Animation]] = None
 
 
@@ -436,24 +436,24 @@ class Timeout:
 class StyleSheet:
     display: Literal["block", "none"] = "block"
     inherit_display: bool = False
-    position: Literal["absolute", "relative"] = None
+    position: Optional[Literal["absolute", "relative"]] = None
 
-    bottom: str = None
-    right: str = None
-    left: str = None
-    top: str = None
+    bottom: Optional[str] = None
+    right: Optional[str] = None
+    left: Optional[str] = None
+    top: Optional[str] = None
 
-    width: str = None
-    height: str = None
+    width: Optional[str] = None
+    height: Optional[str] = None
 
-    bg_color: Tuple[int, int, int, int] = None
-    bg_image: str = None
+    bg_color: Optional["Colour"] = None
+    bg_image: Optional[str] = None
 
-    color: Tuple[int, int, int, int] = None
-    font_family: str = None
-    font_size: str = None
-    font_variant: list[Literal["bold", "italic"]] = None
-    gap: str = None
+    color: Optional["Colour"] = None
+    font_family: Optional[str] = None
+    font_size: Optional[int] = None
+    font_variant: Optional[list[Literal["bold", "italic"]]] = None
+    gap: Optional[str] = None
 
 
 @dataclass
@@ -461,8 +461,8 @@ class GUIElement:
     id: str
     children: list["GUIElement"]
     style: StyleSheet
-    hover: StyleSheet = None
-    current_style: StyleSheet = None
+    hover: Optional[StyleSheet] = None
+    current_style: Optional[StyleSheet] = None
     parent: Optional["GUIElement"] = None
     onclick: Optional[Callable[[], None]] = None
     transform: Optional[Transform] = None

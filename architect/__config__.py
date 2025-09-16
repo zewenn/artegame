@@ -1,6 +1,6 @@
 # For nuitka
 PROJECT_NAME = "Artegame"
-VERSION = "2.0.5"
+VERSION = "2.6.0"
 
 # For the installer, to install...
 DEPENDENCIES = [
@@ -38,6 +38,7 @@ GLOBAL_ROUTINES_DIR_DIST_PATH = [*BASE_PATH, "temp_global"]
 
 PROJ_ENUMS_DIR_PATH = ["src", "enums"]
 PROJ_ENUMS_DIR_DIST_PATH = [*BASE_PATH, "temp_enums"]
+
 
 class ROUTINE_EVENTS:
     spawn = "def spawn("

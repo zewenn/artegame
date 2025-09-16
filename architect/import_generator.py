@@ -2,7 +2,7 @@ from result import Result, Ok, Err
 from dataclasses import dataclass
 from zenyx import printf
 from uuid import uuid4
-from typing import *
+from typing import *  # type: ignore
 from deps import *
 
 import __config__ as conf
@@ -29,27 +29,24 @@ def copy_directory(src, dst):
 
     dst (str): Destination directory path.
     """
-    # Create the destination directory if it does not exist
+
     if not os.path.exists(dst):
         os.makedirs(dst)
 
-    # Loop over all items in the source directory
     for item in os.listdir(src):
         src_path = os.path.join(src, item)
         dst_path = os.path.join(dst, item)
 
-        # If the item is a directory, recursively copy its contents
+
         if os.path.isdir(src_path):
             copy_directory(src_path, dst_path)
-        # If the item is a file, copy it to the destination directory
+
         else:
             shutil.copy2(src_path, dst_path)
 
 
 @task("Generating Imports")
 def generate_imports_from_directory(directory: str) -> Result[list[str], ValueError]:
-
-    # Get the list of files in the directory
     top = len(
         [x for x in os.listdir(directory) if x.endswith(".py") and x != "__init__.py"]
     )
@@ -59,10 +56,6 @@ def generate_imports_from_directory(directory: str) -> Result[list[str], ValueEr
         if not filename.endswith(".py") or filename == "__init__.py":
             continue
 
-        # file_list.append(
-        #     f"\nfrom {'.'.join(conf.ROUTINE_PATH[1:])} import "
-        #     + filename.replace(".py", "")
-        # )
         if filename == "__init__.py":
             print("asdasd")
             continue
@@ -198,7 +191,7 @@ def create_replace_temp(routines: list[Routine], level: int = 3) -> None:
     if not os.path.isdir(temp_path):
         os.mkdir(temp_path)
 
-    delete_files_in_directory(temp_path)
+    delete_files_in_directory([temp_path])
 
     for routine in routines:
         contents = ""
@@ -206,7 +199,7 @@ def create_replace_temp(routines: list[Routine], level: int = 3) -> None:
             contents = rf.read()
 
         contents = f"from {dots} import events, scene\n" + contents
-        # contents = "import enums\n" + contents
+
         contents = contents.replace(
             conf.ROUTINE_EVENTS.spawn,
             f"@scene.spawn(enums.scenes.{routine.scene.upper()})\n{conf.ROUTINE_EVENTS.spawn}",
@@ -274,8 +267,6 @@ def build_global_routines() -> None:
 
         contents = contents.replace("from src.global_routines ", "from . ")
         contents = contents.replace("from src.global_routines.", "from .")
-        # contents = contents.replace("from brass ", "from .. ")
-        # contents = contents.replace("from brass.", "from ..")
         contents = replace_imports(contents, 2)
 
         with open(
@@ -344,7 +335,7 @@ def serialise_imports():
         os.path.join(*conf.PROJ_ENUMS_DIR_DIST_PATH),
     )
 
-    delete_files_in_directory(os.path.join(*conf.GLOBAL_ROUTINES_DIR_DIST_PATH))
+    delete_files_in_directory(conf.GLOBAL_ROUTINES_DIR_DIST_PATH)
     build_global_routines()
 
     routines, scenes = get_routines_and_scenes(conf.SCENES_PATH)
@@ -365,8 +356,9 @@ def serialise_imports():
         if import_list.is_err():
             printf("Failed to import scripts: Wrong path")
             return
-
-        import_line: str = " ".join(import_list.ok())
+        
+        
+        import_line: str = " ".join(import_list.ok()) # type: ignore
 
         if len(content) < 4:
             for _ in range(4):

@@ -1,0 +1,1112 @@
+[
+    {
+        "id": "player",
+        "tags": [
+            "player",
+            "item"
+        ],
+        "uuid": "item:581246a66a0243a19b1b69667be26a31",
+        "transform": {
+            "position": {
+                "x": 52.68175647096083,
+                "y": 200.60883203375909,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 80.0,
+                "y": 80.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": {
+            "position": {
+                "x": 52.68175647096083,
+                "y": 200.60883203375909,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0.0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 80.0,
+                "y": 80.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "sprite_cache": "player_left_0.png",
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": "player_left_0.png",
+        "crop": null,
+        "fill_color": null,
+        "can_move": true,
+        "base_movement_speed": 420,
+        "movement_speed": 420,
+        "dash_movement_multiplier": 2.5,
+        "dash_count": 2,
+        "dashes_remaining": 2,
+        "dash_time": 200,
+        "dash_charge_refill_time": 0.5,
+        "last_dash_charge_refill": 40013.48207775,
+        "dashing": false,
+        "inventory": {
+            "banana": 2,
+            "strawberry": 4,
+            "blueberry": 9,
+            "pyon_converted": true,
+            "@class": "Inventory"
+        },
+        "can_collide": true,
+        "can_repulse": true,
+        "lightness": 0.9,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": "Player",
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": 187.5,
+        "max_mana": 100,
+        "base_attack_speed": 5,
+        "base_damage": 10,
+        "weapons": [
+            {
+                "id": "plates",
+                "light_sprite": "light_attack_projectile.png",
+                "light_damage_multiplier": 1,
+                "light_lifetime": 1,
+                "light_speed": 0.9,
+                "light_size": {
+                    "x": 64,
+                    "y": 64,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "heavy_sprite": "heavy_attack_projectile.png",
+                "heavy_damage_multiplier": 2,
+                "heavy_lifetime": 1.5,
+                "heavy_speed": 0.75,
+                "heavy_size": {
+                    "x": 64,
+                    "y": 64,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "dash_sprite": "light_attack_projectile.png",
+                "dash_damage_multiplier": 1.25,
+                "dash_lifetime": 2.25,
+                "dash_speed": 1.75,
+                "dash_size": {
+                    "x": 256,
+                    "y": 64,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "spell0_effectiveness": 5,
+                "spell1_effectiveness": 5,
+                "pyon_converted": true,
+                "@class": "Weapon"
+            },
+            {
+                "id": "gloves",
+                "light_sprite": "light_attack_projectile.png",
+                "light_damage_multiplier": 1.1,
+                "light_lifetime": 1,
+                "light_speed": 1,
+                "light_size": {
+                    "x": 32,
+                    "y": 96,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "heavy_sprite": "heavy_attack_projectile.png",
+                "heavy_damage_multiplier": 2.1,
+                "heavy_lifetime": 1.5,
+                "heavy_speed": 0.8,
+                "heavy_size": {
+                    "x": 32,
+                    "y": 96,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "dash_sprite": "light_attack_projectile.png",
+                "dash_damage_multiplier": 1.25,
+                "dash_lifetime": 2.25,
+                "dash_speed": 2,
+                "dash_size": {
+                    "x": 64,
+                    "y": 256,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "spell0_effectiveness": 5,
+                "spell1_effectiveness": 5,
+                "pyon_converted": true,
+                "@class": "Weapon"
+            }
+        ],
+        "weapon": {
+            "id": "plates",
+            "light_sprite": "light_attack_projectile.png",
+            "light_damage_multiplier": 1,
+            "light_lifetime": 1,
+            "light_speed": 0.9,
+            "light_size": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "heavy_sprite": "heavy_attack_projectile.png",
+            "heavy_damage_multiplier": 2,
+            "heavy_lifetime": 1.5,
+            "heavy_speed": 0.75,
+            "heavy_size": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "dash_sprite": "light_attack_projectile.png",
+            "dash_damage_multiplier": 1.25,
+            "dash_lifetime": 2.25,
+            "dash_speed": 1.75,
+            "dash_size": {
+                "x": 256,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "spell0_effectiveness": 5,
+            "spell1_effectiveness": 5,
+            "pyon_converted": true,
+            "@class": "Weapon"
+        },
+        "hitpoints": 167.5,
+        "mana": 80,
+        "attack_speed": 5,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": 0,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": [
+            {
+                "name": "Kreatin",
+                "description": "Nagyobb méret és több életerő.",
+                "cooldown": 15,
+                "effectiveness": 1.25,
+                "mana_cost": 35,
+                "icon": "goliath_icon.png",
+                "interrupted_by": [],
+                "cooldown_start": null,
+                "cooldown_remaining": null,
+                "pyon_converted": true,
+                "@class": "Spell"
+            },
+            {
+                "name": "Üres",
+                "description": "Üres képesség hely.",
+                "cooldown": 0,
+                "effectiveness": 0,
+                "mana_cost": 0,
+                "icon": "empty_icon.png",
+                "interrupted_by": [],
+                "cooldown_start": null,
+                "cooldown_remaining": null,
+                "pyon_converted": true,
+                "@class": "Spell"
+            }
+        ],
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "player_hand_holder",
+        "tags": [
+            "player_hand_holder",
+            "item"
+        ],
+        "uuid": "item:f2ad29151b0b4639b03dce293ae398df",
+        "transform": {
+            "position": {
+                "x": 52.68175647096083,
+                "y": 200.60883203375909,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 143.21131531112516,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": {
+            "left_hand": {
+                "transform": {
+                    "position": {
+                        "x": -32,
+                        "y": 16,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "rotation": {
+                        "x": 0,
+                        "y": 0,
+                        "z": -40,
+                        "pyon_converted": true,
+                        "@class": "Vec3"
+                    },
+                    "scale": {
+                        "x": 48,
+                        "y": 48,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "pyon_converted": true,
+                    "@class": "Transform"
+                },
+                "anchor": {
+                    "x": 0,
+                    "y": 0,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "sprite": "plates_0.png",
+                "fill_color": null,
+                "pyon_converted": true,
+                "@class": "Bone"
+            },
+            "right_hand": {
+                "transform": {
+                    "position": {
+                        "x": 32,
+                        "y": 16,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "rotation": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 40,
+                        "pyon_converted": true,
+                        "@class": "Vec3"
+                    },
+                    "scale": {
+                        "x": 48,
+                        "y": 48,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "pyon_converted": true,
+                    "@class": "Transform"
+                },
+                "anchor": {
+                    "x": 0,
+                    "y": 0,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "sprite": "plates_1.png",
+                "fill_color": null,
+                "pyon_converted": true,
+                "@class": "Bone"
+            }
+        },
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": false,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "arteglaive_mixer",
+        "tags": [
+            "mixer",
+            "item"
+        ],
+        "uuid": "item:76df2fa684d848e685020ac39f9c8db9",
+        "transform": {
+            "position": {
+                "x": 0,
+                "y": -196,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": {
+            "display": {
+                "transform": {
+                    "position": {
+                        "x": 0,
+                        "y": -32,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "rotation": {
+                        "x": 0,
+                        "y": 0,
+                        "z": 0,
+                        "pyon_converted": true,
+                        "@class": "Vec3"
+                    },
+                    "scale": {
+                        "x": 64,
+                        "y": 128,
+                        "pyon_converted": true,
+                        "@class": "Vec2"
+                    },
+                    "pyon_converted": true,
+                    "@class": "Transform"
+                },
+                "anchor": {
+                    "x": 0,
+                    "y": 0,
+                    "pyon_converted": true,
+                    "@class": "Vec2"
+                },
+                "sprite": "turmix2000.png",
+                "fill_color": null,
+                "pyon_converted": true,
+                "@class": "Bone"
+            }
+        },
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "RoundSaver",
+        "tags": [
+            "BoonSelection"
+        ],
+        "uuid": "item:eb5e40387a784b5f8088dc54a3007c68",
+        "transform": {
+            "position": {
+                "x": 5,
+                "y": 0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 0,
+                "y": 0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": false,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "invisible_wall_left",
+        "tags": [
+            "invisible",
+            "wall",
+            "wall-left"
+        ],
+        "uuid": "item:9c3babe854334cc3a010f499134b9665",
+        "transform": {
+            "position": {
+                "x": -1184.0,
+                "y": -736.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 1536,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "invisible_wall_right",
+        "tags": [
+            "invisible",
+            "wall",
+            "wall-right"
+        ],
+        "uuid": "item:9cd074bffa71405a8f9602b64359bdd7",
+        "transform": {
+            "position": {
+                "x": 1184.0,
+                "y": -736.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 1536,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "invisible_wall_top",
+        "tags": [
+            "invisible",
+            "wall",
+            "wall-top"
+        ],
+        "uuid": "item:80c8b471e216499bb5ee280b3036ad24",
+        "transform": {
+            "position": {
+                "x": -1120.0,
+                "y": -800.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 2304,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "invisible_wall_bottom",
+        "tags": [
+            "invisible",
+            "wall",
+            "wall-bottom"
+        ],
+        "uuid": "item:a85e8612edce48c9bc8b7731156a2885",
+        "transform": {
+            "position": {
+                "x": -1120.0,
+                "y": 800.0,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "pyon_converted": true,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 2304,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "pyon_converted": true,
+            "@class": "Transform"
+        },
+        "transform_cache": null,
+        "sprite_cache": null,
+        "bones": null,
+        "facing": null,
+        "render": true,
+        "sprite": null,
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": null,
+        "movement_speed": null,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": true,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": false,
+        "lifetime_seconds": null,
+        "life_start": null,
+        "team": null,
+        "projectile_damage": null,
+        "projectile_effects": null,
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "pyon_converted": true,
+        "@class": "Item"
+    },
+    {
+        "id": "Projectile-1c07b09504bd4df0b81ca433cc5b9991",
+        "tags": [
+            "projectile",
+            "item"
+        ],
+        "uuid": "item:cb5b19eac3d3456d8a5afb8be0352c01",
+        "transform": {
+            "position": {
+                "x": 278.4883549012229,
+                "y": 49.249423717112535,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 143.21131531112516,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "@class": "Transform"
+        },
+        "transform_cache": {
+            "position": {
+                "x": 110.97371098974692,
+                "y": 273.2630895395605,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 143.21131531112516,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "@class": "Transform"
+        },
+        "sprite_cache": "light_attack_projectile.png",
+        "bones": null,
+        "facing": 143.21131531112516,
+        "render": true,
+        "sprite": "light_attack_projectile.png",
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": 378.0,
+        "movement_speed": 378.0,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": false,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": true,
+        "lifetime_seconds": 1,
+        "life_start": 40018.034810416,
+        "team": "Player",
+        "projectile_damage": 10,
+        "projectile_effects": [],
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "@class": "Item"
+    },
+    {
+        "id": "Projectile-4091000716b94104a089b93859765d31",
+        "tags": [
+            "projectile",
+            "item"
+        ],
+        "uuid": "item:8c5f3fc6e9024cc08de46408ebd18004",
+        "transform": {
+            "position": {
+                "x": 138.2500475500663,
+                "y": 86.18022976229237,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 143.21131531112516,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "@class": "Transform"
+        },
+        "transform_cache": {
+            "position": {
+                "x": 52.68175647096083,
+                "y": 200.60883203375909,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 143.21131531112516,
+                "@class": "Vec3"
+            },
+            "scale": {
+                "x": 64,
+                "y": 64,
+                "pyon_converted": true,
+                "@class": "Vec2"
+            },
+            "@class": "Transform"
+        },
+        "sprite_cache": "light_attack_projectile.png",
+        "bones": null,
+        "facing": 143.21131531112516,
+        "render": true,
+        "sprite": "light_attack_projectile.png",
+        "crop": null,
+        "fill_color": null,
+        "can_move": null,
+        "base_movement_speed": 378.0,
+        "movement_speed": 378.0,
+        "dash_movement_multiplier": null,
+        "dash_count": null,
+        "dashes_remaining": null,
+        "dash_time": null,
+        "dash_charge_refill_time": null,
+        "last_dash_charge_refill": null,
+        "dashing": false,
+        "inventory": null,
+        "can_collide": false,
+        "can_repulse": false,
+        "lightness": 1,
+        "trigger_collider": false,
+        "is_projectile": true,
+        "lifetime_seconds": 1,
+        "life_start": 40018.395825125,
+        "team": "Player",
+        "projectile_damage": 10,
+        "projectile_effects": [],
+        "max_hitpoints": null,
+        "max_mana": null,
+        "base_attack_speed": null,
+        "base_damage": null,
+        "weapons": null,
+        "weapon": null,
+        "hitpoints": null,
+        "mana": null,
+        "attack_speed": null,
+        "invulnerable": false,
+        "can_attack": false,
+        "slowed_by_percent": null,
+        "rooted": false,
+        "stunned": false,
+        "sleeping": false,
+        "vulnerable": false,
+        "spells": null,
+        "effective_range": null,
+        "@class": "Item"
+    }
+]

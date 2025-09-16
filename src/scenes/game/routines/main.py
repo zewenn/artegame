@@ -23,7 +23,6 @@ from src.enums import keybinds
 # fmt: on
 
 
-
 # def issnit() -> None:
 #     round_manager.ROUND_STATE = "Wait"
 
@@ -34,5 +33,3 @@ def update() -> None:
         menus.is_showing("GameMenu") and inpt.active_bind(enums.base_keybinds.BACK)
     ):
         menus.toggle("GameMenu")
-
-    print("FPS:", round(1 / pgapi.TIME.deltatime), end="\r")
