@@ -173,3 +173,4 @@ architect/@build_counter.txt
 .idea/
 
 artegame/
+**/.DS_Store
