@@ -1,6 +1,6 @@
 # For nuitka
 PROJECT_NAME = "Artegame"
-VERSION = "2.7.0"
+VERSION = "2.7.1"
 
 # For the installer, to install...
 DEPENDENCIES = [
