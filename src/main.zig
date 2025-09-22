@@ -1,6 +1,8 @@
 const lm = @import("loom");
 const std = @import("std");
 
+const Setup = @import("global/setup.zig");
+
 pub fn main() !void {
     lm.project(.{
         .window = .{
@@ -14,7 +16,9 @@ pub fn main() !void {
         },
     })({
         lm.scene("default")({
-            std.debug.print("Hello World!", .{});
+            lm.globalBehaviours(.{
+                Setup{},
+            });
         });
     });
 }
