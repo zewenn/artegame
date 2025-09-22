@@ -1,0 +1,22 @@
+.{
+    .name = .artegame,
+
+    .version = "0.0.0",
+
+    .fingerprint = 0xc19ae7346f78b31f,
+
+    .minimum_zig_version = "0.14.1",
+
+    .dependencies = .{
+        .loom = .{
+            .url = "git+https://github.com/zewenn/loom?ref=stable#9f7dff3e4b8d0e89797d671ff74b601c441abc24",
+            .hash = "loom-0.4.0-rtZyxBKOBABPHjzc_GltLELPECulWwlvTfN0czvqHvN-",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
