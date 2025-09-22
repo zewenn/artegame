@@ -169,6 +169,7 @@ architect/@build_counter.txt
 /nuitka-crash-report.xml
 
 .vscode/
+.VSCodeCounter/
 .vs/
 .idea/
 
