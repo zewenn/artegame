@@ -29,8 +29,8 @@ def init():
     pygame.mixer.init()
     # pylint: enable=no-member
 
-    SCREEN_SIZE = Vec2(1600, 900)
-    ui_ratio = (SCREEN_SIZE.x / SCREEN_SIZE.y) / (1920 / 1080)
+    SCREEN_SIZE = Vec2(1280, 720)
+    ui_ratio = ((SCREEN_SIZE.x / 1920) + (SCREEN_SIZE.y / 1080)) / 2
 
     assets.create_runtime_objects(ui_ratio)
 
@@ -74,7 +74,7 @@ def init():
             pgapi.SCREEN.this.get_width(), pgapi.SCREEN.this.get_height()
         )
 
-        new_ratio = (pgapi.SCREEN.size.x / pgapi.SCREEN.size.y) / (1920 / 1080)
+        new_ratio = ((pgapi.SCREEN.size.x / 2520) + (pgapi.SCREEN.size.y / 1080)) / 2
         if ui_ratio != new_ratio:
             ui_ratio = new_ratio
             pgapi.GUI_PIXEL_RATIO = ui_ratio

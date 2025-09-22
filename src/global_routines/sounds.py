@@ -10,7 +10,7 @@ playing_fight_music: Optional[Audio] = None
 PUNCH: Optional[Audio] = None
 PICKUP: Optional[Audio] = None
 
-VOLUME = 0.05
+VOLUME = 0.2
 
 
 @events.awake
