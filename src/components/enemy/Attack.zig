@@ -36,6 +36,8 @@ pub fn Start(self: *Self) !void {
 }
 
 pub fn Update(self: *Self) !void {
+    if (lm.time.paused()) return;
+    
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);

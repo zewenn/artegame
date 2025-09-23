@@ -34,6 +34,8 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Update(self: *Self) !void {
+    if (lm.time.paused()) return;
+
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const stats: *Stats = try lm.ensureComponent(self.stats);
 

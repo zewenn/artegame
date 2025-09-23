@@ -15,4 +15,8 @@ pub fn Awake() !void {
     });
 }
 
-// pub fn Update() !void {}
+// pub fn Update() !void {
+//     if (lm.input.getKeyDown(.f)) {
+//         lm.time.togglePause();
+//     }
+// }

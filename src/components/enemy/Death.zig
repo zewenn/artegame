@@ -14,6 +14,8 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Update(self: *Self, entity: *lm.Entity) !void {
+    if (lm.time.paused()) return;
+
     const stats: *Stats = try lm.ensureComponent(self.stats);
 
     if (stats.current.health > 0) return;

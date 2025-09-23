@@ -17,6 +17,8 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Update(self: *Self) !void {
+    if (lm.time.paused()) return;
+
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
