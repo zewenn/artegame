@@ -4,7 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../components/Stats.zig");
 const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 
-const Options = struct {
+pub const Options = struct {
     start_position: lm.Vector2 = .init(0, 0),
     target_position: lm.Vector2 = .init(1, 0),
 
