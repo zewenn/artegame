@@ -47,6 +47,7 @@ pub fn Projectile(options: Options) !*lm.Entity {
         lm.Renderer.sprite(options.getProjectileSprite()),
         lm.RectangleCollider.initConfig(.{
             .type = .trigger,
+            .transform = .{ .scale = options.size.multiply(lm.Vec2(0.8, 0.8)) },
             .onCollidion = onCollisionDealDamage,
         }),
 

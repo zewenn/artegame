@@ -7,6 +7,8 @@ pub const StatValues = struct {
     stamina: f32 = 100,
 
     movement_speed: f32 = 330,
+    dash_time: f32 = 0.2,
+    dash_speed_multiplier: f32 = 3,
 
     armour: f32 = 0,
     magic_resist: f32 = 0,
