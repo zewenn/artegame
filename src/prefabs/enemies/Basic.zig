@@ -32,6 +32,8 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
 
         Enemy.Movement{},
         Enemy.Death{},
-        Enemy.Attack{},
+        Enemy.Attack.init(.{
+            .lifetime = 5,
+        }),
     });
 }

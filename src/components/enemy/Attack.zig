@@ -37,7 +37,7 @@ pub fn Start(self: *Self) !void {
 
 pub fn Update(self: *Self) !void {
     if (lm.time.paused()) return;
-    
+
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
@@ -47,7 +47,6 @@ pub fn Update(self: *Self) !void {
     if (self.cooldown != 0) return;
 
     self.cooldown = 1 / stats.current.attack_speed;
-
 
     const distance = std.math.hypot(
         transform.position.x - player_transform.position.x,
@@ -64,7 +63,10 @@ pub fn Update(self: *Self) !void {
             .is_crit = lm.randFloat(f32, 0, 1) <= stats.current.crit_chance,
             .target_team = .player,
 
-            .speed = stats.current.movement_speed * 3,
+            .onhit_effect = .root,
+            .onhit_duration = 0.1,
+
+            .speed = stats.current.movement_speed * 4,
             .damage_multiplier = self.projectile_options.damage_multiplier,
             .damage_type = self.projectile_options.damage_type,
             .passtrough = self.projectile_options.passtrough,

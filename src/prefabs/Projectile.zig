@@ -23,6 +23,10 @@ pub const Options = struct {
     inactive: bool = false,
     override_sprite: ?[]const u8 = null,
 
+    onhit_effect: ?enum { slow, root, stun } = null,
+    onhit_duration: f32 = 0,
+    onhit_strength: f32 = 0,
+
     pub fn getProjectileSprite(self: Options) []const u8 {
         return self.override_sprite orelse switch (self.target_team) {
             .player => "enemy_light_projectile.png",
@@ -83,4 +87,11 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         options.damage_type,
         options.is_crit,
     ) * if (options.passtrough) lm.time.deltaTime() else 1 * options.damage_multiplier;
+
+    const onhit_effect = options.onhit_effect orelse return;
+    switch (onhit_effect) {
+        .slow => other_stats.applySlow(options.onhit_strength, options.onhit_duration),
+        .root => other_stats.applyRoot(options.onhit_duration),
+        .stun => other_stats.applyStun(options.onhit_duration),
+    }
 }

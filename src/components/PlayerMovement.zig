@@ -23,7 +23,7 @@ pub fn Update(self: *Self) !void {
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
 
-    if (dashing.is_dashing()) return;
+    if (dashing.is_dashing() or !stats.canMove()) return;
 
     var move_vector = lm.Vec2(0, 0);
 

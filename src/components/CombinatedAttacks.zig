@@ -54,6 +54,8 @@ pub fn Update(self: *Self) !void {
 
         self.cooldown = 1 / stats.current.attack_speed;
 
+        stats.applyRoot(0.075);
+
         if (dashing.is_dashing()) {
             try lm.summon(&.{.{
                 .entity = try Projectile(.{
@@ -85,6 +87,7 @@ pub fn Update(self: *Self) !void {
                     .size = lm.Vec2(128, 64),
                     .lifetime = 2,
                     .passtrough = true,
+                    .damage_multiplier = 2,
                     .target_team = .enemy,
                 }),
                 else => Projectile(.{
