@@ -20,6 +20,32 @@ pub const StatValues = struct {
     attack_speed: f32 = 0.6,
 };
 
+pub const Teams = enum {
+    player,
+    neutral,
+    enemy,
+};
+
+pub const DamageType = enum {
+    magic,
+    physical,
+};
+
+const Self = @This();
+
+team: Teams = .neutral,
+
 max: StatValues = .{},
 base: StatValues = .{},
 current: StatValues = .{},
+
+pub fn calculateDamage(self: Self, defender: Self, damage_type: DamageType, is_crit: bool) f32 {
+    return switch (damage_type) {
+        .physical => self.current.physical_damage * (1 - defenseToDamageReductionPercent(defender.current.armour)),
+        .magic => self.current.magic_damage * (1 - defenseToDamageReductionPercent(defender.current.magic_damage)),
+    } * if (is_crit) self.current.crit_damage_multiplier else 1;
+}
+
+pub fn defenseToDamageReductionPercent(defense: f32) f32 {
+    return 0.3 * std.math.log10(defense + 1);
+}

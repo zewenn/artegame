@@ -16,8 +16,10 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
         }),
 
         Stats{
+            .team = .player,
             .current = .{
                 .attack_speed = 2,
+                .armour = 30,
             },
         },
         Movement{},

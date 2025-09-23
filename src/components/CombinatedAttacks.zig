@@ -55,6 +55,7 @@ pub fn Update(self: *Self) !void {
 
     const text = try std.fmt.allocPrint(allocator, "Chain Count: {d}", .{self.chain_count});
     const cooldown_text = try std.fmt.allocPrint(allocator, "Cooldown: {d}", .{self.cooldown});
+    const health = try std.fmt.allocPrint(allocator, "Health: {d}", .{stats.current.health});
 
     ui.new(.{
         .id = .ID("chain-attack-count"),
@@ -66,5 +67,6 @@ pub fn Update(self: *Self) !void {
     })({
         ui.text(text, .{});
         ui.text(cooldown_text, .{});
+        ui.text(health, .{ .letter_spacing = 2 });
     });
 }
