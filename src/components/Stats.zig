@@ -20,6 +20,8 @@ pub const StatValues = struct {
     crit_chance: f32 = 0,
 
     attack_speed: f32 = 0.6,
+
+    aggro_range: f32 = 300,
 };
 
 pub const Teams = enum {

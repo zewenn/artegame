@@ -59,7 +59,7 @@ pub fn Update(self: *Self) !void {
                 .entity = try Projectile(.{
                     .start_position = lm.vec3ToVec2(transform.position),
                     .target_position = mouse_pos,
-                    .size = lm.Vec2(192, 64),
+                    .size = lm.Vec2(192 + 32 * self.chain_count, 64),
                     .lifetime = 3,
                     .passtrough = true,
                     .speed = 660,

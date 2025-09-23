@@ -3,7 +3,7 @@ const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
 const Dashing = @import("../components/Dashing.zig");
-const Movement = @import("../components/Movement.zig");
+const PlayerMovement = @import("../components/PlayerMovement.zig");
 const CombinatedAttacks = @import("../components/CombinatedAttacks.zig");
 
 pub fn Player(position: lm.Vector2) !*lm.Entity {
@@ -23,7 +23,7 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
                 .armour = 30,
             },
         },
-        Movement{},
+        PlayerMovement{},
         CombinatedAttacks{},
         Dashing{},
     });
