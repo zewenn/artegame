@@ -17,6 +17,7 @@ pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     const stats = self.stats orelse return;
 
     if (self.direction != null) return;
+    if (stats.current.stamina < 50) return;
 
     self.direction = direction_vector.normalize();
     self.cooldown = stats.current.dash_time;
@@ -52,4 +53,10 @@ pub fn Update(self: *Self) !void {
             .multiply(lm.time.deltaTimeVector2())
             .multiply(lm.Vec2(speed, speed)),
     ));
+}
+
+pub fn Tick(self: *Self) !void {
+    const stats: *Stats = try lm.ensureComponent(self.stats);
+
+    stats.current.stamina = @min(stats.max.stamina, stats.current.stamina + 1);
 }

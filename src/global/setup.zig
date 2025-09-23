@@ -10,16 +10,4 @@ pub fn Awake() !void {
     });
 }
 
-pub fn Update() !void {
-    const mouse_pos = lm.screenToWorldPos(lm.rl.getMousePosition());
-
-    if (lm.input.getMouseDown(.left)) {
-        try lm.summon(&.{.{
-            .entity = try Projectile(.{
-                .start_position = .init(0, 0),
-                .target_position = mouse_pos,
-                .target_team = .player,
-            }),
-        }});
-    }
-}
+// pub fn Update() !void {}
