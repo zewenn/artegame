@@ -86,7 +86,7 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         other_stats.*,
         options.damage_type,
         options.is_crit,
-    ) * if (options.passtrough) lm.time.deltaTime() else 1 * options.damage_multiplier;
+    ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage_multiplier;
 
     const onhit_effect = options.onhit_effect orelse return;
     switch (onhit_effect) {

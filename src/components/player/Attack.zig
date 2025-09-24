@@ -3,9 +3,11 @@ const lm = @import("loom");
 
 const ui = lm.ui;
 
-const Projectile = @import("../prefabs/Projectile.zig").Projectile;
-const Stats = @import("Stats.zig");
-const Dashing = @import("Dashing.zig");
+const Projectile = @import("../../prefabs/Projectile.zig").Projectile;
+const Stats = @import("../Stats.zig");
+const Dashing = @import("../Dashing.zig");
+
+const Weapon = @import("../Weapons/Weapon.zig");
 
 const Self = @This();
 
@@ -19,6 +21,17 @@ dashing: ?*Dashing = null,
 
 arena: ?std.heap.ArenaAllocator = null,
 allocator: ?std.mem.Allocator = null,
+
+weapons: struct {
+    goliath: Weapon = .{
+        .light_attack = .{
+            .shooting_degrees = &.{ -10, 0, 10 },
+            .projectile_options = .{
+                .damage_multiplier = 0.3,
+            },
+        },
+    },
+} = .{},
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.arena = .init(lm.allocators.generic());
@@ -56,46 +69,46 @@ pub fn Update(self: *Self) !void {
         stats.applyRoot(0.075);
 
         if (dashing.is_dashing()) {
-            try lm.summon(&.{.{
-                .entity = try Projectile(.{
-                    .start_position = lm.vec3ToVec2(transform.position),
-                    .target_position = mouse_pos,
-                    .size = lm.Vec2(192 + 32 * self.chain_count, 64),
-                    .lifetime = 3,
-                    .passtrough = true,
-                    .speed = 660,
-                    .target_team = .enemy,
-                }),
-            }});
+            try self.weapons.goliath.dashAttack(
+                lm.vec3ToVec2(transform.position),
+                mouse_pos,
+                stats.*,
+            );
 
             break :attack_block;
         }
 
-        try lm.summon(&.{.{
-            .entity = try switch (self.chain_count) {
-                2 => Projectile(.{
-                    .start_position = lm.vec3ToVec2(transform.position),
-                    .target_position = mouse_pos,
-                    .size = lm.Vec2(96, 64),
-                    .lifetime = 1.5,
-                    .target_team = .enemy,
-                }),
-                3 => Projectile(.{
-                    .start_position = lm.vec3ToVec2(transform.position),
-                    .target_position = mouse_pos,
-                    .size = lm.Vec2(128, 64),
-                    .lifetime = 2,
-                    .passtrough = true,
-                    .damage_multiplier = 2,
-                    .target_team = .enemy,
-                }),
-                else => Projectile(.{
-                    .start_position = lm.vec3ToVec2(transform.position),
-                    .target_position = mouse_pos,
-                    .target_team = .enemy,
-                }),
-            },
-        }});
+        // try lm.summon(&.{.{
+        //     .entity = try switch (self.chain_count) {
+        //         2 => Projectile(.{
+        //             .start_position = lm.vec3ToVec2(transform.position),
+        //             .target_position = mouse_pos,
+        //             .size = lm.Vec2(96, 64),
+        //             .lifetime = 1.5,
+        //             .target_team = .enemy,
+        //         }),
+        //         3 => Projectile(.{
+        //             .start_position = lm.vec3ToVec2(transform.position),
+        //             .target_position = mouse_pos,
+        //             .size = lm.Vec2(128, 64),
+        //             .lifetime = 2,
+        //             .passtrough = true,
+        //             .damage_multiplier = 2,
+        //             .target_team = .enemy,
+        //         }),
+        //         else => Projectile(.{
+        //             .start_position = lm.vec3ToVec2(transform.position),
+        //             .target_position = mouse_pos,
+        //             .target_team = .enemy,
+        //         }),
+        //     },
+        // }});
+
+        try self.weapons.goliath.lightAttack(
+            lm.vec3ToVec2(transform.position),
+            mouse_pos,
+            stats.*,
+        );
     }
 
     const allocator = self.allocator orelse return;

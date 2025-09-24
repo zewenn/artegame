@@ -5,8 +5,6 @@ const Stats = @import("../../components/Stats.zig");
 const Dashing = @import("../../components/Dashing.zig");
 const Enemy = @import("../../components/enemy/export.zig");
 
-const CombinatedAttacks = @import("../../components/CombinatedAttacks.zig");
-
 var basic_enemy_count: u32 = 0;
 
 pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
@@ -24,7 +22,7 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
             .current = .{
                 .attack_speed = 2,
                 .armour = 30,
-                .movement_speed = 100,
+                .movement_speed = 175,
                 .aggro_range = 900,
             },
         },

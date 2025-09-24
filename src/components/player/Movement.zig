@@ -1,8 +1,8 @@
 const std = @import("std");
 const lm = @import("loom");
 
-const Stats = @import("Stats.zig");
-const Dashing = @import("Dashing.zig");
+const Stats = @import("../Stats.zig");
+const Dashing = @import("../Dashing.zig");
 
 const Self = @This();
 

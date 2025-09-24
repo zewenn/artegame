@@ -3,8 +3,7 @@ const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
 const Dashing = @import("../components/Dashing.zig");
-const PlayerMovement = @import("../components/PlayerMovement.zig");
-const CombinatedAttacks = @import("../components/CombinatedAttacks.zig");
+const player = @import("../components/player/export.zig");
 
 pub fn Player(position: lm.Vector2) !*lm.Entity {
     return try lm.makeEntity("player", .{
@@ -23,8 +22,9 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
                 .armour = 30,
             },
         },
-        PlayerMovement{},
-        CombinatedAttacks{},
         Dashing{},
+
+        player.Movement{},
+        player.Attack{},
     });
 }
