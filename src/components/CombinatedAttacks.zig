@@ -2,7 +2,6 @@ const std = @import("std");
 const lm = @import("loom");
 
 const ui = lm.ui;
-const TIMER = 0.1;
 
 const Projectile = @import("../prefabs/Projectile.zig").Projectile;
 const Stats = @import("Stats.zig");
