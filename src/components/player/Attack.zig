@@ -48,6 +48,15 @@ pub fn Update(self: *Self) !void {
 
     if (self.cooldown < 0) self.cooldown = 0;
 
+    if (lm.keyboard.getKeyDown(.tab)) weapon_switching: {
+        if (std.mem.eql(u8, self.current_weapon.id, weapons.fists.id)) {
+            self.current_weapon = weapons.goliath;
+            break :weapon_switching;
+        }
+
+        self.current_weapon = weapons.fists;
+    }
+
     const mouse_pos = camera.screenToWorldPos(lm.rl.getMousePosition());
     if (lm.mouse.getButtonDown(.left) and self.cooldown < 1 / stats.current.attack_speed and !stats.current.stunned) attack_block: {
         self.cooldown = 1 / stats.current.attack_speed;
