@@ -19,6 +19,14 @@ pub fn main() !void {
             lm.globalBehaviours(.{
                 Setup{},
             });
+
+            lm.cameras(&.{
+                lm.CameraConfig{ .id = "main", .options = .{
+                    .display = .fullscreen,
+                    .draw_mode = .world,
+                    .zoom = 1,
+                } },
+            });
         });
     });
 }

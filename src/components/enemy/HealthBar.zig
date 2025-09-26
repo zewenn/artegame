@@ -11,18 +11,24 @@ var healthbar_count: u32 = 0;
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 
+camera: ?*lm.Camera = null,
+
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
 }
 
+pub fn Start(self: *Self) void {
+    self.camera = lm.activeScene().?.getCamera("main");
+}
+
 pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
+    const camera: *lm.Camera = try lm.ensureComponent(self.camera);
 
-    const screen_pos = lm.worldToScreenPos(lm.vec3ToVec2(transform.position))
-        .subtract(.init(32, 64))
-        ;
+    const screen_pos = camera.worldToScreenPos(lm.vec3ToVec2(transform.position))
+        .subtract(.init(32, 64));
 
     healthbar_count +%= 1;
 

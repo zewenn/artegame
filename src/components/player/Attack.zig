@@ -22,6 +22,8 @@ dashing: ?*Dashing = null,
 arena: ?std.heap.ArenaAllocator = null,
 allocator: ?std.mem.Allocator = null,
 
+camera: ?*lm.Camera = null,
+
 weapons: struct {
     goliath: Weapon = .{
         .light_attack = .{
@@ -42,10 +44,15 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
 }
 
+pub fn Start(self: *Self) void {
+    self.camera = lm.activeScene().?.getCamera("main");
+}
+
 pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
+    const camera: *lm.Camera = try lm.ensureComponent(self.camera);
 
     self.remaining_timer -= lm.time.deltaTime();
     self.cooldown -= lm.time.deltaTime();
@@ -55,8 +62,8 @@ pub fn Update(self: *Self) !void {
     if (self.remaining_timer < 0) self.remaining_timer = 0;
     if (self.remaining_timer == 0) self.chain_count = 0;
 
-    if (lm.input.getMouseDown(.left) and self.cooldown < 0.7 / stats.current.attack_speed) attack_block: {
-        const mouse_pos = lm.screenToWorldPos(lm.rl.getMousePosition());
+    if (lm.mouse.getButtonDown(.left) and self.cooldown < 0.7 / stats.current.attack_speed) attack_block: {
+        const mouse_pos = camera.screenToWorldPos(lm.rl.getMousePosition());
         self.remaining_timer = 1.25 / stats.current.attack_speed;
 
         if (self.cooldown < 0.25 / stats.current.attack_speed)

@@ -27,20 +27,20 @@ pub fn Update(self: *Self) !void {
 
     var move_vector = lm.Vec2(0, 0);
 
-    if (lm.input.getKey(.w)) {
+    if (lm.keyboard.getKey(.w)) {
         move_vector.y -= 1;
     }
-    if (lm.input.getKey(.s)) {
+    if (lm.keyboard.getKey(.s)) {
         move_vector.y += 1;
     }
-    if (lm.input.getKey(.a)) {
+    if (lm.keyboard.getKey(.a)) {
         move_vector.x -= 1;
     }
-    if (lm.input.getKey(.d)) {
+    if (lm.keyboard.getKey(.d)) {
         move_vector.x += 1;
     }
 
-    if (lm.input.getKeyDown(.space)) {
+    if (lm.keyboard.getKeyDown(.space)) {
         dashing.apply(move_vector);
         return;
     }
