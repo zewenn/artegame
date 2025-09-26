@@ -83,7 +83,7 @@ pub fn Tick(self: *Self) !void {
 
     if (dashing.is_dashing() or distance > stats.current.aggro_range) return;
 
-    if (lm.random.intRangeAtMost(u8, 1, 10) == 1) {
+    if (lm.random.intRangeAtMost(u8, 1, 30) == 1) {
         dashing.apply(
             lm.vec3ToVec2(player_transform.position)
                 .subtract(lm.vec3ToVec2(transform.position))

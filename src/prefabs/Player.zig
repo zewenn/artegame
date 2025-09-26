@@ -11,14 +11,16 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
             .position = .init(position.x, position.y, 0),
             .scale = .init(64, 64),
         },
-        lm.Renderer.sprite("player_left_0.png"),
+        lm.Renderer.init(.{
+            .img_path = "player_left_0.png",
+        }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),
 
         lm.CameraTarget.init("main", .{
             .follow_speed = 400,
-            .max_distance = 128,
+            // .max_distance = 128,
         }),
 
         Stats{

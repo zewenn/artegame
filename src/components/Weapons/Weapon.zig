@@ -14,6 +14,8 @@ const Attack = struct {
 
 const Self = @This();
 
+id: []const u8,
+
 light_attack: Attack = .{},
 heavy_attack: Attack = .{},
 dash_attack: Attack = .{},

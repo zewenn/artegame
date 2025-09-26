@@ -22,7 +22,7 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
             .current = .{
                 .attack_speed = 2,
                 .armour = 30,
-                .movement_speed = 175,
+                .movement_speed = 125,
                 .aggro_range = 900,
             },
         },
