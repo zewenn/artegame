@@ -2,6 +2,7 @@ const lm = @import("loom");
 const std = @import("std");
 
 const Setup = @import("global/setup.zig");
+const HUD = @import("global/HUD.zig");
 
 pub fn main() !void {
     lm.project(.{
@@ -18,6 +19,7 @@ pub fn main() !void {
         lm.scene("default")({
             lm.globalBehaviours(.{
                 Setup{},
+                HUD{},
             });
 
             lm.cameras(&.{

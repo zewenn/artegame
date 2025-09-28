@@ -40,7 +40,7 @@ pub fn Update(self: *Self) !void {
         },
         .background_color = ui.color(20, 20, 20, 255),
         .layout = .{
-            .sizing = .{ .h = .fixed(16), .w = .fixed(64) },
+            .sizing = .{ .h = .fixed(8), .w = .fixed(64) },
         },
     })({
         ui.new(.{

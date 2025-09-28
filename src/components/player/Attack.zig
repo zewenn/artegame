@@ -35,6 +35,10 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
     self.hands = try entity.pullComponent(Hands);
+
+    if (self.hands) |hands| {
+        hands.play(self.current_weapon) catch {};
+    }
 }
 
 pub fn Start(self: *Self) void {
@@ -52,7 +56,9 @@ pub fn Update(self: *Self) !void {
 
     if (self.cooldown < 0) self.cooldown = 0;
 
-    if (lm.keyboard.getKeyDown(.tab) or lm.gamepad.getButtonDown(0, .right_trigger_1)) weapon_switching: {
+    if (lm.keyboard.getKeyDown(.tab) or
+        lm.gamepad.getButtonDown(0, .right_trigger_1))
+    weapon_switching: {
         defer hands.play(self.current_weapon) catch {};
         if (std.mem.eql(u8, self.current_weapon.id, weapons.fists.id)) {
             self.current_weapon = weapons.goliath;
