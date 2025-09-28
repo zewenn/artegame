@@ -40,7 +40,13 @@ pub fn Update(self: *Self) !void {
         move_vector.x += 1;
     }
 
-    if (lm.keyboard.getKeyDown(.space)) {
+    const gamepad = lm.gamepad.getStickVector(0, .left, 0.1);
+    if (gamepad.length() != 0) move_vector = gamepad;
+
+    if (lm.keyboard.getKeyDown(.space) or
+        lm.gamepad.getButtonDown(0, .right_face_down) or
+        lm.gamepad.getButtonDown(0, .left_trigger_1))
+    {
         dashing.apply(move_vector);
         return;
     }

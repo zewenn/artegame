@@ -9,8 +9,8 @@
 
     .dependencies = .{
         .loom = .{
-            .url = "git+https://github.com/zewenn/loom.git#f9fd3f2a87bfc588c3a73a7ce655e8b1a9c22edd",
-            .hash = "loom-0.7.1-rtZyxIfQBABiMfJsdVzEeY7l-1qyav7XG4v8VBFfn_7C",
+            .url = "git+https://github.com/zewenn/loom?ref=stable#3b64ccae33f2fc62c7874c719aaf0454bd680bb9",
+            .hash = "loom-0.7.4-rtZyxH3QBABH-kddL5sw5OeahOiYzBbdHjNDIRF474mK",
         },
     },
 

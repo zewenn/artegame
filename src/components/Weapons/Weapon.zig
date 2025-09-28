@@ -12,6 +12,11 @@ const Attack = struct {
     projectile_options: ProjectileOptions = .{},
 };
 
+pub const WeaponType = enum {
+    close,
+    wide,
+};
+
 const Self = @This();
 
 id: []const u8,
@@ -19,6 +24,11 @@ id: []const u8,
 light_attack: Attack = .{},
 heavy_attack: Attack = .{},
 dash_attack: Attack = .{},
+
+sprite_left: []const u8 = "empty_icon.png",
+sprite_right: []const u8 = "empty_icon.png",
+
+type: WeaponType = .close,
 
 pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
     const angle = std.math.atan2(
@@ -43,6 +53,8 @@ pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shoote
                 },
 
                 .shooter_stats = shooter_stats,
+
+                .speed = options.speed,
 
                 .damage_multiplier = options.damage_multiplier,
                 .damage_type = options.damage_type,
