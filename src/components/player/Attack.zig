@@ -7,6 +7,9 @@ const Projectile = @import("../../prefabs/Projectile.zig").Projectile;
 const Stats = @import("../Stats.zig");
 const Dashing = @import("../Dashing.zig");
 
+const Spell = @import("../Weapons/Spell.zig");
+const spells = @import("../Weapons/spells.zig");
+
 const Weapon = @import("../Weapons/Weapon.zig");
 const weapons = @import("../Weapons/weapons.zig");
 const Hands = @import("../Weapons/Hands.zig");
@@ -27,13 +30,18 @@ camera: ?*lm.Camera = null,
 current_weapon: Weapon = weapons.fists,
 hands: ?*Hands = null,
 
+equipped_spells: [2]?Spell = [_]?Spell{
+    spells.heal,
+    null,
+},
+
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.arena = .init(lm.allocators.generic());
     self.allocator = self.arena.?.allocator();
 
+    self.transform = try entity.pullComponent(lm.Transform);
     self.dashing = try entity.pullComponent(Dashing);
     self.stats = try entity.pullComponent(Stats);
-    self.transform = try entity.pullComponent(lm.Transform);
     self.hands = try entity.pullComponent(Hands);
 
     if (self.hands) |hands| {
@@ -45,12 +53,12 @@ pub fn Start(self: *Self) void {
     self.camera = lm.activeScene().?.getCamera("main");
 }
 
-pub fn Update(self: *Self) !void {
-    const stats: *Stats = try lm.ensureComponent(self.stats);
+pub fn Update(self: *Self, entity: *lm.Entity) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
-    const hands: *Hands = try lm.ensureComponent(self.hands);
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
+    const stats: *Stats = try lm.ensureComponent(self.stats);
+    const hands: *Hands = try lm.ensureComponent(self.hands);
 
     self.cooldown -= lm.time.deltaTime();
 
@@ -68,6 +76,10 @@ pub fn Update(self: *Self) !void {
         self.current_weapon = weapons.fists;
     }
 
+    if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) {
+        if (self.equipped_spells[0]) |*spell| spell.cast(entity);
+    }
+
     const mouse_pos = get_angle_vetor: {
         const mouse = camera.screenToWorldPos(lm.mouse.getPosition());
 
@@ -78,6 +90,12 @@ pub fn Update(self: *Self) !void {
 
         break :get_angle_vetor gamepad.normalize().add(lm.vec3ToVec2(transform.position));
     };
+
+    const direction_vector = mouse_pos
+        .subtract(lm.vec3ToVec2(transform.position))
+        .normalize()
+        .multiply(.init(32, 32))
+        .add(lm.vec3ToVec2(transform.position));
 
     if ((lm.mouse.getButtonDown(.left) or lm.gamepad.getButtonDown(0, .right_trigger_2)) and
         self.cooldown == 0 and
@@ -91,7 +109,7 @@ pub fn Update(self: *Self) !void {
 
         if (dashing.is_dashing()) {
             try self.current_weapon.dashAttack(
-                lm.vec3ToVec2(transform.position),
+                direction_vector,
                 mouse_pos,
                 stats.*,
             );
@@ -100,7 +118,7 @@ pub fn Update(self: *Self) !void {
         }
 
         try self.current_weapon.lightAttack(
-            lm.vec3ToVec2(transform.position),
+            direction_vector,
             mouse_pos,
             stats.*,
         );
@@ -111,7 +129,7 @@ pub fn Update(self: *Self) !void {
         try hands.play(self.current_weapon);
 
         try self.current_weapon.heavyAttack(
-            lm.vec3ToVec2(transform.position),
+            direction_vector,
             mouse_pos,
             stats.*,
         );

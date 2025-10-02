@@ -4,6 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../components/Stats.zig");
 const Dashing = @import("../components/Dashing.zig");
 const Hands = @import("../components/Weapons/Hands.zig");
+
 const player = @import("../components/player/export.zig");
 
 pub fn Player(position: lm.Vector2) !*lm.Entity {

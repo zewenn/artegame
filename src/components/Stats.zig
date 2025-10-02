@@ -27,9 +27,12 @@ pub const StatValues = struct {
     rooted: bool = false,
     stunned: bool = false,
 
+    regeneration_amount: f32 = 0,
+
     timer_slow_remaining: f32 = 0,
     timer_root_remaining: f32 = 0,
     timer_stun_remaining: f32 = 0,
+    timer_regen_remaining: f32 = 0,
 
     pub fn calculateMovementSpeed(self: StatValues) f32 {
         return @max(10, self.movement_speed - self.slow_movement_speed_decrease);
@@ -58,17 +61,22 @@ current: StatValues = .{},
 pub fn Update(self: *Self) void {
     if (lm.time.paused()) return;
 
+    self.current.health += self.current.regeneration_amount * lm.time.deltaTime();
+
     self.current.timer_slow_remaining -= lm.time.deltaTime();
     self.current.timer_root_remaining -= lm.time.deltaTime();
     self.current.timer_stun_remaining -= lm.time.deltaTime();
+    self.current.timer_regen_remaining -= lm.time.deltaTime();
 
     if (self.current.timer_slow_remaining < 0) self.current.timer_slow_remaining = 0;
     if (self.current.timer_root_remaining < 0) self.current.timer_root_remaining = 0;
     if (self.current.timer_stun_remaining < 0) self.current.timer_stun_remaining = 0;
+    if (self.current.timer_regen_remaining < 0) self.current.timer_regen_remaining = 0;
 
     if (self.current.timer_slow_remaining == 0) self.current.slow_movement_speed_decrease = 0;
     if (self.current.timer_root_remaining == 0) self.current.rooted = false;
     if (self.current.timer_stun_remaining == 0) self.current.stunned = false;
+    if (self.current.timer_regen_remaining == 0) self.current.regeneration_amount = 0;
 }
 
 pub fn calculateDamage(self: Self, defender: Self, damage_type: DamageType, is_crit: bool) f32 {
