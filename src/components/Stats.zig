@@ -61,7 +61,7 @@ current: StatValues = .{},
 pub fn Update(self: *Self) void {
     if (lm.time.paused()) return;
 
-    self.current.health += self.current.regeneration_amount * lm.time.deltaTime();
+    self.current.health = @min(self.max.health, self.current.health + self.current.regeneration_amount * lm.time.deltaTime());
 
     self.current.timer_slow_remaining -= lm.time.deltaTime();
     self.current.timer_root_remaining -= lm.time.deltaTime();

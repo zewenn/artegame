@@ -12,6 +12,7 @@ const spells = @import("../Weapons/spells.zig");
 
 const Weapon = @import("../Weapons/Weapon.zig");
 const weapons = @import("../Weapons/weapons.zig");
+
 const Hands = @import("../Weapons/Hands.zig");
 
 const Self = @This();
@@ -21,9 +22,6 @@ cooldown: f32 = 0,
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 dashing: ?*Dashing = null,
-
-arena: ?std.heap.ArenaAllocator = null,
-allocator: ?std.mem.Allocator = null,
 
 camera: ?*lm.Camera = null,
 
@@ -36,9 +34,6 @@ equipped_spells: [2]?Spell = [_]?Spell{
 },
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
-    self.arena = .init(lm.allocators.generic());
-    self.allocator = self.arena.?.allocator();
-
     self.transform = try entity.pullComponent(lm.Transform);
     self.dashing = try entity.pullComponent(Dashing);
     self.stats = try entity.pullComponent(Stats);
@@ -64,9 +59,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     if (self.cooldown < 0) self.cooldown = 0;
 
-    if (lm.keyboard.getKeyDown(.tab) or
-        lm.gamepad.getButtonDown(0, .right_trigger_1))
-    weapon_switching: {
+    if (lm.keyboard.getKeyDown(.tab) or lm.gamepad.getButtonDown(0, .right_trigger_1)) weapon_switching: {
         defer hands.play(self.current_weapon) catch {};
         if (std.mem.eql(u8, self.current_weapon.id, weapons.fists.id)) {
             self.current_weapon = weapons.goliath;
@@ -136,23 +129,11 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
         stats.applyStun(0.2);
     }
+}
 
-    const allocator = self.allocator orelse return;
-    const arena = &(self.arena orelse return);
-    _ = arena.reset(.free_all);
-
-    const health = try std.fmt.allocPrint(allocator, "Health: {d}", .{stats.current.health});
-    const stamine = try std.fmt.allocPrint(allocator, "Stamina: {d}", .{stats.current.stamina});
-
-    ui.new(.{
-        .id = .ID("chain-attack-count"),
-        .floating = .{
-            .attach_to = .to_root,
-            .offset = .{ .x = 20, .y = 20 },
-        },
-        .layout = .{ .direction = .top_to_bottom },
-    })({
-        ui.text(health, .{ .letter_spacing = 2 });
-        ui.text(stamine, .{ .letter_spacing = 2 });
-    });
+pub fn equipSpell(self: *Self, spell: Spell) void {
+    switch (spell.slot) {
+        .left => self.equipped_spells[0] = spell,
+        .right => self.equipped_spells[1] = spell,
+    }
 }
