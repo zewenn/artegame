@@ -33,6 +33,6 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(.{
             .lifetime = 5,
         }),
-        Enemy.HealthBar{},
+        Enemy.OverheadUI{},
     });
 }

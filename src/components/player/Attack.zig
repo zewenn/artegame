@@ -30,7 +30,7 @@ hands: ?*Hands = null,
 
 equipped_spells: [2]?Spell = [_]?Spell{
     spells.heal,
-    null,
+    spells.root,
 },
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
@@ -71,6 +71,9 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) {
         if (self.equipped_spells[0]) |*spell| spell.cast(entity);
+    }
+    if (lm.keyboard.getKeyDown(.e) or lm.gamepad.getButtonDown(0, .right_face_up)) {
+        if (self.equipped_spells[1]) |*spell| spell.cast(entity);
     }
 
     const mouse_pos = get_angle_vetor: {

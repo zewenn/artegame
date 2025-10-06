@@ -34,7 +34,7 @@ pub fn Update(self: *Self) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
 
-    if (dashing.is_dashing()) return;
+    if (dashing.is_dashing() or !stats.canMove()) return;
 
     const distance = std.math.hypot(
         transform.position.x - player_transform.position.x,
@@ -72,6 +72,9 @@ pub fn Update(self: *Self) !void {
 
 pub fn Tick(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
+
+    if (!stats.canMove()) return;
+
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
