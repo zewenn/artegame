@@ -131,7 +131,7 @@ last_mouse: lm.Vector2 = .init(0, 0),
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
     self.stats = try entity.pullComponent(Stats);
-    self.camera = lm.activeScene().?.getCamera("main");
+    self.camera = lm.activeScene().?.getCameraById("main");
 }
 
 pub fn Start(self: *Self) !void {

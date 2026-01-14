@@ -5,12 +5,12 @@
 
     .fingerprint = 0xc19ae7346f78b31f,
 
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.15.2",
 
     .dependencies = .{
         .loom = .{
-            .url = "git+https://github.com/zewenn/loom?ref=stable#78a6d9fec1c5b71bf08088baaf2c44ed4af7d509",
-            .hash = "loom-0.8.1-rtZyxBnfBAARbczGXoCeXmCZ8H4LqU-4jataBUEvxHw4",
+            .url = "git+https://github.com/zewenn/loom?ref=stable#61b7c14b769006daf402b0d0fa3cc0c7d4682047",
+            .hash = "loom-0.9.0-rtZyxCCKAgDSS04EnGnDBkNYXcxmP-3vQaWcRrgES-6t",
         },
     },
 

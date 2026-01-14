@@ -30,7 +30,7 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Start(self: *Self) !void {
-    if (lm.eventloop.active_scene.?.getEntityById("player")) |player| {
+    if (lm.activeScene().?.getEntityById("player")) |player| {
         self.player_transform = player.getComponent(lm.Transform);
     }
 }

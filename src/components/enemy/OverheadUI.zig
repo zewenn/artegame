@@ -19,7 +19,7 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Start(self: *Self) void {
-    self.camera = lm.activeScene().?.getCamera("main");
+    self.camera = lm.activeScene().?.getCameraById("main");
 }
 
 pub fn Update(self: *Self) !void {
