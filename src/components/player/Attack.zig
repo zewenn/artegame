@@ -103,7 +103,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
         try hands.play(self.current_weapon);
 
-        if (dashing.is_dashing()) {
+        if (dashing.isDashing()) {
             try self.current_weapon.dashAttack(
                 direction_vector,
                 mouse_pos,

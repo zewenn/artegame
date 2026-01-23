@@ -16,7 +16,7 @@ direction: ?lm.Vector2 = null,
 pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     const stats = self.stats orelse return;
 
-    if (self.is_dashing()) return;
+    if (self.isDashing()) return;
     if (stats.current.stamina < 50) return;
 
     self.direction = direction_vector.normalize();
@@ -24,7 +24,7 @@ pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     stats.current.stamina -= 50;
 }
 
-pub inline fn is_dashing(self: *Self) bool {
+pub inline fn isDashing(self: *Self) bool {
     return self.direction != null;
 }
 

@@ -34,7 +34,7 @@ pub fn Update(self: *Self) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
 
-    if (dashing.is_dashing() or !stats.canMove()) return;
+    if (dashing.isDashing() or !stats.canMove()) return;
 
     const distance = std.math.hypot(
         transform.position.x - player_transform.position.x,
@@ -84,7 +84,7 @@ pub fn Tick(self: *Self) !void {
         transform.position.y - player_transform.position.y,
     );
 
-    if (dashing.is_dashing() or distance > stats.current.aggro_range) return;
+    if (dashing.isDashing() or distance > stats.current.aggro_range) return;
 
     if (lm.random.intRangeAtMost(u8, 1, 30) == 1) {
         dashing.apply(
