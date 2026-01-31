@@ -8,16 +8,20 @@ const Self = @This();
 player: ?*lm.Entity = null,
 player_stats: ?*Stats = null,
 
-pub fn Update(self: *Self, scene: *lm.Scene) !void {
-    const stats: *Stats = self.player_stats orelse get: {
-        self.player = scene.getEntityById("player");
-        if (self.player == null) return;
+pub fn Awake(self: *Self) void {
+    self.player = null;
+    self.player_stats = null;
+}
 
-        self.player_stats = try self.player.?.pullComponent(Stats);
+pub fn Tick(self: *Self, scene: *lm.Scene) !void {
+    if (self.player == null or self.player_stats == null) {
+        const player = scene.getEntityById("player") orelse return;
 
-        break :get self.player_stats.?;
-    };
+        self.player = player;
+        self.player_stats = player.getComponentUnsafe(Stats).result;
+    }
 
+    const stats: *Stats = try lm.ensureComponent(self.player_stats);
     const window_size = lm.window.size.get();
     const scaler = @min(window_size.x, window_size.y);
     const BASE_HUD_WIDTH: comptime_float = 0.35;
