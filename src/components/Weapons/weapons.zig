@@ -6,10 +6,16 @@ pub const fists: Weapon = .{
         .projectile_options = .{
             .damage_multiplier = 0.5,
             .size = .init(32, 64),
+            .knockback_duration = 0.1,
+            .knockback_strength = 5,
         },
     },
     .heavy_attack = .{
-        .projectile_options = .{ .damage_multiplier = 1.2, .is_crit = true, .size = .init(96, 64) },
+        .projectile_options = .{
+            .damage_multiplier = 1.2,
+            .is_crit = true,
+            .size = .init(96, 64),
+        },
     },
     .dash_attack = .{
         .shooting_degrees = &.{ -2, 0, 2 },
@@ -30,9 +36,11 @@ pub const fists: Weapon = .{
 pub const goliath: Weapon = .{
     .id = "Goliath",
     .light_attack = .{
-        .shooting_degrees = &.{ -10, 0, 10 },
         .projectile_options = .{
             .damage_multiplier = 0.3,
+            .knockback_duration = -2,
+            .knockback_strength = 0.15,
+            .passtrough = true,
         },
     },
 

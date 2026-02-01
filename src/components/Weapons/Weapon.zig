@@ -66,6 +66,9 @@ pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shoote
                 .onhit_effect = options.onhit_effect,
                 .onhit_duration = options.onhit_duration,
                 .onhit_strength = options.onhit_strength,
+
+                .knockback_duration = options.knockback_duration,
+                .knockback_strength = options.knockback_strength,
             }),
         }});
     }

@@ -3,6 +3,7 @@ const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
 const ProjectileMovement = @import("../components/ProjectileMovement.zig");
+const Dashing = @import("../components/Dashing.zig");
 
 pub const Options = struct {
     start_position: lm.Vector2 = .init(0, 0),
@@ -26,6 +27,9 @@ pub const Options = struct {
     onhit_effect: ?enum { slow, root, stun } = null,
     onhit_duration: f32 = 0,
     onhit_strength: f32 = 0,
+
+    knockback_strength: f32 = 0,
+    knockback_duration: f32 = 0,
 
     pub fn getProjectileSprite(self: Options) []const u8 {
         return self.override_sprite orelse switch (self.target_team) {
@@ -88,10 +92,25 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         options.is_crit,
     ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage_multiplier;
 
-    const onhit_effect = options.onhit_effect orelse return;
-    switch (onhit_effect) {
+    if (options.onhit_effect) |onhit_effect| switch (onhit_effect) {
         .slow => other_stats.applySlow(options.onhit_strength, options.onhit_duration),
         .root => other_stats.applyRoot(options.onhit_duration),
         .stun => other_stats.applyStun(options.onhit_duration),
+    };
+
+    if (other.getComponent(Dashing)) |other_dashing| knockback: {
+        if (options.knockback_strength == 0 or options.knockback_duration == 0) break :knockback;
+        const transform = self.getComponent(lm.Transform) orelse break :knockback;
+        const other_transform = other.getComponent(lm.Transform) orelse break :knockback;
+
+        other_dashing.applyEx(
+            lm.vec3ToVec2(transform.position)
+                .subtract(lm.vec3ToVec2(other_transform.position))
+                .normalize()
+                .negate()
+                .multiply(.init(options.knockback_strength, options.knockback_strength)),
+            options.knockback_duration,
+            true,
+        );
     }
 }

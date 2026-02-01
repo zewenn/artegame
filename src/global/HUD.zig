@@ -13,9 +13,13 @@ pub fn Awake(self: *Self) void {
     self.player_stats = null;
 }
 
-pub fn Tick(self: *Self, scene: *lm.Scene) !void {
+pub fn Update(self: *Self, scene: *lm.Scene) !void {
     if (self.player == null or self.player_stats == null) {
-        const player = scene.getEntityById("player") orelse return;
+        const player = scene.getEntityById("player") orelse {
+            self.player = null;
+            self.player_stats = null;
+            return;
+        };
 
         self.player = player;
         self.player_stats = player.getComponentUnsafe(Stats).result;

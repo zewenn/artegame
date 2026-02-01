@@ -24,8 +24,19 @@ pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     stats.current.stamina -= 50;
 }
 
+pub fn applyEx(self: *Self, direction_vector: lm.Vector2, cooldown: f32, override: bool) void {
+    const stats = self.stats orelse return;
+
+    if (self.isDashing() and !override) return;
+    if (stats.current.stamina < 50) return;
+
+    self.direction = direction_vector;
+    self.cooldown = cooldown;
+    stats.current.stamina -= 50;
+}
+
 pub inline fn isDashing(self: *Self) bool {
-    return self.direction != null;
+    return self.direction != null or self.cooldown != 0;
 }
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
