@@ -7,11 +7,22 @@ const TIMER = 0.1;
 const Stats = @import("Stats.zig");
 const Self = @This();
 
+const Dash = struct {
+    direction: lm.Vector2,
+    cooldown: f32,
+
+    pub fn init(direction: lm.Vector2, cooldown: f32) Dash {
+        return Dash{
+            .direction = direction,
+            .cooldown = cooldown,
+        };
+    }
+};
+
 transform: ?*lm.Transform = null,
 stats: ?*Stats = null,
 
-cooldown: f32 = 0,
-direction: ?lm.Vector2 = null,
+dashes: ?lm.List(Dash) = null,
 
 pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     const stats = self.stats orelse return;
@@ -19,27 +30,26 @@ pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     if (self.isDashing()) return;
     if (stats.current.stamina < 50) return;
 
-    self.direction = direction_vector.normalize();
-    self.cooldown = stats.current.dash_time;
+    const dashes = &(self.dashes orelse return);
+    dashes.append(.init(direction_vector, stats.current.dash_time)) catch return;
     stats.current.stamina -= 50;
 }
 
-pub fn applyEx(self: *Self, direction_vector: lm.Vector2, cooldown: f32, override: bool) void {
+pub fn applyEx(self: *Self, direction_vector: lm.Vector2, cooldown: f32, reduce_stamina: bool) void {
     const stats = self.stats orelse return;
+    const dashes = &(self.dashes orelse return);
 
-    if (self.isDashing() and !override) return;
-    if (stats.current.stamina < 50) return;
-
-    self.direction = direction_vector;
-    self.cooldown = cooldown;
-    stats.current.stamina -= 50;
+    dashes.append(.init(direction_vector, cooldown)) catch return;
+    if (reduce_stamina) stats.current.stamina -= 50;
 }
 
 pub inline fn isDashing(self: *Self) bool {
-    return self.direction != null or self.cooldown != 0;
+    const dashes = &(self.dashes orelse return false);
+    return dashes.len() > 0;
 }
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
+    self.dashes = .init(lm.allocators.scene());
     self.transform = try entity.pullComponent(lm.Transform);
     self.stats = try entity.pullComponent(Stats);
 }
@@ -50,26 +60,41 @@ pub fn Update(self: *Self) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const stats: *Stats = try lm.ensureComponent(self.stats);
 
-    if (self.cooldown < 0) self.cooldown = 0;
-    if (self.cooldown == 0) {
-        self.direction = null;
-        return;
+    const dashes = &(self.dashes orelse return);
+
+    const len = dashes.len();
+    if (len == 0) return;
+
+    for (1..len + 1) |j| {
+        const index = len - j;
+        const dash: *Dash = &dashes.items()[index];
+
+        if (dash.cooldown < 0) dash.cooldown = 0;
+        if (dash.cooldown == 0) {
+            _ = dashes.swapRemove(index);
+            continue;
+        }
+
+        dash.cooldown -= lm.time.deltaTime();
+
+        const direction_vector = dash.direction;
+        const speed = stats.current.movement_speed * stats.current.dash_speed_multiplier;
+
+        transform.position = transform.position.add(lm.vec2ToVec3(
+            direction_vector
+                .multiply(lm.time.deltaTimeVector2())
+                .multiply(lm.Vec2(speed, speed)),
+        ));
     }
-
-    self.cooldown -= lm.time.deltaTime();
-
-    const direction_vector = self.direction orelse return;
-    const speed = stats.current.movement_speed * stats.current.dash_speed_multiplier;
-
-    transform.position = transform.position.add(lm.vec2ToVec3(
-        direction_vector
-            .multiply(lm.time.deltaTimeVector2())
-            .multiply(lm.Vec2(speed, speed)),
-    ));
 }
 
 pub fn Tick(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
 
     stats.current.stamina = @min(stats.max.stamina, stats.current.stamina + 1);
+}
+
+pub fn End(self: *Self) void {
+    if (self.dashes) |*dashes| dashes.deinit();
+    self.dashes = null;
 }

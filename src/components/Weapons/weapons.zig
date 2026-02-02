@@ -4,9 +4,9 @@ pub const fists: Weapon = .{
     .id = "Fists",
     .light_attack = .{
         .projectile_options = .{
-            .damage_multiplier = 0.5,
+            .damage_multiplier = 0.85,
             .size = .init(32, 64),
-            .knockback_duration = 0.1,
+            .knockback_duration = 0.2,
             .knockback_strength = 5,
         },
     },
@@ -38,8 +38,8 @@ pub const goliath: Weapon = .{
     .light_attack = .{
         .projectile_options = .{
             .damage_multiplier = 0.3,
-            .knockback_duration = -2,
-            .knockback_strength = 0.15,
+            .knockback_duration = 0.25,
+            .knockback_strength = -0.05,
             .passtrough = true,
         },
     },
