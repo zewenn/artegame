@@ -1,8 +1,7 @@
 const lm = @import("loom");
 const std = @import("std");
 
-const Setup = @import("global/setup.zig");
-const HUD = @import("global/HUD.zig");
+const gbl = @import("global/global.zig");
 
 pub fn main() !void {
     lm.project(.{
@@ -18,8 +17,8 @@ pub fn main() !void {
     })({
         lm.scene("default")({
             lm.globalBehaviours(.{
-                Setup{},
-                HUD{},
+                gbl.Setup{},
+                gbl.HUD{},
             });
 
             lm.cameras(&.{
@@ -28,6 +27,14 @@ pub fn main() !void {
                     .draw_mode = .world,
                     .zoom = 1,
                 } },
+            });
+        });
+
+        lm.scene("demo_map")({
+            lm.useMainCamera();
+
+            lm.globalBehaviours(.{
+                gbl.DemoMap{},
             });
         });
     });
