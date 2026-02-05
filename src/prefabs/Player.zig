@@ -21,8 +21,8 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
         }),
 
         lm.CameraTarget.init("main", .{
-            .follow_speed = 400,
-            // .max_distance = 128,
+            .follow_speed = 50,
+            .max_distance = 16,
         }),
 
         Stats{
@@ -37,5 +37,6 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
 
         player.Movement{},
         player.Attack{},
+        player.Objectives{},
     });
 }

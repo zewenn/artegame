@@ -35,6 +35,7 @@ pub fn main() !void {
 
             lm.globalBehaviours(.{
                 gbl.DemoMap{},
+                gbl.HUD{},
             });
         });
     });

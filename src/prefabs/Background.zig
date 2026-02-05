@@ -15,7 +15,7 @@ pub fn Background(w: i32, h: i32) !*lm.Entity {
 
         lm.RectangleCollider.initConfig(.{
             .transform = .{
-                .position = lm.Vec3(-1 * w * 64, 0, 0),
+                .position = lm.Vec3(-1 * (w + 1) * 64, 0, 0),
                 .scale = lm.Vec2(COLLIDER_SIZE, height),
             },
             .type = .dynamic,
@@ -23,7 +23,7 @@ pub fn Background(w: i32, h: i32) !*lm.Entity {
         }),
         lm.RectangleCollider.initConfig(.{
             .transform = .{
-                .position = lm.Vec3(w * 64, 0, 0),
+                .position = lm.Vec3((w + 1) * 64, 0, 0),
                 .scale = lm.Vec2(COLLIDER_SIZE, height),
             },
             .type = .dynamic,
@@ -31,7 +31,7 @@ pub fn Background(w: i32, h: i32) !*lm.Entity {
         }),
         lm.RectangleCollider.initConfig(.{
             .transform = .{
-                .position = lm.Vec3(0, -1 * h * 64, 0),
+                .position = lm.Vec3(0, -1 * (h + 1) * 64, 0),
                 .scale = lm.Vec2(width, COLLIDER_SIZE),
             },
             .type = .dynamic,
@@ -39,7 +39,7 @@ pub fn Background(w: i32, h: i32) !*lm.Entity {
         }),
         lm.RectangleCollider.initConfig(.{
             .transform = .{
-                .position = lm.Vec3(0, h * 64, 0),
+                .position = lm.Vec3(0, (h + 1) * 64, 0),
                 .scale = lm.Vec2(width, COLLIDER_SIZE),
             },
             .type = .dynamic,

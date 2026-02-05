@@ -3,26 +3,62 @@ const lm = @import("loom");
 const ui = lm.ui;
 
 const Stats = @import("../components/Stats.zig");
+const Objectives = @import("../components/player/Objectives.zig");
 const Self = @This();
 
 player: ?*lm.Entity = null,
 player_stats: ?*Stats = null,
+player_objectives: ?*Objectives = null,
+
+fn objectiveUI(self: *Self) void {
+    const objectives = self.player_objectives orelse return;
+    const tracking = objectives.trackingObjective() orelse return;
+
+    const window_size = lm.window.size.get();
+    const scaler = @min(window_size.x, window_size.y);
+    const WIDTH: comptime_float = 0.20;
+
+    ui.new(.{
+        .id = .ID("objective-container"),
+        .floating = .{
+            .attach_to = .to_root,
+            .offset = .{ .x = window_size.x * 0.93 - scaler * (WIDTH / 2.0), .y = window_size.y * 0.7 },
+        },
+        .background_color = ui.color(50, 50, 50, 255),
+    })({
+        ui.new(.{
+            .id = .ID("name"),
+        })({
+            ui.text(tracking.name, .{
+                .color = ui.color(255, 255, 255, 255),
+            });
+        });
+        ui.new(.{
+            .id = .ID("desc"),
+        })({
+            ui.text(tracking.description, .{});
+        });
+    });
+}
 
 pub fn Awake(self: *Self) void {
     self.player = null;
     self.player_stats = null;
+    self.player_objectives = null;
 }
 
 pub fn Update(self: *Self, scene: *lm.Scene) !void {
-    if (self.player == null or self.player_stats == null) {
+    if (self.player == null or self.player_stats == null or self.player_objectives == null) {
         const player = scene.getEntityById("player") orelse {
             self.player = null;
             self.player_stats = null;
+            self.player_objectives = null;
             return;
         };
 
         self.player = player;
         self.player_stats = player.getComponentUnsafe(Stats).result;
+        self.player_objectives = player.getComponent(Objectives);
     }
 
     const stats: *Stats = try lm.ensureComponent(self.player_stats);
@@ -90,4 +126,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             })({});
         });
     });
+
+    self.objectiveUI();
 }
