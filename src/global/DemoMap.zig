@@ -26,16 +26,16 @@ fn newRound(self: *Self) !void {
         const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
         try self.enemies.append(enemy.uuid);
 
-        try lm.summon(&.{.{ .entity = enemy }});
+        try lm.summoning.entity(enemy);
     }
 }
 
 pub fn Awake(self: *Self) !void {
     self.enemies = .init(lm.allocators.scene());
 
-    try lm.summon(&.{
-        .{ .entity = try prefabs.Player(.init(0, 0)) },
-        .{ .entity = try prefabs.Background(20, 10) },
+    try lm.summoning.entities(&.{
+        try prefabs.Player(.init(0, 0)),
+        try prefabs.Background(20, 10),
     });
 }
 

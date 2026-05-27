@@ -138,9 +138,9 @@ pub fn Start(self: *Self) !void {
     const right_hand = try (try Hand()).makeInstance();
     const left_hand = try (try Hand()).makeInstance();
 
-    try lm.summon(&.{
-        .{ .entity = right_hand },
-        .{ .entity = left_hand },
+    try lm.summoning.entities(&.{
+        right_hand,
+        left_hand,
     });
 
     self.right_hand = right_hand;

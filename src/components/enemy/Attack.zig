@@ -55,23 +55,21 @@ pub fn Update(self: *Self) !void {
 
     if (distance > stats.current.aggro_range * 1.25) return;
 
-    try lm.summon(&.{.{
-        .entity = try Projectile(.{
-            .start_position = lm.vec3ToVec2(transform.position),
-            .target_position = lm.vec3ToVec2(player_transform.position),
-            .shooter_stats = stats.*,
-            .is_crit = lm.randFloat(f32, 0, 1) <= stats.current.crit_chance,
-            .target_team = .player,
+    try lm.summoning.entity(try Projectile(.{
+        .start_position = lm.vec3ToVec2(transform.position),
+        .target_position = lm.vec3ToVec2(player_transform.position),
+        .shooter_stats = stats.*,
+        .is_crit = lm.randFloat(f32, 0, 1) <= stats.current.crit_chance,
+        .target_team = .player,
 
-            .onhit_effect = .root,
-            .onhit_duration = 0.1,
+        .onhit_effect = .root,
+        .onhit_duration = 0.1,
 
-            .speed = stats.current.movement_speed * 3,
-            .damage_multiplier = self.projectile_options.damage_multiplier,
-            .damage_type = self.projectile_options.damage_type,
-            .passtrough = self.projectile_options.passtrough,
-            .lifetime = self.projectile_options.lifetime,
-            .size = self.projectile_options.size,
-        }),
-    }});
+        .speed = stats.current.movement_speed * 3,
+        .damage_multiplier = self.projectile_options.damage_multiplier,
+        .damage_type = self.projectile_options.damage_type,
+        .passtrough = self.projectile_options.passtrough,
+        .lifetime = self.projectile_options.lifetime,
+        .size = self.projectile_options.size,
+    }));
 }

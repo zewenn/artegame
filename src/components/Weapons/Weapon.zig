@@ -42,35 +42,33 @@ pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shoote
 
         const options = attack.projectile_options;
 
-        try lm.summon(&.{.{
-            .entity = try Projectile(.{
-                .start_position = position,
-                .target_position = target_vector.add(position),
+        try lm.summoning.entity(try Projectile(.{
+            .start_position = position,
+            .target_position = target_vector.add(position),
 
-                .target_team = switch (shooter_stats.team) {
-                    .enemy => .player,
-                    else => .enemy,
-                },
+            .target_team = switch (shooter_stats.team) {
+                .enemy => .player,
+                else => .enemy,
+            },
 
-                .shooter_stats = shooter_stats,
+            .shooter_stats = shooter_stats,
 
-                .speed = options.speed,
+            .speed = options.speed,
 
-                .damage_multiplier = options.damage_multiplier,
-                .damage_type = options.damage_type,
-                .passtrough = options.passtrough,
-                .lifetime = options.lifetime,
-                .size = options.size,
-                .override_sprite = options.override_sprite,
+            .damage_multiplier = options.damage_multiplier,
+            .damage_type = options.damage_type,
+            .passtrough = options.passtrough,
+            .lifetime = options.lifetime,
+            .size = options.size,
+            .override_sprite = options.override_sprite,
 
-                .onhit_effect = options.onhit_effect,
-                .onhit_duration = options.onhit_duration,
-                .onhit_strength = options.onhit_strength,
+            .onhit_effect = options.onhit_effect,
+            .onhit_duration = options.onhit_duration,
+            .onhit_strength = options.onhit_strength,
 
-                .knockback_duration = options.knockback_duration,
-                .knockback_strength = options.knockback_strength,
-            }),
-        }});
+            .knockback_duration = options.knockback_duration,
+            .knockback_strength = options.knockback_strength,
+        }));
     }
 }
 

@@ -45,7 +45,7 @@ pub const root: Spell = Spell{
                     .start_position = lm.vec3ToVec2(transform.position),
                 });
 
-                try lm.summon(&.{.{ .entity = projectile }});
+                try lm.summoning.entity(projectile);
             }
         }
     }.callback,
