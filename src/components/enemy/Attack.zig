@@ -53,7 +53,7 @@ pub fn Update(self: *Self) !void {
         transform.position.y - player_transform.position.y,
     );
 
-    if (distance > stats.current.aggro_range * 1.25) return;
+    if (distance > stats.current.aggro_range) return;
 
     try lm.summoning.entity(try Projectile(.{
         .start_position = lm.vec3ToVec2(transform.position),

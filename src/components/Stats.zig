@@ -58,6 +58,15 @@ max: StatValues = .{},
 base: StatValues = .{},
 current: StatValues = .{},
 
+pub fn init(team: Teams, stats: StatValues) Self {
+    return Self{
+        .team = team,
+        .base = stats,
+        .current = stats,
+        .max = stats,
+    };
+}
+
 pub fn Update(self: *Self) void {
     if (lm.time.paused()) return;
 
