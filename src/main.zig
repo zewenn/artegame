@@ -10,6 +10,7 @@ pub fn main() !void {
             .resizable = true,
             .restore_state = true,
             .size = .init(1280, 720),
+            .clear_color = lm.Color.black,
         },
         .asset_paths = .{
             .debug = "src/assets/",

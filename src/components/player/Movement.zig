@@ -9,11 +9,13 @@ const Self = @This();
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 dashing: ?*Dashing = null,
+animator: ?*lm.Animator = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
     self.dashing = try entity.pullComponent(Dashing);
+    self.animator = try entity.pullComponent(lm.Animator);
 }
 
 pub fn Update(self: *Self) !void {
@@ -22,6 +24,7 @@ pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
+    const animator: *lm.Animator = try lm.ensureComponent(self.animator);
 
     if (dashing.isDashing() or !stats.canMove()) return;
 
@@ -49,6 +52,18 @@ pub fn Update(self: *Self) !void {
     {
         dashing.apply(move_vector);
         return;
+    }
+
+    if (move_vector.length() > 0) animation: {
+        if (move_vector.x <= 0) {
+            animator.stop("walk-right");
+            try animator.play("walk-left");
+
+            break :animation;
+        }
+
+        animator.stop("walk-left");
+        try animator.play("walk-right");
     }
 
     transform.position = transform.position.add(lm.vec2ToVec3(

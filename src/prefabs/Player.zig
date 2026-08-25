@@ -7,6 +7,53 @@ const Hands = @import("../components/Weapons/Hands.zig");
 
 const player = @import("../components/player/export.zig");
 
+const player_animations = &.{
+    lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{
+            .sprite = "characters/player_left_0.png",
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_left_1.png",
+            .rotation = 15,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_left_1.png",
+            .rotation = 5,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_left_0.png",
+            .rotation = -2,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_left_1.png",
+            .rotation = 0,
+        },
+    }),
+    lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{
+            .sprite = "characters/player_right_0.png",
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_right_1.png",
+            .rotation = 15,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_right_1.png",
+            .rotation = 5,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_right_0.png",
+            .rotation = -2,
+        },
+        lm.Keyframe{
+            .sprite = "characters/player_right_0.png",
+            .rotation = 0,
+        },
+    }),
+};
+
 pub fn Player(position: lm.Vector2) !*lm.Entity {
     return try lm.makeEntity("player", .{
         lm.Transform{
@@ -19,6 +66,7 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),
+        lm.Animator.init(player_animations),
 
         lm.CameraTarget.init("main", .{
             .follow_speed = 50,
