@@ -55,7 +55,7 @@ pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shoote
 
             .speed = options.speed,
 
-            .damage_multiplier = options.damage_multiplier,
+            .damage = options.damage,
             .damage_type = options.damage_type,
             .passtrough = options.passtrough,
             .lifetime = options.lifetime,

@@ -18,7 +18,7 @@ pub const Options = struct {
     shooter_stats: Stats = .{},
 
     damage_type: Stats.DamageType = .physical,
-    damage_multiplier: f32 = 1,
+    damage: f32 = 1,
     target_team: Stats.Teams = .neutral,
 
     inactive: bool = false,
@@ -90,7 +90,7 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         other_stats.*,
         options.damage_type,
         options.is_crit,
-    ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage_multiplier;
+    ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage;
 
     if (options.onhit_effect) |onhit_effect| switch (onhit_effect) {
         .slow => other_stats.applySlow(options.onhit_strength, options.onhit_duration),

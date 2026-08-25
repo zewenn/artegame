@@ -66,7 +66,7 @@ pub fn Update(self: *Self) !void {
         .onhit_duration = 0.1,
 
         .speed = stats.current.movement_speed * 3,
-        .damage_multiplier = self.projectile_options.damage_multiplier,
+        .damage = self.projectile_options.damage,
         .damage_type = self.projectile_options.damage_type,
         .passtrough = self.projectile_options.passtrough,
         .lifetime = self.projectile_options.lifetime,

@@ -58,6 +58,8 @@ fn objectiveUI(self: *Self) void {
 
 const playerStats = struct {
     var index: u32 = 0;
+    pub var hud_height: f32 = 64;
+    pub var scale: f32 = 1;
 
     fn progressBar(current: f32, max: f32, bg_color: lm.Color, color: lm.Color, height: f32) void {
         defer index +%= 1;
@@ -79,49 +81,51 @@ const playerStats = struct {
         });
     }
 
+    fn spellShower(img: ?[]const u8) void {
+        ui.new(.{
+            .id = .IDI("spell-", index),
+            .image = ui.image(
+                if (img) |spell| spell else "backgrounds/neunyx32x32.png",
+                .init(hud_height, hud_height),
+            ) catch .{ .image_data = null },
+            .layout = .{
+                .sizing = .{
+                    .h = .fixed(hud_height),
+                    .w = .fixed(hud_height),
+                },
+            },
+        })({});
+    }
+
     pub fn draw(self: *Self) void {
         const stats: *Stats = self.player_stats orelse return;
         const attack: *Attack = self.player_attack orelse return;
-        const window_size = lm.window.size.get();
-        const scaler = @min(window_size.x, window_size.y);
-        const BASE_HUD_WIDTH: comptime_float = 0.35;
-
-        const HEIGHT: f32 = 64;
+        const hud_width: f32 = hud_height * 8;
 
         ui.new(.{
             .id = .ID("player-hud"),
             .floating = .{
                 .attach_to = .to_root,
                 .attach_points = .{ .element = .center_bottom, .parent = .center_bottom },
-                .offset = .{ .x = 0, .y = -1 * HEIGHT / 2 },
+                .offset = .{ .x = 0, .y = -1 * hud_height / 2 },
             },
             .layout = .{
                 .child_gap = 5,
                 .padding = .all(5),
                 .direction = .left_to_right,
             },
-            .background_color = ui.color(50, 50, 50, 255),
         })({
-            ui.new(.{
-                .id = .ID("spell-1"),
-                .image = ui.image(
-                    if (attack.equipped_spells[0]) |spell| spell.icon else "backgrounds/neunyx32x32.png",
-                    .init(HEIGHT, HEIGHT),
-                ) catch .{ .image_data = null },
-                .layout = .{
-                    .sizing = .{
-                        .h = .fixed(HEIGHT),
-                        .w = .fixed(HEIGHT),
-                    },
-                },
-            })({});
+            spellShower(if (attack.equipped_spells[0]) |spell| spell.icon else null);
             ui.new(.{
                 .id = .ID("player-hud-progress-bars"),
                 .layout = .{
-                    .sizing = .{ .h = .fixed(HEIGHT), .w = .fixed(scaler * BASE_HUD_WIDTH) },
+                    .sizing = .{ .h = .fixed(hud_height), .w = .fixed(hud_width) },
                     .direction = .top_to_bottom,
                     .child_gap = 5,
+                    .padding = .axes(lm.tou16(scale * 6), lm.tou16(scale * 6)),
                 },
+                .background_color = ui.color(50, 50, 50, 255),
+                .image = ui.image("ui/HUD/background.png", .init(hud_width, hud_height)) catch .{ .image_data = null },
             })({
                 progressBar(
                     stats.current.health,
@@ -145,19 +149,7 @@ const playerStats = struct {
                     0.2,
                 );
             });
-            ui.new(.{
-                .id = .ID("spell-2"),
-                .image = ui.image(
-                    if (attack.equipped_spells[1]) |spell| spell.icon else "backgrounds/neunyx32x32.png",
-                    .init(HEIGHT, HEIGHT),
-                ) catch .{ .image_data = null },
-                .layout = .{
-                    .sizing = .{
-                        .h = .fixed(HEIGHT),
-                        .w = .fixed(HEIGHT),
-                    },
-                },
-            })({});
+            spellShower(if (attack.equipped_spells[1]) |spell| spell.icon else null);
         });
     }
 };
@@ -182,6 +174,11 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player_objectives = player.getComponent(Objectives);
         self.player_attack = player.getComponent(Attack);
     }
+
+    const window_size = lm.window.size.get();
+    const scaler = @max(1, @round(@min(window_size.x, window_size.y) / 540));
+    playerStats.hud_height = scaler * 32;
+    playerStats.scale = scaler;
 
     playerStats.draw(self);
     self.objectiveUI();

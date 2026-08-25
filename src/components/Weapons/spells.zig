@@ -24,7 +24,7 @@ pub const root: Spell = Spell{
     .id = "Root",
     .mana_cost = 10,
     .slot = .left,
-    .icon = "ui/heal_icon.png",
+    .icon = "effects/stun_effect_1.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;
@@ -40,6 +40,7 @@ pub const root: Spell = Spell{
                     .onhit_effect = .root,
                     .onhit_duration = lm.tof32(level + 1),
                     .passtrough = true,
+                    .damage = 0,
 
                     .target_position = vec,
                     .start_position = lm.vec3ToVec2(transform.position),
