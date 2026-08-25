@@ -33,8 +33,8 @@ pub const Options = struct {
 
     pub fn getProjectileSprite(self: Options) []const u8 {
         return self.override_sprite orelse switch (self.target_team) {
-            .player => "enemy_light_projectile.png",
-            else => "light_attack_projectile.png",
+            .player => "projectiles/enemy_light_projectile.png",
+            else => "projectiles/light_attack_projectile.png",
         };
     }
 };

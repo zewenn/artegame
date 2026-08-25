@@ -12,7 +12,7 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Transform{
             .position = .init(position.x, position.y, 0),
         },
-        lm.Renderer.sprite("enemy_melee_left_1.png"),
+        lm.Renderer.sprite("characters/enemy_melee_left_1.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),

@@ -8,103 +8,114 @@ const Self = @This();
 
 const BASE_ANIM_LENGTH: comptime_float = 0.25;
 
-fn Hand() !lm.Prefab {
-    return try lm.prefab("hand", .{
+const HAND_ANIMATIONS = &[_]lm.Animation{
+    lm.Animation.init("hit-left-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 32,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+    }),
+    lm.Animation.init("hit-right-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 32,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+    }),
+    lm.Animation.init("hit-left-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = -32,
+            .rotation = -30,
+        },
+        lm.Keyframe{
+            .pos_x = 32,
+            .rotation = 90,
+            .pos_y = 0,
+        },
+        lm.Keyframe{
+            .rotation = 0,
+            .pos_x = 0,
+            .pos_y = 0,
+        },
+    }),
+    lm.Animation.init("hit-right-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 0,
+            .rotation = 0,
+        },
+        lm.Keyframe{
+            .pos_x = 0,
+            .pos_y = 32,
+            .rotation = 30,
+        },
+        lm.Keyframe{
+            .rotation = -90,
+            .pos_x = 32,
+            .pos_y = 0,
+        },
+        lm.Keyframe{
+            .rotation = 0,
+            .pos_x = 0,
+            .pos_y = 0,
+        },
+    }),
+};
+
+var index: u32 = 0;
+
+fn Hand() !*lm.Entity {
+    defer index += 1;
+
+    return try lm.makeEntityI("hand", index, .{
         lm.Transform{
             .scale = .init(48, 48),
         },
 
-        lm.Renderer.sprite("gloves_0.png"),
-        lm.Animator.init(&.{
-            lm.Animation.init("hit-left-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &.{
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 32,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-            }),
-            lm.Animation.init("hit-right-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &.{
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 32,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-            }),
-            lm.Animation.init("hit-left-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &.{
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = -32,
-                    .rotation = -30,
-                },
-                lm.Keyframe{
-                    .pos_x = 32,
-                    .rotation = 90,
-                    .pos_y = 0,
-                },
-                lm.Keyframe{
-                    .rotation = 0,
-                    .pos_x = 0,
-                    .pos_y = 0,
-                },
-            }),
-            lm.Animation.init("hit-right-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &.{
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 0,
-                    .rotation = 0,
-                },
-                lm.Keyframe{
-                    .pos_x = 0,
-                    .pos_y = 32,
-                    .rotation = 30,
-                },
-                lm.Keyframe{
-                    .rotation = -90,
-                    .pos_x = 32,
-                    .pos_y = 0,
-                },
-                lm.Keyframe{
-                    .rotation = 0,
-                    .pos_x = 0,
-                    .pos_y = 0,
-                },
-            }),
+        lm.RectangleCollider.initConfig(.{
+            .type = .passtrough,
+            .transform = .{ .scale = .init(48, 48) },
         }),
+
+        lm.Renderer.sprite("weapons/gloves_0.png"),
+        lm.Animator.init(HAND_ANIMATIONS),
     });
 }
 
@@ -132,19 +143,19 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
     self.stats = try entity.pullComponent(Stats);
     self.camera = lm.activeScene().?.getCameraById("main");
-}
 
-pub fn Start(self: *Self) !void {
-    const right_hand = try (try Hand()).makeInstance();
-    const left_hand = try (try Hand()).makeInstance();
+    const right_hand = try Hand();
+    const left_hand = try Hand();
 
-    try lm.summoning.entities(&.{
-        right_hand,
-        left_hand,
-    });
+    try lm.summoning.entities(&.{ right_hand, left_hand });
 
     self.right_hand = right_hand;
     self.left_hand = left_hand;
+}
+
+pub fn Start(self: *Self) !void {
+    const right_hand = self.right_hand orelse return;
+    const left_hand = self.left_hand orelse return;
 
     self.right_hand_transfrom = try right_hand.getComponentUnsafe(lm.Transform).unwrap();
     self.left_hand_transfrom = try left_hand.getComponentUnsafe(lm.Transform).unwrap();

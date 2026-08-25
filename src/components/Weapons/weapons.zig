@@ -29,8 +29,8 @@ pub const fists: Weapon = .{
 
     .type = .close,
 
-    .sprite_right = "gloves_0.png",
-    .sprite_left = "gloves_1.png",
+    .sprite_right = "weapons/gloves_0.png",
+    .sprite_left = "weapons/gloves_1.png",
 };
 
 pub const goliath: Weapon = .{
@@ -46,6 +46,6 @@ pub const goliath: Weapon = .{
 
     .type = .wide,
 
-    .sprite_left = "plates_1.png",
-    .sprite_right = "plates_0.png",
+    .sprite_left = "weapons/plates_1.png",
+    .sprite_right = "weapons/plates_0.png",
 };

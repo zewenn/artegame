@@ -15,28 +15,36 @@ fn objectiveUI(self: *Self) void {
     const tracking = objectives.trackingObjective() orelse return;
 
     const window_size = lm.window.size.get();
-    const scaler = @min(window_size.x, window_size.y);
-    const WIDTH: comptime_float = 0.20;
 
     ui.new(.{
         .id = .ID("objective-container"),
         .floating = .{
             .attach_to = .to_root,
-            .offset = .{ .x = window_size.x * 0.93 - scaler * (WIDTH / 2.0), .y = window_size.y * 0.7 },
+            .offset = .{ .x = window_size.x - 5, .y = window_size.y * 0.3 },
+            .attach_points = .{ .element = .right_top, .parent = .left_top },
         },
-        .background_color = ui.color(50, 50, 50, 255),
+        .background_color = ui.color(50, 50, 50, 128),
+        .layout = .{
+            .direction = .top_to_bottom,
+            .child_gap = 5,
+            .padding = .all(10),
+        },
     })({
         ui.new(.{
             .id = .ID("name"),
         })({
             ui.text(tracking.name, .{
                 .color = ui.color(255, 255, 255, 255),
+                .font_size = 32,
             });
         });
         ui.new(.{
             .id = .ID("desc"),
         })({
-            ui.text(tracking.description, .{});
+            ui.text(tracking.description, .{
+                .color = ui.color(255, 255, 255, 255),
+                .font_size = 16,
+            });
         });
     });
 }

@@ -25,8 +25,8 @@ light_attack: Attack = .{},
 heavy_attack: Attack = .{},
 dash_attack: Attack = .{},
 
-sprite_left: []const u8 = "empty_icon.png",
-sprite_right: []const u8 = "empty_icon.png",
+sprite_left: []const u8 = "ui/empty_icon.png",
+sprite_right: []const u8 = "ui/empty_icon.png",
 
 type: WeaponType = .close,
 

@@ -10,7 +10,7 @@ pub const heal: Spell = Spell{
     .id = "Heal",
     .mana_cost = 60,
     .slot = .left,
-    .icon = "heal_icon.png",
+    .icon = "ui/heal_icon.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
@@ -24,7 +24,7 @@ pub const root: Spell = Spell{
     .id = "Root",
     .mana_cost = 10,
     .slot = .left,
-    .icon = "heal_icon.png",
+    .icon = "ui/heal_icon.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;

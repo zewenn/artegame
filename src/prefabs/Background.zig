@@ -11,7 +11,7 @@ pub fn Background(w: i32, h: i32) !*lm.Entity {
             .position = lm.Vec3(0, 0, -100),
             .scale = lm.Vec2(width, height),
         },
-        lm.Renderer.tile("bakcground_tile_2_32x32.png", .init(128, 128)),
+        lm.Renderer.tile("backgrounds/bakcground_tile_2_32x32.png", .init(128, 128)),
 
         lm.RectangleCollider.initConfig(.{
             .transform = .{

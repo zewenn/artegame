@@ -14,7 +14,7 @@ pub fn Anchor(position: lm.Vector2) !*lm.Entity {
             .position = .init(position.x, position.y, 0),
             .scale = .init(64, 64),
         },
-        lm.Renderer.sprite("empty_icon.png"),
+        lm.Renderer.sprite("ui/empty_icon.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .static,
         }),

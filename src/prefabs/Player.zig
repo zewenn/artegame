@@ -14,7 +14,7 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
             .scale = .init(64, 64),
         },
         lm.Renderer.init(.{
-            .img_path = "player_left_0.png",
+            .img_path = "characters/player_left_0.png",
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
