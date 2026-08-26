@@ -34,6 +34,8 @@ pub const StatValues = struct {
     timer_stun_remaining: f32 = 0,
     timer_regen_remaining: f32 = 0,
 
+    experience: usize = 0,
+
     pub fn calculateMovementSpeed(self: StatValues) f32 {
         return @max(10, self.movement_speed - self.slow_movement_speed_decrease);
     }

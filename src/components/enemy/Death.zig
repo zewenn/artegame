@@ -28,5 +28,6 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     if (self.player_stats) |player_stats| {
         player_stats.current.mana = @min(player_stats.current.mana + player_stats.max.mana * 0.15, player_stats.max.mana);
+        player_stats.current.experience +%= lm.random.intRangeAtMostBiased(usize, 1, 3);
     }
 }

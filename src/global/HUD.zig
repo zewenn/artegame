@@ -12,6 +12,8 @@ player_stats: ?*Stats = null,
 player_objectives: ?*Objectives = null,
 player_attack: ?*Attack = null,
 
+experience_count_string: ?[]u8 = null,
+
 fn objectiveUI(self: *Self) void {
     const objectives = self.player_objectives orelse return;
     const tracking = objectives.trackingObjective() orelse return;
@@ -103,6 +105,60 @@ const playerStats = struct {
         const hud_width: f32 = hud_height * 8;
 
         ui.new(.{
+            .id = .ID("experience-counter"),
+            .background_color = ui.color(50, 50, 50, 128),
+            .floating = .{
+                .attach_to = .to_root,
+                .attach_points = .{
+                    .element = .right_bottom,
+                    .parent = .right_bottom,
+                },
+                .offset = .{ .x = -1 * hud_height / 2, .y = -1.5 * hud_height / 2 },
+            },
+            .layout = .{
+                .padding = .axes(5, 10),
+                .child_gap = lm.tou16(10),
+                .direction = .left_to_right,
+            },
+        })({
+            if (self.experience_count_string) |str| string_alloc: {
+                const new_string = std.fmt.allocPrint(lm.allocators.generic(), "{d}", .{stats.current.experience}) catch break :string_alloc;
+
+                lm.allocators.generic().free(str);
+                self.experience_count_string = new_string;
+            } else {
+                self.experience_count_string = std.fmt.allocPrint(lm.allocators.generic(), "{d}", .{stats.current.experience}) catch null;
+            }
+
+            ui.new(.{
+                .id = .ID("experience-img"),
+                .layout = .{
+                    .sizing = .{
+                        .h = .fixed(hud_height / 2),
+                        .w = .fixed(hud_height / 2),
+                    },
+                },
+                .image = ui.image(
+                    "ui/sleep_icon.png",
+                    .init(hud_height, hud_height),
+                ) catch .{ .image_data = null },
+            })({});
+
+            if (self.experience_count_string) |str|
+                ui.text(str, .{
+                    .font_size = lm.tou16(hud_height / 2),
+                    .letter_spacing = 2,
+                    .color = ui.color(255, 255, 255, 255),
+                })
+            else
+                ui.text("0", .{
+                    .font_size = lm.tou16(hud_height / 2),
+                    .letter_spacing = 2,
+                    .color = ui.color(255, 255, 255, 255),
+                });
+        });
+
+        ui.new(.{
             .id = .ID("player-hud"),
             .floating = .{
                 .attach_to = .to_root,
@@ -182,4 +238,8 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     playerStats.draw(self);
     self.objectiveUI();
+}
+
+pub fn End(self: *Self) void {
+    if (self.experience_count_string) |str| lm.allocators.generic().free(str);
 }
