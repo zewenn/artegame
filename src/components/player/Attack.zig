@@ -25,13 +25,22 @@ dashing: ?*Dashing = null,
 
 camera: ?*lm.Camera = null,
 
-current_weapon: Weapon = weapons.fists,
+current_weapon_number: u1 = 0,
 hands: ?*Hands = null,
 
 equipped_spells: [2]?Spell = [_]?Spell{
     spells.heal,
     spells.root,
 },
+
+equipped_weapons: [2]?Weapon = [_]?Weapon{
+    weapons.fists,
+    weapons.goliath,
+},
+
+pub fn currentWeapon(self: *Self) ?*Weapon {
+    return &(self.equipped_weapons[self.current_weapon_number] orelse return null);
+}
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
@@ -40,7 +49,7 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.hands = try entity.pullComponent(Hands);
 
     if (self.hands) |hands| {
-        hands.play(self.current_weapon) catch {};
+        hands.play((self.currentWeapon() orelse return).*) catch {};
     }
 }
 
@@ -49,24 +58,23 @@ pub fn Start(self: *Self) void {
 }
 
 pub fn Update(self: *Self, entity: *lm.Entity) !void {
+    if (lm.time.paused()) return;
+
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const hands: *Hands = try lm.ensureComponent(self.hands);
+    var weapon = self.currentWeapon() orelse return;
 
     self.cooldown -= lm.time.deltaTime();
 
     if (self.cooldown < 0) self.cooldown = 0;
+    if (lm.keyboard.getKeyDown(.tab) or lm.gamepad.getButtonDown(0, .right_trigger_1)) {
+        defer hands.play(weapon.*) catch {};
 
-    if (lm.keyboard.getKeyDown(.tab) or lm.gamepad.getButtonDown(0, .right_trigger_1)) weapon_switching: {
-        defer hands.play(self.current_weapon) catch {};
-        if (std.mem.eql(u8, self.current_weapon.id, weapons.fists.id)) {
-            self.current_weapon = weapons.goliath;
-            break :weapon_switching;
-        }
-
-        self.current_weapon = weapons.fists;
+        self.current_weapon_number +%= 1;
+        weapon = self.currentWeapon() orelse return;
     }
 
     if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) {
@@ -101,10 +109,10 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
         stats.applyRoot(0.075);
 
-        try hands.play(self.current_weapon);
+        try hands.play(weapon.*);
 
         if (dashing.isDashing()) {
-            try self.current_weapon.dashAttack(
+            try weapon.dashAttack(
                 direction_vector,
                 mouse_pos,
                 stats.*,
@@ -113,7 +121,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
             break :attack_block;
         }
 
-        try self.current_weapon.lightAttack(
+        try weapon.lightAttack(
             direction_vector,
             mouse_pos,
             stats.*,
@@ -122,9 +130,9 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         self.cooldown == 0 and
         !stats.current.stunned)
     {
-        try hands.play(self.current_weapon);
+        try hands.play(weapon.*);
 
-        try self.current_weapon.heavyAttack(
+        try weapon.heavyAttack(
             direction_vector,
             mouse_pos,
             stats.*,

@@ -23,8 +23,8 @@ pub const heal: Spell = Spell{
 pub const root: Spell = Spell{
     .id = "Root",
     .mana_cost = 10,
-    .slot = .left,
-    .icon = "effects/stun_effect_1.png",
+    .slot = .right,
+    .icon = "ui/sleep_icon.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;
@@ -48,6 +48,34 @@ pub const root: Spell = Spell{
 
                 try lm.summoning.entity(projectile);
             }
+        }
+    }.callback,
+};
+
+pub const goliath: Spell = Spell{
+    .id = "Goliath",
+    .mana_cost = 40,
+    .slot = .left,
+    .icon = "ui/goliath_icon.png",
+    .cast_fn = struct {
+        pub fn callback(target: *lm.Entity, level: u32) !void {
+            const stats = target.getComponent(Stats) orelse return;
+            const heal_amount = 25 * lm.tof32(level);
+            stats.current.health = @min(stats.max.health, stats.current.health + heal_amount);
+        }
+    }.callback,
+};
+
+pub const haste: Spell = Spell{
+    .id = "Haste",
+    .mana_cost = 30,
+    .slot = .right,
+    .icon = "ui/haste_icon.png",
+    .cast_fn = struct {
+        pub fn callback(target: *lm.Entity, level: u32) !void {
+            const stats = target.getComponent(Stats) orelse return;
+            stats.applySlow(-20 * lm.tof32(level), 5);
+            stats.current.attack_speed += 0.2 * lm.tof32(level);
         }
     }.callback,
 };

@@ -5,6 +5,9 @@ const ui = lm.ui;
 const Stats = @import("../components/Stats.zig");
 const Objectives = @import("../components/player/Objectives.zig");
 const Attack = @import("../components/player/Attack.zig");
+
+const Boon = @import("boons/Boon.zig");
+
 const Self = @This();
 
 player: ?*lm.Entity = null,
@@ -13,6 +16,54 @@ player_objectives: ?*Objectives = null,
 player_attack: ?*Attack = null,
 
 experience_count_string: ?[]u8 = null,
+arena: ?std.heap.ArenaAllocator = null,
+alloc: ?std.mem.Allocator = null,
+
+pub fn Awake(self: *Self) void {
+    self.player = null;
+    self.player_stats = null;
+    self.player_objectives = null;
+
+    self.arena = .init(lm.allocators.generic());
+    self.alloc = self.arena.?.allocator();
+}
+
+pub fn Update(self: *Self, scene: *lm.Scene) !void {
+    if (self.arena) |*arena| _ = arena.reset(.free_all);
+
+    if (self.player == null or self.player_stats == null or self.player_objectives == null) {
+        const player = scene.getEntityById("player") orelse {
+            self.player = null;
+            self.player_stats = null;
+            self.player_objectives = null;
+            return;
+        };
+
+        self.player = player;
+        self.player_stats = player.getComponentUnsafe(Stats).result;
+        self.player_objectives = player.getComponent(Objectives);
+        self.player_attack = player.getComponent(Attack);
+    }
+
+    const window_size = lm.window.size.get();
+    const scaler = @max(1, @round(@min(window_size.x, window_size.y) / 540));
+    playerStats.hud_height = scaler * 32;
+    playerStats.scale = scaler;
+
+    playerStats.draw(self);
+    self.objectiveUI();
+
+    boonMenu.draw(self, window_size, scaler);
+}
+
+pub fn End(self: *Self) void {
+    if (self.experience_count_string) |str| lm.allocators.generic().free(str);
+    boonMenu.boons = null;
+}
+
+pub fn showBoons(boons: []const Boon) void {
+    boonMenu.boons = boons;
+}
 
 fn objectiveUI(self: *Self) void {
     const objectives = self.player_objectives orelse return;
@@ -57,6 +108,139 @@ fn objectiveUI(self: *Self) void {
         });
     });
 }
+
+const boonMenu = struct {
+    pub var boons: ?[]const Boon = null;
+
+    fn boonCard(self: *Self, boon: Boon, index: u32, scaler: f32) void {
+        const img_size = scaler * 32;
+
+        lm.deps.clay.UI()(.{
+            .id = .IDI("boon-card-", index),
+            .layout = .{
+                .sizing = .{
+                    .h = .percent(1),
+                    .w = .percent(0.33333),
+                },
+                .direction = .top_to_bottom,
+                .padding = .all(25),
+                .child_gap = 25,
+                .child_alignment = .{ .x = .center },
+            },
+            .background_color = if (lm.deps.clay.hovered()) ui.color(100, 100, 100, 200) else ui.color(0, 0, 0, 0),
+        })({
+            ui.text(
+                boon.rarity.toString(),
+                .{
+                    .letter_spacing = 2,
+                    .alignment = .center,
+                    .color = ui.color(255, 255, 255, 255),
+                },
+            );
+
+            ui.new(.{
+                .id = .IDI("boon-image-", index),
+                .image = ui.image(
+                    boon.icon,
+                    .init(img_size, img_size),
+                ) catch .{ .image_data = null },
+                .aspect_ratio = .{ .aspect_ratio = 1 },
+                .layout = .{
+                    .sizing = .{
+                        .w = .percent(0.50),
+                    },
+                },
+            })({});
+
+            ui.text(boon.boon_type.toString(), .{
+                .color = ui.color(255, 255, 255, 255),
+                .letter_spacing = 2,
+                .alignment = .center,
+            });
+
+            ui.text(boon.name, .{
+                .color = ui.color(255, 255, 255, 255),
+                .letter_spacing = 2,
+                .font_size = 35,
+                .alignment = .center,
+            });
+
+            ui.text(boon.description, .{
+                .color = ui.color(255, 255, 255, 255),
+                .letter_spacing = 2,
+                .font_size = 20,
+                .alignment = .center,
+            });
+
+            ui.new(.{
+                .id = .IDI("boon-cost-box-", index),
+                .floating = .{
+                    .attach_to = .to_parent,
+                    .attach_points = .{
+                        .element = .center_bottom,
+                        .parent = .center_bottom,
+                    },
+                    .offset = .{ .y = -1 * img_size / 2, .x = 0 },
+                },
+                .layout = .{
+                    .padding = .all(5),
+                    .child_gap = 5,
+                    .child_alignment = .{ .y = .center },
+                },
+            })({
+                const price_text = if (self.alloc) |alloc| std.fmt.allocPrint(alloc, "{d}", .{boon.cost()}) catch "0" else "0";
+
+                ui.new(.{
+                    .id = .ID("experience-img"),
+                    .layout = .{
+                        .sizing = .{
+                            .h = .fixed(img_size / 2),
+                            .w = .fixed(img_size / 2),
+                        },
+                    },
+                    .image = ui.image(
+                        "ui/sleep_icon.png",
+                        .init(img_size, img_size),
+                    ) catch .{ .image_data = null },
+                })({});
+                ui.text(price_text, .{
+                    .color = ui.color(255, 255, 255, 255),
+                    .letter_spacing = 2,
+                    .font_size = 20,
+                    .alignment = .center,
+                });
+            });
+        });
+    }
+
+    fn draw(self: *Self, window_size: lm.Vector2, scaler: f32) void {
+        const gap = scaler * 32;
+        const boon_array = boons orelse return;
+        ui.new(.{
+            .id = .ID("boon-menu-container"),
+            .floating = .{
+                .attach_to = .to_root,
+                .attach_points = .{
+                    .element = .center_center,
+                    .parent = .center_center,
+                },
+            },
+            .layout = .{
+                .sizing = .{
+                    .h = .fitMinMax(.{ .min = scaler * 300, .max = window_size.y - gap }),
+                    .w = .fixed(@min(window_size.x - gap, scaler * 600)),
+                },
+                .child_gap = 25,
+                .padding = .all(25),
+            },
+            .background_color = ui.color(50, 50, 50, 200),
+        })({
+            for (boon_array, 0..) |boon, index| {
+                boonCard(self, boon, lm.tou32(index), scaler);
+            }
+        });
+    }
+};
 
 const playerStats = struct {
     var index: u32 = 0;
@@ -209,37 +393,3 @@ const playerStats = struct {
         });
     }
 };
-
-pub fn Awake(self: *Self) void {
-    self.player = null;
-    self.player_stats = null;
-    self.player_objectives = null;
-}
-
-pub fn Update(self: *Self, scene: *lm.Scene) !void {
-    if (self.player == null or self.player_stats == null or self.player_objectives == null) {
-        const player = scene.getEntityById("player") orelse {
-            self.player = null;
-            self.player_stats = null;
-            self.player_objectives = null;
-            return;
-        };
-
-        self.player = player;
-        self.player_stats = player.getComponentUnsafe(Stats).result;
-        self.player_objectives = player.getComponent(Objectives);
-        self.player_attack = player.getComponent(Attack);
-    }
-
-    const window_size = lm.window.size.get();
-    const scaler = @max(1, @round(@min(window_size.x, window_size.y) / 540));
-    playerStats.hud_height = scaler * 32;
-    playerStats.scale = scaler;
-
-    playerStats.draw(self);
-    self.objectiveUI();
-}
-
-pub fn End(self: *Self) void {
-    if (self.experience_count_string) |str| lm.allocators.generic().free(str);
-}

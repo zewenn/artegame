@@ -4,6 +4,8 @@ const std = @import("std");
 const prefabs = @import("../prefabs/prefabs.zig");
 const Self = @This();
 const player_components = @import("../components/player/export.zig");
+const HUD = @import("HUD.zig");
+const boons = @import("boons/boons.zig");
 
 const RoundState = enum {
     replenish,
@@ -15,20 +17,6 @@ player_objectives: ?*player_components.Objectives = null,
 enemies: lm.List(u128) = undefined,
 state: RoundState = .replenish,
 round: u32 = 0,
-
-fn newRound(self: *Self) !void {
-    std.debug.assert(self.state == .replenish);
-
-    self.state = .combat;
-    self.round += 1;
-
-    for (0..self.round) |_| {
-        const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
-        try self.enemies.append(enemy.uuid);
-
-        try lm.summoning.entity(enemy);
-    }
-}
 
 pub fn Awake(self: *Self) !void {
     self.enemies = .init(lm.allocators.scene());
@@ -63,6 +51,10 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         return;
     }
 
+    if (lm.keyboard.getKeyDown(.g)) {
+        selectBoons();
+    }
+
     if (self.state == .combat and self.enemies.len() == 0) {
         self.state = .replenish;
         objectives.tracking = try objectives.addObjective(.init("Replenish", "Press [F] to continue"));
@@ -81,4 +73,22 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
 pub fn End(self: *Self) !void {
     self.enemies.clearAndFree();
+}
+
+fn newRound(self: *Self) !void {
+    std.debug.assert(self.state == .replenish);
+
+    self.state = .combat;
+    self.round += 1;
+
+    for (0..self.round) |_| {
+        const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
+        try self.enemies.append(enemy.uuid);
+
+        try lm.summoning.entity(enemy);
+    }
+}
+
+fn selectBoons() void {
+    HUD.showBoons(&.{ boons.all_boons[2], boons.all_boons[14], boons.all_boons[47] });
 }
