@@ -238,7 +238,7 @@ const boonMenu = struct {
                     .width = .outside(1),
                 },
                 .layout = .{
-                    .padding = .axes(cost_box_pad_x, cost_box_pad_y),
+                    .padding = .axes(cost_box_pad_y, cost_box_pad_x),
                     .child_gap = lm.tou16(@round(6 * ui_scale)),
                     .child_alignment = .{ .y = .center },
                     .direction = .left_to_right,
@@ -352,6 +352,30 @@ const boonMenu = struct {
                 for (boon_array, 0..) |boon, index| {
                     boonCard(self, boon, lm.tou32(index), card_w, ui_scale);
                 }
+            });
+
+            lm.deps.clay.UI()(.{
+                .id = .ID("boon-skip-button"),
+                .layout = .{
+                    .padding = .axes(
+                        lm.tou16(@round(8 * ui_scale)),
+                        lm.tou16(@round(28 * ui_scale)),
+                    ),
+                    .child_alignment = .{ .x = .center, .y = .center },
+                },
+                .background_color = if (lm.deps.clay.hovered()) ui.color(45, 52, 68, 250) else ui.color(28, 32, 42, 230),
+                .corner_radius = .all(8 * ui_scale),
+                .border = .{
+                    .color = if (lm.deps.clay.hovered()) ui.color(200, 205, 220, 255) else ui.color(65, 70, 85, 200),
+                    .width = .outside(1),
+                },
+            })({
+                ui.text("SKIP", .{
+                    .color = ui.color(220, 225, 235, 255),
+                    .letter_spacing = lm.tou16(@round(2 * ui_scale)),
+                    .font_size = lm.tou16(@round(13 * ui_scale)),
+                    .alignment = .center,
+                });
             });
         });
     }
