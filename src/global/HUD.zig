@@ -53,7 +53,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     playerStats.draw(self);
     self.objectiveUI();
 
-    boonMenu.draw(self, window_size, scaler);
+    boonMenu.draw(self, window_size);
 }
 
 pub fn End(self: *Self) void {
@@ -112,29 +112,72 @@ fn objectiveUI(self: *Self) void {
 const boonMenu = struct {
     pub var boons: ?[]const Boon = null;
 
-    fn boonCard(self: *Self, boon: Boon, index: u32, scaler: f32) void {
-        const img_size = scaler * 32;
+    fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
+        return switch (rarity) {
+            .normal => ui.color(180, 190, 200, 255),
+            .rare => ui.color(65, 160, 255, 255),
+            .epic => ui.color(180, 85, 255, 255),
+            .legendary => ui.color(255, 195, 45, 255),
+            .mythic => ui.color(255, 60, 100, 255),
+            .cosmic => ui.color(45, 240, 225, 255),
+        };
+    }
+
+    fn rarityBgColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
+        if (is_hovered) {
+            return switch (rarity) {
+                .normal => ui.color(42, 46, 56, 245),
+                .rare => ui.color(28, 44, 68, 245),
+                .epic => ui.color(44, 28, 68, 245),
+                .legendary => ui.color(60, 48, 24, 245),
+                .mythic => ui.color(60, 24, 34, 245),
+                .cosmic => ui.color(24, 54, 58, 245),
+            };
+        } else {
+            return ui.color(28, 30, 38, 230);
+        }
+    }
+
+    fn rarityBorderColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
+        if (is_hovered) {
+            return rarityColor(rarity);
+        } else {
+            return ui.color(55, 60, 75, 180);
+        }
+    }
+
+    fn boonCard(self: *Self, boon: Boon, index: u32, card_w: f32, ui_scale: f32) void {
+        const card_padding = lm.tou16(@round(16 * ui_scale));
+        const card_content_gap = lm.tou16(@round(6 * ui_scale));
+        const img_size = @round(128 * ui_scale);
+        const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
 
         lm.deps.clay.UI()(.{
             .id = .IDI("boon-card-", index),
             .layout = .{
                 .sizing = .{
                     .h = .percent(1),
-                    .w = .percent(0.33333),
+                    .w = .fixed(card_w),
                 },
                 .direction = .top_to_bottom,
-                .padding = .all(25),
-                .child_gap = 25,
+                .padding = .all(card_padding),
+                .child_gap = card_content_gap,
                 .child_alignment = .{ .x = .center },
             },
-            .background_color = if (lm.deps.clay.hovered()) ui.color(100, 100, 100, 200) else ui.color(0, 0, 0, 0),
+            .background_color = rarityBgColor(boon.rarity, lm.deps.clay.hovered()),
+            .corner_radius = .all(10 * ui_scale),
+            .border = .{
+                .color = rarityBorderColor(boon.rarity, lm.deps.clay.hovered()),
+                .width = .outside(if (lm.deps.clay.hovered()) 2 else 1),
+            },
         })({
             ui.text(
                 boon.rarity.toString(),
                 .{
-                    .letter_spacing = 2,
+                    .font_size = lm.tou16(@round(12 * ui_scale)),
+                    .letter_spacing = letter_spacing,
                     .alignment = .center,
-                    .color = ui.color(255, 255, 255, 255),
+                    .color = rarityColor(boon.rarity),
                 },
             );
 
@@ -147,75 +190,106 @@ const boonMenu = struct {
                 .aspect_ratio = .{ .aspect_ratio = 1 },
                 .layout = .{
                     .sizing = .{
-                        .w = .percent(0.50),
+                        .w = .fixed(img_size),
+                        .h = .fixed(img_size),
                     },
                 },
             })({});
 
             ui.text(boon.boon_type.toString(), .{
-                .color = ui.color(255, 255, 255, 255),
-                .letter_spacing = 2,
+                .color = ui.color(150, 155, 170, 255),
+                .letter_spacing = letter_spacing,
+                .font_size = lm.tou16(@round(11 * ui_scale)),
                 .alignment = .center,
             });
 
             ui.text(boon.name, .{
                 .color = ui.color(255, 255, 255, 255),
-                .letter_spacing = 2,
-                .font_size = 35,
+                .letter_spacing = letter_spacing,
+                .font_size = lm.tou16(@round(17 * ui_scale)),
                 .alignment = .center,
             });
 
             ui.text(boon.description, .{
-                .color = ui.color(255, 255, 255, 255),
-                .letter_spacing = 2,
-                .font_size = 20,
+                .color = ui.color(210, 215, 225, 255),
+                .font_size = lm.tou16(@round(13 * ui_scale)),
                 .alignment = .center,
             });
 
             ui.new(.{
-                .id = .IDI("boon-cost-box-", index),
-                .floating = .{
-                    .attach_to = .to_parent,
-                    .attach_points = .{
-                        .element = .center_bottom,
-                        .parent = .center_bottom,
+                .id = .IDI("boon-card-spacer-", index),
+                .layout = .{
+                    .sizing = .{
+                        .h = .grow,
                     },
-                    .offset = .{ .y = -1 * img_size / 2, .x = 0 },
+                },
+            })({});
+
+            const cost_box_pad_x = lm.tou16(@round(12 * ui_scale));
+            const cost_box_pad_y = lm.tou16(@round(5 * ui_scale));
+            const cost_img_size = @round(18 * ui_scale);
+
+            ui.new(.{
+                .id = .IDI("boon-cost-box-", index),
+                .background_color = ui.color(20, 22, 28, 220),
+                .corner_radius = .all(6 * ui_scale),
+                .border = .{
+                    .color = ui.color(55, 60, 75, 200),
+                    .width = .outside(1),
                 },
                 .layout = .{
-                    .padding = .all(5),
-                    .child_gap = 5,
+                    .padding = .axes(cost_box_pad_x, cost_box_pad_y),
+                    .child_gap = lm.tou16(@round(6 * ui_scale)),
                     .child_alignment = .{ .y = .center },
+                    .direction = .left_to_right,
                 },
             })({
                 const price_text = if (self.alloc) |alloc| std.fmt.allocPrint(alloc, "{d}", .{boon.cost()}) catch "0" else "0";
 
                 ui.new(.{
-                    .id = .ID("experience-img"),
+                    .id = .IDI("experience-img-", index),
                     .layout = .{
                         .sizing = .{
-                            .h = .fixed(img_size / 2),
-                            .w = .fixed(img_size / 2),
+                            .h = .fixed(cost_img_size),
+                            .w = .fixed(cost_img_size),
                         },
                     },
                     .image = ui.image(
                         "ui/sleep_icon.png",
-                        .init(img_size, img_size),
+                        .init(cost_img_size, cost_img_size),
                     ) catch .{ .image_data = null },
                 })({});
                 ui.text(price_text, .{
                     .color = ui.color(255, 255, 255, 255),
-                    .letter_spacing = 2,
-                    .font_size = 20,
+                    .letter_spacing = letter_spacing,
+                    .font_size = lm.tou16(@round(14 * ui_scale)),
                     .alignment = .center,
                 });
             });
         });
     }
 
-    fn draw(self: *Self, window_size: lm.Vector2, scaler: f32) void {
-        const gap = scaler * 32;
+    fn draw(self: *Self, window_size: lm.Vector2) void {
         const boon_array = boons orelse return;
+        if (boon_array.len == 0) return;
+
+        const scale_x = window_size.x / 1280.0;
+        const scale_y = window_size.y / 720.0;
+        const base_scale = @min(scale_x, scale_y);
+        const ui_scale = @max(0.65, @min(2.5, base_scale));
+
+        const container_w = @min(window_size.x - 32, @max(740 * ui_scale, window_size.x * 0.78));
+        const container_h = @min(window_size.y - 32, @max(440 * ui_scale, window_size.y * 0.76));
+
+        const container_padding = lm.tou16(@round(18 * ui_scale));
+        const container_gap = lm.tou16(@round(14 * ui_scale));
+        const card_gap = lm.tou16(@round(14 * ui_scale));
+
+        const num_cards: f32 = @floatFromInt(boon_array.len);
+        const inner_w = container_w - @as(f32, @floatFromInt(container_padding * 2));
+        const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards - 1);
+        const card_w = (inner_w - total_card_gaps) / num_cards;
+
         ui.new(.{
             .id = .ID("boon-menu-container"),
             .floating = .{
@@ -227,17 +301,58 @@ const boonMenu = struct {
             },
             .layout = .{
                 .sizing = .{
-                    .h = .fitMinMax(.{ .min = scaler * 300, .max = window_size.y - gap }),
-                    .w = .fixed(@min(window_size.x - gap, scaler * 600)),
+                    .h = .fixed(container_h),
+                    .w = .fixed(container_w),
                 },
-                .child_gap = 25,
-                .padding = .all(25),
+                .direction = .top_to_bottom,
+                .child_alignment = .{ .x = .center },
+                .child_gap = container_gap,
+                .padding = .all(container_padding),
             },
-            .background_color = ui.color(50, 50, 50, 200),
+            .background_color = ui.color(18, 20, 26, 235),
+            .corner_radius = .all(14 * ui_scale),
+            .border = .{
+                .color = ui.color(55, 60, 75, 180),
+                .width = .outside(1),
+            },
         })({
-            for (boon_array, 0..) |boon, index| {
-                boonCard(self, boon, lm.tou32(index), scaler);
-            }
+            ui.new(.{
+                .id = .ID("boon-menu-header"),
+                .layout = .{
+                    .direction = .top_to_bottom,
+                    .child_alignment = .{ .x = .center },
+                    .child_gap = lm.tou16(@round(4 * ui_scale)),
+                },
+            })({
+                ui.text("CHOOSE A BOON", .{
+                    .color = ui.color(255, 215, 100, 255),
+                    .letter_spacing = lm.tou16(@round(3 * ui_scale)),
+                    .font_size = lm.tou16(@round(22 * ui_scale)),
+                    .alignment = .center,
+                });
+                ui.text("Select an upgrade to enhance your abilities", .{
+                    .color = ui.color(150, 155, 170, 255),
+                    .letter_spacing = lm.tou16(@round(1 * ui_scale)),
+                    .font_size = lm.tou16(@round(12 * ui_scale)),
+                    .alignment = .center,
+                });
+            });
+
+            ui.new(.{
+                .id = .ID("boon-cards-row"),
+                .layout = .{
+                    .direction = .left_to_right,
+                    .sizing = .{
+                        .w = .percent(1),
+                        .h = .grow,
+                    },
+                    .child_gap = card_gap,
+                },
+            })({
+                for (boon_array, 0..) |boon, index| {
+                    boonCard(self, boon, lm.tou32(index), card_w, ui_scale);
+                }
+            });
         });
     }
 };
