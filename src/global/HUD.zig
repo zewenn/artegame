@@ -63,6 +63,7 @@ pub fn End(self: *Self) void {
 
 pub fn showBoons(boons: []const Boon) void {
     boonMenu.boons = boons;
+    boonMenu.selected_index = 0;
 }
 
 fn objectiveUI(self: *Self) void {
@@ -111,6 +112,19 @@ fn objectiveUI(self: *Self) void {
 
 const boonMenu = struct {
     pub var boons: ?[]const Boon = null;
+    pub var selected_index: usize = 0;
+    var stick_moved_x: bool = false;
+    var stick_moved_y: bool = false;
+
+    fn selectBoon(self: *Self, boon: Boon) void {
+        const stats = self.player_stats orelse return;
+        const cost = boon.cost();
+        if (stats.current.experience >= cost) {
+            stats.current.experience -= cost;
+            boon.applyTo(stats, self.player_attack);
+            boons = null;
+        }
+    }
 
     fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
         return switch (rarity) {
@@ -151,6 +165,7 @@ const boonMenu = struct {
         const card_content_gap = lm.tou16(@round(6 * ui_scale));
         const img_size = @round(128 * ui_scale);
         const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
+        const is_focused = (selected_index == index);
 
         lm.deps.clay.UI()(.{
             .id = .IDI("boon-card-", index),
@@ -164,13 +179,20 @@ const boonMenu = struct {
                 .child_gap = card_content_gap,
                 .child_alignment = .{ .x = .center },
             },
-            .background_color = rarityBgColor(boon.rarity, lm.deps.clay.hovered()),
+            .background_color = rarityBgColor(boon.rarity, lm.deps.clay.hovered() or is_focused),
             .corner_radius = .all(10 * ui_scale),
             .border = .{
-                .color = rarityBorderColor(boon.rarity, lm.deps.clay.hovered()),
-                .width = .outside(if (lm.deps.clay.hovered()) 2 else 1),
+                .color = rarityBorderColor(boon.rarity, lm.deps.clay.hovered() or is_focused),
+                .width = .outside(if (lm.deps.clay.hovered() or is_focused) 2 else 1),
             },
         })({
+            if (lm.deps.clay.hovered()) {
+                selected_index = index;
+                if (lm.mouse.getButtonDown(.left)) {
+                    selectBoon(self, boon);
+                }
+            }
+
             ui.text(
                 boon.rarity.toString(),
                 .{
@@ -273,6 +295,78 @@ const boonMenu = struct {
         const boon_array = boons orelse return;
         if (boon_array.len == 0) return;
 
+        const num_cards = boon_array.len;
+        const skip_index = num_cards;
+        if (selected_index > skip_index) selected_index = 0;
+
+        // Handle Gamepad 0 inputs
+        if (lm.gamepad.isAvailable(0)) {
+            // Quick cancel/skip with B button
+            if (lm.gamepad.getButtonDown(0, .right_face_right)) {
+                boons = null;
+                return;
+            }
+
+            // Analog stick navigation with hysteresis
+            const stick = lm.gamepad.getStickVector(0, .left, 0.2);
+            var nav_left = lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
+            var nav_right = lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
+            var nav_up = lm.gamepad.getButtonDown(0, .left_face_up);
+            var nav_down = lm.gamepad.getButtonDown(0, .left_face_down);
+
+            if (@abs(stick.x) > 0.5) {
+                if (!stick_moved_x) {
+                    if (stick.x > 0) nav_right = true else nav_left = true;
+                    stick_moved_x = true;
+                }
+            } else if (@abs(stick.x) < 0.2) {
+                stick_moved_x = false;
+            }
+
+            if (@abs(stick.y) > 0.5) {
+                if (!stick_moved_y) {
+                    if (stick.y > 0) nav_down = true else nav_up = true;
+                    stick_moved_y = true;
+                }
+            } else if (@abs(stick.y) < 0.2) {
+                stick_moved_y = false;
+            }
+
+            // Directional selection updates
+            if (selected_index < num_cards) {
+                if (nav_left) {
+                    if (selected_index > 0) selected_index -= 1 else selected_index = num_cards - 1;
+                }
+                if (nav_right) {
+                    if (selected_index + 1 < num_cards) selected_index += 1 else selected_index = 0;
+                }
+                if (nav_down) {
+                    selected_index = skip_index;
+                }
+            } else {
+                if (nav_up) {
+                    selected_index = 0;
+                }
+                if (nav_left) {
+                    selected_index = 0;
+                }
+                if (nav_right) {
+                    selected_index = num_cards - 1;
+                }
+            }
+
+            // Confirm selection with A button
+            if (lm.gamepad.getButtonDown(0, .right_face_down)) {
+                if (selected_index < num_cards) {
+                    selectBoon(self, boon_array[selected_index]);
+                    if (boons == null) return;
+                } else {
+                    boons = null;
+                    return;
+                }
+            }
+        }
+
         const scale_x = window_size.x / 1280.0;
         const scale_y = window_size.y / 720.0;
         const base_scale = @min(scale_x, scale_y);
@@ -285,10 +379,10 @@ const boonMenu = struct {
         const container_gap = lm.tou16(@round(14 * ui_scale));
         const card_gap = lm.tou16(@round(14 * ui_scale));
 
-        const num_cards: f32 = @floatFromInt(boon_array.len);
+        const num_cards_f: f32 = @floatFromInt(boon_array.len);
         const inner_w = container_w - @as(f32, @floatFromInt(container_padding * 2));
-        const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards - 1);
-        const card_w = (inner_w - total_card_gaps) / num_cards;
+        const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards_f - 1);
+        const card_w = (inner_w - total_card_gaps) / num_cards_f;
 
         ui.new(.{
             .id = .ID("boon-menu-container"),
@@ -354,6 +448,8 @@ const boonMenu = struct {
                 }
             });
 
+            const is_skip_focused = (selected_index == skip_index);
+
             lm.deps.clay.UI()(.{
                 .id = .ID("boon-skip-button"),
                 .layout = .{
@@ -363,15 +459,22 @@ const boonMenu = struct {
                     ),
                     .child_alignment = .{ .x = .center, .y = .center },
                 },
-                .background_color = if (lm.deps.clay.hovered()) ui.color(45, 52, 68, 250) else ui.color(28, 32, 42, 230),
+                .background_color = if (lm.deps.clay.hovered() or is_skip_focused) ui.color(45, 52, 68, 250) else ui.color(28, 32, 42, 230),
                 .corner_radius = .all(8 * ui_scale),
                 .border = .{
-                    .color = if (lm.deps.clay.hovered()) ui.color(200, 205, 220, 255) else ui.color(65, 70, 85, 200),
-                    .width = .outside(1),
+                    .color = if (lm.deps.clay.hovered() or is_skip_focused) ui.color(200, 205, 220, 255) else ui.color(65, 70, 85, 200),
+                    .width = .outside(if (lm.deps.clay.hovered() or is_skip_focused) 2 else 1),
                 },
             })({
+                if (lm.deps.clay.hovered()) {
+                    selected_index = skip_index;
+                    if (lm.mouse.getButtonDown(.left)) {
+                        boons = null;
+                    }
+                }
+
                 ui.text("SKIP", .{
-                    .color = ui.color(220, 225, 235, 255),
+                    .color = if (lm.deps.clay.hovered() or is_skip_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
                     .letter_spacing = lm.tou16(@round(2 * ui_scale)),
                     .font_size = lm.tou16(@round(13 * ui_scale)),
                     .alignment = .center,
