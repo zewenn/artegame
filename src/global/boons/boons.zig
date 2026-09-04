@@ -7,6 +7,8 @@ const Spell = @import("../../components/Weapons/Spell.zig");
 const spells = @import("../../components/Weapons/spells.zig");
 const Boon = @import("Boon.zig");
 
+pub const BoonPool = @import("BoonPool.zig");
+
 // Helper Condition Functions
 fn hasSpellSlot0(_: Stats, attack: Attack) bool {
     return attack.equipped_spells[0] != null;
@@ -34,6 +36,83 @@ fn hasGoliathWeapon(_: Stats, attack: Attack) bool {
     return false;
 }
 
+fn canOfferAshwaganda1(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[1]) |s| {
+        if (std.mem.eql(u8, s.id, "Root") and s.level >= 1) return false;
+    }
+    return true;
+}
+
+fn canOfferAshwaganda2(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[1]) |s| {
+        if (std.mem.eql(u8, s.id, "Root") and s.level >= 2) return false;
+    }
+    return true;
+}
+
+fn canOfferAshwaganda3(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[1]) |s| {
+        if (std.mem.eql(u8, s.id, "Root") and s.level >= 4) return false;
+    }
+    return true;
+}
+
+fn canOfferVitaminMix1(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 5) return false;
+    }
+    return true;
+}
+
+fn canOfferVitaminMix2(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 10) return false;
+    }
+    return true;
+}
+
+fn canOfferVitaminMix3(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 25) return false;
+    }
+    return true;
+}
+
+fn canOfferCreatine1(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 1) return false;
+    }
+    return true;
+}
+
+fn canOfferCreatine2(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 2) return false;
+    }
+    return true;
+}
+
+fn canOfferCreatine3(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[0]) |s| {
+        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 5) return false;
+    }
+    return true;
+}
+
+fn canOfferPreWorkout1(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[1]) |s| {
+        if (std.mem.eql(u8, s.id, "Haste") and s.level >= 6) return false;
+    }
+    return true;
+}
+
+fn canOfferPreWorkout2(_: Stats, attack: Attack) bool {
+    if (attack.equipped_spells[1]) |s| {
+        if (std.mem.eql(u8, s.id, "Haste") and s.level >= 9) return false;
+    }
+    return true;
+}
+
 // All 50 Boon Definitions (Reclassified across 6 Rarities: Normal, Rare, Epic, Legendary, Mythic, Cosmic)
 pub const all_boons: []const Boon = &.{
     // --- Spell Boons (21) ---
@@ -43,6 +122,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .normal,
         .boon_type = .spell,
+        .condition = canOfferAshwaganda1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -59,6 +139,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .normal,
         .boon_type = .spell,
+        .condition = canOfferVitaminMix1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -75,6 +156,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .normal,
         .boon_type = .spell,
+        .condition = canOfferCreatine1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -121,6 +203,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .rare,
         .boon_type = .spell,
+        .condition = canOfferPreWorkout1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -137,6 +220,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .rare,
         .boon_type = .spell,
+        .condition = canOfferAshwaganda2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -153,6 +237,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .rare,
         .boon_type = .spell,
+        .condition = canOfferVitaminMix2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -169,6 +254,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .rare,
         .boon_type = .spell,
+        .condition = canOfferCreatine2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -245,6 +331,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .legendary,
         .boon_type = .spell,
+        .condition = canOfferPreWorkout2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -261,6 +348,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .legendary,
         .boon_type = .spell,
+        .condition = canOfferAshwaganda3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -277,6 +365,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .legendary,
         .boon_type = .spell,
+        .condition = canOfferCreatine3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {
@@ -323,6 +412,7 @@ pub const all_boons: []const Boon = &.{
         .icon = "items/banana.png",
         .rarity = .mythic,
         .boon_type = .spell,
+        .condition = canOfferVitaminMix3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
                 if (attack) |att| {

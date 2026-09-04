@@ -78,6 +78,7 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
             .current = .{
                 .attack_speed = 5,
                 .armour = 30,
+                .experience = 250_000,
             },
         },
         Dashing{},

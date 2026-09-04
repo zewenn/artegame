@@ -4,6 +4,8 @@ const std = @import("std");
 const prefabs = @import("../prefabs/prefabs.zig");
 const Self = @This();
 const player_components = @import("../components/player/export.zig");
+const Stats = @import("../components/Stats.zig");
+const BoonPool = @import("boons/BoonPool.zig");
 
 pub const RoundState = enum {
     replenish,
@@ -54,6 +56,7 @@ round: u32 = 0,
 pub fn Awake(self: *Self) !void {
     instance = self;
     state = .replenish;
+    BoonPool.reset();
     self.enemies = .init(lm.allocators.scene());
 
     try lm.summoning.entities(&.{
@@ -94,10 +97,18 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         if (self.player_objectives) |objectives| {
             objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
         }
+        if (self.player) |player| {
+            if (player.getComponent(Stats)) |stats| {
+                if (player.getComponent(player_components.Attack)) |attack| {
+                    BoonPool.reroll(stats.*, attack.*);
+                }
+            }
+        }
     }
 }
 
 pub fn End(self: *Self) !void {
     instance = null;
     self.enemies.clearAndFree();
+    BoonPool.reset();
 }

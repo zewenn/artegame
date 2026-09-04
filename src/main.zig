@@ -11,6 +11,7 @@ pub fn main() !void {
             .restore_state = true,
             .size = .init(1280, 720),
             .clear_color = lm.Color.black,
+            .exit_key = .null,
         },
         .asset_paths = .{
             .debug = "src/assets/",
@@ -40,4 +41,8 @@ pub fn main() !void {
             });
         });
     });
+}
+
+test {
+    _ = @import("global/boons/BoonPool.zig");
 }

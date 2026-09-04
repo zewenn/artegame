@@ -2,9 +2,6 @@
 
 ## Backlog
 
-### Boon pool filtering and randomizer (draw 3 valid boons)
-  - tags: [boons, gameplay]
-
 ### Skip or reroll rewards for boons
   - tags: [boons, gameplay]
 
@@ -59,6 +56,9 @@
 ## Work in Progress
 
 ## Done
+
+### Boon pool filtering and randomizer (draw 3 valid boons)
+  - tags: [boons, gameplay]
 
 ### Natural boon triggers on round completion or level up
   - tags: [boons, progression]

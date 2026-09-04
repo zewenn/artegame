@@ -5,6 +5,7 @@ const ui = lm.ui;
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("../boons/Boon.zig");
+const BoonPool = @import("../boons/BoonPool.zig");
 const HUD = @import("../HUD.zig");
 
 pub var boons: ?[]const Boon = null;
@@ -35,6 +36,7 @@ fn selectBoon(boon: Boon, stats_opt: ?*Stats, attack_opt: ?*Attack) void {
     if (stats.current.experience >= cost) {
         stats.current.experience -= cost;
         boon.applyTo(stats, attack_opt);
+        BoonPool.consumeBoon(boon);
         hide();
     }
 }
@@ -219,7 +221,96 @@ pub fn draw(
     alloc: ?std.mem.Allocator,
 ) void {
     if (boons == null) return;
-    if (boon_array.len == 0) return;
+
+    if (boon_array.len == 0) {
+        if (lm.keyboard.getKeyDown(.escape) or
+            (lm.gamepad.isAvailable(0) and (lm.gamepad.getButtonDown(0, .right_face_right) or lm.gamepad.getButtonDown(0, .right_face_down))))
+        {
+            hide();
+            return;
+        }
+
+        const window_size = HUD.window_size;
+        const ui_scale = HUD.ui_scale;
+        const container_w = @min(window_size.x - 32, @max(500 * ui_scale, window_size.x * 0.5));
+        const container_h = @min(window_size.y - 32, @max(260 * ui_scale, window_size.y * 0.4));
+        const container_padding = lm.tou16(@round(24 * ui_scale));
+
+        ui.new(.{
+            .id = .ID("boon-empty-container"),
+            .floating = .{
+                .attach_to = .to_root,
+                .attach_points = .{
+                    .element = .center_center,
+                    .parent = .center_center,
+                },
+            },
+            .layout = .{
+                .sizing = .{
+                    .h = .fixed(container_h),
+                    .w = .fixed(container_w),
+                },
+                .direction = .top_to_bottom,
+                .child_alignment = .{ .x = .center, .y = .center },
+                .child_gap = lm.tou16(@round(16 * ui_scale)),
+                .padding = .all(container_padding),
+            },
+            .background_color = ui.color(18, 20, 26, 235),
+            .corner_radius = .all(14 * ui_scale),
+            .border = .{
+                .color = ui.color(55, 60, 75, 180),
+                .width = .outside(1),
+            },
+        })({
+            ui.text("ALL BOONS CLAIMED", .{
+                .color = ui.color(255, 215, 100, 255),
+                .letter_spacing = lm.tou16(@round(2 * ui_scale)),
+                .font_size = lm.tou16(@round(20 * ui_scale)),
+                .alignment = .center,
+            });
+
+            ui.text("You have claimed all upgrades for this round.\nDefeat the next wave to restock new boons!", .{
+                .color = ui.color(180, 185, 200, 255),
+                .letter_spacing = lm.tou16(@round(1 * ui_scale)),
+                .font_size = lm.tou16(@round(13 * ui_scale)),
+                .alignment = .center,
+            });
+
+            lm.deps.clay.UI()(.{
+                .id = .ID("boon-empty-close-button"),
+                .layout = .{
+                    .padding = .axes(
+                        lm.tou16(@round(8 * ui_scale)),
+                        lm.tou16(@round(28 * ui_scale)),
+                    ),
+                    .child_alignment = .{ .x = .center, .y = .center },
+                },
+                .background_color = if (lm.deps.clay.hovered()) ui.color(45, 52, 68, 250) else ui.color(28, 32, 42, 230),
+                .corner_radius = .all(8 * ui_scale),
+                .border = .{
+                    .color = if (lm.deps.clay.hovered()) ui.color(200, 205, 220, 255) else ui.color(65, 70, 85, 200),
+                    .width = .outside(if (lm.deps.clay.hovered()) 2 else 1),
+                },
+            })({
+                if (lm.deps.clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                    hide();
+                }
+
+                ui.text("CLOSE", .{
+                    .color = if (lm.deps.clay.hovered()) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
+                    .letter_spacing = lm.tou16(@round(2 * ui_scale)),
+                    .font_size = lm.tou16(@round(13 * ui_scale)),
+                    .alignment = .center,
+                });
+            });
+        });
+        return;
+    }
+
+    if (lm.keyboard.getKeyDown(.escape)) {
+        hide();
+        return;
+    }
 
     const num_cards = boon_array.len;
     const skip_index = num_cards;

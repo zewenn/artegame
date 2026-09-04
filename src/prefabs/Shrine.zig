@@ -3,15 +3,20 @@ const lm = @import("loom");
 
 const Interactable = @import("../components/interaction/Interactable.zig");
 const HUD = @import("../global/HUD.zig");
-const boons = @import("../global/boons/boons.zig");
 const DemoMap = @import("../global/DemoMap.zig");
+const Stats = @import("../components/Stats.zig");
+const Attack = @import("../components/player/Attack.zig");
+const BoonPool = @import("../global/boons/BoonPool.zig");
 
 var shrine_count: u32 = 0;
 
 fn onShrineInteract(interactable: *Interactable, player: *lm.Entity) void {
     _ = interactable;
-    _ = player;
-    HUD.showBoons(&.{ boons.all_boons[2], boons.all_boons[14], boons.all_boons[47] });
+    const stats = player.getComponent(Stats) orelse return;
+    const attack = player.getComponent(Attack) orelse return;
+
+    const available_boons = BoonPool.getCurrentBoons(stats.*, attack.*);
+    HUD.showBoons(available_boons);
 }
 
 pub fn Shrine(position: lm.Vector2) !*lm.Entity {

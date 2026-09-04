@@ -72,3 +72,10 @@ pub fn isAvailable(self: Self, stats: Stats, attack: Attack) bool {
 pub fn cost(self: Self) usize {
     return self.rarity.cost();
 }
+
+pub fn eql(self: Self, other: Self) bool {
+    return self.rarity == other.rarity and
+        self.boon_type == other.boon_type and
+        std.mem.eql(u8, self.name, other.name) and
+        std.mem.eql(u8, self.description, other.description);
+}
