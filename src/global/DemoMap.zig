@@ -35,10 +35,21 @@ pub fn startRound() !void {
     }
 }
 
+fn isEnemyAlive(scene: *lm.Scene, uuid: u128) bool {
+    for (scene.entities.items()) |entity| {
+        if (entity.uuid == uuid) return true;
+    }
+    for (scene.new_entities.items()) |entity| {
+        if (entity.uuid == uuid) return true;
+    }
+    return false;
+}
+
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
 enemies: lm.List(u128) = undefined,
 round: u32 = 0,
+
 
 pub fn Awake(self: *Self) !void {
     instance = self;
@@ -68,21 +79,21 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    if (state == .combat and self.enemies.len() == 0) {
-        state = .replenish;
-        if (self.player_objectives) |objectives| {
-            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
-        }
-    }
-
     const len = self.enemies.len();
     for (1..len + 1) |j| {
         const index = len - j;
         const uuid = self.enemies.items()[index];
 
-        if (lm.activeScene().?.isEntityAliveUuid(uuid)) continue;
+        if (isEnemyAlive(scene, uuid)) continue;
 
         _ = self.enemies.swapRemove(index);
+    }
+
+    if (state == .combat and self.enemies.len() == 0) {
+        state = .replenish;
+        if (self.player_objectives) |objectives| {
+            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
+        }
     }
 }
 

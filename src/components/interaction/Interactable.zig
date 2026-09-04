@@ -1,5 +1,6 @@
 const std = @import("std");
 const lm = @import("loom");
+const DemoMap = @import("../../global/DemoMap.zig");
 
 const Self = @This();
 
@@ -54,6 +55,7 @@ pub fn End(self: *Self) void {
 
 pub fn isActive(self: *const Self) bool {
     if (!self.enabled) return false;
+    if (DemoMap.state == .combat) return false;
     if (self.can_interact) |check| {
         if (!check()) return false;
     }
