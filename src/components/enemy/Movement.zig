@@ -63,10 +63,11 @@ pub fn Update(self: *Self) !void {
             .normalize(),
     };
 
+    const effective_speed = stats.current.calculateMovementSpeed();
     transform.position = transform.position.add(lm.vec2ToVec3(
         move_vector
             .multiply(lm.time.deltaTimeVector2())
-            .multiply(.init(stats.current.movement_speed, stats.current.movement_speed)),
+            .multiply(.init(effective_speed, effective_speed)),
     ));
 }
 
