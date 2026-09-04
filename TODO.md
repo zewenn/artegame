@@ -2,8 +2,6 @@
 
 ## Backlog
 
-- [ ] Physical experience drops / orbs spawned on enemy defeat
-- [ ] Experience orb pickup magnetism and pickup audio
 - [ ] Natural boon triggers on round completion or level up
 - [ ] Boon pool filtering and randomizer (draw 3 valid boons)
 - [ ] Skip or reroll rewards for boons
@@ -29,6 +27,8 @@
 
 ## Done
 
+- [x] Physical experience drops / orbs spawned on enemy defeat
+- [x] Experience orb pickup magnetism and pickup audio
 - [x] Engine migration to Zig using Loom framework
 - [x] Multi-scene structure (default and demo_map scenes)
 - [x] Entity Component System (ECS) architecture
