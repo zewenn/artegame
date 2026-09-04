@@ -15,10 +15,14 @@ var stick_moved_y: bool = false;
 pub fn show(boons_to_show: []const Boon) void {
     boons = boons_to_show;
     selected_index = 0;
+    lm.time.pause();
 }
 
 pub fn hide() void {
-    boons = null;
+    if (boons != null) {
+        boons = null;
+        lm.time.proceed();
+    }
 }
 
 pub fn isShowing() bool {

@@ -5,11 +5,13 @@ const Stats = @import("../components/Stats.zig");
 const Objectives = @import("../components/player/Objectives.zig");
 const Attack = @import("../components/player/Attack.zig");
 const Boon = @import("boons/Boon.zig");
+const Interactable = @import("../components/interaction/Interactable.zig");
 
 pub const ui = @import("ui/ui.zig");
 pub const PlayerStats = ui.PlayerStats;
 pub const ObjectiveUI = ui.ObjectiveUI;
 pub const BoonMenu = ui.BoonMenu;
+pub const InteractionPrompt = ui.InteractionPrompt;
 
 const Self = @This();
 
@@ -78,6 +80,14 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         const tracking = objectives.trackingObjective() orelse break :objectives;
 
         ObjectiveUI.draw(tracking);
+    }
+
+    // Draw interaction prompt for focused interactable
+    if (!BoonMenu.isShowing()) {
+        if (Interactable.getFocused()) |focused| {
+            const camera = scene.getCameraById("main");
+            InteractionPrompt.draw(camera, focused);
+        }
     }
 
     // Draw boon menu if showing

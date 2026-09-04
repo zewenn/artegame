@@ -4,26 +4,52 @@ const std = @import("std");
 const prefabs = @import("../prefabs/prefabs.zig");
 const Self = @This();
 const player_components = @import("../components/player/export.zig");
-const HUD = @import("HUD.zig");
-const boons = @import("boons/boons.zig");
 
-const RoundState = enum {
+pub const RoundState = enum {
     replenish,
     combat,
 };
 
+pub var state: RoundState = .replenish;
+var instance: ?*Self = null;
+
+pub fn isReplenish() bool {
+    return state == .replenish;
+}
+
+pub fn startRound() !void {
+    const self = instance orelse return;
+    if (state != .replenish) return;
+
+    state = .combat;
+    self.round += 1;
+
+    if (self.player_objectives) |objectives| {
+        objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
+    }
+
+    for (0..self.round) |_| {
+        const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
+        try self.enemies.append(enemy.uuid);
+        try lm.summoning.entity(enemy);
+    }
+}
+
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
 enemies: lm.List(u128) = undefined,
-state: RoundState = .replenish,
 round: u32 = 0,
 
 pub fn Awake(self: *Self) !void {
+    instance = self;
+    state = .replenish;
     self.enemies = .init(lm.allocators.scene());
 
     try lm.summoning.entities(&.{
         try prefabs.Player(.init(0, 0)),
         try prefabs.Background(20, 10),
+        try prefabs.Shrine(.init(-96, -200)),
+        try prefabs.RoundActivator(.init(96, -200)),
     });
 }
 
@@ -37,27 +63,16 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
         self.player = player;
         self.player_objectives = player.getComponent(player_components.Objectives);
+        if (self.player_objectives) |objectives| {
+            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
+        }
     }
 
-    const objectives = self.player_objectives orelse return;
-
-    if (lm.keyboard.getKeyDown(.f) and self.state == .replenish) {
-        try self.newRound();
-        objectives.tracking = objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies")) catch |err| {
-            std.log.err("{any}", .{err});
-            return;
-        };
-
-        return;
-    }
-
-    if (lm.keyboard.getKeyDown(.g)) {
-        selectBoons();
-    }
-
-    if (self.state == .combat and self.enemies.len() == 0) {
-        self.state = .replenish;
-        objectives.tracking = try objectives.addObjective(.init("Replenish", "Press [F] to continue"));
+    if (state == .combat and self.enemies.len() == 0) {
+        state = .replenish;
+        if (self.player_objectives) |objectives| {
+            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
+        }
     }
 
     const len = self.enemies.len();
@@ -72,23 +87,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 }
 
 pub fn End(self: *Self) !void {
+    instance = null;
     self.enemies.clearAndFree();
-}
-
-fn newRound(self: *Self) !void {
-    std.debug.assert(self.state == .replenish);
-
-    self.state = .combat;
-    self.round += 1;
-
-    for (0..self.round) |_| {
-        const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
-        try self.enemies.append(enemy.uuid);
-
-        try lm.summoning.entity(enemy);
-    }
-}
-
-fn selectBoons() void {
-    HUD.showBoons(&.{ boons.all_boons[2], boons.all_boons[14], boons.all_boons[47] });
 }
