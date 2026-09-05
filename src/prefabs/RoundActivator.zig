@@ -3,12 +3,14 @@ const lm = @import("loom");
 
 const Interactable = @import("../components/interaction/Interactable.zig");
 const DemoMap = @import("../global/DemoMap.zig");
+const AudioManager = @import("../global/audio/AudioManager.zig");
 
 var round_activator_count: u32 = 0;
 
 fn onRoundActivatorInteract(interactable: *Interactable, player: *lm.Entity) void {
     _ = interactable;
     _ = player;
+    AudioManager.playSfxPitched("audio/click.wav", 0.9, 0.05);
     DemoMap.startRound() catch |err| {
         std.log.err("Failed to start round from activator: {any}", .{err});
     };

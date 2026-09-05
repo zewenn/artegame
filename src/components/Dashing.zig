@@ -5,6 +5,7 @@ const ui = lm.ui;
 const TIMER = 0.1;
 
 const Stats = @import("Stats.zig");
+const AudioManager = @import("../global/audio/AudioManager.zig");
 const Self = @This();
 
 const Dash = struct {

@@ -38,6 +38,7 @@ pub fn main() !void {
             lm.globalBehaviours(.{
                 gbl.DemoMap{},
                 gbl.HUD{},
+                gbl.MusicManager{},
             });
         });
     });
@@ -49,4 +50,7 @@ test {
     _ = @import("components/effects/Effect.zig");
     _ = @import("components/effects/EffectVisual.zig");
     _ = @import("components/Stats.zig");
+    _ = @import("global/audio/AudioManager.zig");
+    _ = @import("global/audio/MusicManager.zig");
+    _ = @import("global/audio/SpatialAudio.zig");
 }

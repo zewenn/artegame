@@ -7,6 +7,7 @@ const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("../boons/Boon.zig");
 const BoonPool = @import("../boons/BoonPool.zig");
 const HUD = @import("../HUD.zig");
+const AudioManager = @import("../audio/AudioManager.zig");
 
 pub var boons: ?[]const Boon = null;
 pub var selected_index: usize = 0;
@@ -33,16 +34,24 @@ pub fn isShowing() bool {
 fn selectBoon(boon: Boon, stats_opt: ?*Stats, attack_opt: ?*Attack) void {
     const stats = stats_opt orelse return;
     const cost = boon.cost();
-    if (stats.current.experience >= cost) {
-        stats.current.experience -= cost;
-        boon.applyTo(stats, attack_opt);
-        BoonPool.consumeBoon(boon);
 
-        if (attack_opt) |attack|
-            boons = BoonPool.getCurrentBoons(stats.*, attack.*)
-        else
-            hide();
+    if (stats.current.experience < cost) {
+        AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.1);
+        return;
     }
+
+    stats.current.experience -= cost;
+    AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+
+    boon.applyTo(stats, attack_opt);
+    BoonPool.consumeBoon(boon);
+
+    if (attack_opt) |attack| {
+        boons = BoonPool.getCurrentBoons(stats.*, attack.*);
+        return;
+    }
+
+    hide();
 }
 
 fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {

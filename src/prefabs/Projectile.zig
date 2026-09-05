@@ -4,6 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../components/Stats.zig");
 const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
+const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 
 pub const Options = struct {
     start_position: lm.Vector2 = .init(0, 0),
@@ -91,6 +92,23 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         options.damage_type,
         options.is_crit,
     ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage;
+
+    if (other.getComponent(lm.Transform)) |other_t| {
+        const hit_pos = lm.vec3ToVec2(other_t.position);
+        var listener_pos = hit_pos;
+        if (lm.activeScene()) |scene| {
+            if (scene.getEntityById("player")) |player| {
+                if (player.getComponent(lm.Transform)) |pt| {
+                    listener_pos = lm.vec3ToVec2(pt.position);
+                }
+            }
+        }
+        if (options.is_crit) {
+            SpatialAudio.playSpatialPitched("audio/boom.wav", hit_pos, listener_pos, 700.0, 0.65, 0.15);
+        } else {
+            SpatialAudio.playSpatialPitched("audio/punch.mp3", hit_pos, listener_pos, 700.0, 0.5, 0.1);
+        }
+    }
 
     if (options.onhit_effect) |onhit_effect| switch (onhit_effect) {
         .slow => other_stats.applySlow(options.onhit_strength, options.onhit_duration),

@@ -3,9 +3,11 @@ const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
 const Dashing = @import("../Dashing.zig");
+const AudioManager = @import("../../global/audio/AudioManager.zig");
 
 const Self = @This();
 
+footstep_timer: f32 = 0,
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 dashing: ?*Dashing = null,
@@ -55,6 +57,12 @@ pub fn Update(self: *Self) !void {
     }
 
     if (move_vector.length() > 0) animation: {
+        self.footstep_timer -= lm.time.deltaTime();
+        if (self.footstep_timer <= 0) {
+            AudioManager.playSfxPitched("audio/walking.mp3", 0.45, 0.15);
+        }
+        self.footstep_timer = 0.35;
+
         if (move_vector.x <= 0) {
             animator.stop("walk-right");
             try animator.play("walk-left");
@@ -64,6 +72,9 @@ pub fn Update(self: *Self) !void {
 
         animator.stop("walk-left");
         try animator.play("walk-right");
+    } else {
+        self.footstep_timer = 0.0;
+        lm.audio.stop("audio/walking.mp3");
     }
 
     transform.position = transform.position.add(lm.vec2ToVec3(

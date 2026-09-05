@@ -6,6 +6,7 @@ const Self = @This();
 const player_components = @import("../components/player/export.zig");
 const Stats = @import("../components/Stats.zig");
 const BoonPool = @import("boons/BoonPool.zig");
+const MusicManager = @import("audio/MusicManager.zig");
 
 pub const RoundState = enum {
     replenish,
@@ -25,6 +26,7 @@ pub fn startRound() !void {
 
     state = .combat;
     self.round += 1;
+    MusicManager.setPhase(.combat);
 
     if (self.player_objectives) |objectives| {
         objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
@@ -56,6 +58,7 @@ round: u32 = 0,
 pub fn Awake(self: *Self) !void {
     instance = self;
     state = .replenish;
+    MusicManager.setPhase(.replenish);
     BoonPool.reset();
     self.enemies = .init(lm.allocators.scene());
 
@@ -94,6 +97,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     if (state == .combat and self.enemies.len() == 0) {
         state = .replenish;
+        MusicManager.setPhase(.replenish);
         if (self.player_objectives) |objectives| {
             objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
         }
@@ -109,6 +113,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
 pub fn End(self: *Self) !void {
     instance = null;
+    MusicManager.stop();
     self.enemies.clearAndFree();
     BoonPool.reset();
 }

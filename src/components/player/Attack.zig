@@ -14,6 +14,7 @@ const Weapon = @import("../Weapons/Weapon.zig");
 const weapons = @import("../Weapons/weapons.zig");
 
 const Hands = @import("../Weapons/Hands.zig");
+const AudioManager = @import("../../global/audio/AudioManager.zig");
 
 const Self = @This();
 
@@ -80,11 +81,13 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     if (self.equipped_spells[0]) |*spell| spell.update(lm.time.deltaTime());
     if (self.equipped_spells[1]) |*spell| spell.update(lm.time.deltaTime());
 
-    if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) {
-        if (self.equipped_spells[0]) |*spell| _ = spell.cast(entity);
+    if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) spell_0: {
+        const spell = &(self.equipped_spells[0] orelse break :spell_0);
+        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/click.wav", 0.7, 0.15);
     }
-    if (lm.keyboard.getKeyDown(.e) or lm.gamepad.getButtonDown(0, .right_face_up)) {
-        if (self.equipped_spells[1]) |*spell| _ = spell.cast(entity);
+    if (lm.keyboard.getKeyDown(.e) or lm.gamepad.getButtonDown(0, .right_face_up)) spell_1: {
+        const spell = &(self.equipped_spells[1] orelse break :spell_1);
+        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/click.wav", 0.7, 0.15);
     }
 
     const mouse_pos = get_angle_vetor: {
@@ -113,6 +116,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         stats.applyRoot(0.075);
 
         try hands.play(weapon.*);
+        AudioManager.playSfxPitched("audio/punch.mp3", 0.7, 0.1);
 
         if (dashing.isDashing()) {
             try weapon.dashAttack(
@@ -134,6 +138,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         !stats.isStunned())
     {
         try hands.play(weapon.*);
+        AudioManager.playSfxPitched("audio/punch.mp3", 0.95, 0.15);
 
         try weapon.heavyAttack(
             direction_vector,

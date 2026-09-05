@@ -25,48 +25,25 @@
       - [ ] Connect spawner lifecycle with RoundManager combat and replenish phases
       - [ ] Add wave progress tracking to HUD/ObjectiveUI
 
-### [4#AUD] Audio engine integration with Loom audio backend
-
-  - tags: [audio, engine]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [ ] Audit and initialize Loom audio device in main game lifecycle
-      - [ ] Create AudioManager component or global service with volume control buses (Master, SFX, Music)
-      - [ ] Implement asset preloading and playback cache for sound effects
-      - [ ] Add spatial audio or falloff calculation helper for world events
-
-### [5#AUD] Dynamic background music for combat and replenish phases
-
-  - tags: [audio, music]
-  - priority: medium
-  - workload: Normal
-
-### [6#AUD] Sound effects for combat, movement, and pickups
-
-  - tags: [audio, sfx]
-  - priority: medium
-  - workload: Easy
-
-### [7#UIM] Main menu scene (Play, Options, Quit)
+### [5#UIM] Main menu scene (Play, Options, Quit)
 
   - tags: [ui, menu]
   - priority: medium
   - workload: Normal
 
-### [8#UIM] In-game pause menu (Resume, Restart, Main Menu)
+### [6#UIM] In-game pause menu (Resume, Restart, Main Menu)
 
   - tags: [ui, menu]
   - priority: high
   - workload: Normal
 
-### [9#UIS] Defeat and victory screens with run summary
+### [7#UIS] Defeat and victory screens with run summary
 
   - tags: [ui, summary]
   - priority: medium
   - workload: Normal
 
-### [10#SYS] Save system and session persistence
+### [8#SYS] Save system and session persistence
 
   - tags: [system, save]
   - priority: low
@@ -77,13 +54,13 @@
       - [ ] Hook settings persistence (audio volume, controls) into game startup
       - [ ] Add run summary recording to high score / stats history
 
-### [11#INP] Controller aiming polish and configurable stick deadzones
+### [9#INP] Controller aiming polish and configurable stick deadzones
 
   - tags: [input, controller]
   - priority: medium
   - workload: Easy
 
-### [12#INP] Dynamic button prompt overlays (keyboard vs controller)
+### [10#INP] Dynamic button prompt overlays (keyboard vs controller)
 
   - tags: [input, ui]
   - priority: low
@@ -92,6 +69,20 @@
 ## Work in Progress
 
 ## Done
+
+### [4#AUD] Comprehensive audio system (Loom audio backend, dynamic phase BGM, and gameplay SFX)
+
+  - tags: [audio, engine, music, sfx]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Build AudioManager service with volume buses (Master, Music, SFX) and mute state atop Loom's audio backend
+      - [x] Implement dynamic BGM manager with track cross-fading and looping between combat (action) and replenish (ambient)
+      - [x] Connect phase-based BGM transitions to DemoMap combat start and round clear events
+      - [x] Implement spatial audio helper (stereo pan and distance attenuation) wrapping lm.audio.playAdvanced
+      - [x] Wire combat SFX: weapon swings, punch/projectile impacts, enemy hurt, and defeat sounds
+      - [x] Wire movement & action SFX: dash swoosh, footsteps, and spell cast sounds
+      - [x] Wire world & UI SFX: shrine activation, round start gong/horn, and boon selection feedback
 
 ### [1#VIS] Status visual effect sprite overlays (sleep, stun, heal particles)
 

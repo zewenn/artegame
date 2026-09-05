@@ -7,6 +7,7 @@ const TIMER = 0.1;
 const Stats = @import("../Stats.zig");
 const Attack = @import("../player/Attack.zig");
 const prefabs = @import("../../prefabs/prefabs.zig");
+const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 
 const Self = @This();
 
@@ -35,6 +36,15 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         lm.vec3ToVec2(t.position)
     else
         .init(0, 0);
+
+    var listener_pos = enemy_pos;
+    player_listner: {
+        const player = lm.getEntity(.{ .id = "player" }) orelse break :player_listner;
+        const player_transform = player.getComponent(lm.Transform) orelse break :player_listner;
+        listener_pos = lm.vec3ToVec2(player_transform.position);
+    }
+
+    SpatialAudio.playSpatialPitched("audio/boom.wav", enemy_pos, listener_pos, 800.0, 0.75, 0.15);
 
     const orb_count = lm.random.intRangeAtMostBiased(u8, 1, 3);
     for (0..orb_count) |_| {
