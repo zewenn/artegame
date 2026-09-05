@@ -75,21 +75,17 @@ test "BoonPool rolls 3 distinct valid boons and handles consumption & reroll" {
     };
     const attack = Attack{};
 
-    // Initial roll
     const initial_boons = getCurrentBoons(stats, attack);
     try std.testing.expectEqual(@as(usize, 3), initial_boons.len);
 
-    // Verify distinct boons
     try std.testing.expect(!initial_boons[0].eql(initial_boons[1]));
     try std.testing.expect(!initial_boons[0].eql(initial_boons[2]));
     try std.testing.expect(!initial_boons[1].eql(initial_boons[2]));
 
-    // Verify all are available
     for (initial_boons) |b| {
         try std.testing.expect(b.isAvailable(stats, attack));
     }
 
-    // Consume first boon
     const first_boon = initial_boons[0];
     consumeBoon(first_boon);
 
@@ -99,14 +95,12 @@ test "BoonPool rolls 3 distinct valid boons and handles consumption & reroll" {
         try std.testing.expect(!b.eql(first_boon));
     }
 
-    // Consume remaining boons
     consumeBoon(remaining_after_one[0]);
     consumeBoon(remaining_after_one[1]);
 
     const remaining_after_all = getCurrentBoons(stats, attack);
     try std.testing.expectEqual(@as(usize, 0), remaining_after_all.len);
 
-    // Reroll for new round
     reroll(stats, attack);
     const new_round_boons = getCurrentBoons(stats, attack);
     try std.testing.expectEqual(@as(usize, 3), new_round_boons.len);
@@ -122,7 +116,7 @@ test "BoonPool respects weapon availability conditions" {
         .team = .player,
     };
     var attack = Attack{};
-    attack.equipped_weapons[1] = null; // No Goliath weapon
+    attack.equipped_weapons[1] = null;
 
     for (0..10) |_| {
         reroll(stats, attack);
@@ -132,4 +126,3 @@ test "BoonPool respects weapon availability conditions" {
         }
     }
 }
-

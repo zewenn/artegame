@@ -49,7 +49,6 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     const dt = lm.time.deltaTime();
 
-    // Initial scatter velocity decay
     if (self.velocity.x != 0 or self.velocity.y != 0) {
         transform.position = transform.position.add(lm.vec2ToVec3(
             self.velocity.multiply(lm.time.deltaTimeVector2()),
@@ -76,7 +75,6 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         player_pos.y - orb_pos.y,
     );
 
-    // Magnetism attraction logic
     if (self.is_magnetized or distance <= self.magnet_radius) {
         self.is_magnetized = true;
 
@@ -91,13 +89,11 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
             ));
         }
     } else {
-        // Idle gentle float bobbing when resting
         self.bob_timer += dt * 3.0;
         const bob_offset = std.math.sin(self.bob_timer) * 0.25;
         transform.position.y += bob_offset;
     }
 
-    // Distance-based collection
     if (distance <= self.pickup_radius) {
         try self.collect(entity);
     }
@@ -115,7 +111,6 @@ pub fn collect(self: *Self, entity: *lm.Entity) !void {
         stats.current.experience +%= self.experience_value;
     }
 
-    // Audio chime on pickup
     lm.audio.playAdvanced("audio/pickup.mp3", .{
         .volume = 0.65,
         .pitch = lm.randFloat(f32, 0.95, 1.15),

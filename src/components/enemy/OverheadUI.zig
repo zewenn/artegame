@@ -50,15 +50,15 @@ pub fn Update(self: *Self) !void {
                 .child_alignment = .{ .x = .center },
             },
         })({
-            if (stats.current.stunned) {
+            if (stats.isStunned()) {
                 lm.ui.text("Stunned", .{
                     .letter_spacing = 2,
                 });
-            } else if (stats.current.rooted) {
+            } else if (stats.isRooted()) {
                 lm.ui.text("Rooted", .{
                     .letter_spacing = 2,
                 });
-            } else if (stats.current.slow_movement_speed_decrease != 0) {
+            } else if (stats.isSlowed()) {
                 lm.ui.text("Slowed", .{
                     .letter_spacing = 2,
                 });

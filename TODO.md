@@ -2,15 +2,6 @@
 
 ## Backlog
 
-### Spell visuals and particle effects (sleep puddles, goliath scale, haste trail, heal sparkles)
-
-  - tags: [spells, visuals]
-
-
-### Timed buff lifecycle in Stats (temporary haste and goliath expiration)
-
-  - tags: [stats, spells]
-
 ### Status visual effect sprite overlays (sleep, stun, heal particles)
 
   - tags: [visuals, status]
@@ -66,6 +57,10 @@
 ## Work in Progress
 
 ## Done
+
+### Timed buff lifecycle in Stats (temporary haste and goliath expiration)
+
+  - tags: [stats, spells]
 
 ### Spell mana depletion checks and cooldown indicators on HUD
 

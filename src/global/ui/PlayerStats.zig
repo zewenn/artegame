@@ -60,7 +60,6 @@ fn spellShower(
                 .padding = .all(lm.tou16(@max(2, @round(2 * HUD.scale)))),
             },
         })({
-            // Top row: Keybind badge in top-left
             ui.new(.{
                 .id = .IDI("spell-top-row-", slot_index),
                 .layout = .{
@@ -89,7 +88,6 @@ fn spellShower(
                 });
             });
 
-            // Middle space
             ui.new(.{
                 .id = .IDI("spell-mid-spacer-", slot_index),
                 .layout = .{
@@ -97,7 +95,6 @@ fn spellShower(
                 },
             })({});
 
-            // Bottom row: Cooldown on right corner (if on cooldown)
             if (is_on_cooldown) {
                 ui.new(.{
                     .id = .IDI("spell-bottom-row-", slot_index),
@@ -107,7 +104,6 @@ fn spellShower(
                         .child_alignment = .{ .y = .center },
                     },
                 })({
-                    // Spacer pushing cooldown to right corner
                     ui.new(.{
                         .id = .IDI("spell-bottom-spacer-", slot_index),
                         .layout = .{
@@ -115,7 +111,6 @@ fn spellShower(
                         },
                     })({});
 
-                    // Right corner: Cooldown indicator
                     ui.new(.{
                         .id = .IDI("spell-cooldown-badge-", slot_index),
                         .background_color = ui.color(16, 18, 24, 230),

@@ -12,10 +12,29 @@ pub const heal: Spell = Spell{
     .slot = .left,
     .icon = "ui/heal_icon.png",
     .cast_fn = struct {
+        fn onEnable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "heal_regen" })) |e| {
+                s.current.regeneration_amount += e.value;
+            }
+        }
+
+        fn onDisable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "heal_regen" })) |e| {
+                s.current.regeneration_amount = @max(0, s.current.regeneration_amount - e.value);
+            }
+        }
+
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
-            stats.current.regeneration_amount = 20 * lm.tof32(level);
-            stats.current.timer_regen_remaining = 2;
+            const regen_val = 20 * lm.tof32(level);
+            stats.addEffect(.{
+                .id = "heal_regen",
+                .effect_type = .regen,
+                .duration = 2.0,
+                .value = regen_val,
+                .on_enable = onEnable,
+                .on_disable = onDisable,
+            });
         }
     }.callback,
 };
@@ -58,10 +77,35 @@ pub const goliath: Spell = Spell{
     .slot = .left,
     .icon = "ui/goliath_icon.png",
     .cast_fn = struct {
+        fn onEnable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "goliath" })) |e| {
+                s.max.health += e.value;
+                s.current.health += e.value;
+                s.current.physical_damage += e.secondary_value;
+            }
+        }
+
+        fn onDisable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "goliath" })) |e| {
+                s.max.health = @max(1, s.max.health - e.value);
+                s.current.health = @min(s.current.health, s.max.health);
+                s.current.physical_damage = @max(0, s.current.physical_damage - e.secondary_value);
+            }
+        }
+
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
-            const heal_amount = 25 * lm.tof32(level);
-            stats.current.health = @min(stats.max.health, stats.current.health + heal_amount);
+            const hp_boost = 50 * lm.tof32(level);
+            const dmg_boost = 15 * lm.tof32(level);
+            stats.addEffect(.{
+                .id = "goliath",
+                .effect_type = .goliath,
+                .duration = 6.0,
+                .value = hp_boost,
+                .secondary_value = dmg_boost,
+                .on_enable = onEnable,
+                .on_disable = onDisable,
+            });
         }
     }.callback,
 };
@@ -72,10 +116,33 @@ pub const haste: Spell = Spell{
     .slot = .right,
     .icon = "ui/haste_icon.png",
     .cast_fn = struct {
+        fn onEnable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "haste" })) |e| {
+                s.current.movement_speed += e.value;
+                s.current.attack_speed += e.secondary_value;
+            }
+        }
+
+        fn onDisable(s: *Stats) void {
+            if (s.getEffect(.{ .id = "haste" })) |e| {
+                s.current.movement_speed = @max(10, s.current.movement_speed - e.value);
+                s.current.attack_speed = @max(0.1, s.current.attack_speed - e.secondary_value);
+            }
+        }
+
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
-            stats.applySlow(-20 * lm.tof32(level), 5);
-            stats.current.attack_speed += 0.2 * lm.tof32(level);
+            const speed_boost = 60 * lm.tof32(level);
+            const atk_speed_boost = 0.3 * lm.tof32(level);
+            stats.addEffect(.{
+                .id = "haste",
+                .effect_type = .haste,
+                .duration = 5.0,
+                .value = speed_boost,
+                .secondary_value = atk_speed_boost,
+                .on_enable = onEnable,
+                .on_disable = onDisable,
+            });
         }
     }.callback,
 };

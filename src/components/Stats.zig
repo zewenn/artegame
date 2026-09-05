@@ -1,6 +1,11 @@
 const std = @import("std");
 const lm = @import("loom");
 
+pub const Effect = @import("effects/Effect.zig");
+pub const EffectType = Effect.EffectType;
+pub const EffectCallback = Effect.EffectCallback;
+pub const EffectTarget = Effect.EffectTarget;
+
 pub const StatValues = struct {
     health: f32 = 100,
     stamina: f32 = 100,
@@ -22,21 +27,12 @@ pub const StatValues = struct {
 
     aggro_range: f32 = 300,
 
-    slow_movement_speed_decrease: f32 = 0,
-    rooted: bool = false,
-    stunned: bool = false,
-
     regeneration_amount: f32 = 0,
-
-    timer_slow_remaining: f32 = 0,
-    timer_root_remaining: f32 = 0,
-    timer_stun_remaining: f32 = 0,
-    timer_regen_remaining: f32 = 0,
 
     experience: usize = 0,
 
     pub fn calculateMovementSpeed(self: StatValues) f32 {
-        return @max(10, self.movement_speed - self.slow_movement_speed_decrease);
+        return @max(10, self.movement_speed);
     }
 };
 
@@ -59,34 +55,210 @@ max: StatValues = .{},
 base: StatValues = .{},
 current: StatValues = .{},
 
+effects: ?lm.List(Effect) = null,
+
+pub fn Awake(self: *Self) void {
+    if (self.effects == null) {
+        self.effects = lm.List(Effect).init(lm.allocators.scene());
+    }
+}
+
+pub fn Update(self: *Self) void {
+    if (lm.time.paused()) return;
+    self.tickEffects(lm.time.deltaTime());
+
+    if (self.current.regeneration_amount > 0) {
+        self.current.health = @min(self.max.health, self.current.health + self.current.regeneration_amount * lm.time.deltaTime());
+    }
+}
+
+pub fn End(self: *Self) void {
+    if (self.effects) |*effs| {
+        effs.deinit();
+        self.effects = null;
+    }
+}
+
 pub fn init(team: Teams, stats: StatValues) Self {
     return Self{
         .team = team,
         .base = stats,
         .current = stats,
         .max = stats,
+        .effects = lm.List(Effect).init(lm.allocators.scene()),
     };
 }
 
-pub fn Update(self: *Self) void {
-    if (lm.time.paused()) return;
+pub fn deinit(self: *Self) void {
+    self.End();
+}
 
-    self.current.health = @min(self.max.health, self.current.health + self.current.regeneration_amount * lm.time.deltaTime());
+pub fn getEffectsList(self: *Self) *lm.List(Effect) {
+    if (self.effects == null) {
+        self.effects = lm.List(Effect).init(lm.allocators.scene());
+    }
+    return &self.effects.?;
+}
 
-    self.current.timer_slow_remaining -= lm.time.deltaTime();
-    self.current.timer_root_remaining -= lm.time.deltaTime();
-    self.current.timer_stun_remaining -= lm.time.deltaTime();
-    self.current.timer_regen_remaining -= lm.time.deltaTime();
+pub fn hasEffect(self: Self, target: EffectTarget) bool {
+    const effects = self.effects orelse return false;
+    for (effects.items()) |eff| {
+        const matches = switch (target) {
+            .id => |id| std.mem.eql(u8, eff.id, id),
+            .effect_type => |et| eff.effect_type == et,
+        };
+        if (matches) return true;
+    }
+    return false;
+}
 
-    if (self.current.timer_slow_remaining < 0) self.current.timer_slow_remaining = 0;
-    if (self.current.timer_root_remaining < 0) self.current.timer_root_remaining = 0;
-    if (self.current.timer_stun_remaining < 0) self.current.timer_stun_remaining = 0;
-    if (self.current.timer_regen_remaining < 0) self.current.timer_regen_remaining = 0;
+pub fn getEffect(self: *Self, target: EffectTarget) ?*Effect {
+    const effects = &(self.effects orelse return null);
+    for (effects.items()) |*eff| {
+        const matches = switch (target) {
+            .id => |id| std.mem.eql(u8, eff.id, id),
+            .effect_type => |et| eff.effect_type == et,
+        };
+        if (matches) return eff;
+    }
+    return null;
+}
 
-    if (self.current.timer_slow_remaining == 0) self.current.slow_movement_speed_decrease = 0;
-    if (self.current.timer_root_remaining == 0) self.current.rooted = false;
-    if (self.current.timer_stun_remaining == 0) self.current.stunned = false;
-    if (self.current.timer_regen_remaining == 0) self.current.regeneration_amount = 0;
+pub fn isStunned(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .stun });
+}
+
+pub fn isRooted(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .root });
+}
+
+pub fn isSlowed(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .slow });
+}
+
+pub fn canMove(self: Self) bool {
+    return !self.isStunned() and !self.isRooted();
+}
+
+pub fn addEffect(self: *Self, effect: Effect) void {
+    var eff = effect;
+    if (eff.time_remaining <= 0) {
+        eff.time_remaining = eff.duration;
+    }
+
+    const effects = self.getEffectsList();
+
+    for (effects.items()) |*existing| {
+        if (std.mem.eql(u8, existing.id, eff.id)) {
+            if (existing.on_disable) |on_disable| {
+                on_disable(self);
+            }
+            existing.* = eff;
+            if (existing.on_enable) |on_enable| {
+                on_enable(self);
+            }
+            return;
+        }
+    }
+
+    effects.append(eff) catch |err| {
+        std.log.err("Failed to append effect '{s}': {s}", .{ eff.id, @errorName(err) });
+        return;
+    };
+
+    const new_idx = effects.len() - 1;
+    if (effects.items()[new_idx].on_enable) |on_enable| {
+        on_enable(self);
+    }
+}
+
+pub fn removeEffectAtIndex(self: *Self, idx: usize) void {
+    const effects = &(self.effects orelse return);
+    if (idx >= effects.len()) return;
+
+    if (effects.items()[idx].on_disable) |on_disable| {
+        on_disable(self);
+    }
+
+    _ = effects.orderedRemove(idx);
+}
+
+pub fn removeEffect(self: *Self, target: EffectTarget) void {
+    const effects = &(self.effects orelse return);
+    var i: usize = 0;
+    while (i < effects.len()) {
+        const matches = switch (target) {
+            .id => |id| std.mem.eql(u8, effects.items()[i].id, id),
+            .effect_type => |et| effects.items()[i].effect_type == et,
+        };
+        if (matches) {
+            self.removeEffectAtIndex(i);
+        } else {
+            i += 1;
+        }
+    }
+}
+
+pub fn clearEffects(self: *Self) void {
+    const effects = &(self.effects orelse return);
+    while (effects.len() > 0) {
+        self.removeEffectAtIndex(effects.len() - 1);
+    }
+}
+
+pub fn applySlow(self: *Self, strength: f32, duration: f32) void {
+    self.addEffect(.{
+        .id = "slow",
+        .effect_type = .slow,
+        .duration = duration,
+        .value = strength,
+        .on_enable = struct {
+            pub fn onEnable(stats: *Self) void {
+                if (stats.getEffect(.{ .id = "slow" })) |e| {
+                    stats.current.movement_speed = @max(10, stats.current.movement_speed - e.value);
+                }
+            }
+        }.onEnable,
+        .on_disable = struct {
+            pub fn onDisable(stats: *Self) void {
+                if (stats.getEffect(.{ .id = "slow" })) |e| {
+                    stats.current.movement_speed += e.value;
+                }
+            }
+        }.onDisable,
+    });
+}
+
+pub fn applyRoot(self: *Self, duration: f32) void {
+    self.addEffect(.{
+        .id = "root",
+        .effect_type = .root,
+        .duration = duration,
+    });
+}
+
+pub fn applyStun(self: *Self, duration: f32) void {
+    self.addEffect(.{
+        .id = "stun",
+        .effect_type = .stun,
+        .duration = duration,
+    });
+}
+
+pub fn tickEffects(self: *Self, dt: f32) void {
+    const effects = &(self.effects orelse return);
+    var i: usize = 0;
+    while (i < effects.len()) {
+        var effect = &effects.items()[i];
+        if (effect.duration > 0) {
+            effect.time_remaining -= dt;
+            if (effect.time_remaining <= 0) {
+                self.removeEffectAtIndex(i);
+                continue;
+            }
+        }
+        i += 1;
+    }
 }
 
 pub fn calculateDamage(self: Self, defender: Self, damage_type: DamageType, is_crit: bool) f32 {
@@ -100,22 +272,118 @@ pub fn defenseToDamageReductionPercent(defense: f32) f32 {
     return 0.3 * std.math.log10(defense + 1);
 }
 
-pub fn applySlow(self: *Self, strength: f32, duration: f32) void {
-    if (self.current.slow_movement_speed_decrease < strength)
-        self.current.slow_movement_speed_decrease = strength;
-    self.current.timer_slow_remaining = duration;
+test "Stats effect lifecycle with on_enable and on_disable callbacks using lm.List" {
+    var stats = Self.init(.player, .{
+        .movement_speed = 300,
+        .physical_damage = 20,
+    });
+    defer stats.deinit();
+
+    const CustomBuff = struct {
+        pub fn onEnable(s: *Self) void {
+            s.current.physical_damage += 15;
+        }
+        pub fn onDisable(s: *Self) void {
+            s.current.physical_damage -= 15;
+        }
+    };
+
+    stats.addEffect(.{
+        .id = "might",
+        .effect_type = .custom,
+        .duration = 2.0,
+        .on_enable = CustomBuff.onEnable,
+        .on_disable = CustomBuff.onDisable,
+    });
+
+    try std.testing.expect(stats.hasEffect(.{ .id = "might" }));
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .custom }));
+    try std.testing.expectEqual(@as(f32, 35), stats.current.physical_damage);
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(stats.hasEffect(.{ .id = "might" }));
+    try std.testing.expectEqual(@as(f32, 35), stats.current.physical_damage);
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(!stats.hasEffect(.{ .id = "might" }));
+    try std.testing.expectEqual(@as(f32, 20), stats.current.physical_damage);
 }
 
-pub fn applyRoot(self: *Self, duration: f32) void {
-    self.current.timer_root_remaining = duration;
-    self.current.rooted = true;
+test "Stats slow directly modifies movement_speed and restores on disable" {
+    var stats = Self.init(.player, .{
+        .movement_speed = 300,
+    });
+    defer stats.deinit();
+
+    stats.applySlow(50, 3.0);
+    try std.testing.expect(stats.isSlowed());
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .slow }));
+    try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
+
+    stats.tickEffects(3.0);
+    try std.testing.expect(!stats.isSlowed());
+    try std.testing.expectEqual(@as(f32, 300), stats.current.movement_speed);
 }
 
-pub fn applyStun(self: *Self, duration: f32) void {
-    self.current.timer_stun_remaining = duration;
-    self.current.stunned = true;
+test "Stats crowd control flags and canMove query" {
+    var stats = Self.init(.player, .{});
+    defer stats.deinit();
+
+    try std.testing.expect(stats.canMove());
+    try std.testing.expect(!stats.isStunned());
+    try std.testing.expect(!stats.isRooted());
+
+    stats.applyStun(1.5);
+    try std.testing.expect(stats.isStunned());
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .stun }));
+    try std.testing.expect(!stats.canMove());
+
+    stats.applyRoot(2.5);
+    try std.testing.expect(stats.isRooted());
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .root }));
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.5);
+    try std.testing.expect(!stats.isStunned());
+    try std.testing.expect(stats.isRooted());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(!stats.isRooted());
+    try std.testing.expect(stats.canMove());
 }
 
-pub fn canMove(self: *Self) bool {
-    return !(self.current.rooted or self.current.stunned);
+test "Stats re-applying effect refreshes duration without double-stacking stats" {
+    var stats = Self.init(.player, .{
+        .movement_speed = 300,
+    });
+    defer stats.deinit();
+
+    stats.applySlow(50, 3.0);
+    try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
+
+    stats.applySlow(50, 4.0);
+    try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
+    try std.testing.expectEqual(@as(usize, 1), stats.effects.?.len());
+
+    stats.tickEffects(4.0);
+    try std.testing.expectEqual(@as(f32, 300), stats.current.movement_speed);
+    try std.testing.expect(!stats.isSlowed());
+}
+
+test "Stats removeEffect with target union (by ID and by Type)" {
+    var stats = Self.init(.player, .{});
+    defer stats.deinit();
+
+    stats.applyStun(5.0);
+    stats.applyRoot(5.0);
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .stun }));
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .root }));
+
+    stats.removeEffect(.{ .effect_type = .stun });
+    try std.testing.expect(!stats.hasEffect(.{ .effect_type = .stun }));
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .root }));
+
+    stats.removeEffect(.{ .id = "root" });
+    try std.testing.expect(!stats.hasEffect(.{ .id = "root" }));
 }

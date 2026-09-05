@@ -46,4 +46,6 @@ pub fn main() !void {
 test {
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Spell.zig");
+    _ = @import("components/effects/Effect.zig");
+    _ = @import("components/Stats.zig");
 }

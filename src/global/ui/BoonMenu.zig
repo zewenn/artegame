@@ -37,7 +37,11 @@ fn selectBoon(boon: Boon, stats_opt: ?*Stats, attack_opt: ?*Attack) void {
         stats.current.experience -= cost;
         boon.applyTo(stats, attack_opt);
         BoonPool.consumeBoon(boon);
-        hide();
+
+        if (attack_opt) |attack|
+            boons = BoonPool.getCurrentBoons(stats.*, attack.*)
+        else
+            hide();
     }
 }
 
@@ -316,7 +320,6 @@ pub fn draw(
     const skip_index = num_cards;
     if (selected_index > skip_index) selected_index = 0;
 
-    // Handle Gamepad 0 inputs
     if (lm.gamepad.isAvailable(0)) {
         if (lm.gamepad.getButtonDown(0, .right_face_right)) {
             hide();

@@ -106,7 +106,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     if ((lm.mouse.getButtonDown(.left) or lm.gamepad.getButtonDown(0, .right_trigger_2)) and
         self.cooldown == 0 and
-        !stats.current.stunned)
+        !stats.isStunned())
     attack_block: {
         self.cooldown = 1 / stats.current.attack_speed;
 
@@ -131,7 +131,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         );
     } else if ((lm.mouse.getButtonDown(.right) or lm.gamepad.getButtonDown(0, .left_trigger_2)) and
         self.cooldown == 0 and
-        !stats.current.stunned)
+        !stats.isStunned())
     {
         try hands.play(weapon.*);
 

@@ -185,9 +185,6 @@ pub fn Update(self: *Self) !void {
         anim.length = 1.25 * (1 + 4 / stats.current.attack_speed);
     }
 
-    // right_hand_transform.position = transform.position.add(.init(32, 32, 10));
-    // left_hand_transform.position = transform.position.subtract(.init(32, -32, 10));
-
     const mouse_position = camera.screenToWorldPos(lm.mouse.getPosition());
 
     const angle_vec = get_angle_vetor: {

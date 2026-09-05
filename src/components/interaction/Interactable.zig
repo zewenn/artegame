@@ -68,7 +68,6 @@ pub fn trigger(self: *Self, player: *lm.Entity) void {
     }
 }
 
-/// Finds the single closest active interactable within range of the given player position.
 pub fn getClosest(player_position: lm.Vector2) ?*Self {
     var closest: ?*Self = null;
     var min_dist: f32 = std.math.floatMax(f32);

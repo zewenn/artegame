@@ -58,23 +58,18 @@ test "Spell canCast, cooldown update, reduceCooldown, and cast" {
         }.cb,
     };
 
-    // Ready to cast
     try std.testing.expect(dummy_spell.canCast());
 
-    // Trigger cooldown
     dummy_spell.cooldown_remaining = 5.0;
     try std.testing.expect(!dummy_spell.canCast());
 
-    // Update cooldown with delta time
     dummy_spell.update(1.0);
     try std.testing.expectApproxEqAbs(@as(f32, 4.0), dummy_spell.cooldown_remaining, 0.001);
     try std.testing.expect(!dummy_spell.canCast());
 
-    // Reduce cooldown on enemy kill
     dummy_spell.reduceCooldown(1.5);
     try std.testing.expectApproxEqAbs(@as(f32, 2.5), dummy_spell.cooldown_remaining, 0.001);
 
-    // Over-reduce clamps at 0
     dummy_spell.reduceCooldown(5.0);
     try std.testing.expectEqual(@as(f32, 0), dummy_spell.cooldown_remaining);
     try std.testing.expect(dummy_spell.canCast());

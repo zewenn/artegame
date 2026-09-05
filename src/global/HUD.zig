@@ -15,7 +15,6 @@ pub const InteractionPrompt = ui.InteractionPrompt;
 
 const Self = @This();
 
-// Public global scaling and sizing variables calculated once per frame in Update
 pub var window_size: lm.Vector2 = .init(1280, 720);
 pub var scale: f32 = 1.0;
 pub var hud_height: f32 = 64.0;
@@ -58,7 +57,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player_attack = player.getComponent(Attack);
     }
 
-    // Calculate sizing and scaling metrics once per frame
     window_size = lm.window.size.get();
     scale = @max(1.0, @round(@min(window_size.x, window_size.y) / 540.0));
     hud_height = scale * 32.0;
@@ -82,7 +80,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         ObjectiveUI.draw(tracking);
     }
 
-    // Draw interaction prompt for focused interactable
     if (!BoonMenu.isShowing()) {
         if (Interactable.getFocused()) |focused| {
             const camera = scene.getCameraById("main");
@@ -90,7 +87,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    // Draw boon menu if showing
     if (BoonMenu.boons) |boon_array| {
         BoonMenu.draw(boon_array, self.player_stats, self.player_attack, self.alloc);
     }

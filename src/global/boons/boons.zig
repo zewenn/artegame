@@ -9,7 +9,6 @@ const Boon = @import("Boon.zig");
 
 pub const BoonPool = @import("BoonPool.zig");
 
-// Helper Condition Functions
 fn hasSpellSlot0(_: Stats, attack: Attack) bool {
     return attack.equipped_spells[0] != null;
 }
@@ -113,9 +112,7 @@ fn canOfferPreWorkout2(_: Stats, attack: Attack) bool {
     return true;
 }
 
-// All 50 Boon Definitions (Reclassified across 6 Rarities: Normal, Rare, Epic, Legendary, Mythic, Cosmic)
 pub const all_boons: []const Boon = &.{
-    // --- Spell Boons (21) ---
     .{
         .name = "Ashwaganda",
         .description = "Puts surrounding enemies to sleep after 2s.\nReplaces: Right Spell",
@@ -454,7 +451,6 @@ pub const all_boons: []const Boon = &.{
         }.cb,
     },
 
-    // --- Stat Boons (11) ---
     .{
         .name = "Underpass Gyros",
         .description = "Increases movement speed.\n+20 movement speed",
@@ -593,7 +589,6 @@ pub const all_boons: []const Boon = &.{
         }.cb,
     },
 
-    // --- Weapon Boons (18) ---
     .{
         .name = "New PR (Weight Plate)",
         .description = "+10% light attack damage",

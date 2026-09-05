@@ -9,7 +9,6 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
     const camera = camera_opt orelse return;
     const transform = interactable.transform orelse return;
 
-    // Project the prompt's world position (offset above the entity) to screen coordinates
     const world_pos = lm.vec3ToVec2(transform.position).add(interactable.prompt_offset);
     const screen_pos = camera.worldToScreenPos(world_pos);
 
@@ -46,7 +45,6 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
             ),
         },
     })({
-        // Input key/button badge
         ui.new(.{
             .id = .ID("interaction-prompt-key-badge"),
             .background_color = if (is_gamepad) ui.color(35, 145, 75, 250) else ui.color(55, 115, 230, 250),
@@ -66,7 +64,6 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
             });
         });
 
-        // Action description text
         ui.new(.{
             .id = .ID("interaction-prompt-action-text"),
         })({
