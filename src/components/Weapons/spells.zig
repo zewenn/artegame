@@ -27,6 +27,16 @@ pub const heal: Spell = Spell{
                 .duration = 2.0,
                 .value = regen_val,
                 .on_tick = onTick,
+                .visual = .{
+                    .frames = &.{
+                        "effects/heal_effect_0.png",
+                        "effects/heal_effect_1.png",
+                    },
+                    .frame_duration = 0.1,
+                    .offset = .init(0, 0),
+                    .scale = .init(64, 64),
+                    .icon = "ui/heal_icon.png",
+                },
             });
         }
     }.callback,
@@ -98,6 +108,9 @@ pub const goliath: Spell = Spell{
                 .secondary_value = dmg_boost,
                 .on_enable = onEnable,
                 .on_disable = onDisable,
+                .visual = .{
+                    .icon = "ui/goliath_icon.png",
+                },
             });
         }
     }.callback,
@@ -135,6 +148,9 @@ pub const haste: Spell = Spell{
                 .secondary_value = atk_speed_boost,
                 .on_enable = onEnable,
                 .on_disable = onDisable,
+                .visual = .{
+                    .icon = "ui/haste_icon.png",
+                },
             });
         }
     }.callback,

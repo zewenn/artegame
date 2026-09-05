@@ -7,7 +7,7 @@ pub const fists: Weapon = .{
             .damage = 0.85,
             .size = .init(32, 64),
             .knockback_duration = 0.2,
-            .knockback_strength = 5,
+            .knockback_strength = 0.5,
         },
     },
     .heavy_attack = .{
@@ -15,12 +15,16 @@ pub const fists: Weapon = .{
             .damage = 1.2,
             .is_crit = true,
             .size = .init(96, 64),
+
+            .onhit_effect = .stun,
+            .onhit_duration = 1,
+            .onhit_strength = 2,
         },
     },
     .dash_attack = .{
         .shooting_degrees = &.{ -2, 0, 2 },
         .projectile_options = .{
-            .damage = 2,
+            .damage = 20,
             .speed = 1200,
             .size = .init(128, 64),
             .passtrough = true,

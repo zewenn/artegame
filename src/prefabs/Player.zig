@@ -2,6 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
+const StatusOverlays = @import("../components/effects/StatusOverlays.zig");
 const Dashing = @import("../components/Dashing.zig");
 const Hands = @import("../components/Weapons/Hands.zig");
 
@@ -81,6 +82,7 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
                 .experience = 250_000,
             },
         },
+        StatusOverlays{},
         Dashing{},
         Hands{},
 

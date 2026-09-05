@@ -246,6 +246,7 @@ pub fn tickEffects(self: *Self, dt: f32) void {
     for (1..len + 1) |j| {
         const index = len - j;
         const effect = &(effects.items()[index]);
+        effect.anim_time += dt;
 
         if (effect.on_tick) |tick|
             @call(.auto, tick, .{self});

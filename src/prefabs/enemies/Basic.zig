@@ -2,6 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../../components/Stats.zig");
+const StatusOverlays = @import("../../components/effects/StatusOverlays.zig");
 const Dashing = @import("../../components/Dashing.zig");
 const Enemy = @import("../../components/enemy/export.zig");
 
@@ -23,6 +24,7 @@ pub fn BasicEnemy(position: lm.Vector2) !*lm.Entity {
             .movement_speed = 125,
             .aggro_range = 900,
         }),
+        StatusOverlays{},
         Dashing{},
 
         Enemy.Movement{},

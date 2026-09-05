@@ -4,6 +4,7 @@ const lm = @import("loom");
 const ui = lm.ui;
 
 const Stats = @import("../Stats.zig");
+const EffectVisualRegistry = @import("../effects/EffectVisual.zig").EffectVisualRegistry;
 const Self = @This();
 
 var enemy_overhead_ui_count: u32 = 0;
@@ -28,7 +29,7 @@ pub fn Update(self: *Self) !void {
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
 
     const screen_pos = camera.worldToScreenPos(lm.vec3ToVec2(transform.position))
-        .subtract(.init(32, 64));
+        .subtract(.init(0, 48));
 
     enemy_overhead_ui_count +%= 1;
 
@@ -37,31 +38,39 @@ pub fn Update(self: *Self) !void {
         .floating = .{
             .attach_to = .to_root,
             .offset = .{ .x = screen_pos.x, .y = screen_pos.y },
+            .attach_points = .{
+                .element = .center_bottom,
+                .parent = .left_top,
+            },
         },
         .layout = .{
             .sizing = .{ .h = .fit, .w = .fixed(64) },
             .direction = .top_to_bottom,
+            .child_gap = 8,
         },
     })({
         ui.new(.{
-            .id = .IDI("enemy-status-effect", enemy_overhead_ui_count),
+            .id = .IDI("enemy-status-badges", enemy_overhead_ui_count),
             .layout = .{
-                .sizing = .{ .h = .fit, .w = .percent(1) },
+                .sizing = .{ .h = .fit, .w = .fit },
+                .direction = .left_to_right,
                 .child_alignment = .{ .x = .center },
+                .child_gap = 2,
             },
-        })({
-            if (stats.isStunned()) {
-                lm.ui.text("Stunned", .{
-                    .letter_spacing = 2,
-                });
-            } else if (stats.isRooted()) {
-                lm.ui.text("Rooted", .{
-                    .letter_spacing = 2,
-                });
-            } else if (stats.isSlowed()) {
-                lm.ui.text("Slowed", .{
-                    .letter_spacing = 2,
-                });
+        })(badges: {
+            const effects = stats.effects orelse break :badges;
+
+            for (effects.items(), 0..) |effect, badge_index| {
+                const visual = EffectVisualRegistry.resolve(effect) orelse continue;
+                const icon_path = visual.icon orelse continue;
+
+                ui.new(.{
+                    .id = .IDI("status-badge-", (enemy_overhead_ui_count * 16) + @as(u32, @intCast(badge_index))),
+                    .image = ui.image(icon_path, .init(14, 14)) catch .{ .image_data = null },
+                    .layout = .{
+                        .sizing = .{ .w = .fixed(14), .h = .fixed(14) },
+                    },
+                })({});
             }
         });
 
@@ -76,7 +85,10 @@ pub fn Update(self: *Self) !void {
                 .id = .IDI("enemy-healthbar-inner", enemy_overhead_ui_count),
                 .background_color = ui.color(255, 20, 20, 255),
                 .layout = .{
-                    .sizing = .{ .h = .percent(1), .w = .percent(stats.current.health / stats.max.health) },
+                    .sizing = .{
+                        .h = .percent(1),
+                        .w = .percent(stats.current.health / stats.max.health),
+                    },
                 },
             })({});
         });

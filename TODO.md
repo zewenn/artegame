@@ -2,61 +2,108 @@
 
 ## Backlog
 
-### Status visual effect sprite overlays (sleep, stun, heal particles)
+### [2#ENE] Universal enemy system with attack ranges, conditional projectiles, and spells
 
-  - tags: [visuals, status]
+  - tags: [enemies, combat, ai]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [ ] Design universal enemy attack configuration with range thresholds, conditional rules, and fallback attack
+      - [ ] Implement conditional projectile firing supporting multiple projectile profiles and trigger criteria
+      - [ ] Implement enemy spell-casting support with conditions (e.g. self-buffs, crowd control)
+      - [ ] Build variant prefabs (melee, ranged, elite/champion with distinctive tints) using universal system
+      - [ ] Update Enemy AI pursuit, strafing, and attack execution to evaluate conditional attacks dynamically
 
-### Ranged enemy prefab with strafing and projectile attacks
-
-  - tags: [enemies, ai]
-
-### Dynamic round spawner with scaling enemy waves
+### [3#SPW] Dynamic round spawner with scaling enemy waves
 
   - tags: [spawner, gameplay]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [ ] Design wave budget and enemy cost scaling formula based on round number
+      - [ ] Implement spawn queue system with randomized spawn positions around arena bounds
+      - [ ] Connect spawner lifecycle with RoundManager combat and replenish phases
+      - [ ] Add wave progress tracking to HUD/ObjectiveUI
 
-### Elite and champion enemy variants with distinctive tints
-
-  - tags: [enemies, visuals]
-
-### Audio engine integration with Loom audio backend
+### [4#AUD] Audio engine integration with Loom audio backend
 
   - tags: [audio, engine]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [ ] Audit and initialize Loom audio device in main game lifecycle
+      - [ ] Create AudioManager component or global service with volume control buses (Master, SFX, Music)
+      - [ ] Implement asset preloading and playback cache for sound effects
+      - [ ] Add spatial audio or falloff calculation helper for world events
 
-### Dynamic background music for combat and replenish phases
+### [5#AUD] Dynamic background music for combat and replenish phases
 
   - tags: [audio, music]
+  - priority: medium
+  - workload: Normal
 
-### Sound effects for combat, movement, and pickups
+### [6#AUD] Sound effects for combat, movement, and pickups
 
   - tags: [audio, sfx]
+  - priority: medium
+  - workload: Easy
 
-### Main menu scene (Play, Options, Quit)
-
-  - tags: [ui, menu]
-
-### In-game pause menu (Resume, Restart, Main Menu)
+### [7#UIM] Main menu scene (Play, Options, Quit)
 
   - tags: [ui, menu]
+  - priority: medium
+  - workload: Normal
 
-### Defeat and victory screens with run summary
+### [8#UIM] In-game pause menu (Resume, Restart, Main Menu)
+
+  - tags: [ui, menu]
+  - priority: high
+  - workload: Normal
+
+### [9#UIS] Defeat and victory screens with run summary
 
   - tags: [ui, summary]
+  - priority: medium
+  - workload: Normal
 
-### Save system and session persistence
+### [10#SYS] Save system and session persistence
 
   - tags: [system, save]
+  - priority: low
+  - workload: Hard
+  - steps:
+      - [ ] Define serialization schema for settings, high scores, and run statistics
+      - [ ] Implement file I/O reader and writer with error recovery and default fallbacks
+      - [ ] Hook settings persistence (audio volume, controls) into game startup
+      - [ ] Add run summary recording to high score / stats history
 
-### Controller aiming polish and configurable stick deadzones
+### [11#INP] Controller aiming polish and configurable stick deadzones
 
   - tags: [input, controller]
+  - priority: medium
+  - workload: Easy
 
-### Dynamic button prompt overlays (keyboard vs controller)
+### [12#INP] Dynamic button prompt overlays (keyboard vs controller)
 
   - tags: [input, ui]
+  - priority: low
+  - workload: Easy
 
 ## Work in Progress
 
 ## Done
+
+### [1#VIS] Status visual effect sprite overlays (sleep, stun, heal particles)
+
+  - tags: [visuals, status]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create or configure sprite frames/assets for status effect overlays (sleep Zzz, stun stars, heal sparkles, root vines)
+      - [x] Implement animated visual overlay component attached to entity transforms
+      - [x] Connect overlay rendering to Stats active effect queries (stun, root, slow, regen)
+      - [x] Replace text status labels in enemy OverheadUI with animated icon overlays
+      - [x] Test overlay lifecycle and positioning on both Player and Enemy entities
 
 ### Effect on_tick callback for periodic spells like regen
 
