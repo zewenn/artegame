@@ -6,6 +6,8 @@ const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const HUD = @import("../HUD.zig");
 
+const Spell = @import("../../components/Weapons/Spell.zig");
+
 var index: u32 = 0;
 
 fn progressBar(current: f32, max: f32, bg_color: lm.Color, color: lm.Color, height: f32) void {
@@ -28,20 +30,133 @@ fn progressBar(current: f32, max: f32, bg_color: lm.Color, color: lm.Color, heig
     });
 }
 
-fn spellShower(img: ?[]const u8) void {
-    ui.new(.{
-        .id = .IDI("spell-", index),
-        .image = ui.image(
-            if (img) |spell| spell else "backgrounds/neunyx32x32.png",
-            .init(HUD.hud_height, HUD.hud_height),
-        ) catch .{ .image_data = null },
-        .layout = .{
-            .sizing = .{
-                .h = .fixed(HUD.hud_height),
-                .w = .fixed(HUD.hud_height),
+fn spellShower(
+    maybe_spell: ?Spell,
+    key_label: []const u8,
+    slot_index: u32,
+    alloc: ?std.mem.Allocator,
+) void {
+    const slot_size = HUD.hud_height;
+    const badge_pad_y = lm.tou16(@max(1, @round(1 * HUD.scale)));
+    const badge_pad_x = lm.tou16(@max(2, @round(3 * HUD.scale)));
+    const font_sz = lm.tou16(@max(9, @round(10 * HUD.scale)));
+    const key_font_sz = lm.tou16(@max(8, @round(9 * HUD.scale)));
+
+    if (maybe_spell) |spell| {
+        const is_on_cooldown = spell.cooldown_remaining > 0;
+
+        ui.new(.{
+            .id = .IDI("spell-slot-", slot_index),
+            .image = ui.image(
+                spell.icon,
+                .init(slot_size, slot_size),
+            ) catch .{ .image_data = null },
+            .layout = .{
+                .sizing = .{
+                    .h = .fixed(slot_size),
+                    .w = .fixed(slot_size),
+                },
+                .direction = .top_to_bottom,
+                .padding = .all(lm.tou16(@max(2, @round(2 * HUD.scale)))),
             },
-        },
-    })({});
+        })({
+            // Top row: Keybind badge in top-left
+            ui.new(.{
+                .id = .IDI("spell-top-row-", slot_index),
+                .layout = .{
+                    .direction = .left_to_right,
+                    .sizing = .{ .w = .percent(1) },
+                },
+            })({
+                ui.new(.{
+                    .id = .IDI("spell-key-badge-", slot_index),
+                    .background_color = ui.color(15, 20, 28, 210),
+                    .corner_radius = .all(3 * HUD.scale),
+                    .border = .{
+                        .color = ui.color(70, 80, 100, 180),
+                        .width = .outside(1),
+                    },
+                    .layout = .{
+                        .padding = .axes(badge_pad_y, badge_pad_x),
+                        .child_alignment = .{ .x = .center, .y = .center },
+                    },
+                })({
+                    ui.text(key_label, .{
+                        .color = ui.color(210, 220, 235, 240),
+                        .font_size = key_font_sz,
+                        .letter_spacing = 1,
+                    });
+                });
+            });
+
+            // Middle space
+            ui.new(.{
+                .id = .IDI("spell-mid-spacer-", slot_index),
+                .layout = .{
+                    .sizing = .{ .h = .grow },
+                },
+            })({});
+
+            // Bottom row: Cooldown on right corner (if on cooldown)
+            if (is_on_cooldown) {
+                ui.new(.{
+                    .id = .IDI("spell-bottom-row-", slot_index),
+                    .layout = .{
+                        .direction = .left_to_right,
+                        .sizing = .{ .w = .percent(1) },
+                        .child_alignment = .{ .y = .center },
+                    },
+                })({
+                    // Spacer pushing cooldown to right corner
+                    ui.new(.{
+                        .id = .IDI("spell-bottom-spacer-", slot_index),
+                        .layout = .{
+                            .sizing = .{ .w = .grow },
+                        },
+                    })({});
+
+                    // Right corner: Cooldown indicator
+                    ui.new(.{
+                        .id = .IDI("spell-cooldown-badge-", slot_index),
+                        .background_color = ui.color(16, 18, 24, 230),
+                        .corner_radius = .all(3 * HUD.scale),
+                        .layout = .{
+                            .padding = .axes(badge_pad_y, badge_pad_x),
+                            .child_alignment = .{ .x = .center, .y = .center },
+                        },
+                    })({
+                        const cd_str = if (alloc) |a| blk: {
+                            if (spell.cooldown_remaining >= 10.0) {
+                                break :blk std.fmt.allocPrint(a, "{d:.0}s", .{@ceil(spell.cooldown_remaining)}) catch "0s";
+                            } else {
+                                break :blk std.fmt.allocPrint(a, "{d:.1}s", .{spell.cooldown_remaining}) catch "0s";
+                            }
+                        } else "0s";
+
+                        ui.text(cd_str, .{
+                            .color = ui.color(255, 255, 255, 255),
+                            .font_size = font_sz,
+                            .letter_spacing = 1,
+                        });
+                    });
+                });
+            }
+        });
+    } else {
+        ui.new(.{
+            .id = .IDI("spell-empty-", slot_index),
+            .image = ui.image(
+                "backgrounds/neunyx32x32.png",
+                .init(slot_size, slot_size),
+            ) catch .{ .image_data = null },
+            .layout = .{
+                .sizing = .{
+                    .h = .fixed(slot_size),
+                    .w = .fixed(slot_size),
+                },
+            },
+        })({});
+    }
 }
 
 fn experienceCounter(experience: usize, alloc: ?std.mem.Allocator) void {
@@ -105,7 +220,7 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
             .direction = .left_to_right,
         },
     })({
-        spellShower(if (attack.equipped_spells[0]) |spell| spell.icon else null);
+        spellShower(attack.equipped_spells[0], if (lm.gamepad.isAvailable(0)) "X" else "Q", 0, alloc);
         ui.new(.{
             .id = .ID("player-hud-progress-bars"),
             .layout = .{
@@ -122,23 +237,16 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
                 stats.max.health,
                 .init(50, 50, 50, 255),
                 .init(220, 20, 120, 255),
-                0.4,
-            );
-            progressBar(
-                stats.current.mana,
-                stats.max.mana,
-                .init(50, 50, 50, 255),
-                .init(20, 120, 220, 255),
-                0.4,
+                0.7,
             );
             progressBar(
                 stats.current.stamina,
                 stats.max.stamina,
                 .init(50, 50, 50, 255),
                 .init(220, 220, 220, 255),
-                0.2,
+                0.3,
             );
         });
-        spellShower(if (attack.equipped_spells[1]) |spell| spell.icon else null);
+        spellShower(attack.equipped_spells[1], if (lm.gamepad.isAvailable(0)) "Y" else "E", 1, alloc);
     });
 }

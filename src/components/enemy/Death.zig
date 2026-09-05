@@ -5,17 +5,22 @@ const ui = lm.ui;
 const TIMER = 0.1;
 
 const Stats = @import("../Stats.zig");
+const Attack = @import("../player/Attack.zig");
 const prefabs = @import("../../prefabs/prefabs.zig");
 
 const Self = @This();
 
 stats: ?*Stats = null,
 player_stats: ?*Stats = null,
+player_attack: ?*Attack = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
-    if (lm.activeScene().?.getEntityById("player")) |player| {
-        self.player_stats = player.getComponent(Stats);
+    if (lm.activeScene()) |scene| {
+        if (scene.getEntityById("player")) |player| {
+            self.player_stats = player.getComponent(Stats);
+            self.player_attack = player.getComponent(Attack);
+        }
     }
 }
 
@@ -43,8 +48,15 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         try lm.summoning.entity(orb);
     }
 
-    if (self.player_stats) |player_stats| {
-        player_stats.current.mana = @min(player_stats.current.mana + player_stats.max.mana * 0.15, player_stats.max.mana);
+    if (self.player_attack) |player_attack| {
+        player_attack.reduceSpellCooldowns(1.0);
+    } else if (lm.activeScene()) |scene| {
+        if (scene.getEntityById("player")) |player| {
+            if (player.getComponent(Attack)) |attack| {
+                attack.reduceSpellCooldowns(1.0);
+                self.player_attack = attack;
+            }
+        }
     }
 
     lm.removeEntity(.{ .uuid = entity.uuid });

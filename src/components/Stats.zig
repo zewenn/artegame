@@ -3,7 +3,6 @@ const lm = @import("loom");
 
 pub const StatValues = struct {
     health: f32 = 100,
-    mana: f32 = 100,
     stamina: f32 = 100,
 
     movement_speed: f32 = 330,

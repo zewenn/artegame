@@ -77,11 +77,14 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         weapon = self.currentWeapon() orelse return;
     }
 
+    if (self.equipped_spells[0]) |*spell| spell.update(lm.time.deltaTime());
+    if (self.equipped_spells[1]) |*spell| spell.update(lm.time.deltaTime());
+
     if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) {
-        if (self.equipped_spells[0]) |*spell| spell.cast(entity);
+        if (self.equipped_spells[0]) |*spell| _ = spell.cast(entity);
     }
     if (lm.keyboard.getKeyDown(.e) or lm.gamepad.getButtonDown(0, .right_face_up)) {
-        if (self.equipped_spells[1]) |*spell| spell.cast(entity);
+        if (self.equipped_spells[1]) |*spell| _ = spell.cast(entity);
     }
 
     const mouse_pos = get_angle_vetor: {
@@ -147,4 +150,9 @@ pub fn equipSpell(self: *Self, spell: Spell) void {
         .left => self.equipped_spells[0] = spell,
         .right => self.equipped_spells[1] = spell,
     }
+}
+
+pub fn reduceSpellCooldowns(self: *Self, amount: f32) void {
+    if (self.equipped_spells[0]) |*spell| spell.reduceCooldown(amount);
+    if (self.equipped_spells[1]) |*spell| spell.reduceCooldown(amount);
 }

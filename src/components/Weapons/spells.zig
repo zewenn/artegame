@@ -8,7 +8,7 @@ const Projectile = @import("../../prefabs/Projectile.zig").Projectile;
 
 pub const heal: Spell = Spell{
     .id = "Heal",
-    .mana_cost = 60,
+    .cooldown = 8,
     .slot = .left,
     .icon = "ui/heal_icon.png",
     .cast_fn = struct {
@@ -22,7 +22,7 @@ pub const heal: Spell = Spell{
 
 pub const root: Spell = Spell{
     .id = "Root",
-    .mana_cost = 10,
+    .cooldown = 3,
     .slot = .right,
     .icon = "ui/sleep_icon.png",
     .cast_fn = struct {
@@ -54,7 +54,7 @@ pub const root: Spell = Spell{
 
 pub const goliath: Spell = Spell{
     .id = "Goliath",
-    .mana_cost = 40,
+    .cooldown = 8,
     .slot = .left,
     .icon = "ui/goliath_icon.png",
     .cast_fn = struct {
@@ -68,7 +68,7 @@ pub const goliath: Spell = Spell{
 
 pub const haste: Spell = Spell{
     .id = "Haste",
-    .mana_cost = 30,
+    .cooldown = 6,
     .slot = .right,
     .icon = "ui/haste_icon.png",
     .cast_fn = struct {

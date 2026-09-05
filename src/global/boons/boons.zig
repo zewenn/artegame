@@ -495,19 +495,6 @@ pub const all_boons: []const Boon = &.{
         }.cb,
     },
     .{
-        .name = "More Mana",
-        .description = "+10 max mana.",
-        .icon = "items/strawberry.png",
-        .rarity = .normal,
-        .boon_type = .stat,
-        .callback = struct {
-            pub fn cb(stats: *Stats, _: ?*Attack) void {
-                stats.max.mana += 10;
-                stats.current.mana += 10;
-            }
-        }.cb,
-    },
-    .{
         .name = "Steroid Shot",
         .description = "+50 max health.",
         .icon = "items/strawberry.png",
