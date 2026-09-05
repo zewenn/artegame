@@ -12,15 +12,9 @@ pub const heal: Spell = Spell{
     .slot = .left,
     .icon = "ui/heal_icon.png",
     .cast_fn = struct {
-        fn onEnable(s: *Stats) void {
+        fn onTick(s: *Stats) void {
             if (s.getEffect(.{ .id = "heal_regen" })) |e| {
-                s.current.regeneration_amount += e.value;
-            }
-        }
-
-        fn onDisable(s: *Stats) void {
-            if (s.getEffect(.{ .id = "heal_regen" })) |e| {
-                s.current.regeneration_amount = @max(0, s.current.regeneration_amount - e.value);
+                s.current.health = @min(s.max.health, s.current.health + e.value * lm.time.deltaTime());
             }
         }
 
@@ -32,8 +26,7 @@ pub const heal: Spell = Spell{
                 .effect_type = .regen,
                 .duration = 2.0,
                 .value = regen_val,
-                .on_enable = onEnable,
-                .on_disable = onDisable,
+                .on_tick = onTick,
             });
         }
     }.callback,

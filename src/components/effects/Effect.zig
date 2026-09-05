@@ -42,6 +42,7 @@ value: f32 = 0,
 secondary_value: f32 = 0,
 on_enable: ?EffectCallback = null,
 on_disable: ?EffectCallback = null,
+on_tick: ?EffectCallback = null,
 
 pub fn isExpired(self: Self) bool {
     return self.duration > 0 and self.time_remaining <= 0;
@@ -63,3 +64,20 @@ test "Effect initialization and isExpired check" {
     expired_effect.time_remaining = 0.0;
     try std.testing.expect(expired_effect.isExpired());
 }
+
+test "Effect with on_tick callback initialization" {
+    const Dummy = struct {
+        fn cb(_: *Stats) void {}
+    };
+
+    const effect = Self{
+        .id = "test_tick",
+        .effect_type = .regen,
+        .duration = 5.0,
+        .on_tick = Dummy.cb,
+    };
+
+    try std.testing.expect(effect.on_tick != null);
+    try std.testing.expectEqual(Dummy.cb, effect.on_tick.?);
+}
+

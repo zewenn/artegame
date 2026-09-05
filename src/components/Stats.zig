@@ -27,8 +27,6 @@ pub const StatValues = struct {
 
     aggro_range: f32 = 300,
 
-    regeneration_amount: f32 = 0,
-
     experience: usize = 0,
 
     pub fn calculateMovementSpeed(self: StatValues) f32 {
@@ -66,10 +64,6 @@ pub fn Awake(self: *Self) void {
 pub fn Update(self: *Self) void {
     if (lm.time.paused()) return;
     self.tickEffects(lm.time.deltaTime());
-
-    if (self.current.regeneration_amount > 0) {
-        self.current.health = @min(self.max.health, self.current.health + self.current.regeneration_amount * lm.time.deltaTime());
-    }
 }
 
 pub fn End(self: *Self) void {
@@ -247,17 +241,22 @@ pub fn applyStun(self: *Self, duration: f32) void {
 
 pub fn tickEffects(self: *Self, dt: f32) void {
     const effects = &(self.effects orelse return);
-    var i: usize = 0;
-    while (i < effects.len()) {
-        var effect = &effects.items()[i];
+    const len = effects.len();
+
+    for (1..len + 1) |j| {
+        const index = len - j;
+        const effect = &(effects.items()[index]);
+
+        if (effect.on_tick) |tick|
+            @call(.auto, tick, .{self});
+
         if (effect.duration > 0) {
             effect.time_remaining -= dt;
             if (effect.time_remaining <= 0) {
-                self.removeEffectAtIndex(i);
+                self.removeEffectAtIndex(index);
                 continue;
             }
         }
-        i += 1;
     }
 }
 
@@ -386,4 +385,35 @@ test "Stats removeEffect with target union (by ID and by Type)" {
 
     stats.removeEffect(.{ .id = "root" });
     try std.testing.expect(!stats.hasEffect(.{ .id = "root" }));
+}
+
+test "Stats effect on_tick periodic callback execution" {
+    var stats = Self.init(.player, .{
+        .health = 50,
+    });
+    stats.max.health = 100;
+    defer stats.deinit();
+
+    const PeriodicHealing = struct {
+        pub fn onTick(s: *Self) void {
+            if (s.getEffect(.{ .id = "periodic_heal" })) |e| {
+                s.current.health = @min(s.max.health, s.current.health + e.value);
+            }
+        }
+    };
+
+    stats.addEffect(.{
+        .id = "periodic_heal",
+        .effect_type = .regen,
+        .duration = 2.0,
+        .value = 10,
+        .on_tick = PeriodicHealing.onTick,
+    });
+
+    stats.tickEffects(1.0);
+    try std.testing.expectEqual(@as(f32, 60), stats.current.health);
+
+    stats.tickEffects(1.0);
+    try std.testing.expectEqual(@as(f32, 70), stats.current.health);
+    try std.testing.expect(!stats.hasEffect(.{ .id = "periodic_heal" }));
 }

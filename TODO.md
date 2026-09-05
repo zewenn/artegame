@@ -58,6 +58,10 @@
 
 ## Done
 
+### Effect on_tick callback for periodic spells like regen
+
+  - tags: [effects, spells]
+
 ### Timed buff lifecycle in Stats (temporary haste and goliath expiration)
 
   - tags: [stats, spells]
