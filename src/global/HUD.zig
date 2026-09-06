@@ -6,6 +6,8 @@ const Objectives = @import("../components/player/Objectives.zig");
 const Attack = @import("../components/player/Attack.zig");
 const Boon = @import("boons/Boon.zig");
 const Interactable = @import("../components/interaction/Interactable.zig");
+const DemoMap = @import("DemoMap.zig");
+const RoundSpawner = @import("spawner/RoundSpawner.zig");
 
 pub const ui = @import("ui/ui.zig");
 pub const PlayerStats = ui.PlayerStats;
@@ -66,6 +68,13 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     const scale_y = window_size.y / 720.0;
     ui_scale = @max(0.65, @min(2.5, @min(scale_x, scale_y)));
 
+    round_indicator: {
+        const progress = DemoMap.getWaveProgress() orelse break :round_indicator;
+        if (progress.round == 0) break :round_indicator;
+
+        drawRoundIndicator(progress, self.alloc);
+    }
+
     player_stats: {
         const attack = self.player_attack orelse break :player_stats;
         const stats = self.player_stats orelse break :player_stats;
@@ -101,4 +110,65 @@ pub fn End(self: *Self) void {
 
 pub fn showBoons(boons: []const Boon) void {
     BoonMenu.show(boons);
+}
+
+fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Allocator) void {
+    const round_str = if (alloc) |a|
+        std.fmt.allocPrint(a, "{d}. Round", .{progress.round}) catch "Round"
+    else
+        "Round";
+
+    const count_str = if (alloc) |a|
+        std.fmt.allocPrint(a, "{d} / {d}", .{ progress.killed, progress.total }) catch "0 / 0"
+    else
+        "0 / 0";
+
+    const title_font_size = lm.tou16(@max(20, @round(24 * scale)));
+    const count_font_size = lm.tou16(@max(14, @round(16 * scale)));
+    const pad_y = lm.tou16(@round(6 * ui_scale));
+    const pad_x = lm.tou16(@round(16 * ui_scale));
+
+    lm.ui.new(.{
+        .id = .ID("hud-round-indicator"),
+        .floating = .{
+            .attach_to = .to_root,
+            .attach_points = .{
+                .element = .center_top,
+                .parent = .center_top,
+            },
+            .offset = .{ .x = 0, .y = 16 * scale },
+        },
+        .background_color = lm.ui.color(18, 20, 26, 210),
+        .corner_radius = .all(8 * ui_scale),
+        .border = .{
+            .color = lm.ui.color(240, 200, 100, 160),
+            .width = .outside(1),
+        },
+        .layout = .{
+            .direction = .top_to_bottom,
+            .child_alignment = .{ .x = .center },
+            .child_gap = lm.tou16(@round(2 * ui_scale)),
+            .padding = .axes(pad_y, pad_x),
+        },
+    })({
+        lm.ui.new(.{
+            .id = .ID("hud-round-title"),
+        })({
+            lm.ui.text(round_str, .{
+                .color = lm.ui.color(255, 235, 170, 255),
+                .font_size = title_font_size,
+                .letter_spacing = 1,
+            });
+        });
+
+        lm.ui.new(.{
+            .id = .ID("hud-round-count"),
+        })({
+            lm.ui.text(count_str, .{
+                .color = lm.ui.color(210, 225, 245, 255),
+                .font_size = count_font_size,
+                .letter_spacing = 1,
+            });
+        });
+    });
 }

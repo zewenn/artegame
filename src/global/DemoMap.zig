@@ -1,12 +1,14 @@
-const lm = @import("loom");
 const std = @import("std");
+const lm = @import("loom");
 
 const prefabs = @import("../prefabs/prefabs.zig");
-const Self = @This();
 const player_components = @import("../components/player/export.zig");
 const Stats = @import("../components/Stats.zig");
 const BoonPool = @import("boons/BoonPool.zig");
 const MusicManager = @import("audio/MusicManager.zig");
+const RoundSpawner = @import("spawner/RoundSpawner.zig");
+
+const Self = @This();
 
 pub const RoundState = enum {
     replenish,
@@ -16,58 +18,17 @@ pub const RoundState = enum {
 pub var state: RoundState = .replenish;
 var instance: ?*Self = null;
 
-pub fn isReplenish() bool {
-    return state == .replenish;
-}
-
-pub fn startRound() !void {
-    const self = instance orelse return;
-    if (state != .replenish) return;
-
-    state = .combat;
-    self.round += 1;
-    MusicManager.setPhase(.combat);
-
-    if (self.player_objectives) |objectives| {
-        objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
-    }
-
-    for (0..self.round) |i| {
-        const pos = lm.Vec2(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256));
-        const enemy = if (self.round >= 3 and i == 0)
-            try prefabs.enemies.Elite(pos)
-        else if (self.round >= 2 and (i % 2 == 1))
-            try prefabs.enemies.Ranged(pos)
-        else
-            try prefabs.enemies.Melee(pos);
-
-        try self.enemies.append(enemy.uuid);
-        try lm.summoning.entity(enemy);
-    }
-}
-
-fn isEnemyAlive(scene: *lm.Scene, uuid: u128) bool {
-    for (scene.entities.items()) |entity| {
-        if (entity.uuid == uuid) return true;
-    }
-    for (scene.new_entities.items()) |entity| {
-        if (entity.uuid == uuid) return true;
-    }
-    return false;
-}
-
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
-enemies: lm.List(u128) = undefined,
 round: u32 = 0,
-
+spawner: RoundSpawner = undefined,
 
 pub fn Awake(self: *Self) !void {
     instance = self;
     state = .replenish;
     MusicManager.setPhase(.replenish);
     BoonPool.reset();
-    self.enemies = .init(lm.allocators.scene());
+    self.spawner = RoundSpawner.init(lm.allocators.scene());
 
     try lm.summoning.entities(&.{
         try prefabs.Player(.init(0, 0)),
@@ -92,18 +53,18 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    const len = self.enemies.len();
-    for (1..len + 1) |j| {
-        const index = len - j;
-        const uuid = self.enemies.items()[index];
+    const player_pos: lm.Vector2 = player_pos: {
+        const player = self.player orelse break :player_pos lm.Vec2(0, 0);
+        const transform = player.getComponent(lm.Transform) orelse break :player_pos lm.Vec2(0, 0);
+        break :player_pos lm.vec3ToVec2(transform.position);
+    };
 
-        if (isEnemyAlive(scene, uuid)) continue;
+    const dt = lm.time.deltaTime();
+    try self.spawner.update(dt, scene, player_pos);
 
-        _ = self.enemies.swapRemove(index);
-    }
-
-    if (state == .combat and self.enemies.len() == 0) {
+    if (state == .combat and self.spawner.isWaveFinished()) {
         state = .replenish;
+        self.spawner.finishWave();
         MusicManager.setPhase(.replenish);
         if (self.player_objectives) |objectives| {
             objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
@@ -121,6 +82,30 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 pub fn End(self: *Self) !void {
     instance = null;
     MusicManager.stop();
-    self.enemies.clearAndFree();
+    self.spawner.deinit();
     BoonPool.reset();
+}
+
+pub fn isReplenish() bool {
+    return state == .replenish;
+}
+
+pub fn startRound() !void {
+    const self = instance orelse return;
+    if (state != .replenish) return;
+
+    state = .combat;
+    self.round += 1;
+    MusicManager.setPhase(.combat);
+
+    if (self.player_objectives) |objectives| {
+        objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
+    }
+
+    try self.spawner.startWave(self.round);
+}
+
+pub fn getWaveProgress() ?RoundSpawner.WaveProgress {
+    const self = instance orelse return null;
+    return self.spawner.getProgress();
 }

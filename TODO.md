@@ -2,17 +2,6 @@
 
 ## Backlog
 
-### [3#SPW] Dynamic round spawner with scaling enemy waves
-
-  - tags: [spawner, gameplay]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [ ] Design wave budget and enemy cost scaling formula based on round number
-      - [ ] Implement spawn queue system with randomized spawn positions around arena bounds
-      - [ ] Connect spawner lifecycle with RoundManager combat and replenish phases
-      - [ ] Add wave progress tracking to HUD/ObjectiveUI
-
 ### [5#UIM] Main menu scene (Play, Options, Quit)
 
   - tags: [ui, menu]
@@ -57,6 +46,18 @@
 ## Work in Progress
 
 ## Done
+
+### [3#SPW] Dynamic round spawner with scaling enemy waves
+
+  - tags: [spawner, gameplay]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Design wave budget and enemy cost scaling formula based on round number
+      - [x] Implement spawn queue system with randomized spawn positions around arena bounds
+      - [x] Connect spawner lifecycle with RoundManager combat and replenish phases
+      - [x] Add wave progress tracking to HUD/ObjectiveUI
+
 
 ### [11#FIX] Fix Clay UI element ID exhaustion causing unclickable Boon Menu and frozen UI
 
