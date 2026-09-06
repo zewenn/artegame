@@ -2,12 +2,6 @@
 
 ## Backlog
 
-### [5#UIM] Main menu scene (Play, Options, Quit)
-
-  - tags: [ui, menu]
-  - priority: medium
-  - workload: Normal
-
 ### [6#UIM] In-game pause menu (Resume, Restart, Main Menu)
 
   - tags: [ui, menu]
@@ -46,6 +40,21 @@
 ## Work in Progress
 
 ## Done
+
+### [5#UIM] Main menu scene (Play, Options, Quit)
+
+  - tags: [ui, menu]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create MainMenu behaviour struct conforming to Loom behaviour conventions with responsive layout and state machine
+      - [x] Build Main Menu screen with game logo, Play, Options, and Quit buttons
+      - [x] Build Options screen with Master/Music/SFX volume sliders, Mute toggle, Fullscreen toggle, and Controls reference guide
+      - [x] Support Mouse, Keyboard (WASD/Arrows/Enter/Esc), and Gamepad (D-pad/stick/A/B) navigation
+      - [x] Connect hover/click SFX and background music streaming to AudioManager & MusicManager
+      - [x] Wire main_menu scene into main.zig and update startup routing in Setup.zig
+      - [x] Add unit tests for menu state transitions, volume controls, and navigation logic
+
 
 ### [12#ARC] Codebase architectural overhaul and critical bug remediation
 

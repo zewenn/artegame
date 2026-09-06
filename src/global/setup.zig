@@ -8,5 +8,5 @@ const Projectile = @import("../prefabs/Projectile.zig").Projectile;
 const Background = @import("../prefabs/Background.zig").Background;
 
 pub fn Awake() !void {
-    try lm.loadScene("demo_map");
+    try lm.loadScene("main_menu");
 }

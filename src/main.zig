@@ -20,7 +20,6 @@ pub fn main() !void {
         lm.scene("default")({
             lm.globalBehaviours(.{
                 gbl.Setup{},
-                gbl.HUD{},
             });
 
             lm.cameras(&.{
@@ -29,6 +28,15 @@ pub fn main() !void {
                     .draw_mode = .world,
                     .zoom = 1,
                 } },
+            });
+        });
+
+        lm.scene("main_menu")({
+            lm.useMainCamera();
+
+            lm.globalBehaviours(.{
+                gbl.MainMenu{},
+                gbl.MusicManager{},
             });
         });
 
@@ -45,6 +53,7 @@ pub fn main() !void {
 }
 
 test {
+    _ = @import("global/ui/MainMenu.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Spell.zig");
     _ = @import("components/effects/Effect.zig");
