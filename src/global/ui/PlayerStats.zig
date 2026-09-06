@@ -8,20 +8,16 @@ const HUD = @import("../HUD.zig");
 
 const Spell = @import("../../components/Weapons/Spell.zig");
 
-var index: u32 = 0;
-
-fn progressBar(current: f32, max: f32, bg_color: lm.Color, color: lm.Color, height: f32) void {
-    defer index +%= 1;
-
+fn progressBar(bar_index: u32, current: f32, max: f32, bg_color: lm.Color, color: lm.Color, height: f32) void {
     ui.new(.{
-        .id = .IDI("progress-bar-", index),
+        .id = .IDI("progress-bar-", bar_index),
         .background_color = ui.color(bg_color.r, bg_color.g, bg_color.b, bg_color.a),
         .layout = .{
             .sizing = .{ .h = .percent(height), .w = .percent(1) },
         },
     })({
         ui.new(.{
-            .id = .IDI("progress-bar-inner-", index),
+            .id = .IDI("progress-bar-inner-", bar_index),
             .background_color = ui.color(color.r, color.g, color.b, color.a),
             .layout = .{
                 .sizing = .{ .h = .percent(1), .w = .percent(current / max) },
@@ -228,6 +224,7 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
             .image = ui.image("ui/HUD/background.png", .init(HUD.hud_width, HUD.hud_height)) catch .{ .image_data = null },
         })({
             progressBar(
+                0,
                 stats.current.health,
                 stats.max.health,
                 .init(50, 50, 50, 255),
@@ -235,6 +232,7 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
                 0.7,
             );
             progressBar(
+                1,
                 stats.current.stamina,
                 stats.max.stamina,
                 .init(50, 50, 50, 255),

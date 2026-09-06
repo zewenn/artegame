@@ -237,6 +237,8 @@ pub fn draw(
 
     if (boon_array.len == 0) {
         if (lm.keyboard.getKeyDown(.escape) or
+            lm.keyboard.getKeyDown(.enter) or
+            lm.keyboard.getKeyDown(.space) or
             (lm.gamepad.isAvailable(0) and (lm.gamepad.getButtonDown(0, .right_face_right) or lm.gamepad.getButtonDown(0, .right_face_down))))
         {
             hide();
@@ -329,6 +331,12 @@ pub fn draw(
     const skip_index = num_cards;
     if (selected_index > skip_index) selected_index = 0;
 
+    var nav_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
+    var nav_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
+    var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
+    var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
+    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+
     if (lm.gamepad.isAvailable(0)) {
         if (lm.gamepad.getButtonDown(0, .right_face_right)) {
             hide();
@@ -336,10 +344,10 @@ pub fn draw(
         }
 
         const stick = lm.gamepad.getStickVector(0, .left, 0.2);
-        var nav_left = lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
-        var nav_right = lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
-        var nav_up = lm.gamepad.getButtonDown(0, .left_face_up);
-        var nav_down = lm.gamepad.getButtonDown(0, .left_face_down);
+        nav_left = nav_left or lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
+        nav_right = nav_right or lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
+        nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);
+        nav_down = nav_down or lm.gamepad.getButtonDown(0, .left_face_down);
 
         if (@abs(stick.x) > 0.5) {
             if (!stick_moved_x) {
@@ -359,36 +367,38 @@ pub fn draw(
             stick_moved_y = false;
         }
 
-        if (selected_index < num_cards) {
-            if (nav_left) {
-                if (selected_index > 0) selected_index -= 1 else selected_index = num_cards - 1;
-            }
-            if (nav_right) {
-                if (selected_index + 1 < num_cards) selected_index += 1 else selected_index = 0;
-            }
-            if (nav_down) {
-                selected_index = skip_index;
-            }
-        } else {
-            if (nav_up) {
-                selected_index = 0;
-            }
-            if (nav_left) {
-                selected_index = 0;
-            }
-            if (nav_right) {
-                selected_index = num_cards - 1;
-            }
-        }
+        select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
+    }
 
-        if (lm.gamepad.getButtonDown(0, .right_face_down)) {
-            if (selected_index < num_cards) {
-                selectBoon(boon_array[selected_index], stats, attack);
-                if (!isShowing()) return;
-            } else {
-                hide();
-                return;
-            }
+    if (selected_index < num_cards) {
+        if (nav_left) {
+            if (selected_index > 0) selected_index -= 1 else selected_index = num_cards - 1;
+        }
+        if (nav_right) {
+            if (selected_index + 1 < num_cards) selected_index += 1 else selected_index = 0;
+        }
+        if (nav_down) {
+            selected_index = skip_index;
+        }
+    } else {
+        if (nav_up) {
+            selected_index = 0;
+        }
+        if (nav_left) {
+            selected_index = 0;
+        }
+        if (nav_right) {
+            selected_index = num_cards - 1;
+        }
+    }
+
+    if (select_pressed) {
+        if (selected_index < num_cards) {
+            selectBoon(boon_array[selected_index], stats, attack);
+            if (!isShowing()) return;
+        } else {
+            hide();
+            return;
         }
     }
 

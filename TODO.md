@@ -58,6 +58,17 @@
 
 ## Done
 
+### [11#FIX] Fix Clay UI element ID exhaustion causing unclickable Boon Menu and frozen UI
+
+  - tags: [ui, bugfix]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [x] Stabilize progress bar element IDs in PlayerStats
+      - [x] Implement recyclable enemy UI ID pool in OverheadUI
+      - [x] Add keyboard navigation support to BoonMenu
+
+
 ### [2#ENE] Universal enemy system with attack ranges, conditional projectiles, and spells
 
   - tags: [enemies, combat, ai]
