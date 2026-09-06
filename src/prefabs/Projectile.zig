@@ -9,6 +9,8 @@ const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 pub const OnHitEffect = enum { slow, root, stun };
 
 pub const Options = struct {
+    pub const MAX_HIT_TARGETS: usize = 64;
+
     start_position: lm.Vector2 = .init(0, 0),
     target_position: lm.Vector2 = .init(1, 0),
 
@@ -33,6 +35,25 @@ pub const Options = struct {
 
     knockback_strength: f32 = 0,
     knockback_duration: f32 = 0,
+
+    hit_targets: [MAX_HIT_TARGETS]u128 = [_]u128{0} ** MAX_HIT_TARGETS,
+    hit_count: usize = 0,
+
+    pub fn hasHit(self: *const Options, target_uuid: u128) bool {
+        for (self.hit_targets[0..self.hit_count]) |uuid| {
+            if (uuid == target_uuid) return true;
+        }
+        return false;
+    }
+
+    pub fn recordHit(self: *Options, target_uuid: u128) bool {
+        if (self.hasHit(target_uuid)) return false;
+        if (self.hit_count < MAX_HIT_TARGETS) {
+            self.hit_targets[self.hit_count] = target_uuid;
+            self.hit_count += 1;
+        }
+        return true;
+    }
 
     pub fn getProjectileSprite(self: Options) []const u8 {
         return self.override_sprite orelse switch (self.target_team) {
@@ -87,13 +108,15 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
 
         options.inactive = true;
         lm.removeEntity(.{ .uuid = self.uuid });
+    } else {
+        if (!options.recordHit(other.uuid)) return;
     }
 
     other_stats.current.health -= options.shooter_stats.calculateDamage(
         other_stats.*,
         options.damage_type,
         options.is_crit,
-    ) * (if (options.passtrough) lm.time.deltaTime() else 1) * options.damage;
+    ) * options.damage;
 
     if (other.getComponent(lm.Transform)) |other_t| {
         const hit_pos = lm.vec3ToVec2(other_t.position);
@@ -130,7 +153,25 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
                 .negate()
                 .multiply(.init(options.knockback_strength, options.knockback_strength)),
             options.knockback_duration,
-            true,
+            false,
         );
     }
 }
+
+test "Projectile Options per-target hit tracking" {
+    var opts = Options{ .passtrough = true };
+    try std.testing.expectEqual(false, opts.hasHit(101));
+
+    // First hit should record successfully
+    try std.testing.expect(opts.recordHit(101));
+    try std.testing.expect(opts.hasHit(101));
+
+    // Second hit against same target should be rejected
+    try std.testing.expectEqual(false, opts.recordHit(101));
+
+    // Different target should record
+    try std.testing.expect(opts.recordHit(202));
+    try std.testing.expect(opts.hasHit(202));
+    try std.testing.expectEqual(2, opts.hit_count);
+}
+

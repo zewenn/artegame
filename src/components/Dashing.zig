@@ -24,6 +24,7 @@ transform: ?*lm.Transform = null,
 stats: ?*Stats = null,
 
 dashes: ?lm.List(Dash) = null,
+last_dash_at: f32 = -1,
 
 pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     const stats = self.stats orelse return;
@@ -66,6 +67,8 @@ pub fn Update(self: *Self) !void {
     const len = dashes.len();
     if (len == 0) return;
 
+    self.last_dash_at = lm.time.gameTime();
+
     for (1..len + 1) |j| {
         const index = len - j;
         const dash: *Dash = &dashes.items()[index];
@@ -90,6 +93,8 @@ pub fn Update(self: *Self) !void {
 }
 
 pub fn Tick(self: *Self) !void {
+    if (lm.time.gameTime() - self.last_dash_at < 0.5) return;
+
     const stats: *Stats = try lm.ensureComponent(self.stats);
 
     stats.current.stamina = @min(stats.max.stamina, stats.current.stamina + 1);

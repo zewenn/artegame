@@ -22,7 +22,8 @@ player_transform: ?*lm.Transform = null,
 player_stats: ?*Stats = null,
 animator: ?*lm.Animator = null,
 
-abilities: []Ability = &.{},
+abilities_template: []const Ability = &.{},
+abilities: ?lm.List(Ability) = null,
 fallback_ability: ?Ability = null,
 
 action_state: ActionState = .idle,
@@ -30,42 +31,17 @@ active_ability_index: ?usize = null,
 is_fallback_active: bool = false,
 action_timer: f32 = 0,
 
-pub fn init(abilities: []Ability, fallback: ?Ability) Self {
-    return Self{
-        .abilities = abilities,
-        .fallback_ability = fallback,
-    };
-}
-
-pub fn fromProjectileOptions(options: ProjectileOptions) Self {
-    return Self{
-        .fallback_ability = Ability{
-            .id = "fallback_shot",
-            .execution_type = .projectile,
-            .cooldown = 1.0,
-            .projectile_profile = ProjectileProfile{
-                .speed = options.speed,
-                .lifetime = options.lifetime,
-                .damage = options.damage,
-                .damage_type = options.damage_type,
-                .size = options.size,
-                .passtrough = options.passtrough,
-                .onhit_effect = options.onhit_effect,
-                .onhit_duration = options.onhit_duration,
-                .onhit_strength = options.onhit_strength,
-                .knockback_strength = options.knockback_strength,
-                .knockback_duration = options.knockback_duration,
-                .sfx_path = "audio/punch.mp3",
-            },
-        },
-    };
-}
-
-pub fn isActing(self: *const Self) bool {
-    return self.action_state != .idle;
-}
-
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
+    if (self.abilities == null) {
+        var list = lm.List(Ability).init(lm.allocators.scene());
+        for (self.abilities_template) |template| {
+            var ability = template;
+            ability.cooldown_remaining = 0;
+            try list.append(ability);
+        }
+        self.abilities = list;
+    }
+
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
     self.animator = entity.getComponent(lm.Animator);
@@ -171,8 +147,10 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         return;
     }
 
-    for (self.abilities) |*ability| {
-        ability.updateCooldown(dt);
+    if (self.abilities) |*abilities| {
+        for (abilities.items()) |*ability| {
+            ability.updateCooldown(dt);
+        }
     }
     if (self.fallback_ability) |*fallback| {
         fallback.updateCooldown(dt);
@@ -187,11 +165,13 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     const player_stats_val = if (self.player_stats) |ps| ps.* else null;
 
-    for (self.abilities, 0..) |*ability, index| {
-        if (!ability.canExecute(stats.*, player_stats_val, distance)) continue;
+    if (self.abilities) |*abilities| {
+        for (abilities.items(), 0..) |*ability, index| {
+            if (!ability.canExecute(stats.*, player_stats_val, distance)) continue;
 
-        self.startAbility(ability, index, false, entity, transform, stats, player_transform);
-        return;
+            self.startAbility(ability, index, false, entity, transform, stats, player_transform);
+            return;
+        }
     }
 
     if (self.fallback_ability) |*fallback| {
@@ -199,6 +179,48 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
             self.startAbility(fallback, null, true, entity, transform, stats, player_transform);
         }
     }
+}
+
+pub fn End(self: *Self) void {
+    if (self.abilities) |*list| {
+        list.deinit();
+        self.abilities = null;
+    }
+}
+
+pub fn init(abilities_template: []const Ability, fallback: ?Ability) Self {
+    return Self{
+        .abilities_template = abilities_template,
+        .fallback_ability = fallback,
+    };
+}
+
+pub fn fromProjectileOptions(options: ProjectileOptions) Self {
+    return Self{
+        .fallback_ability = Ability{
+            .id = "fallback_shot",
+            .execution_type = .projectile,
+            .cooldown = 1.0,
+            .projectile_profile = ProjectileProfile{
+                .speed = options.speed,
+                .lifetime = options.lifetime,
+                .damage = options.damage,
+                .damage_type = options.damage_type,
+                .size = options.size,
+                .passtrough = options.passtrough,
+                .onhit_effect = options.onhit_effect,
+                .onhit_duration = options.onhit_duration,
+                .onhit_strength = options.onhit_strength,
+                .knockback_strength = options.knockback_strength,
+                .knockback_duration = options.knockback_duration,
+                .sfx_path = "audio/punch.mp3",
+            },
+        },
+    };
+}
+
+pub fn isActing(self: *const Self) bool {
+    return self.action_state != .idle;
 }
 
 fn startAbility(
@@ -259,11 +281,65 @@ fn startAbility(
 fn getActiveAbilityPtr(self: *Self) ?*Ability {
     if (self.is_fallback_active) return &(self.fallback_ability orelse return null);
 
-    ability_index: {
-        const index = self.active_ability_index orelse break :ability_index;
-        if (index > self.abilities.len) break :ability_index;
-        return &self.abilities[index];
-    }
+    const abilities = &(self.abilities orelse return null);
+    const index = self.active_ability_index orelse return null;
+    const items = abilities.items();
+    if (index >= items.len) return null;
+    return &items[index];
+}
 
-    return null;
+test "Enemy Attack with lm.List(Ability)" {
+    const template = [_]Ability{
+        .{
+            .id = "slash",
+            .execution_type = .projectile,
+            .cooldown = 2.0,
+            .projectile_profile = .{},
+        },
+        .{
+            .id = "spin",
+            .execution_type = .projectile,
+            .cooldown = 5.0,
+            .projectile_profile = .{},
+        },
+    };
+
+    var attack = Self.init(&template, null);
+    try std.testing.expectEqual(@as(usize, 2), attack.abilities_template.len);
+    try std.testing.expect(attack.abilities == null);
+
+    var list = lm.List(Ability).init(std.testing.allocator);
+    for (attack.abilities_template) |t| {
+        var ab = t;
+        ab.cooldown_remaining = 0;
+        try list.append(ab);
+    }
+    attack.abilities = list;
+    defer attack.End();
+
+    try std.testing.expectEqual(@as(usize, 2), attack.abilities.?.items().len);
+
+    attack.active_ability_index = 0;
+    const active_0 = attack.getActiveAbilityPtr();
+    try std.testing.expect(active_0 != null);
+    try std.testing.expectEqualStrings("slash", active_0.?.id);
+
+    active_0.?.cooldown_remaining = 2.0;
+
+    attack.active_ability_index = 1;
+    const active_1 = attack.getActiveAbilityPtr();
+    try std.testing.expect(active_1 != null);
+    try std.testing.expectEqualStrings("spin", active_1.?.id);
+
+    // Out of bounds test
+    attack.active_ability_index = 2;
+    try std.testing.expect(attack.getActiveAbilityPtr() == null);
+    attack.active_ability_index = 999;
+    try std.testing.expect(attack.getActiveAbilityPtr() == null);
+
+    // Cooldown update
+    for (attack.abilities.?.items()) |*ab| {
+        ab.updateCooldown(0.5);
+    }
+    try std.testing.expectApproxEqAbs(@as(f32, 1.5), attack.abilities.?.items()[0].cooldown_remaining, 0.001);
 }

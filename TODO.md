@@ -47,6 +47,47 @@
 
 ## Done
 
+### [12#ARC] Codebase architectural overhaul and critical bug remediation
+
+  - tags: [architecture, bugfix, performance, refactor]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Convert enemy ability arrays in Melee, Ranged, and Elite prefabs to immutable templates and store runtime cooldown state per-instance in Enemy.Attack
+      - [x] Fix off-by-one out-of-bounds slice index check in Enemy.Attack.getActiveAbilityPtr (change `>` to `>=`)
+      - [x] Fix magic damage mitigation formula in Stats.calculateDamage to use defender.current.magic_resist instead of magic_damage
+      - [x] Clamp defense values in Stats.defenseToDamageReductionPercent to prevent negative log10 NaN and high-defense damage healing
+      - [x] Fix gamepad 180-degree attack direction reversal in player.Attack and Weapon.doAttack to restore accurate stick aiming
+      - [x] Fix footstep audio timer reset placement in player.Movement to allow walking audio to play
+      - [x] Fix knockback stamina drain by setting reduce_stamina = false in Projectile.onCollisionDealDamage
+      - [x] Restore attack cooldown timer on player heavy attack and remove self-inflicted stun in player.Attack
+      - [x] Fix canOfferAshwaganda1 unlock condition in boons.zig so tier-1 spell can be offered
+      - [x] Implement per-target hit tracking on passthrough projectiles to eliminate multi-hit audio distortion and status effect spam
+      - [x] Enforce hard cap in RoundSpawner ensuring active enemy count never exceeds 128 concurrently (protecting OverheadUI ID pool)
+      - [x] Replace O(N*M) spawner liveness polling in RoundSpawner.update with direct defeat notification from Death component
+      - [x] Replace O(N) array shifts in RoundSpawner spawn queue with O(1) queue cursor index
+      - [x] Decouple arena coordinates and obstacle exclusion box from RoundSpawner by accepting SpawnAreaConfig from DemoMap
+      - [x] Migrate global singletons (DemoMap state, MusicManager) to Loom 0.10.0 scene.getGlobalBehaviour / pullGlobalBehaviour
+      - [x] Decouple Interactable component from DemoMap.state and replace static 64-slot registry with proximity/trigger collision detection
+      - [x] Decouple weapon boons from fixed slot indices (0/1) by implementing Attack.getWeaponById
+      - [x] Add unique string ID to Boon struct, update Boon.eql, and disambiguate duplicate boon names
+      - [x] Prevent unbounded Objectives list growth by clearing or updating active phase objectives
+      - [x] Ensure Raylib music streams are cleanly stopped and unloaded in MusicManager.End()
+      - [x] Refactor Enemy.Attack abilities from fixed-capacity array to lm.List(Ability)
+      - [x] Refactor Interactable registry from std.ArrayListUnmanaged(*Self) to lm.List(*Self)
+    ```md
+    Comprehensive remediation addressing critical combat bugs, spawner performance bottlenecks, memory leaks, and global singleton anti-patterns identified in the architectural analysis, leveraging Loom 0.10.0 global behaviour querying.
+    ```
+
+### Architectural analysis and code audit
+
+  - tags: [architecture, analysis, audit]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Comprehensive codebase audit (architecture, bugs, performance, extensibility)
+      - [x] Document findings and recommendations in architecture analysis artifact
+
 ### [3#SPW] Dynamic round spawner with scaling enemy waves
 
   - tags: [spawner, gameplay]

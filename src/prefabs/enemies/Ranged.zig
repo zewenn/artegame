@@ -12,7 +12,7 @@ const SpellProfile = Enemy.Ability.SpellProfile;
 
 var ranged_enemy_count: u32 = 0;
 
-var ranged_abilities = [_]Ability{
+pub const ranged_abilities = [_]Ability{
     Ability{
         .id = "escape_root",
         .execution_type = .spell,

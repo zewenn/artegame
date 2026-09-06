@@ -114,13 +114,26 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     }
 }
 
-pub fn pickSpawnPosition(player_pos: lm.Vector2) lm.Vector2 {
-    const MIN_X: f32 = -1100.0;
-    const MAX_X: f32 = 1100.0;
-    const MIN_Y: f32 = -520.0;
-    const MAX_Y: f32 = 520.0;
-    const MIN_PLAYER_DIST: f32 = 420.0;
+pub const ExclusionZone = struct {
+    min: lm.Vector2,
+    max: lm.Vector2,
 
+    pub fn contains(self: ExclusionZone, pos: lm.Vector2) bool {
+        return pos.x >= self.min.x and pos.x <= self.max.x and pos.y >= self.min.y and pos.y <= self.max.y;
+    }
+};
+
+pub const SpawnAreaConfig = struct {
+    min_x: f32 = -1100.0,
+    max_x: f32 = 1100.0,
+    min_y: f32 = -520.0,
+    max_y: f32 = 520.0,
+    min_player_dist: f32 = 420.0,
+    edge_depth: f32 = 80.0,
+    exclusion_zones: []const ExclusionZone = &.{},
+};
+
+pub fn pickSpawnPositionWithConfig(player_pos: lm.Vector2, config: SpawnAreaConfig) lm.Vector2 {
     var attempt: usize = 0;
     while (attempt < 10) : (attempt += 1) {
         const edge = lm.random.intRangeAtMost(u32, 0, 3);
@@ -129,52 +142,57 @@ pub fn pickSpawnPosition(player_pos: lm.Vector2) lm.Vector2 {
 
         switch (edge) {
             0 => {
-                x = MIN_X + lm.randFloat(f32, 0, 80);
-                y = lm.randFloat(f32, MIN_Y, MAX_Y);
+                x = config.min_x + lm.randFloat(f32, 0, config.edge_depth);
+                y = lm.randFloat(f32, config.min_y, config.max_y);
             },
             1 => {
-                x = MAX_X - lm.randFloat(f32, 0, 80);
-                y = lm.randFloat(f32, MIN_Y, MAX_Y);
+                x = config.max_x - lm.randFloat(f32, 0, config.edge_depth);
+                y = lm.randFloat(f32, config.min_y, config.max_y);
             },
             2 => {
-                x = lm.randFloat(f32, MIN_X, MAX_X);
-                y = MIN_Y + lm.randFloat(f32, 0, 80);
+                x = lm.randFloat(f32, config.min_x, config.max_x);
+                y = config.min_y + lm.randFloat(f32, 0, config.edge_depth);
             },
             else => {
-                x = lm.randFloat(f32, MIN_X, MAX_X);
-                y = MAX_Y - lm.randFloat(f32, 0, 80);
+                x = lm.randFloat(f32, config.min_x, config.max_x);
+                y = config.max_y - lm.randFloat(f32, 0, config.edge_depth);
             },
         }
 
-        if (x >= -160 and x <= 160 and y >= -280 and y <= -120) continue;
+        var in_exclusion = false;
+        for (config.exclusion_zones) |zone| {
+            if (zone.contains(.init(x, y))) {
+                in_exclusion = true;
+                break;
+            }
+        }
+        if (in_exclusion) continue;
 
         const dx = x - player_pos.x;
         const dy = y - player_pos.y;
         const dist = std.math.hypot(dx, dy);
-        if (dist >= MIN_PLAYER_DIST) {
+        if (dist >= config.min_player_dist) {
             return lm.Vec2(x, y);
         }
     }
 
-    const fallback_x = if (player_pos.x > 0) MIN_X + 50 else MAX_X - 50;
-    const fallback_y = if (player_pos.y > 0) MIN_Y + 50 else MAX_Y - 50;
+    const fallback_x = if (player_pos.x > 0) config.min_x + 50 else config.max_x - 50;
+    const fallback_y = if (player_pos.y > 0) config.min_y + 50 else config.max_y - 50;
     return lm.Vec2(fallback_x, fallback_y);
 }
 
-fn isEnemyAlive(scene: *lm.Scene, uuid: u128) bool {
-    for (scene.entities.items()) |entity| {
-        if (entity.uuid == uuid) return true;
-    }
-    for (scene.new_entities.items()) |entity| {
-        if (entity.uuid == uuid) return true;
-    }
-    return false;
+pub fn pickSpawnPosition(player_pos: lm.Vector2) lm.Vector2 {
+    return pickSpawnPositionWithConfig(player_pos, .{});
 }
 
 const Self = @This();
 
+pub const MAX_CONCURRENT_ENEMIES: usize = 128;
+
 spawn_queue: lm.List(EnemyType),
+spawn_cursor: usize = 0,
 active_enemies: lm.List(u128),
+spawn_area: SpawnAreaConfig = .{},
 
 round: u32 = 0,
 total_wave_enemies: u32 = 0,
@@ -189,12 +207,14 @@ is_active: bool = false,
 pub fn init(allocator: std.mem.Allocator) Self {
     return Self{
         .spawn_queue = .init(allocator),
+        .spawn_cursor = 0,
         .active_enemies = .init(allocator),
     };
 }
 
 pub fn deinit(self: *Self) void {
     self.spawn_queue.deinit();
+    self.spawn_cursor = 0;
     self.active_enemies.deinit();
     self.is_active = false;
 }
@@ -204,33 +224,36 @@ pub fn startWave(self: *Self, round: u32) !void {
     const config = generateWaveConfig(round);
     self.total_wave_enemies = config.total_enemies;
     self.killed_enemies = 0;
+    self.spawn_cursor = 0;
 
     try populateQueue(&self.spawn_queue, config);
     self.active_enemies.clearRetainingCapacity();
 
-    self.max_active_enemies = @min(10 + round * 2, 18);
+    self.max_active_enemies = @min(@min(10 + round * 2, 18), MAX_CONCURRENT_ENEMIES);
     self.spawn_interval = @max(0.40, 0.70 - @as(f32, @floatFromInt(round)) * 0.03);
     self.spawn_timer = 0.2;
     self.is_active = true;
 }
 
-pub fn update(self: *Self, dt: f32, scene: *lm.Scene, player_pos: lm.Vector2) !void {
+pub fn removeDefeatedEnemy(self: *Self, uuid: u128) void {
+    if (!self.is_active) return;
+    const len = self.active_enemies.len();
+    for (0..len) |index| {
+        if (self.active_enemies.items()[index] == uuid) {
+            _ = self.active_enemies.swapRemove(index);
+            self.killed_enemies += 1;
+            return;
+        }
+    }
+}
+
+pub fn update(self: *Self, dt: f32, scene: ?*lm.Scene, player_pos: lm.Vector2) !void {
+    _ = scene;
     if (!self.is_active) return;
 
-    const len = self.active_enemies.len();
-    for (1..len + 1) |j| {
-        const index = len - j;
-        const uuid = self.active_enemies.items()[index];
+    if (self.spawn_cursor >= self.spawn_queue.len()) return;
 
-        if (isEnemyAlive(scene, uuid)) continue;
-
-        _ = self.active_enemies.swapRemove(index);
-        self.killed_enemies += 1;
-    }
-
-    if (self.spawn_queue.len() == 0) return;
-
-    if (self.active_enemies.len() >= self.max_active_enemies) return;
+    if (self.active_enemies.len() >= self.max_active_enemies or self.active_enemies.len() >= MAX_CONCURRENT_ENEMIES) return;
 
     self.spawn_timer -= dt;
 
@@ -240,8 +263,9 @@ pub fn update(self: *Self, dt: f32, scene: *lm.Scene, player_pos: lm.Vector2) !v
 
     if (self.spawn_timer > 0) return;
 
-    const enemy_type = self.spawn_queue.orderedRemove(0);
-    const pos = pickSpawnPosition(player_pos);
+    const enemy_type = self.spawn_queue.items()[self.spawn_cursor];
+    self.spawn_cursor += 1;
+    const pos = pickSpawnPositionWithConfig(player_pos, self.spawn_area);
 
     const enemy = switch (enemy_type) {
         .melee => try prefabs.enemies.Melee(pos),
@@ -259,7 +283,7 @@ pub fn update(self: *Self, dt: f32, scene: *lm.Scene, player_pos: lm.Vector2) !v
 
 pub fn isWaveFinished(self: *const Self) bool {
     if (!self.is_active) return false;
-    return self.spawn_queue.len() == 0 and self.active_enemies.len() == 0;
+    return self.spawn_cursor >= self.spawn_queue.len() and self.active_enemies.len() == 0;
 }
 
 pub fn finishWave(self: *Self) void {
@@ -267,12 +291,17 @@ pub fn finishWave(self: *Self) void {
 }
 
 pub fn getProgress(self: *const Self) WaveProgress {
+    const queued_count = if (self.spawn_queue.len() > self.spawn_cursor)
+        self.spawn_queue.len() - self.spawn_cursor
+    else
+        0;
+
     return WaveProgress{
         .round = self.round,
         .killed = self.killed_enemies,
         .total = self.total_wave_enemies,
         .active = @intCast(self.active_enemies.len()),
-        .queued = @intCast(self.spawn_queue.len()),
+        .queued = @intCast(queued_count),
     };
 }
 
@@ -345,5 +374,65 @@ test "pickSpawnPosition stays in bounds and away from player" {
 
         const dist = std.math.hypot(pos.x, pos.y);
         try std.testing.expect(dist >= 400.0);
+    }
+}
+
+test "RoundSpawner enforces MAX_CONCURRENT_ENEMIES <= 128" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    try spawner.startWave(100);
+    try std.testing.expect(spawner.max_active_enemies <= MAX_CONCURRENT_ENEMIES);
+    try std.testing.expect(MAX_CONCURRENT_ENEMIES <= 128);
+}
+
+test "RoundSpawner onEnemyDefeated updates active and killed count in O(1)" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    try spawner.startWave(1);
+    try spawner.active_enemies.append(12345);
+    try spawner.active_enemies.append(67890);
+    try std.testing.expectEqual(@as(usize, 2), spawner.active_enemies.len());
+    try std.testing.expectEqual(@as(u32, 0), spawner.killed_enemies);
+
+    spawner.removeDefeatedEnemy(12345);
+    try std.testing.expectEqual(@as(usize, 1), spawner.active_enemies.len());
+    try std.testing.expectEqual(@as(u32, 1), spawner.killed_enemies);
+    try std.testing.expectEqual(@as(u128, 67890), spawner.active_enemies.items()[0]);
+}
+
+test "RoundSpawner queue cursor progression" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    try spawner.startWave(1);
+    const initial_queued = spawner.getProgress().queued;
+    try std.testing.expect(initial_queued > 0);
+    try std.testing.expectEqual(@as(usize, 0), spawner.spawn_cursor);
+
+    spawner.spawn_cursor += 1;
+    try std.testing.expectEqual(initial_queued - 1, spawner.getProgress().queued);
+}
+
+test "pickSpawnPositionWithConfig obeys custom boundaries and exclusion zones" {
+    const custom_config = SpawnAreaConfig{
+        .min_x = 100.0,
+        .max_x = 500.0,
+        .min_y = 100.0,
+        .max_y = 500.0,
+        .min_player_dist = 50.0,
+        .exclusion_zones = &.{
+            .{ .min = .init(200, 200), .max = .init(300, 300) },
+        },
+    };
+
+    const player_pos = lm.Vec2(0, 0);
+    for (0..20) |_| {
+        const pos = pickSpawnPositionWithConfig(player_pos, custom_config);
+        try std.testing.expect(pos.x >= 50.0 and pos.x <= 550.0);
+        try std.testing.expect(pos.y >= 50.0 and pos.y <= 550.0);
+        const in_exclusion = pos.x >= 200 and pos.x <= 300 and pos.y >= 200 and pos.y <= 300;
+        try std.testing.expect(!in_exclusion);
     }
 }

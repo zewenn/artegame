@@ -60,8 +60,8 @@ pub fn Update(self: *Self) !void {
         self.footstep_timer -= lm.time.deltaTime();
         if (self.footstep_timer <= 0) {
             AudioManager.playSfxPitched("audio/walking.mp3", 0.45, 0.15);
+            self.footstep_timer = 0.35;
         }
-        self.footstep_timer = 0.35;
 
         if (move_vector.x <= 0) {
             animator.stop("walk-right");

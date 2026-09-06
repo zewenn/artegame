@@ -90,22 +90,23 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         if (spell.cast(entity)) AudioManager.playSfxPitched("audio/click.wav", 0.7, 0.15);
     }
 
-    const mouse_pos = get_angle_vetor: {
+    const player_pos = lm.vec3ToVec2(transform.position);
+
+    const aim_dir = get_aim_dir: {
+        if (lm.gamepad.isAvailable(0)) {
+            const gamepad = lm.gamepad.getStickVector(0, .right, 0.1);
+            if (gamepad.length() > 0) break :get_aim_dir gamepad.normalize();
+        }
+
         const mouse = camera.screenToWorldPos(lm.mouse.getPosition());
+        const diff = mouse.subtract(player_pos);
+        if (diff.length() > 0) break :get_aim_dir diff.normalize();
 
-        if (!lm.gamepad.isAvailable(0)) break :get_angle_vetor mouse;
-
-        const gamepad = lm.gamepad.getStickVector(0, .right, 0.1);
-        if (gamepad.length() == 0) break :get_angle_vetor mouse;
-
-        break :get_angle_vetor gamepad.normalize().add(lm.vec3ToVec2(transform.position));
+        break :get_aim_dir lm.Vec2(1, 0);
     };
 
-    const direction_vector = mouse_pos
-        .subtract(lm.vec3ToVec2(transform.position))
-        .normalize()
-        .multiply(.init(32, 32))
-        .add(lm.vec3ToVec2(transform.position));
+    const spawn_pos = player_pos.add(aim_dir.multiply(.init(32, 32)));
+    const target_pos = spawn_pos.add(aim_dir);
 
     if ((lm.mouse.getButtonDown(.left) or lm.gamepad.getButtonDown(0, .right_trigger_2)) and
         self.cooldown == 0 and
@@ -120,8 +121,8 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
         if (dashing.isDashing()) {
             try weapon.dashAttack(
-                direction_vector,
-                mouse_pos,
+                spawn_pos,
+                target_pos,
                 stats.*,
             );
 
@@ -129,24 +130,26 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         }
 
         try weapon.lightAttack(
-            direction_vector,
-            mouse_pos,
+            spawn_pos,
+            target_pos,
             stats.*,
         );
     } else if ((lm.mouse.getButtonDown(.right) or lm.gamepad.getButtonDown(0, .left_trigger_2)) and
         self.cooldown == 0 and
         !stats.isStunned())
     {
+        self.cooldown = 1.8 / stats.current.attack_speed;
+
+        stats.applyRoot(0.12);
+
         try hands.play(weapon.*);
         AudioManager.playSfxPitched("audio/punch.mp3", 0.95, 0.15);
 
         try weapon.heavyAttack(
-            direction_vector,
-            mouse_pos,
+            spawn_pos,
+            target_pos,
             stats.*,
         );
-
-        stats.applyStun(0.2);
     }
 }
 
@@ -160,4 +163,41 @@ pub fn equipSpell(self: *Self, spell: Spell) void {
 pub fn reduceSpellCooldowns(self: *Self, amount: f32) void {
     if (self.equipped_spells[0]) |*spell| spell.reduceCooldown(amount);
     if (self.equipped_spells[1]) |*spell| spell.reduceCooldown(amount);
+}
+
+pub fn getWeaponById(self: *Self, id: []const u8) ?*Weapon {
+    for (&self.equipped_weapons) |*maybe_weapon| {
+        if (maybe_weapon.*) |*weapon| {
+            if (std.mem.eql(u8, weapon.id, id)) {
+                return weapon;
+            }
+        }
+    }
+    return null;
+}
+
+pub fn hasWeaponId(self: *const Self, id: []const u8) bool {
+    for (self.equipped_weapons) |maybe_weapon| {
+        if (maybe_weapon) |weapon| {
+            if (std.mem.eql(u8, weapon.id, id)) return true;
+        }
+    }
+    return false;
+}
+
+test "Attack.getWeaponById and hasWeaponId" {
+    var attack: Self = .{};
+    try std.testing.expect(attack.hasWeaponId("Fists"));
+    try std.testing.expect(attack.hasWeaponId("Goliath"));
+    try std.testing.expect(!attack.hasWeaponId("NonExistent"));
+
+    const fists_weapon = attack.getWeaponById("Fists");
+    try std.testing.expect(fists_weapon != null);
+    try std.testing.expectEqualStrings("Fists", fists_weapon.?.id);
+
+    const goliath_weapon = attack.getWeaponById("Goliath");
+    try std.testing.expect(goliath_weapon != null);
+    try std.testing.expectEqualStrings("Goliath", goliath_weapon.?.id);
+
+    try std.testing.expect(attack.getWeaponById("NonExistent") == null);
 }

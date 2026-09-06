@@ -268,12 +268,14 @@ pub fn tickEffects(self: *Self, dt: f32) void {
 pub fn calculateDamage(self: Self, defender: Self, damage_type: DamageType, is_crit: bool) f32 {
     return switch (damage_type) {
         .physical => self.current.physical_damage * (1 - defenseToDamageReductionPercent(defender.current.armour)),
-        .magic => self.current.magic_damage * (1 - defenseToDamageReductionPercent(defender.current.magic_damage)),
+        .magic => self.current.magic_damage * (1 - defenseToDamageReductionPercent(defender.current.magic_resist)),
     } * if (is_crit) self.current.crit_damage_multiplier else 1;
 }
 
 pub fn defenseToDamageReductionPercent(defense: f32) f32 {
-    return 0.3 * std.math.log10(defense + 1);
+    const clamped_defense = @max(0.0, defense);
+    const reduction = 0.3 * std.math.log10(clamped_defense + 1);
+    return std.math.clamp(reduction, 0.0, 0.90);
 }
 
 test "Stats effect lifecycle with on_enable and on_disable callbacks using lm.List" {
@@ -422,3 +424,18 @@ test "Stats effect on_tick periodic callback execution" {
     try std.testing.expectEqual(@as(f32, 70), stats.current.health);
     try std.testing.expect(!stats.hasEffect(.{ .id = "periodic_heal" }));
 }
+
+test "defenseToDamageReductionPercent clamping against negative and extreme values" {
+    // Negative defense should clamp to 0 reduction, avoiding negative log10 NaN
+    try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(-10.0));
+    try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(-1.0));
+    try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(0.0));
+
+    // Normal defense values
+    const red10 = defenseToDamageReductionPercent(10.0);
+    try std.testing.expect(red10 > 0.0 and red10 < 0.90);
+
+    // Extreme high defense should clamp to 0.90 (90%) reduction, never healing (never > 1.0)
+    try std.testing.expectEqual(@as(f32, 0.90), defenseToDamageReductionPercent(100000.0));
+}
+

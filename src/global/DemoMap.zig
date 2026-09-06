@@ -15,20 +15,32 @@ pub const RoundState = enum {
     combat,
 };
 
-pub var state: RoundState = .replenish;
-var instance: ?*Self = null;
-
+state: RoundState = .replenish,
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
 round: u32 = 0,
 spawner: RoundSpawner = undefined,
 
+pub fn get() ?*Self {
+    const scene = lm.activeScene() orelse return null;
+    return scene.getGlobalBehaviour(Self);
+}
+
 pub fn Awake(self: *Self) !void {
-    instance = self;
-    state = .replenish;
-    MusicManager.setPhase(.replenish);
+    self.state = .replenish;
+    MusicManager.setGlobalPhase(.replenish);
     BoonPool.reset();
     self.spawner = RoundSpawner.init(lm.allocators.scene());
+    self.spawner.spawn_area = .{
+        .min_x = -1100.0,
+        .max_x = 1100.0,
+        .min_y = -520.0,
+        .max_y = 520.0,
+        .min_player_dist = 420.0,
+        .exclusion_zones = &.{
+            .{ .min = .init(-160, -280), .max = .init(160, -120) },
+        },
+    };
 
     try lm.summoning.entities(&.{
         try prefabs.Player(.init(0, 0)),
@@ -49,7 +61,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player = player;
         self.player_objectives = player.getComponent(player_components.Objectives);
         if (self.player_objectives) |objectives| {
-            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
+            _ = try objectives.setSingleObjective("Replenish", " - Visit Boon Shrine to upgrade \n - Activate Round Shrine to fight");
         }
     }
 
@@ -62,12 +74,12 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     const dt = lm.time.deltaTime();
     try self.spawner.update(dt, scene, player_pos);
 
-    if (state == .combat and self.spawner.isWaveFinished()) {
-        state = .replenish;
+    if (self.state == .combat and self.spawner.isWaveFinished()) {
+        self.state = .replenish;
         self.spawner.finishWave();
-        MusicManager.setPhase(.replenish);
+        MusicManager.setGlobalPhase(.replenish);
         if (self.player_objectives) |objectives| {
-            objectives.tracking = try objectives.addObjective(.init("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight"));
+            _ = try objectives.setSingleObjective("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight");
         }
         if (self.player) |player| {
             if (player.getComponent(Stats)) |stats| {
@@ -80,32 +92,42 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 }
 
 pub fn End(self: *Self) !void {
-    instance = null;
-    MusicManager.stop();
+    MusicManager.stopGlobal();
     self.spawner.deinit();
     BoonPool.reset();
 }
 
 pub fn isReplenish() bool {
-    return state == .replenish;
+    const self = get() orelse return false;
+    return self.state == .replenish;
+}
+
+pub fn getState() ?RoundState {
+    const self = get() orelse return null;
+    return self.state;
 }
 
 pub fn startRound() !void {
-    const self = instance orelse return;
-    if (state != .replenish) return;
+    const self = get() orelse return;
+    if (self.state != .replenish) return;
 
-    state = .combat;
+    self.state = .combat;
     self.round += 1;
-    MusicManager.setPhase(.combat);
+    MusicManager.setGlobalPhase(.combat);
 
     if (self.player_objectives) |objectives| {
-        objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
+        _ = try objectives.setSingleObjective("FIGHT TILL DEATH", "Kill all enemies");
     }
 
     try self.spawner.startWave(self.round);
 }
 
 pub fn getWaveProgress() ?RoundSpawner.WaveProgress {
-    const self = instance orelse return null;
+    const self = get() orelse return null;
     return self.spawner.getProgress();
+}
+
+pub fn removeDefeatedEnemy(uuid: u128) void {
+    const self = get() orelse return;
+    self.spawner.removeDefeatedEnemy(uuid);
 }

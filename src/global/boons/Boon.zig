@@ -49,6 +49,7 @@ pub const Rarity = enum {
     }
 };
 
+id: []const u8,
 name: []const u8,
 description: []const u8,
 icon: []const u8,
@@ -74,8 +75,42 @@ pub fn cost(self: Self) usize {
 }
 
 pub fn eql(self: Self, other: Self) bool {
-    return self.rarity == other.rarity and
-        self.boon_type == other.boon_type and
-        std.mem.eql(u8, self.name, other.name) and
-        std.mem.eql(u8, self.description, other.description);
+    return std.mem.eql(u8, self.id, other.id);
+}
+
+test "Boon equality by unique id" {
+    const dummy_cb = struct {
+        fn cb(_: *Stats, _: ?*Attack) void {}
+    }.cb;
+
+    const b1: Self = .{
+        .id = "boon_1",
+        .name = "Boon One",
+        .description = "Desc",
+        .icon = "icon.png",
+        .rarity = .normal,
+        .boon_type = .stat,
+        .callback = dummy_cb,
+    };
+    const b2: Self = .{
+        .id = "boon_1",
+        .name = "Boon One Modified",
+        .description = "Different Desc",
+        .icon = "icon2.png",
+        .rarity = .rare,
+        .boon_type = .stat,
+        .callback = dummy_cb,
+    };
+    const b3: Self = .{
+        .id = "boon_2",
+        .name = "Boon One",
+        .description = "Desc",
+        .icon = "icon.png",
+        .rarity = .normal,
+        .boon_type = .stat,
+        .callback = dummy_cb,
+    };
+
+    try std.testing.expect(b1.eql(b2));
+    try std.testing.expect(!b1.eql(b3));
 }

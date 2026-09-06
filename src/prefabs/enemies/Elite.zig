@@ -22,7 +22,7 @@ fn onHasteDisable(s: *Stats) void {
     s.current.attack_speed /= 1.4;
 }
 
-var elite_abilities = [_]Ability{
+pub const elite_abilities = [_]Ability{
     Ability{
         .id = "elite_enrage",
         .execution_type = .spell,

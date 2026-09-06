@@ -11,7 +11,7 @@ const MobilityProfile = Enemy.Ability.MobilityProfile;
 
 var melee_enemy_count: u32 = 0;
 
-var melee_abilities = [_]Ability{
+pub const melee_abilities = [_]Ability{
     Ability{
         .id = "lunge_dash",
         .execution_type = .mobility,

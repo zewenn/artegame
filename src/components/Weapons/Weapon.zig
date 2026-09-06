@@ -31,10 +31,11 @@ sprite_right: []const u8 = "ui/empty_icon.png",
 type: WeaponType = .close,
 
 pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
-    const angle = std.math.atan2(
-        target.y - position.y,
-        target.x - position.x,
-    );
+    const diff = target.subtract(position);
+    const angle = switch (diff.length() > 0.001) {
+        true => std.math.atan2(diff.y, diff.x),
+        false => 0.0,
+    };
 
     for (attack.shooting_degrees) |degree_offset| {
         const new_angle = std.math.degreesToRadians(degree_offset) + angle;
