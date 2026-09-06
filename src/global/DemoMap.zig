@@ -32,8 +32,15 @@ pub fn startRound() !void {
         objectives.tracking = try objectives.addObjective(.init("FIGHT TILL DEATH", "Kill all enemies"));
     }
 
-    for (0..self.round) |_| {
-        const enemy = try prefabs.enemies.Basic(.init(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256)));
+    for (0..self.round) |i| {
+        const pos = lm.Vec2(lm.randFloat(f32, -256, 256), lm.randFloat(f32, -256, 256));
+        const enemy = if (self.round >= 3 and i == 0)
+            try prefabs.enemies.Elite(pos)
+        else if (self.round >= 2 and (i % 2 == 1))
+            try prefabs.enemies.Ranged(pos)
+        else
+            try prefabs.enemies.Melee(pos);
+
         try self.enemies.append(enemy.uuid);
         try lm.summoning.entity(enemy);
     }

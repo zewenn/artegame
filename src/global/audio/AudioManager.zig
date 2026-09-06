@@ -73,7 +73,6 @@ test "AudioManager effective volume calculation" {
     try std.testing.expectEqual(@as(f32, 0.0), effectiveSfx(1.0));
     try std.testing.expectEqual(@as(f32, 0.0), effectiveMusic(1.0));
 
-    // Reset defaults
     master_volume = 1.0;
     music_volume = 0.7;
     sfx_volume = 0.8;

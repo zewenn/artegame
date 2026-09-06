@@ -130,8 +130,12 @@ pub fn isSlowed(self: Self) bool {
     return self.hasEffect(.{ .effect_type = .slow });
 }
 
+pub fn isSleeping(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .sleep });
+}
+
 pub fn canMove(self: Self) bool {
-    return !self.isStunned() and !self.isRooted();
+    return !self.isStunned() and !self.isRooted() and !self.isSleeping();
 }
 
 pub fn addEffect(self: *Self, effect: Effect) void {

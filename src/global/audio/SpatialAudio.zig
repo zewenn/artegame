@@ -53,24 +53,20 @@ pub fn playSpatialPitched(path: []const u8, source_pos: lm.Vector2, listener_pos
 test "calculateSpatialParams distance and panning" {
     const listener = lm.Vector2.init(0, 0);
 
-    // Center close
     const center = calculateSpatialParams(.init(0, 0), listener, 100.0);
     try std.testing.expect(center != null);
     try std.testing.expectApproxEqAbs(@as(f32, 1.0), center.?.falloff, 0.01);
     try std.testing.expectApproxEqAbs(@as(f32, 0.0), center.?.pan, 0.01);
 
-    // Hard left
     const left = calculateSpatialParams(.init(-50, 0), listener, 100.0);
     try std.testing.expect(left != null);
     try std.testing.expect(left.?.pan < -0.9);
     try std.testing.expect(left.?.falloff < 1.0 and left.?.falloff > 0.0);
 
-    // Hard right
     const right = calculateSpatialParams(.init(50, 0), listener, 100.0);
     try std.testing.expect(right != null);
     try std.testing.expect(right.?.pan > 0.9);
 
-    // Beyond max distance
     const outside = calculateSpatialParams(.init(150, 0), listener, 100.0);
     try std.testing.expectEqual(@as(?SpatialParams, null), outside);
 }

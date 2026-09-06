@@ -2,18 +2,6 @@
 
 ## Backlog
 
-### [2#ENE] Universal enemy system with attack ranges, conditional projectiles, and spells
-
-  - tags: [enemies, combat, ai]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [ ] Design universal enemy attack configuration with range thresholds, conditional rules, and fallback attack
-      - [ ] Implement conditional projectile firing supporting multiple projectile profiles and trigger criteria
-      - [ ] Implement enemy spell-casting support with conditions (e.g. self-buffs, crowd control)
-      - [ ] Build variant prefabs (melee, ranged, elite/champion with distinctive tints) using universal system
-      - [ ] Update Enemy AI pursuit, strafing, and attack execution to evaluate conditional attacks dynamically
-
 ### [3#SPW] Dynamic round spawner with scaling enemy waves
 
   - tags: [spawner, gameplay]
@@ -69,6 +57,20 @@
 ## Work in Progress
 
 ## Done
+
+### [2#ENE] Universal enemy system with attack ranges, conditional projectiles, and spells
+
+  - tags: [enemies, combat, ai]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Design universal enemy attack configuration with range thresholds, conditional rules, and fallback attack
+      - [x] Implement conditional projectile firing supporting multiple projectile profiles and trigger criteria
+      - [x] Implement enemy spell-casting support with conditions (e.g. self-buffs, crowd control)
+      - [x] Build variant prefabs (melee, ranged, elite/champion with distinctive tints) using universal system
+      - [x] Update Enemy AI pursuit, strafing, and attack execution to evaluate conditional attacks dynamically
+      - [x] Implement conditional animations (idle, locomotion, windup, attack, winddown, reaction)
+
 
 ### [4#AUD] Comprehensive audio system (Loom audio backend, dynamic phase BGM, and gameplay SFX)
 

@@ -4,21 +4,20 @@ const Effect = @import("Effect.zig");
 const EffectType = Effect.EffectType;
 
 pub const EffectVisual = struct {
-    /// Sprite frame asset paths (e.g. &.{ "effects/stun_effect_1.png", ... })
     frames: []const []const u8 = &.{},
-    /// Duration of each frame in seconds (e.g. 0.1s = 10 FPS)
+
     frame_duration: f32 = 0.1,
-    /// Offset relative to entity transform position
+
     offset: lm.Vector2 = .init(0, 32),
-    /// Render scale / dimensions
+
     scale: lm.Vector2 = .init(32, 32),
-    /// Continuous rotation speed in degrees per second
+
     rotation_speed: f32 = 0,
-    /// Color tint multiplier
+
     tint: lm.Color = lm.Color.white,
-    /// Icon asset path for UI badges (e.g. "ui/sleep_icon.png")
+
     icon: ?[]const u8 = null,
-    /// Whether the sprite animation loops
+
     loop: bool = true,
 
     pub fn getFrameIndex(self: EffectVisual, elapsed_time: f32) usize {
@@ -101,7 +100,7 @@ test "EffectVisual frame index calculation" {
     try std.testing.expectEqual(@as(usize, 0), visual.getFrameIndex(0.05));
     try std.testing.expectEqual(@as(usize, 1), visual.getFrameIndex(0.15));
     try std.testing.expectEqual(@as(usize, 2), visual.getFrameIndex(0.25));
-    // Loops back to 0 at 0.3
+
     try std.testing.expectEqual(@as(usize, 0), visual.getFrameIndex(0.30));
     try std.testing.expectEqual(@as(usize, 1), visual.getFrameIndex(0.40));
 }

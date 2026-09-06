@@ -53,4 +53,5 @@ test {
     _ = @import("global/audio/AudioManager.zig");
     _ = @import("global/audio/MusicManager.zig");
     _ = @import("global/audio/SpatialAudio.zig");
+    _ = @import("components/enemy/Ability.zig");
 }

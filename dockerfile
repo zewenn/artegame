@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/zig
 WORKDIR /
 
-RUN curl -L https://ziglang.org/download/0.15.1/zig-x86_64-linux-0.15.1.tar.xz \
+RUN curl -L https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz \
     | tar -xJ -C /opt/zig --strip-components=1 \
     && ln -s /opt/zig/zig /usr/local/bin/zig
 

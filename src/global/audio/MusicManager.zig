@@ -161,13 +161,11 @@ test "MusicManager phase selection and transition logic" {
     current_vol = 0.0;
     outgoing_vol = 0.0;
 
-    // Transition to replenish
     setPhase(.replenish);
     try std.testing.expectEqual(Phase.replenish, current_phase);
     try std.testing.expect(current_track_path != null);
     try std.testing.expectEqualStrings(ambient_track, current_track_path.?);
 
-    // Transition to combat
     setPhase(.combat);
     try std.testing.expectEqual(Phase.combat, current_phase);
     try std.testing.expect(outgoing_track_path != null);
@@ -175,7 +173,6 @@ test "MusicManager phase selection and transition logic" {
     try std.testing.expect(current_track_path != null);
     try std.testing.expect(std.mem.startsWith(u8, current_track_path.?, "audio/audio__fight_"));
 
-    // Reset
     current_phase = .stopped;
     current_track_path = null;
     outgoing_track_path = null;

@@ -6,6 +6,8 @@ const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
 const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 
+pub const OnHitEffect = enum { slow, root, stun };
+
 pub const Options = struct {
     start_position: lm.Vector2 = .init(0, 0),
     target_position: lm.Vector2 = .init(1, 0),
@@ -25,7 +27,7 @@ pub const Options = struct {
     inactive: bool = false,
     override_sprite: ?[]const u8 = null,
 
-    onhit_effect: ?enum { slow, root, stun } = null,
+    onhit_effect: ?OnHitEffect = null,
     onhit_duration: f32 = 0,
     onhit_strength: f32 = 0,
 
