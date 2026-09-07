@@ -95,12 +95,12 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) b
     });
 
     if (selected_index != prev_selected_index) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.35, 0.1);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
         prev_selected_index = selected_index;
     }
 
     if (should_exit or back_clicked) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.0);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.0);
         return true;
     }
 
@@ -819,7 +819,7 @@ fn handleInput() bool {
 
 pub fn setTab(tab: OptionsTab) void {
     if (options_tab != tab) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.45, 0.05);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.45, 0.05);
         options_tab = tab;
         selected_index = 0;
         prev_selected_index = 0;
@@ -853,7 +853,7 @@ pub fn adjustVolume(kind: VolumeType, delta: f32) void {
         AudioManager.sfx_volume,
         AudioManager.mute,
     );
-    AudioManager.playSfxPitched("audio/click.wav", 0.35, 0.15);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.15);
 }
 
 pub fn toggleMuteAudio() void {
@@ -864,12 +864,12 @@ pub fn toggleMuteAudio() void {
         AudioManager.sfx_volume,
         AudioManager.mute,
     );
-    AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.05);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.05);
 }
 
 pub fn toggleFullscreenMode() void {
     lm.window.fullscreen.toggle();
-    AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.05);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.05);
 }
 
 // --------------------------------------------------------------------------------------------------

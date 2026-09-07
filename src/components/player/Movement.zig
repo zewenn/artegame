@@ -59,7 +59,7 @@ pub fn Update(self: *Self) !void {
     if (move_vector.length() > 0) animation: {
         self.footstep_timer -= lm.time.deltaTime();
         if (self.footstep_timer <= 0) {
-            AudioManager.playSfxPitched("audio/walking.mp3", 0.45, 0.15);
+            AudioManager.playSfxPitched("audio/sfx/walking.mp3", 0.45, 0.15);
             self.footstep_timer = 0.35;
         }
 
@@ -74,7 +74,7 @@ pub fn Update(self: *Self) !void {
         try animator.play("walk-right");
     } else {
         self.footstep_timer = 0.0;
-        lm.audio.stop("audio/walking.mp3");
+        lm.audio.stop("audio/sfx/walking.mp3");
     }
 
     transform.position = transform.position.add(lm.vec2ToVec3(

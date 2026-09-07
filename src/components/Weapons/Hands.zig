@@ -114,7 +114,7 @@ fn Hand() !*lm.Entity {
             .transform = .{ .scale = .init(48, 48) },
         }),
 
-        lm.Renderer.sprite("weapons/gloves_0.png"),
+        lm.Renderer.sprite("weapons/gloves/gloves_0.png"),
         lm.Animator.init(HAND_ANIMATIONS),
     });
 }

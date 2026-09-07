@@ -14,6 +14,10 @@
   - priority: low
   - workload: Easy
 
+## Work in Progress
+
+## Done
+
 ### [13#AST] Rename/re-categorise assets into subdirectory trees.
 
   - tags: [Assets, Categorisation]
@@ -21,18 +25,14 @@
   - workload: Normal
   - defaultExpanded: false
   - steps:
-      - [ ] Create subdir-tree for assets/audio and re-categorise
-      - [ ] Create subdir-tree for assets/characters and re-categorise
-      - [ ] Create subdir-tree for assets/projectiles and re-categorise
-      - [ ] Create subdir-tree for assets/ui and re-categorise
-      - [ ] Create subdir-tree for assets/weapons and re-categorise
+      - [x] Create subdir-tree for assets/audio and re-categorise
+      - [x] Create subdir-tree for assets/characters and re-categorise
+      - [x] Create subdir-tree for assets/projectiles and re-categorise
+      - [x] Create subdir-tree for assets/ui and re-categorise
+      - [x] Create subdir-tree for assets/weapons and re-categorise
     ```md
     Currently assets like [audio__ambient.mp3](./src/assets/audio/audio__ambient.mp3) are clutterring up the workspace, and would be better named/placed like: "src/assets/audio/music/ambient.mp3".
     ```
-
-## Work in Progress
-
-## Done
 
 ### [8#SYS] Save system and session persistence
 

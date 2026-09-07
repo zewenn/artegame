@@ -86,12 +86,12 @@ fn selectBoon(slot_index: usize, stats_opt: ?*Stats, attack_opt: ?*Attack) void 
     const cost = boon.cost();
 
     if (stats.current.experience < cost) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.1);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.1);
         return;
     }
 
     stats.current.experience -= cost;
-    AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+    AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
 
     boon.applyTo(stats, attack_opt);
     BoonPool.consumeBoon(boon);
@@ -267,7 +267,7 @@ fn boonCard(
                     },
                 },
                 .image = ui.image(
-                    "ui/sleep_icon.png",
+                    "ui/icons/sleep_icon.png",
                     .init(cost_img_size, cost_img_size),
                 ) catch .{ .image_data = null },
             })({});

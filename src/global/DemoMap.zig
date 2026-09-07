@@ -9,6 +9,7 @@ const MusicManager = @import("audio/MusicManager.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const SaveSystem = @import("save/SaveSystem.zig");
 const spells = @import("../components/Weapons/spells.zig");
+const Hands = @import("../components/Weapons/Hands.zig");
 
 const Self = @This();
 
@@ -113,6 +114,12 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
                 var s = base_spell;
                 s.level = spell.level;
                 attack.equipped_spells[i] = s;
+            }
+
+            if (player.getComponent(Hands)) |hands| {
+                if (attack.currentWeapon()) |w| {
+                    hands.play(w.*) catch {};
+                }
             }
         }
     }

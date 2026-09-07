@@ -82,7 +82,7 @@ pub fn Update(self: *Self) !void {
     });
 
     if (self.selected_index != self.prev_selected_index) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.35, 0.1);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
         self.prev_selected_index = self.selected_index;
     }
 }
@@ -126,7 +126,7 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
                 },
             },
             .image = ui.image(
-                "ui/artegame_logo.png",
+                "ui/branding/artegame_logo.png",
                 .init(logo_w, logo_h),
             ) catch .{ .image_data = null },
         })({});
@@ -407,7 +407,7 @@ fn activateAction(self: *Self, index: usize) void {
     if (SaveSystem.hasActiveRun()) {
         switch (index) {
             0 => {
-                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 DemoMap.resume_saved_run = true;
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});
@@ -416,18 +416,18 @@ fn activateAction(self: *Self, index: usize) void {
             1 => {
                 SaveSystem.clearRun();
                 DemoMap.resume_saved_run = false;
-                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});
                 };
             },
             2 => {
-                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
                 OptionsMenu.reset();
                 self.screen = .options;
             },
             3 => {
-                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
                 lm.quit();
             },
             else => {},
@@ -436,18 +436,18 @@ fn activateAction(self: *Self, index: usize) void {
         switch (index) {
             0 => {
                 DemoMap.resume_saved_run = false;
-                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});
                 };
             },
             1 => {
-                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
                 OptionsMenu.reset();
                 self.screen = .options;
             },
             2 => {
-                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
                 lm.quit();
             },
             else => {},

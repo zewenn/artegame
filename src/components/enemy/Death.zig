@@ -45,7 +45,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         listener_pos = lm.vec3ToVec2(player_transform.position);
     }
 
-    SpatialAudio.playSpatialPitched("audio/boom.wav", enemy_pos, listener_pos, 800.0, 0.75, 0.15);
+    SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", enemy_pos, listener_pos, 800.0, 0.75, 0.15);
 
     const orb_count = lm.random.intRangeAtMostBiased(u8, 1, 3);
     for (0..orb_count) |_| {

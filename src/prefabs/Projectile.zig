@@ -57,8 +57,8 @@ pub const Options = struct {
 
     pub fn getProjectileSprite(self: Options) []const u8 {
         return self.override_sprite orelse switch (self.target_team) {
-            .player => "projectiles/enemy_light_projectile.png",
-            else => "projectiles/light_attack_projectile.png",
+            .player => "projectiles/enemies/light.png",
+            else => "projectiles/player/light.png",
         };
     }
 };
@@ -129,9 +129,9 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
             }
         }
         if (options.is_crit) {
-            SpatialAudio.playSpatialPitched("audio/boom.wav", hit_pos, listener_pos, 700.0, 0.65, 0.15);
+            SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", hit_pos, listener_pos, 700.0, 0.65, 0.15);
         } else {
-            SpatialAudio.playSpatialPitched("audio/punch.mp3", hit_pos, listener_pos, 700.0, 0.5, 0.1);
+            SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", hit_pos, listener_pos, 700.0, 0.5, 0.1);
         }
     }
 

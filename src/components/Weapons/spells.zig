@@ -10,7 +10,7 @@ pub const heal: Spell = Spell{
     .id = "Heal",
     .cooldown = 8,
     .slot = .left,
-    .icon = "ui/heal_icon.png",
+    .icon = "ui/icons/heal_icon.png",
     .cast_fn = struct {
         fn onTick(s: *Stats) void {
             if (s.getEffect(.{ .id = "heal_regen" })) |e| {
@@ -35,7 +35,7 @@ pub const heal: Spell = Spell{
                     .frame_duration = 0.1,
                     .offset = .init(0, 0),
                     .scale = .init(64, 64),
-                    .icon = "ui/heal_icon.png",
+                    .icon = "ui/icons/heal_icon.png",
                 },
             });
         }
@@ -46,7 +46,7 @@ pub const root: Spell = Spell{
     .id = "Root",
     .cooldown = 3,
     .slot = .right,
-    .icon = "ui/sleep_icon.png",
+    .icon = "ui/icons/sleep_icon.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;
@@ -78,7 +78,7 @@ pub const goliath: Spell = Spell{
     .id = "Goliath",
     .cooldown = 8,
     .slot = .left,
-    .icon = "ui/goliath_icon.png",
+    .icon = "ui/icons/goliath_icon.png",
     .cast_fn = struct {
         fn onEnable(s: *Stats) void {
             if (s.getEffect(.{ .id = "goliath" })) |e| {
@@ -109,7 +109,7 @@ pub const goliath: Spell = Spell{
                 .on_enable = onEnable,
                 .on_disable = onDisable,
                 .visual = .{
-                    .icon = "ui/goliath_icon.png",
+                    .icon = "ui/icons/goliath_icon.png",
                 },
             });
         }
@@ -120,7 +120,7 @@ pub const haste: Spell = Spell{
     .id = "Haste",
     .cooldown = 6,
     .slot = .right,
-    .icon = "ui/haste_icon.png",
+    .icon = "ui/icons/haste_icon.png",
     .cast_fn = struct {
         fn onEnable(s: *Stats) void {
             if (s.getEffect(.{ .id = "haste" })) |e| {
@@ -149,7 +149,7 @@ pub const haste: Spell = Spell{
                 .on_enable = onEnable,
                 .on_disable = onDisable,
                 .visual = .{
-                    .icon = "ui/haste_icon.png",
+                    .icon = "ui/icons/haste_icon.png",
                 },
             });
         }

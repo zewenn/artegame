@@ -21,7 +21,7 @@ pub fn show(stats: DemoMap.RunStats) void {
     prev_selected_index = 0;
     just_opened = true;
     lm.time.pause();
-    AudioManager.playSfxPitched("audio/click.wav", 0.4, -0.2);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.4, -0.2);
     SaveSystem.recordRunEnd(stats);
 }
 
@@ -74,7 +74,7 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
     });
 
     if (selected_index != prev_selected_index) {
-        AudioManager.playSfxPitched("audio/click.wav", 0.35, 0.1);
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
         prev_selected_index = selected_index;
     }
 }
@@ -326,7 +326,7 @@ fn activateAction(index: usize) void {
             // RESTART
             SaveSystem.clearRun();
             hide();
-            AudioManager.playSfxPitched("audio/coin.wav", 0.8, 0.05);
+            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
             lm.loadScene("demo_map") catch |err| {
                 std.log.err("Failed to restart demo_map scene: {any}", .{err});
             };
@@ -334,7 +334,7 @@ fn activateAction(index: usize) void {
         1 => {
             // MAIN MENU
             hide();
-            AudioManager.playSfxPitched("audio/click.wav", 0.55, 0.0);
+            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
             lm.loadScene("main_menu") catch |err| {
                 std.log.err("Failed to return to main_menu scene: {any}", .{err});
             };

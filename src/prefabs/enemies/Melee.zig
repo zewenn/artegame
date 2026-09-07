@@ -20,7 +20,7 @@ pub const melee_abilities = [_]Ability{
         .cooldown = 4.0,
         .mobility_profile = MobilityProfile{
             .direction = .towards_target,
-            .sfx_path = "audio/dash.wav",
+            .sfx_path = "audio/sfx/dash.wav",
         },
         .windup_animation = "windup-melee",
         .release_animation = "attack-melee",
@@ -42,7 +42,7 @@ const melee_fallback = Ability{
         .size = .init(48, 48),
         .knockback_strength = 0.2,
         .knockback_duration = 0.15,
-        .sfx_path = "audio/punch.mp3",
+        .sfx_path = "audio/sfx/punch.mp3",
     },
     .windup_animation = "windup-melee",
     .release_animation = "attack-melee",
@@ -56,7 +56,7 @@ pub fn MeleeEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Transform{
             .position = .init(position.x, position.y, 0),
         },
-        lm.Renderer.sprite("characters/enemy_melee_left_1.png"),
+        lm.Renderer.sprite("characters/enemies/melee/left_1.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),

@@ -111,7 +111,7 @@ pub fn collect(self: *Self, entity: *lm.Entity) !void {
         stats.current.experience +%= self.experience_value;
     }
 
-    lm.audio.playAdvanced("audio/pickup.mp3", .{
+    lm.audio.playAdvanced("audio/sfx/pickup.mp3", .{
         .volume = 0.65,
         .pitch = lm.randFloat(f32, 0.95, 1.15),
     }) catch {};

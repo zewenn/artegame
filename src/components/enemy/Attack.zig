@@ -213,7 +213,7 @@ pub fn fromProjectileOptions(options: ProjectileOptions) Self {
                 .onhit_strength = options.onhit_strength,
                 .knockback_strength = options.knockback_strength,
                 .knockback_duration = options.knockback_duration,
-                .sfx_path = "audio/punch.mp3",
+                .sfx_path = "audio/sfx/punch.mp3",
             },
         },
     };

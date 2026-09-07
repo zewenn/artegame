@@ -75,8 +75,8 @@ pub const SerializedAttack = struct {
 pub const SerializedWeapon = struct {
     id: []const u8 = "",
     type: WeaponType = .close,
-    sprite_left: []const u8 = "ui/empty_icon.png",
-    sprite_right: []const u8 = "ui/empty_icon.png",
+    sprite_left: []const u8 = "ui/icons/empty_icon.png",
+    sprite_right: []const u8 = "ui/icons/empty_icon.png",
     light_attack: SerializedAttack = .{},
     heavy_attack: SerializedAttack = .{},
     dash_attack: SerializedAttack = .{},
@@ -95,8 +95,8 @@ light_attack: Attack = .{},
 heavy_attack: Attack = .{},
 dash_attack: Attack = .{},
 
-sprite_left: []const u8 = "ui/empty_icon.png",
-sprite_right: []const u8 = "ui/empty_icon.png",
+sprite_left: []const u8 = "ui/icons/empty_icon.png",
+sprite_right: []const u8 = "ui/icons/empty_icon.png",
 
 type: WeaponType = .close,
 
@@ -113,13 +113,23 @@ pub fn jsonStringify(self: @This(), jw: anytype) !void {
     try jw.write(sw);
 }
 
+pub fn migratePath(path: []const u8) []const u8 {
+    if (std.mem.eql(u8, path, "weapons/gloves_0.png")) return "weapons/gloves/gloves_0.png";
+    if (std.mem.eql(u8, path, "weapons/gloves_1.png")) return "weapons/gloves/gloves_1.png";
+    if (std.mem.eql(u8, path, "weapons/plates_0.png")) return "weapons/plates/plates_0.png";
+    if (std.mem.eql(u8, path, "weapons/plates_1.png")) return "weapons/plates/plates_1.png";
+    if (std.mem.eql(u8, path, "weapons/weight_plate.png")) return "weapons/plates/weight_plate.png";
+    if (std.mem.eql(u8, path, "ui/empty_icon.png")) return "ui/icons/empty_icon.png";
+    return path;
+}
+
 pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.json.ParseOptions) !@This() {
     const sw = try std.json.innerParse(SerializedWeapon, allocator, source, options);
     return @This(){
         .id = sw.id,
         .type = sw.type,
-        .sprite_left = sw.sprite_left,
-        .sprite_right = sw.sprite_right,
+        .sprite_left = migratePath(sw.sprite_left),
+        .sprite_right = migratePath(sw.sprite_right),
         .light_attack = sw.light_attack.toAttack(),
         .heavy_attack = sw.heavy_attack.toAttack(),
         .dash_attack = sw.dash_attack.toAttack(),
@@ -188,8 +198,8 @@ test "Weapon serialization and deserialization roundtrip" {
     const original = Self{
         .id = "TestGoliath",
         .type = .wide,
-        .sprite_left = "weapons/plates_1.png",
-        .sprite_right = "weapons/plates_0.png",
+        .sprite_left = "weapons/plates/plates_1.png",
+        .sprite_right = "weapons/plates/plates_0.png",
         .light_attack = .{
             .shooting_degrees = &.{ -5, 0, 5 },
             .projectile_options = .{

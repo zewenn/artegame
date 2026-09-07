@@ -28,12 +28,12 @@ pub const Phase = enum {
     combat,
 };
 
-pub const ambient_track = "audio/audio__ambient.mp3";
+pub const ambient_track = "audio/music/ambient.mp3";
 pub const fight_tracks = [_][]const u8{
-    "audio/audio__fight_0.mp3",
-    "audio/audio__fight_1.mp3",
-    "audio/audio__fight_2.mp3",
-    "audio/audio__fight_3.mp3",
+    "audio/music/fight_0.mp3",
+    "audio/music/fight_1.mp3",
+    "audio/music/fight_2.mp3",
+    "audio/music/fight_3.mp3",
 };
 
 current_phase: Phase = .stopped,
@@ -178,7 +178,7 @@ test "MusicManager phase selection and transition logic" {
     try std.testing.expect(mgr.outgoing_track_path != null);
     try std.testing.expectEqualStrings(ambient_track, mgr.outgoing_track_path.?);
     try std.testing.expect(mgr.current_track_path != null);
-    try std.testing.expect(std.mem.startsWith(u8, mgr.current_track_path.?, "audio/audio__fight_"));
+    try std.testing.expect(std.mem.startsWith(u8, mgr.current_track_path.?, "audio/music/fight_"));
 
     mgr.End();
     try std.testing.expectEqual(Phase.stopped, mgr.current_phase);

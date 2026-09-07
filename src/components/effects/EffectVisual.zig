@@ -56,7 +56,7 @@ pub const EffectVisualRegistry = struct {
                 .frame_duration = 0.1,
                 .offset = .init(0, 0),
                 .scale = .init(64, 64),
-                .icon = "ui/empty_icon.png",
+                .icon = "ui/icons/empty_icon.png",
             },
             .sleep, .root => EffectVisual{
                 .frames = &.{
@@ -66,7 +66,7 @@ pub const EffectVisualRegistry = struct {
                 .offset = .init(0, 0),
                 .scale = .init(64, 64),
                 .loop = true,
-                .icon = "ui/sleep_icon.png",
+                .icon = "ui/icons/sleep_icon.png",
             },
             .regen => EffectVisual{
                 .frames = &.{
@@ -76,13 +76,13 @@ pub const EffectVisualRegistry = struct {
                 .frame_duration = 0.1,
                 .offset = .init(0, 0),
                 .scale = .init(64, 64),
-                .icon = "ui/heal_icon.png",
+                .icon = "ui/icons/heal_icon.png",
             },
             .haste => EffectVisual{
-                .icon = "ui/haste_icon.png",
+                .icon = "ui/icons/haste_icon.png",
             },
             .goliath => EffectVisual{
-                .icon = "ui/goliath_icon.png",
+                .icon = "ui/icons/goliath_icon.png",
             },
             .slow, .custom => null,
         };

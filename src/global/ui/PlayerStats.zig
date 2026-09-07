@@ -177,7 +177,7 @@ fn experienceCounter(experience: usize, alloc: ?std.mem.Allocator) void {
                 },
             },
             .image = ui.image(
-                "ui/sleep_icon.png",
+                "ui/icons/sleep_icon.png",
                 .init(HUD.hud_height, HUD.hud_height),
             ) catch .{ .image_data = null },
         })({});
@@ -221,7 +221,7 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
                 .padding = .axes(lm.tou16(HUD.scale * 6), lm.tou16(HUD.scale * 6)),
             },
             .background_color = ui.color(50, 50, 50, 255),
-            .image = ui.image("ui/HUD/background.png", .init(HUD.hud_width, HUD.hud_height)) catch .{ .image_data = null },
+            .image = ui.image("ui/hud/background.png", .init(HUD.hud_width, HUD.hud_height)) catch .{ .image_data = null },
         })({
             progressBar(
                 0,

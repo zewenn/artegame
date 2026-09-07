@@ -13,7 +13,7 @@ var shrine_count: u32 = 0;
 
 fn onShrineInteract(interactable: *Interactable, player: *lm.Entity) void {
     _ = interactable;
-    AudioManager.playSfxPitched("audio/click.wav", 0.8, 0.05);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.8, 0.05);
     const stats = player.getComponent(Stats) orelse return;
     const attack = player.getComponent(Attack) orelse return;
 

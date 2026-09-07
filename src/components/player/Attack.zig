@@ -56,6 +56,11 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 
 pub fn Start(self: *Self) void {
     self.camera = lm.activeScene().?.getCameraById("main");
+    if (self.hands) |hands| {
+        if (self.currentWeapon()) |w| {
+            hands.play(w.*) catch {};
+        }
+    }
 }
 
 pub fn Update(self: *Self, entity: *lm.Entity) !void {
@@ -83,11 +88,11 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     if (lm.keyboard.getKeyDown(.q) or lm.gamepad.getButtonDown(0, .right_face_left)) spell_0: {
         const spell = &(self.equipped_spells[0] orelse break :spell_0);
-        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/click.wav", 0.7, 0.15);
+        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/sfx/click.wav", 0.7, 0.15);
     }
     if (lm.keyboard.getKeyDown(.e) or lm.gamepad.getButtonDown(0, .right_face_up)) spell_1: {
         const spell = &(self.equipped_spells[1] orelse break :spell_1);
-        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/click.wav", 0.7, 0.15);
+        if (spell.cast(entity)) AudioManager.playSfxPitched("audio/sfx/click.wav", 0.7, 0.15);
     }
 
     const player_pos = lm.vec3ToVec2(transform.position);
@@ -117,7 +122,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         stats.applyRoot(0.075);
 
         try hands.play(weapon.*);
-        AudioManager.playSfxPitched("audio/punch.mp3", 0.7, 0.1);
+        AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.7, 0.1);
 
         if (dashing.isDashing()) {
             try weapon.dashAttack(
@@ -143,7 +148,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         stats.applyRoot(0.12);
 
         try hands.play(weapon.*);
-        AudioManager.playSfxPitched("audio/punch.mp3", 0.95, 0.15);
+        AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.95, 0.15);
 
         try weapon.heavyAttack(
             spawn_pos,

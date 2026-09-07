@@ -14,7 +14,7 @@ pub fn ExperienceOrb(position: lm.Vector2, experience_value: usize, initial_velo
             .position = .init(position.x, position.y, 0),
             .scale = .init(24, 24),
         },
-        lm.Renderer.sprite("ui/sleep_icon.png"),
+        lm.Renderer.sprite("ui/icons/sleep_icon.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .trigger,
             .transform = .{ .scale = .init(24, 24) },

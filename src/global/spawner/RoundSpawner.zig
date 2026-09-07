@@ -276,7 +276,7 @@ pub fn update(self: *Self, dt: f32, scene: ?*lm.Scene, player_pos: lm.Vector2) !
     try self.active_enemies.append(enemy.uuid);
     try lm.summoning.entity(enemy);
 
-    SpatialAudio.playSpatialPitched("audio/punch.mp3", pos, player_pos, 800.0, 0.35, 0.15);
+    SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", pos, player_pos, 800.0, 0.35, 0.15);
 
     self.spawn_timer = self.spawn_interval + lm.randFloat(f32, -0.08, 0.08);
 }
