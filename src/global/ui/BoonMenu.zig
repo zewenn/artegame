@@ -9,6 +9,7 @@ const BoonPool = @import("../boons/BoonPool.zig");
 const HUD = @import("../HUD.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
@@ -398,6 +399,7 @@ pub fn draw(
     alloc: ?std.mem.Allocator,
 ) void {
     if (slots == null) return;
+    InputHelper.update();
 
     if (lm.keyboard.getKeyDown(.escape)) {
         hide();
@@ -581,10 +583,33 @@ pub fn draw(
                 }
             }
 
-            ui.text("CLOSE", .{
+            const close_label = if (InputHelper.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
+            ui.text(close_label, .{
                 .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
                 .letter_spacing = lm.tou16(@round(2 * ui_scale)),
                 .font_size = lm.tou16(@round(13 * ui_scale)),
+                .alignment = .center,
+            });
+        });
+
+        lm.deps.clay.UI()(.{
+            .id = .ID("boon-footer-spacer"),
+            .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+        })({});
+
+        lm.deps.clay.UI()(.{
+            .id = .ID("boon-footer-container"),
+            .layout = .{ .child_alignment = .{ .x = .center } },
+        })({
+            const nav_hint = if (InputHelper.isGamepad())
+                "Navigate: D-Pad / L-Stick  |  Select: A  |  Close: B"
+            else
+                "Navigate: WASD / Arrows / Click  |  Select: Enter / Click  |  Close: Esc";
+
+            ui.text(nav_hint, .{
+                .color = ui.color(140, 150, 175, 200),
+                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+                .letter_spacing = 1,
                 .alignment = .center,
             });
         });

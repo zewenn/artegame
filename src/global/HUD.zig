@@ -9,6 +9,7 @@ const Interactable = @import("../components/interaction/Interactable.zig");
 const DemoMap = @import("DemoMap.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const MusicManager = @import("audio/MusicManager.zig");
+const InputHelper = @import("input/InputHelper.zig");
 
 pub const ui = @import("ui/ui.zig");
 pub const PlayerStats = ui.PlayerStats;
@@ -45,6 +46,7 @@ pub fn Awake(self: *Self) void {
 }
 
 pub fn Update(self: *Self, scene: *lm.Scene) !void {
+    InputHelper.update();
     if (self.arena) |*arena| _ = arena.reset(.free_all);
 
     if (self.player == null or self.player_stats == null or self.player_objectives == null) {

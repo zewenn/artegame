@@ -5,6 +5,7 @@ const ui = lm.ui;
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const HUD = @import("../HUD.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 const Spell = @import("../../components/Weapons/Spell.zig");
 
@@ -28,7 +29,6 @@ fn progressBar(bar_index: u32, current: f32, max: f32, bg_color: lm.Color, color
 
 fn spellShower(
     maybe_spell: ?Spell,
-    key_label: []const u8,
     slot_index: u32,
     alloc: ?std.mem.Allocator,
 ) void {
@@ -37,6 +37,9 @@ fn spellShower(
     const badge_pad_x = lm.tou16(@max(2, @round(3 * HUD.scale)));
     const font_sz = lm.tou16(@max(9, @round(10 * HUD.scale)));
     const key_font_sz = lm.tou16(@max(8, @round(9 * HUD.scale)));
+
+    const prompt = InputHelper.getActionPrompt(if (slot_index == 0) .spell_0 else .spell_1);
+    const is_gamepad = InputHelper.isGamepad();
 
     if (maybe_spell) |spell| {
         const is_on_cooldown = spell.cooldown_remaining > 0;
@@ -65,19 +68,19 @@ fn spellShower(
             })({
                 ui.new(.{
                     .id = .IDI("spell-key-badge-", slot_index),
-                    .background_color = ui.color(15, 20, 28, 210),
-                    .corner_radius = .all(3 * HUD.scale),
+                    .background_color = prompt.badge_bg,
+                    .corner_radius = .all(if (is_gamepad) 6 * HUD.scale else 3 * HUD.scale),
                     .border = .{
-                        .color = ui.color(70, 80, 100, 180),
+                        .color = prompt.badge_border,
                         .width = .outside(1),
                     },
                     .layout = .{
-                        .padding = .axes(badge_pad_y, badge_pad_x),
+                        .padding = .axes(badge_pad_y, if (is_gamepad) lm.tou16(@max(3, @round(4 * HUD.scale))) else badge_pad_x),
                         .child_alignment = .{ .x = .center, .y = .center },
                     },
                 })({
-                    ui.text(key_label, .{
-                        .color = ui.color(210, 220, 235, 240),
+                    ui.text(prompt.label, .{
+                        .color = prompt.text_color,
                         .font_size = key_font_sz,
                         .letter_spacing = 1,
                     });
@@ -211,7 +214,7 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
             .direction = .left_to_right,
         },
     })({
-        spellShower(attack.equipped_spells[0], if (lm.gamepad.isAvailable(0)) "X" else "Q", 0, alloc);
+        spellShower(attack.equipped_spells[0], 0, alloc);
         ui.new(.{
             .id = .ID("player-hud-progress-bars"),
             .layout = .{
@@ -240,6 +243,6 @@ pub fn draw(stats: *Stats, attack: *Attack, alloc: ?std.mem.Allocator) void {
                 0.3,
             );
         });
-        spellShower(attack.equipped_spells[1], if (lm.gamepad.isAvailable(0)) "Y" else "E", 1, alloc);
+        spellShower(attack.equipped_spells[1], 1, alloc);
     });
 }

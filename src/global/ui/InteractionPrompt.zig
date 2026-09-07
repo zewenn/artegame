@@ -4,6 +4,7 @@ const ui = lm.ui;
 
 const Interactable = @import("../../components/interaction/Interactable.zig");
 const HUD = @import("../HUD.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
     const camera = camera_opt orelse return;
@@ -13,8 +14,8 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
     const screen_pos = camera.worldToScreenPos(world_pos);
 
     const ui_scale = HUD.ui_scale;
-    const is_gamepad = lm.gamepad.isAvailable(0);
-    const key_badge_text = if (is_gamepad) "A" else "F";
+    const is_gamepad = InputHelper.isGamepad();
+    const prompt = InputHelper.getActionPrompt(.interact);
 
     ui.new(.{
         .id = .ID("interaction-prompt-container"),
@@ -47,18 +48,22 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
     })({
         ui.new(.{
             .id = .ID("interaction-prompt-key-badge"),
-            .background_color = if (is_gamepad) ui.color(35, 145, 75, 250) else ui.color(55, 115, 230, 250),
-            .corner_radius = .all(4 * ui_scale),
+            .background_color = prompt.badge_bg,
+            .corner_radius = .all(if (is_gamepad) 8 * ui_scale else 4 * ui_scale),
+            .border = .{
+                .color = prompt.badge_border,
+                .width = .outside(1),
+            },
             .layout = .{
                 .padding = .axes(
                     lm.tou16(@round(2 * ui_scale)),
-                    lm.tou16(@round(6 * ui_scale)),
+                    lm.tou16(@round(if (is_gamepad) 7 * ui_scale else 6 * ui_scale)),
                 ),
                 .child_alignment = .{ .x = .center, .y = .center },
             },
         })({
-            ui.text(key_badge_text, .{
-                .color = ui.color(255, 255, 255, 255),
+            ui.text(prompt.label, .{
+                .color = prompt.text_color,
                 .font_size = lm.tou16(@round(13 * ui_scale)),
                 .letter_spacing = 1,
             });

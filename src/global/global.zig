@@ -13,6 +13,8 @@ pub const SpatialAudio = audio.SpatialAudio;
 pub const save = @import("save/save.zig");
 pub const SaveSystem = save.SaveSystem;
 pub const SaveData = save.SaveData;
+pub const input = @import("input/input.zig");
+pub const InputHelper = input.InputHelper;
 pub const Weapon = @import("../components/Weapons/Weapon.zig");
 pub const weapons = @import("../components/Weapons/weapons.zig");
 

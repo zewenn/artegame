@@ -7,6 +7,7 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 pub const View = enum {
     root,
@@ -193,6 +194,28 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
         drawPauseButton(1, "RESTART", button_w, button_h, ui_scale, font_size, letter_spacing, false);
         drawPauseButton(2, "OPTIONS", button_w, button_h, ui_scale, font_size, letter_spacing, false);
         drawPauseButton(3, "MAIN MENU", button_w, button_h, ui_scale, font_size, letter_spacing, false);
+
+        ui.new(.{
+            .id = .ID("pause-footer-spacer"),
+            .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+        })({});
+
+        ui.new(.{
+            .id = .ID("pause-footer-container"),
+            .layout = .{ .child_alignment = .{ .x = .center } },
+        })({
+            const footer_text = if (InputHelper.isGamepad())
+                "Navigate: D-Pad / L-Stick  |  Select: A  |  Resume: B / Start"
+            else
+                "Navigate: WASD / Arrows  |  Select: Enter / Space  |  Resume: Esc";
+
+            ui.text(footer_text, .{
+                .color = ui.color(140, 150, 175, 200),
+                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+                .letter_spacing = 1,
+                .alignment = .center,
+            });
+        });
     });
 }
 
@@ -258,6 +281,7 @@ fn drawPauseButton(
 // --------------------------------------------------------------------------------------------------
 
 fn handleRootInput() void {
+    InputHelper.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);

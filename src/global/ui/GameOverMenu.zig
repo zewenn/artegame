@@ -6,6 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 pub var is_showing: bool = false;
 pub var run_stats: DemoMap.RunStats = .{};
@@ -235,6 +236,28 @@ fn drawActionButtons(btn_w: f32, ui_scale: f32) void {
     })({
         drawButton(0, "RESTART", true, btn_w, btn_h, ui_scale);
         drawButton(1, "MAIN MENU", false, btn_w, btn_h, ui_scale);
+
+        ui.new(.{
+            .id = .ID("gameover-footer-spacer"),
+            .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+        })({});
+
+        ui.new(.{
+            .id = .ID("gameover-footer-container"),
+            .layout = .{ .child_alignment = .{ .x = .center } },
+        })({
+            const footer_text = if (InputHelper.isGamepad())
+                "Navigate: D-Pad / L-Stick  |  Select: A"
+            else
+                "Navigate: WASD / Arrows  |  Select: Enter / Space / Click";
+
+            ui.text(footer_text, .{
+                .color = ui.color(140, 150, 175, 200),
+                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+                .letter_spacing = 1,
+                .alignment = .center,
+            });
+        });
     });
 }
 
@@ -294,6 +317,7 @@ fn drawButton(
 }
 
 fn handleInput() void {
+    InputHelper.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);

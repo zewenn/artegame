@@ -8,15 +8,21 @@
   - priority: medium
   - workload: Easy
 
+## Work in Progress
+
+## Done
+
 ### [10#INP] Dynamic button prompt overlays (keyboard vs controller)
 
   - tags: [input, ui]
   - priority: low
   - workload: Easy
-
-## Work in Progress
-
-## Done
+  - steps:
+      - [x] Implement InputHelper state machine detecting active input device (KBM vs Gamepad)
+      - [x] Create PromptBadge component for styled keycaps and Xbox-colored controller pills
+      - [x] Update InteractionPrompt and PlayerStats HUD to dynamically render active device prompts
+      - [x] Update MainMenu, PauseMenu, GameOverMenu, BoonMenu, and OptionsMenu with dynamic footers and button prompts
+      - [x] Add unit tests for InputHelper device switching, prompt resolution, and run build verification
 
 ### [13#AST] Rename/re-categorise assets into subdirectory trees.
 

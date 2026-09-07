@@ -5,6 +5,7 @@ const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
+const InputHelper = @import("../input/InputHelper.zig");
 
 pub const OptionsTab = enum {
     audio,
@@ -115,6 +116,9 @@ fn drawOptionsTabs(ui_scale: f32) void {
     const tab_h = @round(34 * ui_scale);
     const tab_w = @round(130 * ui_scale);
     const tab_font_size = lm.tou16(@max(11, @round(13 * ui_scale)));
+    const is_pad = InputHelper.isGamepad();
+    const prev_hint = if (is_pad) "LB" else "Q";
+    const next_hint = if (is_pad) "RB" else "E";
 
     ui.new(.{
         .id = .ID("opt-tabs-bar"),
@@ -124,9 +128,37 @@ fn drawOptionsTabs(ui_scale: f32) void {
             .child_alignment = .{ .y = .center },
         },
     })({
+        drawTabHintBadge("opt-tab-hint-l", prev_hint, ui_scale);
         drawTabItem(.audio, "AUDIO", tab_w, tab_h, ui_scale, tab_font_size);
         drawTabItem(.display, "DISPLAY", tab_w, tab_h, ui_scale, tab_font_size);
         drawTabItem(.controls, "CONTROLS", tab_w, tab_h, ui_scale, tab_font_size);
+        drawTabHintBadge("opt-tab-hint-r", next_hint, ui_scale);
+    });
+}
+
+fn drawTabHintBadge(id_str: []const u8, hint: []const u8, ui_scale: f32) void {
+    const is_pad = InputHelper.isGamepad();
+    clay.UI()(.{
+        .id = .ID(id_str),
+        .layout = .{
+            .padding = .axes(
+                lm.tou16(@max(2, @round(3 * ui_scale))),
+                lm.tou16(@max(4, @round(6 * ui_scale))),
+            ),
+            .child_alignment = .{ .x = .center, .y = .center },
+        },
+        .background_color = if (is_pad) ui.color(55, 60, 75, 200) else ui.color(35, 40, 52, 200),
+        .corner_radius = .all(if (is_pad) 6 * ui_scale else 4 * ui_scale),
+        .border = .{
+            .color = if (is_pad) ui.color(120, 130, 150, 180) else ui.color(70, 80, 100, 180),
+            .width = .outside(1),
+        },
+    })({
+        ui.text(hint, .{
+            .color = ui.color(190, 200, 220, 230),
+            .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
+            .letter_spacing = 1,
+        });
     });
 }
 
@@ -560,6 +592,8 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
             .child_gap = lm.tou16(@round(3 * ui_scale)),
         },
     })({
+        const is_pad = InputHelper.isGamepad();
+
         ui.new(.{
             .id = .ID("opt-ctrl-header"),
             .layout = .{
@@ -586,8 +620,8 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
                 .id = .ID("opt-tbl-h2"),
                 .layout = .{ .sizing = .{ .w = .fixed(@round(190 * ui_scale)) } },
             })({
-                ui.text("KEYBOARD & MOUSE", .{
-                    .color = ui.color(240, 200, 100, 255),
+                ui.text(if (!is_pad) "KEYBOARD & MOUSE (ACTIVE)" else "KEYBOARD & MOUSE", .{
+                    .color = if (!is_pad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200),
                     .font_size = header_font_size,
                     .letter_spacing = 1,
                 });
@@ -597,8 +631,8 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
                 .id = .ID("opt-tbl-h3"),
                 .layout = .{ .sizing = .{ .w = .grow } },
             })({
-                ui.text("CONTROLLER", .{
-                    .color = ui.color(240, 200, 100, 255),
+                ui.text(if (is_pad) "CONTROLLER (ACTIVE)" else "CONTROLLER", .{
+                    .color = if (is_pad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200),
                     .font_size = header_font_size,
                     .letter_spacing = 1,
                 });
@@ -632,7 +666,7 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
                     .layout = .{ .sizing = .{ .w = .fixed(@round(190 * ui_scale)) } },
                 })({
                     ui.text(bind.kbm, .{
-                        .color = ui.color(165, 175, 195, 255),
+                        .color = if (!is_pad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180),
                         .font_size = row_font_size,
                     });
                 });
@@ -642,7 +676,7 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
                     .layout = .{ .sizing = .{ .w = .grow } },
                 })({
                     ui.text(bind.pad, .{
-                        .color = ui.color(165, 175, 195, 255),
+                        .color = if (is_pad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180),
                         .font_size = row_font_size,
                     });
                 });
@@ -687,7 +721,8 @@ fn drawBackButton(ui_scale: f32) bool {
             }
         }
 
-        ui.text("BACK", .{
+        const back_label = if (InputHelper.isGamepad()) "B  BACK" else "ESC  BACK";
+        ui.text(back_label, .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(255, 255, 255, 255)
             else
@@ -706,6 +741,7 @@ fn drawBackButton(ui_scale: f32) bool {
 // --------------------------------------------------------------------------------------------------
 
 fn handleInput() bool {
+    InputHelper.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var nav_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
