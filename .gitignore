@@ -7,3 +7,5 @@ zig-pkg/
 .VSCodeCounter/
 .DS_Store
 .vscode/
+save.json
+zig-out/**/save.json

@@ -5,6 +5,8 @@ const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
+const SaveSystem = @import("../save/SaveSystem.zig");
+const DemoMap = @import("../DemoMap.zig");
 
 const Self = @This();
 
@@ -154,10 +156,51 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
         });
     });
 
+    const scores = SaveSystem.getScores();
+    if (scores.total_runs_played > 0) {
+        const stats_str = if (self.alloc) |a|
+            std.fmt.allocPrint(
+                a,
+                "HIGH SCORE: {d} XP  |  BEST ROUND: {d}  |  TOTAL KILLS: {d}",
+                .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
+            ) catch "HIGH SCORE: 0 XP"
+        else
+            "HIGH SCORE: 0 XP";
+
+        ui.new(.{
+            .id = .ID("menu-stats-badge-spacer"),
+            .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+        })({});
+
+        ui.new(.{
+            .id = .ID("menu-stats-badge"),
+            .layout = .{
+                .padding = .axes(
+                    lm.tou16(@round(3 * ui_scale)),
+                    lm.tou16(@round(14 * ui_scale)),
+                ),
+                .child_alignment = .{ .x = .center, .y = .center },
+            },
+            .background_color = ui.color(16, 20, 28, 220),
+            .corner_radius = .all(6 * ui_scale),
+            .border = .{
+                .color = ui.color(100, 200, 255, 120),
+                .width = .outside(1),
+            },
+        })({
+            ui.text(stats_str, .{
+                .color = ui.color(140, 215, 255, 230),
+                .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
+                .letter_spacing = 1,
+                .alignment = .center,
+            });
+        });
+    }
+
     ui.new(.{
         .id = .ID("menu-main-spacer"),
         .layout = .{
-            .sizing = .{ .h = .fixed(@round(32 * ui_scale)), .w = .fixed(1) },
+            .sizing = .{ .h = .fixed(@round(24 * ui_scale)), .w = .fixed(1) },
         },
     })({});
 
@@ -169,38 +212,84 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             .child_alignment = .{ .x = .center },
         },
     })({
-        self.drawMenuButton(
-            0,
-            "PLAY",
-            button_w,
-            button_h,
-            ui_scale,
-            font_size,
-            letter_spacing,
-            true,
-        );
+        if (SaveSystem.hasActiveRun()) {
+            self.drawMenuButton(
+                0,
+                "CONTINUE",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                true,
+            );
 
-        self.drawMenuButton(
-            1,
-            "OPTIONS",
-            button_w,
-            button_h,
-            ui_scale,
-            font_size,
-            letter_spacing,
-            false,
-        );
+            self.drawMenuButton(
+                1,
+                "NEW RUN",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                false,
+            );
 
-        self.drawMenuButton(
-            2,
-            "QUIT",
-            button_w,
-            button_h,
-            ui_scale,
-            font_size,
-            letter_spacing,
-            false,
-        );
+            self.drawMenuButton(
+                2,
+                "OPTIONS",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                false,
+            );
+
+            self.drawMenuButton(
+                3,
+                "QUIT",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                false,
+            );
+        } else {
+            self.drawMenuButton(
+                0,
+                "PLAY",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                true,
+            );
+
+            self.drawMenuButton(
+                1,
+                "OPTIONS",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                false,
+            );
+
+            self.drawMenuButton(
+                2,
+                "QUIT",
+                button_w,
+                button_h,
+                ui_scale,
+                font_size,
+                letter_spacing,
+                false,
+            );
+        }
     });
 
     ui.new(.{
@@ -302,7 +391,7 @@ fn handleInput(self: *Self) void {
         if (stick.y > 0.5) nav_down = true;
     }
 
-    const max_index: usize = 2;
+    const max_index: usize = if (SaveSystem.hasActiveRun()) 3 else 2;
     if (nav_up) {
         if (self.selected_index == 0) self.selected_index = max_index else self.selected_index -= 1;
     }
@@ -315,23 +404,54 @@ fn handleInput(self: *Self) void {
 }
 
 fn activateAction(self: *Self, index: usize) void {
-    switch (index) {
-        0 => {
-            AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
-            lm.loadScene("demo_map") catch |err| {
-                std.log.err("Failed to load demo_map scene: {any}", .{err});
-            };
-        },
-        1 => {
-            AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
-            OptionsMenu.reset();
-            self.screen = .options;
-        },
-        2 => {
-            AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
-            lm.quit();
-        },
-        else => {},
+    if (SaveSystem.hasActiveRun()) {
+        switch (index) {
+            0 => {
+                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                DemoMap.resume_saved_run = true;
+                lm.loadScene("demo_map") catch |err| {
+                    std.log.err("Failed to load demo_map scene: {any}", .{err});
+                };
+            },
+            1 => {
+                SaveSystem.clearRun();
+                DemoMap.resume_saved_run = false;
+                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                lm.loadScene("demo_map") catch |err| {
+                    std.log.err("Failed to load demo_map scene: {any}", .{err});
+                };
+            },
+            2 => {
+                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                OptionsMenu.reset();
+                self.screen = .options;
+            },
+            3 => {
+                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                lm.quit();
+            },
+            else => {},
+        }
+    } else {
+        switch (index) {
+            0 => {
+                DemoMap.resume_saved_run = false;
+                AudioManager.playSfxPitched("audio/coin.wav", 0.9, 0.05);
+                lm.loadScene("demo_map") catch |err| {
+                    std.log.err("Failed to load demo_map scene: {any}", .{err});
+                };
+            },
+            1 => {
+                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                OptionsMenu.reset();
+                self.screen = .options;
+            },
+            2 => {
+                AudioManager.playSfxPitched("audio/click.wav", 0.6, 0.0);
+                lm.quit();
+            },
+            else => {},
+        }
     }
 }
 

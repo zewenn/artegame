@@ -8,6 +8,7 @@ const Boon = @import("../boons/Boon.zig");
 const BoonPool = @import("../boons/BoonPool.zig");
 const HUD = @import("../HUD.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
+const DemoMap = @import("../DemoMap.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
@@ -94,6 +95,7 @@ fn selectBoon(slot_index: usize, stats_opt: ?*Stats, attack_opt: ?*Attack) void 
 
     boon.applyTo(stats, attack_opt);
     BoonPool.consumeBoon(boon);
+    DemoMap.saveCurrentRun();
 
     if (attack_opt) |attack| {
         slots = BoonPool.getSlots(stats.*, attack.*);

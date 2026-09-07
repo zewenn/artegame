@@ -4,6 +4,7 @@ const ui = lm.ui;
 const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
+const SaveSystem = @import("../save/SaveSystem.zig");
 
 pub const OptionsTab = enum {
     audio,
@@ -846,11 +847,23 @@ pub fn adjustVolume(kind: VolumeType, delta: f32) void {
         .music => AudioManager.setMusicVolume(AudioManager.music_volume + delta),
         .sfx => AudioManager.setSfxVolume(AudioManager.sfx_volume + delta),
     }
+    SaveSystem.updateSettings(
+        AudioManager.master_volume,
+        AudioManager.music_volume,
+        AudioManager.sfx_volume,
+        AudioManager.mute,
+    );
     AudioManager.playSfxPitched("audio/click.wav", 0.35, 0.15);
 }
 
 pub fn toggleMuteAudio() void {
     AudioManager.toggleMute();
+    SaveSystem.updateSettings(
+        AudioManager.master_volume,
+        AudioManager.music_volume,
+        AudioManager.sfx_volume,
+        AudioManager.mute,
+    );
     AudioManager.playSfxPitched("audio/click.wav", 0.5, 0.05);
 }
 

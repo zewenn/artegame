@@ -5,6 +5,7 @@ const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
+const SaveSystem = @import("../save/SaveSystem.zig");
 
 pub var is_showing: bool = false;
 pub var run_stats: DemoMap.RunStats = .{};
@@ -21,6 +22,7 @@ pub fn show(stats: DemoMap.RunStats) void {
     just_opened = true;
     lm.time.pause();
     AudioManager.playSfxPitched("audio/click.wav", 0.4, -0.2);
+    SaveSystem.recordRunEnd(stats);
 }
 
 pub fn hide() void {
@@ -152,6 +154,11 @@ fn drawStatsBox(box_w: f32, ui_scale: f32, alloc: ?std.mem.Allocator) void {
     else
         "0 XP";
 
+    const high_score_str = if (alloc) |a|
+        std.fmt.allocPrint(a, "{d} XP", .{SaveSystem.getScores().high_score}) catch "0 XP"
+    else
+        "0 XP";
+
     ui.new(.{
         .id = .ID("gameover-stats-box"),
         .layout = .{
@@ -170,6 +177,7 @@ fn drawStatsBox(box_w: f32, ui_scale: f32, alloc: ?std.mem.Allocator) void {
         drawStatRow("ROUNDS SURVIVED", rounds_str, ui.color(240, 205, 110, 255), box_w, row_h, ui_scale);
         drawStatRow("ENEMIES DEFEATED", enemies_str, ui.color(235, 90, 95, 255), box_w, row_h, ui_scale);
         drawStatRow("EXPERIENCE", xp_str, ui.color(100, 200, 255, 255), box_w, row_h, ui_scale);
+        drawStatRow("HIGH SCORE", high_score_str, ui.color(180, 230, 140, 255), box_w, row_h, ui_scale);
     });
 }
 
@@ -316,6 +324,7 @@ fn activateAction(index: usize) void {
     switch (index) {
         0 => {
             // RESTART
+            SaveSystem.clearRun();
             hide();
             AudioManager.playSfxPitched("audio/coin.wav", 0.8, 0.05);
             lm.loadScene("demo_map") catch |err| {

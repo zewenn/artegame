@@ -155,3 +155,20 @@ pub const haste: Spell = Spell{
         }
     }.callback,
 };
+
+pub fn getById(id: []const u8) ?Spell {
+    if (std.ascii.eqlIgnoreCase(id, "Heal")) return heal;
+    if (std.ascii.eqlIgnoreCase(id, "Root")) return root;
+    if (std.ascii.eqlIgnoreCase(id, "Goliath")) return goliath;
+    if (std.ascii.eqlIgnoreCase(id, "Haste")) return haste;
+    return null;
+}
+
+test "spells getById resolves known spells" {
+    try std.testing.expect(getById("Heal") != null);
+    try std.testing.expect(getById("Root") != null);
+    try std.testing.expect(getById("Goliath") != null);
+    try std.testing.expect(getById("Haste") != null);
+    try std.testing.expect(getById("Unknown") == null);
+}
+

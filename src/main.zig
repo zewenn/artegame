@@ -60,7 +60,11 @@ test {
     _ = @import("global/ui/GameOverMenu.zig");
     _ = @import("global/DemoMap.zig");
     _ = @import("global/boons/BoonPool.zig");
+    _ = @import("components/Weapons/Weapon.zig");
+    _ = @import("components/Weapons/spells.zig");
     _ = @import("components/Weapons/Spell.zig");
+    _ = @import("global/save/SaveData.zig");
+    _ = @import("global/save/SaveSystem.zig");
     _ = @import("components/effects/Effect.zig");
     _ = @import("components/effects/EffectVisual.zig");
     _ = @import("components/Stats.zig");

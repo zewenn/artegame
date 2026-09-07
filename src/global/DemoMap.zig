@@ -7,8 +7,12 @@ const Stats = @import("../components/Stats.zig");
 const BoonPool = @import("boons/BoonPool.zig");
 const MusicManager = @import("audio/MusicManager.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
+const SaveSystem = @import("save/SaveSystem.zig");
+const spells = @import("../components/Weapons/spells.zig");
 
 const Self = @This();
+
+pub var resume_saved_run: bool = false;
 
 pub const RoundState = enum {
     replenish,
@@ -36,10 +40,19 @@ pub fn get() ?*Self {
 }
 
 pub fn Awake(self: *Self) !void {
-    self.state = .replenish;
-    self.round = 0;
-    self.rounds_survived = 0;
-    self.enemies_defeated = 0;
+    if (resume_saved_run and SaveSystem.hasActiveRun()) {
+        if (SaveSystem.getSavedRun()) |saved| {
+            self.round = saved.round;
+            self.rounds_survived = saved.rounds_survived;
+            self.enemies_defeated = saved.enemies_defeated;
+            self.state = .replenish;
+        }
+    } else {
+        self.state = .replenish;
+        self.round = 0;
+        self.rounds_survived = 0;
+        self.enemies_defeated = 0;
+    }
     MusicManager.setGlobalPhase(.replenish);
     BoonPool.reset();
     self.spawner = RoundSpawner.init(lm.allocators.scene());
@@ -74,6 +87,33 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player_objectives = player.getComponent(player_components.Objectives);
         if (self.player_objectives) |objectives| {
             _ = try objectives.setSingleObjective("Replenish", " - Visit Boon Shrine to upgrade \n - Activate Round Shrine to fight");
+        }
+
+        load_saved_run: {
+            if (!resume_saved_run or !SaveSystem.hasActiveRun()) break :load_saved_run;
+            resume_saved_run = false;
+
+            const saved = SaveSystem.getSavedRun() orelse break :load_saved_run;
+            if (player.getComponent(Stats)) |stats| saved.player_stats.applyToStats(stats);
+
+            const attack = player.getComponent(player_components.Attack) orelse break :load_saved_run;
+            attack.equipped_weapons = saved.equipped_weapons;
+            attack.current_weapon_number = saved.current_weapon_number;
+
+            for (0..2, saved.equipped_spells) |i, maybe_spell| {
+                const spell = maybe_spell orelse {
+                    attack.equipped_spells[i] = null;
+                    continue;
+                };
+                const base_spell = spells.getById(spell.id) orelse {
+                    attack.equipped_spells[i] = null;
+                    continue;
+                };
+
+                var s = base_spell;
+                s.level = spell.level;
+                attack.equipped_spells[i] = s;
+            }
         }
     }
 
@@ -134,7 +174,18 @@ pub fn startRound() !void {
         _ = try objectives.setSingleObjective("FIGHT TILL DEATH", "Kill all enemies");
     }
 
+    // Auto-save when round starts
+    saveCurrentRun();
+
     try self.spawner.startWave(self.round);
+}
+
+pub fn saveCurrentRun() void {
+    const self = get() orelse return;
+    const player = self.player orelse return;
+    const stats = player.getComponent(Stats) orelse return;
+    const attack = player.getComponent(player_components.Attack) orelse return;
+    SaveSystem.saveRun(self.round, self.rounds_survived, self.enemies_defeated, stats.*, attack.*);
 }
 
 pub fn getWaveProgress() ?RoundSpawner.WaveProgress {

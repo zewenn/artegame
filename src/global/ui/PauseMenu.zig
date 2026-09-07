@@ -6,6 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
+const SaveSystem = @import("../save/SaveSystem.zig");
 
 pub const View = enum {
     root,
@@ -297,6 +298,7 @@ fn activateRootAction(index: usize) void {
             hide();
         },
         1 => {
+            SaveSystem.clearRun();
             hide();
             AudioManager.playSfxPitched("audio/coin.wav", 0.8, 0.05);
             lm.loadScene("demo_map") catch |err| {
@@ -309,6 +311,7 @@ fn activateRootAction(index: usize) void {
             current_view = .options;
         },
         3 => {
+            DemoMap.saveCurrentRun();
             hide();
             AudioManager.playSfxPitched("audio/click.wav", 0.55, 0.0);
             lm.loadScene("main_menu") catch |err| {

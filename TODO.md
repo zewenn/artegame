@@ -2,17 +2,6 @@
 
 ## Backlog
 
-### [8#SYS] Save system and session persistence
-
-  - tags: [system, save]
-  - priority: low
-  - workload: Hard
-  - steps:
-      - [ ] Define serialization schema for settings, high scores, and run statistics
-      - [ ] Implement file I/O reader and writer with error recovery and default fallbacks
-      - [ ] Hook settings persistence (audio volume, controls) into game startup
-      - [ ] Add run summary recording to high score / stats history
-
 ### [9#INP] Controller aiming polish and configurable stick deadzones
 
   - tags: [input, controller]
@@ -25,9 +14,38 @@
   - priority: low
   - workload: Easy
 
+### [13#AST] Rename/re-categorise assets into subdirectory trees.
+
+  - tags: [Assets, Categorisation]
+  - priority: medium
+  - workload: Normal
+  - defaultExpanded: false
+  - steps:
+      - [ ] Create subdir-tree for assets/audio and re-categorise
+      - [ ] Create subdir-tree for assets/characters and re-categorise
+      - [ ] Create subdir-tree for assets/projectiles and re-categorise
+      - [ ] Create subdir-tree for assets/ui and re-categorise
+      - [ ] Create subdir-tree for assets/weapons and re-categorise
+    ```md
+    Currently assets like [audio__ambient.mp3](./src/assets/audio/audio__ambient.mp3) are clutterring up the workspace, and would be better named/placed like: "src/assets/audio/music/ambient.mp3".
+    ```
+
 ## Work in Progress
 
 ## Done
+
+### [8#SYS] Save system and session persistence
+
+  - tags: [system, save]
+  - priority: low
+  - workload: Hard
+  - steps:
+      - [x] Define serialization schema for settings, all-time scores, and current run data (full Weapon structs, spells, stats, round state)
+      - [x] Implement file I/O reader and writer with error recovery and default fallbacks at exe-relative path (./save.json)
+      - [x] Hook settings persistence (audio volume) into game startup and options menu
+      - [x] Implement run auto-saving on round start, boon purchase, quit to main menu, and player death
+      - [x] Support run resumption from Main Menu (Continue / New Run) and record lifetime statistics
+      - [x] Add unit tests for schema serialization, Weapon roundtrip, and save/load lifecycle
 
 ### [7#UIS] Game Over screen with run statistics, restart, and main menu
 
@@ -68,7 +86,6 @@
       - [x] Connect multi-modal navigation (Mouse, Keyboard, Gamepad) and audio feedback for pause actions
       - [x] Add unit tests for PauseMenu state transitions, action triggers, and visibility lifecycle
 
-
 ### [5#UIM] Main menu scene (Play, Options, Quit)
 
   - tags: [ui, menu]
@@ -82,7 +99,6 @@
       - [x] Connect hover/click SFX and background music streaming to AudioManager & MusicManager
       - [x] Wire main_menu scene into main.zig and update startup routing in Setup.zig
       - [x] Add unit tests for menu state transitions, volume controls, and navigation logic
-
 
 ### [12#ARC] Codebase architectural overhaul and critical bug remediation
 
@@ -136,7 +152,6 @@
       - [x] Connect spawner lifecycle with RoundManager combat and replenish phases
       - [x] Add wave progress tracking to HUD/ObjectiveUI
 
-
 ### [11#FIX] Fix Clay UI element ID exhaustion causing unclickable Boon Menu and frozen UI
 
   - tags: [ui, bugfix]
@@ -146,7 +161,6 @@
       - [x] Stabilize progress bar element IDs in PlayerStats
       - [x] Implement recyclable enemy UI ID pool in OverheadUI
       - [x] Add keyboard navigation support to BoonMenu
-
 
 ### [2#ENE] Universal enemy system with attack ranges, conditional projectiles, and spells
 
@@ -160,7 +174,6 @@
       - [x] Build variant prefabs (melee, ranged, elite/champion with distinctive tints) using universal system
       - [x] Update Enemy AI pursuit, strafing, and attack execution to evaluate conditional attacks dynamically
       - [x] Implement conditional animations (idle, locomotion, windup, attack, winddown, reaction)
-
 
 ### [4#AUD] Comprehensive audio system (Loom audio backend, dynamic phase BGM, and gameplay SFX)
 
