@@ -5,6 +5,8 @@ const ui = lm.ui;
 
 const Stats = @import("../Stats.zig");
 const EffectVisualRegistry = @import("../effects/EffectVisual.zig").EffectVisualRegistry;
+const GameOverMenu = @import("../../global/ui/GameOverMenu.zig");
+const PauseMenu = @import("../../global/ui/PauseMenu.zig");
 
 const Self = @This();
 
@@ -25,7 +27,15 @@ pub fn Start(self: *Self) void {
     self.camera = lm.activeScene().?.getCameraById("main");
 }
 
+pub fn shouldRender() bool {
+    if (GameOverMenu.isShowing()) return false;
+    if (PauseMenu.isShowing()) return false;
+    return true;
+}
+
 pub fn Update(self: *Self) !void {
+    if (!shouldRender()) return;
+
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
@@ -113,4 +123,20 @@ fn releaseId(id: u32) void {
     if (id < id_pool.len) {
         id_pool[id] = false;
     }
+}
+
+test "OverheadUI shouldRender suppresses when GameOverMenu or PauseMenu is showing" {
+    GameOverMenu.hide();
+    PauseMenu.hide();
+    try std.testing.expect(shouldRender());
+
+    GameOverMenu.show(.{});
+    try std.testing.expect(!shouldRender());
+    GameOverMenu.hide();
+    try std.testing.expect(shouldRender());
+
+    PauseMenu.show();
+    try std.testing.expect(!shouldRender());
+    PauseMenu.hide();
+    try std.testing.expect(shouldRender());
 }

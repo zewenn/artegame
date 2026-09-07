@@ -57,6 +57,8 @@ test {
     _ = @import("global/ui/PauseMenu.zig");
     _ = @import("global/ui/OptionsMenu.zig");
     _ = @import("global/ui/BoonMenu.zig");
+    _ = @import("global/ui/GameOverMenu.zig");
+    _ = @import("global/DemoMap.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Spell.zig");
     _ = @import("components/effects/Effect.zig");
@@ -66,5 +68,6 @@ test {
     _ = @import("global/audio/MusicManager.zig");
     _ = @import("global/audio/SpatialAudio.zig");
     _ = @import("components/enemy/Ability.zig");
+    _ = @import("components/enemy/OverheadUI.zig");
     _ = @import("global/spawner/RoundSpawner.zig");
 }

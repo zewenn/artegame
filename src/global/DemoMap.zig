@@ -15,10 +15,19 @@ pub const RoundState = enum {
     combat,
 };
 
+pub const RunStats = struct {
+    rounds_survived: u32 = 0,
+    current_round: u32 = 0,
+    enemies_defeated: u32 = 0,
+    experience_collected: usize = 0,
+};
+
 state: RoundState = .replenish,
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
 round: u32 = 0,
+rounds_survived: u32 = 0,
+enemies_defeated: u32 = 0,
 spawner: RoundSpawner = undefined,
 
 pub fn get() ?*Self {
@@ -28,6 +37,9 @@ pub fn get() ?*Self {
 
 pub fn Awake(self: *Self) !void {
     self.state = .replenish;
+    self.round = 0;
+    self.rounds_survived = 0;
+    self.enemies_defeated = 0;
     MusicManager.setGlobalPhase(.replenish);
     BoonPool.reset();
     self.spawner = RoundSpawner.init(lm.allocators.scene());
@@ -78,6 +90,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     if (self.state == .combat and self.spawner.isWaveFinished()) {
         self.state = .replenish;
+        self.rounds_survived += 1;
         self.spawner.finishWave();
         MusicManager.setGlobalPhase(.replenish);
         if (self.player_objectives) |objectives| {
@@ -131,5 +144,32 @@ pub fn getWaveProgress() ?RoundSpawner.WaveProgress {
 
 pub fn removeDefeatedEnemy(uuid: u128) void {
     const self = get() orelse return;
+    self.enemies_defeated += 1;
     self.spawner.removeDefeatedEnemy(uuid);
+}
+
+pub fn getRunStats() RunStats {
+    const self = get() orelse return .{};
+    const xp = if (self.player) |p|
+        if (p.getComponent(Stats)) |s| s.current.experience else 0
+    else
+        0;
+    return .{
+        .rounds_survived = self.rounds_survived,
+        .current_round = self.round,
+        .enemies_defeated = self.enemies_defeated,
+        .experience_collected = xp,
+    };
+}
+
+// --------------------------------------------------------------------------------------------------
+// Unit Tests
+// --------------------------------------------------------------------------------------------------
+
+test "DemoMap RunStats defaults" {
+    const stats = RunStats{};
+    try std.testing.expectEqual(@as(u32, 0), stats.rounds_survived);
+    try std.testing.expectEqual(@as(u32, 0), stats.current_round);
+    try std.testing.expectEqual(@as(u32, 0), stats.enemies_defeated);
+    try std.testing.expectEqual(@as(usize, 0), stats.experience_collected);
 }

@@ -2,12 +2,6 @@
 
 ## Backlog
 
-### [7#UIS] Defeat and victory screens with run summary
-
-  - tags: [ui, summary]
-  - priority: medium
-  - workload: Normal
-
 ### [8#SYS] Save system and session persistence
 
   - tags: [system, save]
@@ -34,6 +28,20 @@
 ## Work in Progress
 
 ## Done
+
+### [7#UIS] Game Over screen with run statistics, restart, and main menu
+
+  - tags: [ui, game-over, summary]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Detect player defeat when player's health <= 0 and trigger game over modal sequence
+      - [x] Freeze gameplay world updates (lm.time.pause()) while keeping UI modal rendering active
+      - [x] Build GameOver UI component rendered on top of the game with dimmed backdrop overlay and suppress in-game HUD
+      - [x] Display run statistics summary (rounds survived, enemies defeated, and experience collected)
+      - [x] Implement "Restart" action (reloads demo_map scene) and "Main Menu" action (returns to main_menu scene)
+      - [x] Support Mouse, Keyboard, and Gamepad navigation with audio feedback
+      - [x] Add unit tests for defeat trigger condition, state machine, and action handlers
 
 ### [13#UIB] Replace purchased boon cards with non-clickable dummy cards
 

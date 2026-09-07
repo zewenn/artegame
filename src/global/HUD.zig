@@ -8,6 +8,7 @@ const Boon = @import("boons/Boon.zig");
 const Interactable = @import("../components/interaction/Interactable.zig");
 const DemoMap = @import("DemoMap.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
+const MusicManager = @import("audio/MusicManager.zig");
 
 pub const ui = @import("ui/ui.zig");
 pub const PlayerStats = ui.PlayerStats;
@@ -15,6 +16,7 @@ pub const ObjectiveUI = ui.ObjectiveUI;
 pub const BoonMenu = ui.BoonMenu;
 pub const InteractionPrompt = ui.InteractionPrompt;
 pub const PauseMenu = ui.PauseMenu;
+pub const GameOverMenu = ui.GameOverMenu;
 
 const Self = @This();
 
@@ -58,6 +60,22 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player_stats = player.getComponentUnsafe(Stats).result;
         self.player_objectives = player.getComponent(Objectives);
         self.player_attack = player.getComponent(Attack);
+    }
+
+    // Defeat detection: trigger Game Over when player health <= 0
+    if (self.player_stats) |stats| {
+        if (stats.current.health <= 0 and !GameOverMenu.isShowing()) {
+            BoonMenu.hide();
+            PauseMenu.hide();
+            GameOverMenu.show(DemoMap.getRunStats());
+            MusicManager.setGlobalPhase(.replenish);
+        }
+    }
+
+    // Suppress all in-game HUD rendering when Game Over is active
+    if (GameOverMenu.isShowing()) {
+        GameOverMenu.draw(self.alloc);
+        return;
     }
 
     window_size = lm.window.size.get();
@@ -119,6 +137,7 @@ pub fn End(self: *Self) void {
     self.alloc = null;
     BoonMenu.hide();
     PauseMenu.hide();
+    GameOverMenu.hide();
 }
 
 pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
