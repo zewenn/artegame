@@ -2,15 +2,20 @@
 
 ## Backlog
 
-### [9#INP] Controller aiming polish and configurable stick deadzones
-
-  - tags: [input, controller]
-  - priority: medium
-  - workload: Easy
-
 ## Work in Progress
 
 ## Done
+
+### [14#AST] Remove unused assets from assets directory
+
+  - tags: [assets, cleanup]
+  - priority: low
+  - workload: Easy
+  - steps:
+      - [x] Remove obsolete background, font, character, card, HUD, and effect files (28 files)
+      - [x] Verify build and tests pass with zero missing asset errors
+
+
 
 ### [10#INP] Dynamic button prompt overlays (keyboard vs controller)
 
