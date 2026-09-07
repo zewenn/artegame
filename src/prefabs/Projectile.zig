@@ -162,16 +162,12 @@ test "Projectile Options per-target hit tracking" {
     var opts = Options{ .passtrough = true };
     try std.testing.expectEqual(false, opts.hasHit(101));
 
-    // First hit should record successfully
     try std.testing.expect(opts.recordHit(101));
     try std.testing.expect(opts.hasHit(101));
 
-    // Second hit against same target should be rejected
     try std.testing.expectEqual(false, opts.recordHit(101));
 
-    // Different target should record
     try std.testing.expect(opts.recordHit(202));
     try std.testing.expect(opts.hasHit(202));
     try std.testing.expectEqual(2, opts.hit_count);
 }
-

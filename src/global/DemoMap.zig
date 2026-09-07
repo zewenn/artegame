@@ -71,6 +71,8 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         break :player_pos lm.vec3ToVec2(transform.position);
     };
 
+    if (lm.time.paused()) return;
+
     const dt = lm.time.deltaTime();
     try self.spawner.update(dt, scene, player_pos);
 

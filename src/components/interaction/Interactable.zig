@@ -210,21 +210,17 @@ test "Interactable dynamic registration and squared distance closest selection" 
     try std.testing.expect(registry != null);
     try std.testing.expectEqual(@as(usize, 2), registry.?.len());
 
-    // Closest to (40, 40) is item2 (dist ~14 < 80)
     const closest1 = getClosest(.init(40, 40));
     try std.testing.expect(closest1 == &item2);
 
-    // Closest to (90, 90) is item1 (dist ~14 < 80)
     const closest2 = getClosest(.init(90, 90));
     try std.testing.expect(closest2 == &item1);
 
-    // Player too far from both (at 500, 500)
     const closest_none = getClosest(.init(500, 500));
     try std.testing.expect(closest_none == null);
 
-    // Unregister item2
     item2.unregister();
     try std.testing.expectEqual(@as(usize, 1), registry.?.len());
     const closest3 = getClosest(.init(40, 40));
-    try std.testing.expect(closest3 == null); // item2 gone, item1 out of range
+    try std.testing.expect(closest3 == null);
 }

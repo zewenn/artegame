@@ -426,16 +426,12 @@ test "Stats effect on_tick periodic callback execution" {
 }
 
 test "defenseToDamageReductionPercent clamping against negative and extreme values" {
-    // Negative defense should clamp to 0 reduction, avoiding negative log10 NaN
     try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(-10.0));
     try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(-1.0));
     try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(0.0));
 
-    // Normal defense values
     const red10 = defenseToDamageReductionPercent(10.0);
     try std.testing.expect(red10 > 0.0 and red10 < 0.90);
 
-    // Extreme high defense should clamp to 0.90 (90%) reduction, never healing (never > 1.0)
     try std.testing.expectEqual(@as(f32, 0.90), defenseToDamageReductionPercent(100000.0));
 }
-

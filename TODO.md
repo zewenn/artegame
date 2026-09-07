@@ -2,12 +2,6 @@
 
 ## Backlog
 
-### [6#UIM] In-game pause menu (Resume, Restart, Main Menu)
-
-  - tags: [ui, menu]
-  - priority: high
-  - workload: Normal
-
 ### [7#UIS] Defeat and victory screens with run summary
 
   - tags: [ui, summary]
@@ -40,6 +34,20 @@
 ## Work in Progress
 
 ## Done
+
+### [6#UIM] In-game pause menu (Resume, Restart, Main Menu)
+
+  - tags: [ui, menu]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Create PauseMenu component with modal overlay, responsive scaling, and state machine (root vs options sub-view)
+      - [x] Implement Resume, Restart, Options, and Main Menu action handlers
+      - [x] Integrate pause trigger (Escape key / Gamepad Start) in HUD.Update with BoonMenu exclusivity
+      - [x] Add if (lm.time.paused()) return; guard to DemoMap.Update to halt spawner and wave logic during pause
+      - [x] Connect multi-modal navigation (Mouse, Keyboard, Gamepad) and audio feedback for pause actions
+      - [x] Add unit tests for PauseMenu state transitions, action triggers, and visibility lifecycle
+
 
 ### [5#UIM] Main menu scene (Play, Options, Quit)
 

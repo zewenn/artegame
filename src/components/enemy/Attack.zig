@@ -331,13 +331,11 @@ test "Enemy Attack with lm.List(Ability)" {
     try std.testing.expect(active_1 != null);
     try std.testing.expectEqualStrings("spin", active_1.?.id);
 
-    // Out of bounds test
     attack.active_ability_index = 2;
     try std.testing.expect(attack.getActiveAbilityPtr() == null);
     attack.active_ability_index = 999;
     try std.testing.expect(attack.getActiveAbilityPtr() == null);
 
-    // Cooldown update
     for (attack.abilities.?.items()) |*ab| {
         ab.updateCooldown(0.5);
     }

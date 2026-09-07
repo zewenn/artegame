@@ -14,6 +14,7 @@ pub const PlayerStats = ui.PlayerStats;
 pub const ObjectiveUI = ui.ObjectiveUI;
 pub const BoonMenu = ui.BoonMenu;
 pub const InteractionPrompt = ui.InteractionPrompt;
+pub const PauseMenu = ui.PauseMenu;
 
 const Self = @This();
 
@@ -89,14 +90,25 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         ObjectiveUI.draw(tracking);
     }
 
-    if (!BoonMenu.isShowing()) {
-        if (Interactable.getFocused()) |focused| {
-            const camera = scene.getCameraById("main");
-            InteractionPrompt.draw(camera, focused);
+    if (!BoonMenu.isShowing() and !PauseMenu.isShowing()) menus: {
+        const pause_pressed = lm.keyboard.getKeyDown(.escape) or
+            (lm.gamepad.isAvailable(0) and (lm.gamepad.getButtonDown(0, .middle_right) or lm.gamepad.getButtonDown(0, .middle)));
+        if (pause_pressed) {
+            PauseMenu.show();
+            break :menus;
+        }
+
+        if (!PauseMenu.isShowing()) {
+            if (Interactable.getFocused()) |focused| {
+                const camera = scene.getCameraById("main");
+                InteractionPrompt.draw(camera, focused);
+            }
         }
     }
 
-    if (BoonMenu.boons) |boon_array| {
+    if (PauseMenu.isShowing()) {
+        PauseMenu.draw(self.alloc);
+    } else if (BoonMenu.boons) |boon_array| {
         BoonMenu.draw(boon_array, self.player_stats, self.player_attack, self.alloc);
     }
 }
@@ -106,6 +118,7 @@ pub fn End(self: *Self) void {
     self.arena = null;
     self.alloc = null;
     BoonMenu.hide();
+    PauseMenu.hide();
 }
 
 pub fn showBoons(boons: []const Boon) void {
