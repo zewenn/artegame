@@ -6,7 +6,13 @@ const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("Boon.zig");
 const boons = @import("boons.zig");
 
-var current_boons: [3]?Boon = [_]?Boon{ null, null, null };
+pub const BoonSlot = struct {
+    boon: Boon,
+    is_purchased: bool = false,
+};
+
+var current_slots: [3]?BoonSlot = [_]?BoonSlot{ null, null, null };
+var active_slots_buffer: [3]BoonSlot = undefined;
 var active_slice_buffer: [3]Boon = undefined;
 var has_rolled: bool = false;
 
@@ -28,12 +34,30 @@ pub fn reroll(stats: Stats, attack: Attack) void {
         valid_indices[pick_index] = valid_indices[i];
         valid_indices[i] = chosen_boon_index;
 
-        current_boons[i] = boons.all_boons[chosen_boon_index];
+        current_slots[i] = .{
+            .boon = boons.all_boons[chosen_boon_index],
+            .is_purchased = false,
+        };
     }
     for (draw_count..3) |i| {
-        current_boons[i] = null;
+        current_slots[i] = null;
     }
     has_rolled = true;
+}
+
+pub fn getSlots(stats: Stats, attack: Attack) []const BoonSlot {
+    if (!has_rolled) {
+        reroll(stats, attack);
+    }
+
+    var count: usize = 0;
+    for (current_slots) |maybe_slot| {
+        if (maybe_slot) |slot| {
+            active_slots_buffer[count] = slot;
+            count += 1;
+        }
+    }
+    return active_slots_buffer[0..count];
 }
 
 pub fn getCurrentBoons(stats: Stats, attack: Attack) []const Boon {
@@ -42,20 +66,22 @@ pub fn getCurrentBoons(stats: Stats, attack: Attack) []const Boon {
     }
 
     var count: usize = 0;
-    for (current_boons) |maybe_boon| {
-        if (maybe_boon) |b| {
-            active_slice_buffer[count] = b;
-            count += 1;
+    for (current_slots) |maybe_slot| {
+        if (maybe_slot) |slot| {
+            if (!slot.is_purchased) {
+                active_slice_buffer[count] = slot.boon;
+                count += 1;
+            }
         }
     }
     return active_slice_buffer[0..count];
 }
 
 pub fn consumeBoon(boon: Boon) void {
-    for (&current_boons) |*maybe_boon| {
-        if (maybe_boon.*) |b| {
-            if (b.eql(boon)) {
-                maybe_boon.* = null;
+    for (&current_slots) |*maybe_slot| {
+        if (maybe_slot.*) |*slot| {
+            if (slot.boon.eql(boon)) {
+                slot.is_purchased = true;
                 break;
             }
         }
@@ -63,7 +89,7 @@ pub fn consumeBoon(boon: Boon) void {
 }
 
 pub fn reset() void {
-    current_boons = [_]?Boon{ null, null, null };
+    current_slots = [_]?BoonSlot{ null, null, null };
     has_rolled = false;
 }
 
@@ -125,4 +151,39 @@ test "BoonPool respects weapon availability conditions" {
             try std.testing.expect(b.isAvailable(stats, attack));
         }
     }
+}
+
+test "BoonPool getSlots retains consumed boons with is_purchased = true" {
+    reset();
+
+    const stats = Stats{ .team = .player };
+    const attack = Attack{};
+
+    const slots = getSlots(stats, attack);
+    try std.testing.expectEqual(@as(usize, 3), slots.len);
+    for (slots) |slot| {
+        try std.testing.expect(!slot.is_purchased);
+    }
+
+    const first_boon = slots[0].boon;
+    consumeBoon(first_boon);
+
+    const slots_after_one = getSlots(stats, attack);
+    try std.testing.expectEqual(@as(usize, 3), slots_after_one.len);
+    try std.testing.expect(slots_after_one[0].is_purchased);
+    try std.testing.expect(!slots_after_one[1].is_purchased);
+    try std.testing.expect(!slots_after_one[2].is_purchased);
+    try std.testing.expect(slots_after_one[0].boon.eql(first_boon));
+
+    consumeBoon(slots_after_one[1].boon);
+    consumeBoon(slots_after_one[2].boon);
+
+    const slots_after_all = getSlots(stats, attack);
+    try std.testing.expectEqual(@as(usize, 3), slots_after_all.len);
+    for (slots_after_all) |slot| {
+        try std.testing.expect(slot.is_purchased);
+    }
+
+    reset();
+    try std.testing.expectEqual(@as(usize, 3), getSlots(stats, attack).len);
 }

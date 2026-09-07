@@ -108,8 +108,8 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     if (PauseMenu.isShowing()) {
         PauseMenu.draw(self.alloc);
-    } else if (BoonMenu.boons) |boon_array| {
-        BoonMenu.draw(boon_array, self.player_stats, self.player_attack, self.alloc);
+    } else if (BoonMenu.slots) |slot_array| {
+        BoonMenu.draw(slot_array, self.player_stats, self.player_attack, self.alloc);
     }
 }
 
@@ -121,8 +121,8 @@ pub fn End(self: *Self) void {
     PauseMenu.hide();
 }
 
-pub fn showBoons(boons: []const Boon) void {
-    BoonMenu.show(boons);
+pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
+    BoonMenu.show(slots);
 }
 
 fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Allocator) void {

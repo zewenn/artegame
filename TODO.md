@@ -35,6 +35,18 @@
 
 ## Done
 
+### [13#UIB] Replace purchased boon cards with non-clickable dummy cards
+
+  - tags: [ui, boons]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Retain purchased card slots in BoonMenu using dummy placeholders
+      - [x] Render visually distinct disabled/purchased styling for dummy cards
+      - [x] Adjust keyboard and gamepad navigation to skip dummy cards
+      - [x] Replace SKIP button with CLOSE by default and remove empty all-claimed screen
+      - [x] Add unit tests for dummy card state, navigation skipping, and purchase lifecycle
+
 ### [6#UIM] In-game pause menu (Resume, Restart, Main Menu)
 
   - tags: [ui, menu]

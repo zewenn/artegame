@@ -56,6 +56,7 @@ test {
     _ = @import("global/ui/MainMenu.zig");
     _ = @import("global/ui/PauseMenu.zig");
     _ = @import("global/ui/OptionsMenu.zig");
+    _ = @import("global/ui/BoonMenu.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Spell.zig");
     _ = @import("components/effects/Effect.zig");

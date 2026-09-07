@@ -17,8 +17,8 @@ fn onShrineInteract(interactable: *Interactable, player: *lm.Entity) void {
     const stats = player.getComponent(Stats) orelse return;
     const attack = player.getComponent(Attack) orelse return;
 
-    const available_boons = BoonPool.getCurrentBoons(stats.*, attack.*);
-    HUD.showBoons(available_boons);
+    const available_slots = BoonPool.getSlots(stats.*, attack.*);
+    HUD.showBoons(available_slots);
 }
 
 pub fn Shrine(position: lm.Vector2) !*lm.Entity {
