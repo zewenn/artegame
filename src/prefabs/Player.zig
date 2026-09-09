@@ -77,9 +77,9 @@ pub fn Player(position: lm.Vector2) !*lm.Entity {
         Stats{
             .team = .player,
             .current = .{
-                .attack_speed = 5,
-                .armour = 30,
-                .experience = 250_000,
+                .attack_speed = 4.5,
+                .physical_damage = 27.5,
+                .magic_damage = 15,
             },
         },
         StatusOverlays{},

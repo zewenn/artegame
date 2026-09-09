@@ -62,6 +62,33 @@ pub const ranged_abilities = [_]Ability{
         .release_animation = "fire-ranged",
         .winddown_animation = "winddown-ranged",
     },
+
+    Ability{
+        .id = "cleansing_fire",
+        .execution_type = .projectile,
+        .min_range = 0,
+        .max_range = 256,
+        .cooldown = 15.0,
+        .conditions = .{
+            .target_lacks_effect = .{ .effect_type = .stun },
+        },
+        .projectile_profile = ProjectileProfile{
+            .sprite = "projectiles/enemies/heavy.png",
+            .damage = 2.5,
+            .damage_type = .magic,
+            .speed = 800,
+            .lifetime = 2,
+            .size = .init(128, 64),
+            .is_crit = true,
+            .onhit_effect = .stun,
+            .onhit_strength = 1,
+            .onhit_duration = 1,
+            .sfx_path = "audio/sfx/click.wav",
+        },
+        .windup_animation = "windup-ranged",
+        .release_animation = "fire-ranged",
+        .winddown_animation = "winddown-ranged",
+    },
 };
 
 const ranged_fallback = Ability{
@@ -91,7 +118,7 @@ pub fn RangedEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Transform{
             .position = .init(position.x, position.y, 0),
         },
-        lm.Renderer.sprite("characters/enemies/ranged/left.png"),
+        lm.Renderer.sprite("characters/enemies/ranged/left_0.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),

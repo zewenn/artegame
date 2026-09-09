@@ -51,16 +51,16 @@ pub const root: Spell = Spell{
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;
 
-            for (@as([]const f32, &.{ -180, -90, 0, 90 })) |value| {
+            for (@as([]const f32, &.{ -180, -45, -90, -135, 0, 45, 90, 135 })) |value| {
                 const vec = lm.Vec2(1, 0)
                     .rotate(std.math.degreesToRadians(value))
                     .add(lm.vec3ToVec2(transform.position));
 
                 const projectile = try Projectile(.{
                     .target_team = .enemy,
-                    .size = .init(512, 64),
-                    .onhit_effect = .root,
-                    .onhit_duration = lm.tof32(level + 1),
+                    .size = .init(128, 64),
+                    .onhit_effect = if (level < 10) .root else .stun,
+                    .onhit_duration = if (level < 10) lm.tof32(level + 1) else lm.tof32((level) + 1) - 9.5,
                     .passtrough = true,
                     .damage = 0,
 
@@ -171,4 +171,3 @@ test "spells getById resolves known spells" {
     try std.testing.expect(getById("Haste") != null);
     try std.testing.expect(getById("Unknown") == null);
 }
-

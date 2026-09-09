@@ -101,8 +101,11 @@ pub fn End(self: *Self) void {
 
 fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
     _ = window_size;
-    const logo_w = @round(480 * ui_scale);
-    const logo_h = @round(120 * ui_scale);
+
+    const logo_base_height = 240;
+
+    const logo_w = @round((logo_base_height * 3) * ui_scale);
+    const logo_h = @round(logo_base_height * ui_scale);
     const button_w = @round(300 * ui_scale);
     const button_h = @round(52 * ui_scale);
     const button_gap = lm.tou16(@round(14 * ui_scale));
@@ -128,7 +131,7 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
                 },
             },
             .image = ui.image(
-                "ui/branding/artegame_logo.png",
+                "ui/branding/artegame_reimagined_logo.png",
                 .init(logo_w, logo_h),
             ) catch .{ .image_data = null },
         })({});

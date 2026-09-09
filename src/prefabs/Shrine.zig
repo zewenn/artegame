@@ -27,9 +27,9 @@ pub fn Shrine(position: lm.Vector2) !*lm.Entity {
     return try lm.makeEntityI("shrine", shrine_count, .{
         lm.Transform{
             .position = .init(position.x, position.y, 0),
-            .scale = .init(48, 96),
+            .scale = .init(128, 128),
         },
-        lm.Renderer.sprite("items/turmix2000.png"),
+        lm.Renderer.sprite("items/bench_press_shrine.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .static,
         }),

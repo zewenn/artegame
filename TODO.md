@@ -6,6 +6,28 @@
 
 ## Done
 
+### [16#OPS] Multi-platform release GitHub Actions workflow
+
+  - tags: [ci, github-actions, release]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Add GitHub Actions workflow triggered on push to release branch
+      - [x] Extract version tag from build.zig.zon
+      - [x] Cross-compile / matrix build for Windows, macOS (ARM64 & x86_64), and Linux
+      - [x] Package release archives with binary and assets
+      - [x] Configure application icon for macOS bundle (.icns) and Windows executable (.ico/.rc)
+      - [x] Create GitHub release and upload release assets
+
+### [15#DOC] Complete project README documentation
+
+  - tags: [docs, readme]
+  - priority: low
+  - workload: Easy
+  - steps:
+      - [x] Fill in About the game, Download, and Build from source sections in README.md
+
+
 ### [14#AST] Remove unused assets from assets directory
 
   - tags: [assets, cleanup]

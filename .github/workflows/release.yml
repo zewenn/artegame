@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      tag: ${{ steps.get_version.outputs.tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from build.zig.zon
+        id: get_version
+        run: |
+          RAW_VERSION=$(grep -o '\.version = "[^"]*"' build.zig.zon | cut -d'"' -f2)
+          if [ -z "$RAW_VERSION" ]; then
+            echo "Error: Could not extract version from build.zig.zon" >&2
+            exit 1
+          fi
+          if [[ "$RAW_VERSION" == v* ]]; then
+            TAG="$RAW_VERSION"
+            VERSION="${RAW_VERSION#v}"
+          else
+            TAG="v$RAW_VERSION"
+            VERSION="$RAW_VERSION"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Extracted version: $VERSION"
+          echo "Release tag: $TAG"
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: prepare-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-linux-gnu
+            binary_name: artegame
+            archive_name: artegame-linux-x86_64.tar.gz
+            format: gztar
+          - name: macos-arm64
+            os: macos-latest
+            target: aarch64-macos
+            binary_name: artegame
+            archive_name: artegame-macos-arm64.zip
+            format: zip
+          - name: macos-x86_64
+            os: macos-latest
+            target: x86_64-macos
+            binary_name: artegame
+            archive_name: artegame-macos-x86_64.zip
+            format: zip
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-windows
+            binary_name: artegame.exe
+            archive_name: artegame-windows-x86_64.zip
+            format: zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libx11-dev libxcursor-dev libxext-dev libxfixes-dev \
+            libxi-dev libxinerama-dev libxrandr-dev libxrender-dev \
+            libgl1-mesa-dev
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Build executable
+        run: zig build -Doptimize=ReleaseFast -Dtarget=${{ matrix.target }}
+
+      - name: Package release archive
+        shell: bash
+        run: |
+          python3 -c "
+          import sys, os, shutil
+          archive_name = '${{ matrix.archive_name }}'
+          platform = archive_name.replace('.tar.gz', '').replace('.zip', '')
+          binary = 'zig-out/bin/${{ matrix.binary_name }}'
+          fmt = '${{ matrix.format }}'
+          dist_dir = os.path.join('dist', platform)
+          os.makedirs(dist_dir, exist_ok=True)
+          is_macos = 'macos' in '${{ matrix.name }}'
+          if is_macos:
+              # For macOS releases, only include the self-contained artegame.app bundle
+              app_src = 'zig-out/bin/artegame.app'
+              app_dest = os.path.join(dist_dir, 'artegame.app')
+              shutil.copytree(app_src, app_dest, dirs_exist_ok=True)
+              archive_path = shutil.make_archive(platform, fmt, root_dir=dist_dir)
+          else:
+              # For Windows and Linux releases, include binary and assets
+              dest_bin = os.path.join(dist_dir, os.path.basename(binary))
+              shutil.copy2(binary, dest_bin)
+              if not dest_bin.endswith('.exe'):
+                  os.chmod(dest_bin, 0o755)
+              shutil.copytree('src/assets', os.path.join(dist_dir, 'assets'), dirs_exist_ok=True)
+              shutil.copytree('src/assets', os.path.join(dist_dir, 'src', 'assets'), dirs_exist_ok=True)
+              archive_path = shutil.make_archive(platform, fmt, root_dir='dist', base_dir=platform)
+          print(f'Archive created: {archive_path}')
+          "
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [prepare-release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List release assets
+        run: ls -la release-assets/
+
+      - name: Create or update GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Uploading assets..."
+            gh release upload "$TAG" release-assets/* --clobber
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" release-assets/* \
+              --target "${{ github.sha }}" \
+              --title "Release $TAG" \
+              --generate-notes
+          fi

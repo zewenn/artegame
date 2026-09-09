@@ -119,7 +119,12 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     attack_block: {
         self.cooldown = 1 / stats.current.attack_speed;
 
-        stats.applyRoot(0.075);
+        stats.addEffect(.{
+            .id = "root",
+            .effect_type = .root,
+            .duration = 0.075,
+            .visual = .{},
+        });
 
         try hands.play(weapon.*);
         AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.7, 0.1);
@@ -145,7 +150,14 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     {
         self.cooldown = 1.8 / stats.current.attack_speed;
 
-        stats.applyRoot(0.12);
+        // stats.applyRoot(0.12);
+
+        stats.addEffect(.{
+            .id = "root",
+            .effect_type = .root,
+            .duration = 0.12,
+            .visual = .{},
+        });
 
         try hands.play(weapon.*);
         AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.95, 0.15);

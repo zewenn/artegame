@@ -21,7 +21,10 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn Update(self: *Self) !void {
-    if (lm.time.paused()) return;
+    if (lm.time.paused()) {
+        lm.audio.stop("audio/sfx/walking.mp3");
+        return;
+    }
 
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const dashing: *Dashing = try lm.ensureComponent(self.dashing);

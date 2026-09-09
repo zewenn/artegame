@@ -153,26 +153,26 @@ pub const melee_animations = [_]lm.Animation{
 
 pub const ranged_animations = [_]lm.Animation{
     lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = 0 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = -2 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_0.png", .rotation = -2 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_0.png", .rotation = 0 },
     }),
     lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 0 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 2 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_0.png", .rotation = 2 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_0.png", .rotation = 0 },
     }),
-    lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = 0 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = 8 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = -5 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/left.png", .rotation = 0 },
+    lm.Animation.init("walk-left", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_1.png", .rotation = 8 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_1.png", .rotation = -5 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/left_0.png", .rotation = 0 },
     }),
-    lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 0 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = -8 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 5 },
-        lm.Keyframe{ .sprite = "characters/enemies/ranged/right.png", .rotation = 0 },
+    lm.Animation.init("walk-right", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_1.png", .rotation = -8 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_1.png", .rotation = 5 },
+        lm.Keyframe{ .sprite = "characters/enemies/ranged/right_0.png", .rotation = 0 },
     }),
     lm.Animation.init("windup-ranged", 0.5, lm.interpolation.lerp, &.{
         lm.Keyframe{ .rotation = 0, .height = 64, .width = 64 },

@@ -14,6 +14,7 @@ const Hands = @import("../components/Weapons/Hands.zig");
 const Self = @This();
 
 pub var resume_saved_run: bool = false;
+const replenish_objective_text = " - Visit Boon Shrine to upgrade \n - Activate Round Shrine to fight";
 
 pub const RoundState = enum {
     replenish,
@@ -71,8 +72,8 @@ pub fn Awake(self: *Self) !void {
     try lm.summoning.entities(&.{
         try prefabs.Player(.init(0, 0)),
         try prefabs.Background(20, 10),
-        try prefabs.Shrine(.init(-96, -200)),
-        try prefabs.RoundActivator(.init(96, -200)),
+        try prefabs.Shrine(.init(-128, -200)),
+        try prefabs.RoundActivator(.init(128, -200)),
     });
 }
 
@@ -87,7 +88,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player = player;
         self.player_objectives = player.getComponent(player_components.Objectives);
         if (self.player_objectives) |objectives| {
-            _ = try objectives.setSingleObjective("Replenish", " - Visit Boon Shrine to upgrade \n - Activate Round Shrine to fight");
+            _ = try objectives.setSingleObjective("Replenish", replenish_objective_text);
         }
 
         load_saved_run: {
@@ -139,10 +140,18 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.state = .replenish;
         self.rounds_survived += 1;
         self.spawner.finishWave();
+
         MusicManager.setGlobalPhase(.replenish);
-        if (self.player_objectives) |objectives| {
-            _ = try objectives.setSingleObjective("Replenish", "Visit Boon Shrine to upgrade | Activate Round Shrine to fight");
+        round_activator_sprite_change: {
+            const activator = lm.getEntity(.{ .id = "round-activator" }) orelse break :round_activator_sprite_change;
+            const renderer = activator.getComponent(lm.Renderer) orelse break :round_activator_sprite_change;
+            renderer.img_path = "items/activator_shrine1.png";
         }
+
+        if (self.player_objectives) |objectives| {
+            _ = try objectives.setSingleObjective("Replenish", replenish_objective_text);
+        }
+
         if (self.player) |player| {
             if (player.getComponent(Stats)) |stats| {
                 if (player.getComponent(player_components.Attack)) |attack| {

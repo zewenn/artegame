@@ -58,9 +58,20 @@ pub const EffectVisualRegistry = struct {
                 .scale = .init(64, 64),
                 .icon = "ui/icons/empty_icon.png",
             },
-            .sleep, .root => EffectVisual{
+            .sleep,
+            => EffectVisual{
                 .frames = &.{
                     "effects/sleep_effect.png",
+                },
+                .frame_duration = 0.2,
+                .offset = .init(0, 0),
+                .scale = .init(64, 64),
+                .loop = true,
+                .icon = "ui/icons/sleep_icon.png",
+            },
+            .root => EffectVisual{
+                .frames = &.{
+                    "effects/root.png",
                 },
                 .frame_duration = 0.2,
                 .offset = .init(0, 0),

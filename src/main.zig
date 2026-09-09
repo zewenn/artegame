@@ -15,6 +15,10 @@ pub fn main() !void {
         },
         .asset_paths = .{
             .debug = "src/assets/",
+            .release = switch (@import("builtin").target.os.tag) {
+                .macos => "../../Resources/assets/",
+                else => "../assets/",
+            },
         },
     })({
         lm.scene("default")({

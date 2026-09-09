@@ -5,8 +5,6 @@ const Interactable = @import("../components/interaction/Interactable.zig");
 const DemoMap = @import("../global/DemoMap.zig");
 const AudioManager = @import("../global/audio/AudioManager.zig");
 
-var round_activator_count: u32 = 0;
-
 fn onRoundActivatorInteract(interactable: *Interactable, player: *lm.Entity) void {
     _ = interactable;
     _ = player;
@@ -14,19 +12,25 @@ fn onRoundActivatorInteract(interactable: *Interactable, player: *lm.Entity) voi
     DemoMap.startRound() catch |err| {
         std.log.err("Failed to start round from activator: {any}", .{err});
     };
+
+    const activator = lm.getEntity(.{ .id = "round-activator" }) orelse return;
+    const renderer = activator.getComponent(lm.Renderer) orelse return;
+
+    renderer.img_path = "items/activator_shrine2.png";
 }
 
 pub fn RoundActivator(position: lm.Vector2) !*lm.Entity {
-    defer round_activator_count +%= 1;
-
-    return try lm.makeEntityI("round-activator", round_activator_count, .{
+    return try lm.makeEntity("round-activator", .{
         lm.Transform{
             .position = .init(position.x, position.y, 0),
-            .scale = .init(48, 96),
+            .scale = .init(128, 128),
         },
-        lm.Renderer.sprite("items/mixer.png"),
+        lm.Renderer.sprite("items/activator_shrine1.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .static,
+            .transform = .{
+                .scale = .init(32, 64),
+            },
         }),
         Interactable{
             .action_text = "Start Next Round",
