@@ -27,6 +27,32 @@ pub var hud_height: f32 = 64.0;
 pub var hud_width: f32 = 512.0;
 pub var ui_scale: f32 = 1.0;
 
+pub const MENU_BUTTON_BASE_H: f32 = 48.0;
+pub const MENU_BUTTON_BASE_W: f32 = MENU_BUTTON_BASE_H * 6.0;
+pub const UTILITY_BUTTON_BASE_H: f32 = 24.0;
+pub const UTILITY_BUTTON_BASE_W: f32 = UTILITY_BUTTON_BASE_H * 4.0;
+
+pub const MENU_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/large_button1.png";
+pub const MENU_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/large_button2.png";
+pub const UTILITY_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/small_button1.png";
+pub const UTILITY_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/small_button2.png";
+
+pub fn getMenuButtonSprite(is_active: bool) []const u8 {
+    return if (is_active) MENU_BUTTON_HOVER_SPRITE else MENU_BUTTON_SPRITE;
+}
+
+pub fn getUtilityButtonSprite(is_active: bool) []const u8 {
+    return if (is_active) UTILITY_BUTTON_HOVER_SPRITE else UTILITY_BUTTON_SPRITE;
+}
+
+/// Calculates crisp integer scaling factor relative to 1280x720 base resolution.
+/// Ensures pixel art UI sprites scale cleanly by integer multipliers (1x, 2x, 3x, etc.).
+pub fn calculateUiScale(win_size: lm.Vector2) f32 {
+    const scale_x = win_size.x / 1280.0;
+    const scale_y = win_size.y / 720.0;
+    return @max(1.0, @floor(@min(scale_x, scale_y)));
+}
+
 player: ?*lm.Entity = null,
 player_stats: ?*Stats = null,
 player_objectives: ?*Objectives = null,
@@ -85,9 +111,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     hud_height = scale * 32.0;
     hud_width = hud_height * 8.0;
 
-    const scale_x = window_size.x / 1280.0;
-    const scale_y = window_size.y / 720.0;
-    ui_scale = @max(0.65, @min(2.5, @min(scale_x, scale_y)));
+    ui_scale = calculateUiScale(window_size);
 
     round_indicator: {
         const progress = DemoMap.getWaveProgress() orelse break :round_indicator;
@@ -206,3 +230,44 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
         });
     });
 }
+
+test "HUD.calculateUiScale integer scaling" {
+    // 720p base resolution -> 1.0x
+    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
+
+    // 1080p (1.5x ratio) -> 1.0x floor
+    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
+
+    // 1440p (2.0x ratio) -> 2.0x
+    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
+
+    // 4K (3.0x ratio) -> 3.0x
+    try std.testing.expectEqual(@as(f32, 3.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
+
+    // Ultrawide 1080p (2560x1080) -> limited by vertical scale (1080/720 = 1.5 -> 1.0x)
+    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
+
+    // Ultrawide 1440p (3440x1440) -> limited by vertical scale (1440/720 = 2.0 -> 2.0x)
+    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
+
+    // Small sub-720p window (e.g. 800x600) -> clamped to 1.0x minimum
+    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 800, .y = 600 }));
+}
+
+test "UI button base aspect ratios" {
+    // Menu item ratio: exactly 6:1 with 48px base height
+    try std.testing.expectEqual(@as(f32, 48.0), MENU_BUTTON_BASE_H);
+    try std.testing.expectEqual(@as(f32, 6.0), MENU_BUTTON_BASE_W / MENU_BUTTON_BASE_H);
+
+    // Utility button ratio: exactly 4:1 with dynamic base height
+    try std.testing.expectEqual(@as(f32, 24.0), UTILITY_BUTTON_BASE_H);
+    try std.testing.expectEqual(@as(f32, 4.0), UTILITY_BUTTON_BASE_W / UTILITY_BUTTON_BASE_H);
+}
+
+test "UI button sprites idle and hover variants" {
+    try std.testing.expectEqualStrings("ui/HUD/buttons/large_button1.png", getMenuButtonSprite(false));
+    try std.testing.expectEqualStrings("ui/HUD/buttons/large_button2.png", getMenuButtonSprite(true));
+    try std.testing.expectEqualStrings("ui/HUD/buttons/small_button1.png", getUtilityButtonSprite(false));
+    try std.testing.expectEqualStrings("ui/HUD/buttons/small_button2.png", getUtilityButtonSprite(true));
+}
+

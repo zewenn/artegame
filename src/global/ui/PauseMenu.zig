@@ -8,6 +8,7 @@ const DemoMap = @import("../DemoMap.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const InputHelper = @import("../input/InputHelper.zig");
+const HUD = @import("../HUD.zig");
 
 pub const View = enum {
     root,
@@ -57,9 +58,7 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
     if (!is_showing) return;
 
     const window_size = lm.window.size.get();
-    const scale_x = window_size.x / 1280.0;
-    const scale_y = window_size.y / 720.0;
-    const ui_scale = @max(0.65, @min(2.5, @min(scale_x, scale_y)));
+    const ui_scale = HUD.calculateUiScale(window_size);
 
     if (just_opened) {
         just_opened = false;
@@ -111,8 +110,8 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
 
 fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) void {
     const card_w = @min(window_size.x - 32, @round(380 * ui_scale));
-    const button_w = @round(280 * ui_scale);
-    const button_h = @round(46 * ui_scale);
+    const button_w = @round(HUD.MENU_BUTTON_BASE_W * ui_scale);
+    const button_h = @round(HUD.MENU_BUTTON_BASE_H * ui_scale);
     const card_padding = lm.tou16(@round(24 * ui_scale));
     const font_size = lm.tou16(@max(13, @round(15 * ui_scale)));
     const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
@@ -231,6 +230,7 @@ fn drawPauseButton(
 ) void {
     const is_selected = (selected_index == index);
 
+    _ = ui_scale;
     clay.UI()(.{
         .id = .IDI("pause-btn-", @intCast(index)),
         .layout = .{
@@ -240,20 +240,7 @@ fn drawPauseButton(
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (clay.hovered() or is_selected)
-            if (is_primary) ui.color(52, 60, 80, 255) else ui.color(40, 46, 62, 255)
-        else
-            ui.color(22, 26, 35, 230),
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 255)
-            else if (is_primary)
-                ui.color(200, 165, 80, 160)
-            else
-                ui.color(50, 56, 72, 160),
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
-        },
+        .image = ui.image(HUD.getMenuButtonSprite(clay.hovered() or is_selected), .init(w, h)) catch .{ .image_data = null },
     })({
         if (clay.hovered()) {
             selected_index = index;

@@ -4,7 +4,23 @@
 
 ## Work in Progress
 
+
 ## Done
+
+### [17#UIB] Standardize UI button ratios and integer scaling for pixel-art sprites
+
+  - tags: [ui, scaling, buttons]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Add calculateUiScale in HUD.zig with integer floor scaling and unit tests
+      - [x] Standardize menu item buttons to 6:1 ratio with 48px base height (288x48) in MainMenu, PauseMenu, and GameOverMenu
+      - [x] Standardize compact/utility buttons to 4:1 ratio with dynamic base height in OptionsMenu and BoonMenu
+      - [x] Remove borders and corner radiuses from buttons and apply sprites from src/assets/ui/HUD/buttons
+      - [x] Support normal and hovered sprite variants (large_button1/2, small_button1/2)
+      - [x] Verify test suite and build verification
+
+
 
 ### [16#OPS] Multi-platform release GitHub Actions workflow
 

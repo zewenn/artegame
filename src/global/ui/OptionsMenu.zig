@@ -6,6 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const InputHelper = @import("../input/InputHelper.zig");
+const HUD = @import("../HUD.zig");
 
 pub const OptionsTab = enum {
     audio,
@@ -113,8 +114,8 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) b
 // --------------------------------------------------------------------------------------------------
 
 fn drawOptionsTabs(ui_scale: f32) void {
-    const tab_h = @round(34 * ui_scale);
-    const tab_w = @round(130 * ui_scale);
+    const tab_h = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
+    const tab_w = @round(HUD.UTILITY_BUTTON_BASE_W * ui_scale);
     const tab_font_size = lm.tou16(@max(11, @round(13 * ui_scale)));
     const is_pad = InputHelper.isGamepad();
     const prev_hint = if (is_pad) "LB" else "Q";
@@ -171,6 +172,7 @@ fn drawTabItem(
     font_size: u16,
 ) void {
     const is_active = (options_tab == tab);
+    _ = ui_scale;
 
     clay.UI()(.{
         .id = .IDI("opt-tab-", @intFromEnum(tab)),
@@ -181,22 +183,7 @@ fn drawTabItem(
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (is_active)
-            ui.color(38, 44, 60, 255)
-        else if (clay.hovered())
-            ui.color(28, 32, 44, 255)
-        else
-            ui.color(18, 20, 28, 200),
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = if (is_active)
-                ui.color(240, 200, 100, 255)
-            else if (clay.hovered())
-                ui.color(120, 130, 155, 180)
-            else
-                ui.color(40, 45, 60, 160),
-            .width = .outside(if (is_active) 2 else 1),
-        },
+        .image = ui.image(HUD.getUtilityButtonSprite(clay.hovered() or is_active), .init(w, h)) catch .{ .image_data = null },
     })({
         if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
             setTab(tab);
@@ -248,7 +235,7 @@ fn drawVolumeRow(
 ) void {
     const is_selected = (selected_index == index);
     const pct = @as(u32, @intFromFloat(@round(value * 100.0)));
-    const btn_size = @round(30 * ui_scale);
+    const btn_size = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
     const bar_total_w = @round(160 * ui_scale);
     const bar_filled_w = @max(0.0, bar_total_w * value);
     const bar_unfilled_w = @max(0.0, bar_total_w - bar_filled_w);
@@ -306,11 +293,6 @@ fn drawVolumeRow(
                 .child_alignment = .{ .x = .center, .y = .center },
             },
             .background_color = if (clay.hovered()) ui.color(50, 58, 78, 255) else ui.color(30, 35, 48, 220),
-            .corner_radius = .all(4 * ui_scale),
-            .border = .{
-                .color = if (clay.hovered()) ui.color(240, 200, 100, 220) else ui.color(60, 68, 88, 160),
-                .width = .outside(1),
-            },
         })({
             if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
                 selected_index = index;
@@ -371,11 +353,6 @@ fn drawVolumeRow(
                 .child_alignment = .{ .x = .center, .y = .center },
             },
             .background_color = if (clay.hovered()) ui.color(50, 58, 78, 255) else ui.color(30, 35, 48, 220),
-            .corner_radius = .all(4 * ui_scale),
-            .border = .{
-                .color = if (clay.hovered()) ui.color(240, 200, 100, 220) else ui.color(60, 68, 88, 160),
-                .width = .outside(1),
-            },
         })({
             if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
                 selected_index = index;
@@ -457,21 +434,21 @@ fn drawMuteRow(index: usize, row_w: f32, row_h: f32, ui_scale: f32) void {
             .id = .ID("opt-mute-badge-btn"),
             .layout = .{
                 .sizing = .{
-                    .w = .fixed(@round(110 * ui_scale)),
-                    .h = .fixed(@round(30 * ui_scale)),
+                    .w = .fixed(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale)),
+                    .h = .fixed(@round(HUD.UTILITY_BUTTON_BASE_H * ui_scale)),
                 },
                 .child_alignment = .{ .x = .center, .y = .center },
             },
-            .background_color = if (is_mute) ui.color(160, 45, 45, 240) else ui.color(35, 110, 65, 240),
-            .corner_radius = .all(4 * ui_scale),
-            .border = .{
-                .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(200, 210, 230, 140),
-                .width = .outside(1),
-            },
+            .image = ui.image(HUD.getUtilityButtonSprite(clay.hovered() or is_selected), .init(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale), @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale))) catch .{ .image_data = null },
         })({
             ui.text(if (is_mute) "MUTED" else "UNMUTED", .{
-                .color = ui.color(255, 255, 255, 255),
-                .font_size = lm.tou16(@max(11, @round(12 * ui_scale))),
+                .color = if (is_selected)
+                    ui.color(240, 200, 100, 255)
+                else if (is_mute)
+                    ui.color(240, 100, 100, 255)
+                else
+                    ui.color(100, 230, 140, 255),
+                .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
                 .letter_spacing = 1,
                 .alignment = .center,
             });
@@ -543,21 +520,16 @@ fn drawDisplayTab(panel_w: f32, ui_scale: f32) void {
                 .id = .ID("opt-fs-badge-btn"),
                 .layout = .{
                     .sizing = .{
-                        .w = .fixed(@round(150 * ui_scale)),
-                        .h = .fixed(@round(32 * ui_scale)),
+                        .w = .fixed(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale)),
+                        .h = .fixed(@round(HUD.UTILITY_BUTTON_BASE_H * ui_scale)),
                     },
                     .child_alignment = .{ .x = .center, .y = .center },
                 },
-                .background_color = if (is_fs) ui.color(45, 75, 125, 240) else ui.color(35, 40, 52, 240),
-                .corner_radius = .all(4 * ui_scale),
-                .border = .{
-                    .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(70, 80, 105, 160),
-                    .width = .outside(1),
-                },
+                .image = ui.image(HUD.getUtilityButtonSprite(clay.hovered() or is_selected), .init(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale), @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale))) catch .{ .image_data = null },
             })({
                 ui.text(if (is_fs) "FULLSCREEN" else "WINDOWED", .{
-                    .color = ui.color(255, 255, 255, 255),
-                    .font_size = lm.tou16(@max(11, @round(12 * ui_scale))),
+                    .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(255, 255, 255, 255),
+                    .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
                     .letter_spacing = 1,
                     .alignment = .center,
                 });
@@ -688,8 +660,8 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
 fn drawBackButton(ui_scale: f32) bool {
     const back_index = getBackIndex();
     const is_selected = (selected_index == back_index);
-    const btn_w = @round(160 * ui_scale);
-    const btn_h = @round(38 * ui_scale);
+    const btn_w = @round(HUD.UTILITY_BUTTON_BASE_W * ui_scale);
+    const btn_h = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
     var clicked = false;
 
     clay.UI()(.{
@@ -701,18 +673,7 @@ fn drawBackButton(ui_scale: f32) bool {
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (clay.hovered() or is_selected)
-            ui.color(45, 52, 70, 255)
-        else
-            ui.color(24, 28, 38, 220),
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 255)
-            else
-                ui.color(60, 68, 88, 180),
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
-        },
+        .image = ui.image(HUD.getUtilityButtonSprite(clay.hovered() or is_selected), .init(btn_w, btn_h)) catch .{ .image_data = null },
     })({
         if (clay.hovered()) {
             selected_index = back_index;
@@ -727,8 +688,8 @@ fn drawBackButton(ui_scale: f32) bool {
                 ui.color(255, 255, 255, 255)
             else
                 ui.color(200, 205, 220, 255),
-            .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
-            .letter_spacing = 2,
+            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .letter_spacing = 1,
             .alignment = .center,
         });
     });

@@ -563,18 +563,13 @@ pub fn draw(
         lm.deps.clay.UI()(.{
             .id = .ID("boon-close-button"),
             .layout = .{
-                .padding = .axes(
-                    lm.tou16(@round(8 * ui_scale)),
-                    lm.tou16(@round(28 * ui_scale)),
-                ),
+                .sizing = .{
+                    .w = .fixed(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale)),
+                    .h = .fixed(@round(HUD.UTILITY_BUTTON_BASE_H * ui_scale)),
+                },
                 .child_alignment = .{ .x = .center, .y = .center },
             },
-            .background_color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(45, 52, 68, 250) else ui.color(28, 32, 42, 230),
-            .corner_radius = .all(8 * ui_scale),
-            .border = .{
-                .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(200, 205, 220, 255) else ui.color(65, 70, 85, 200),
-                .width = .outside(if (lm.deps.clay.hovered() or is_close_focused) 2 else 1),
-            },
+            .image = ui.image(HUD.getUtilityButtonSprite(lm.deps.clay.hovered() or is_close_focused), .init(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale), @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale))) catch .{ .image_data = null },
         })({
             if (lm.deps.clay.hovered()) {
                 selected_index = close_index;
@@ -586,8 +581,8 @@ pub fn draw(
             const close_label = if (InputHelper.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
             ui.text(close_label, .{
                 .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
-                .letter_spacing = lm.tou16(@round(2 * ui_scale)),
-                .font_size = lm.tou16(@round(13 * ui_scale)),
+                .letter_spacing = 1,
+                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
                 .alignment = .center,
             });
         });

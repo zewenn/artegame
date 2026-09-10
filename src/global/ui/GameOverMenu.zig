@@ -7,6 +7,7 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const DemoMap = @import("../DemoMap.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const InputHelper = @import("../input/InputHelper.zig");
+const HUD = @import("../HUD.zig");
 
 pub var is_showing: bool = false;
 pub var run_stats: DemoMap.RunStats = .{};
@@ -41,9 +42,7 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
     if (!is_showing) return;
 
     const window_size = lm.window.size.get();
-    const scale_x = window_size.x / 1280.0;
-    const scale_y = window_size.y / 720.0;
-    const ui_scale = @max(0.65, @min(2.5, @min(scale_x, scale_y)));
+    const ui_scale = HUD.calculateUiScale(window_size);
 
     if (just_opened) {
         just_opened = false;
@@ -221,8 +220,9 @@ fn drawStatRow(
     });
 }
 
-fn drawActionButtons(btn_w: f32, ui_scale: f32) void {
-    const btn_h = @round(44 * ui_scale);
+fn drawActionButtons(btn_max_w: f32, ui_scale: f32) void {
+    const btn_w = @min(btn_max_w, @round(HUD.MENU_BUTTON_BASE_W * ui_scale));
+    const btn_h = @round(HUD.MENU_BUTTON_BASE_H * ui_scale);
     const gap = lm.tou16(@round(10 * ui_scale));
 
     ui.new(.{
@@ -282,18 +282,7 @@ fn drawButton(
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (clay.hovered() or is_selected)
-            (if (is_primary) ui.color(180, 45, 55, 250) else ui.color(60, 52, 70, 240))
-        else
-            (if (is_primary) ui.color(120, 28, 38, 220) else ui.color(28, 24, 34, 200)),
-        .corner_radius = .all(8 * ui_scale),
-        .border = .{
-            .color = if (clay.hovered() or is_selected)
-                (if (is_primary) ui.color(255, 120, 130, 255) else ui.color(200, 190, 220, 255))
-            else
-                (if (is_primary) ui.color(160, 40, 50, 180) else ui.color(60, 55, 75, 160)),
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
-        },
+        .image = ui.image(HUD.getMenuButtonSprite(clay.hovered() or is_selected), .init(w, h)) catch .{ .image_data = null },
     })({
         if (clay.hovered()) {
             selected_index = index;
