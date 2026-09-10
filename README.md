@@ -21,15 +21,15 @@
 
 # Download
 
-Pre-compiled, standalone binaries for **macOS** and **Windows** are available on GitHub (Linux builds coming soon):
+Pre-compiled binaries and installers for **macOS** and **Windows** are available on GitHub (Linux builds coming soon):
 
 1. Visit the [Releases](https://github.com/zewenn/artegame/releases) page.
-2. Download the latest archive for your platform:
-   - `artegame-macos-arm64.zip` (Apple Silicon M1/M2/M3/M4)
-   - `artegame-macos-x86_64.zip` (Intel macOS)
+2. Download the latest installer or archive for your platform:
+   - `artegame-macos-arm64.dmg` (Apple Silicon M1/M2/M3/M4 - drag-to-Applications installer)
+   - `artegame-macos-x86_64.dmg` (Intel macOS - drag-to-Applications installer)
+   - `artegame-windows-x86_64-setup.exe` (Windows 10/11 setup wizard)
    - `artegame-windows-x86_64.zip` (Windows 10/11 standalone zip)
-   - `artegame-windows-x86_64-setup.exe` (Windows 10/11 installer)
-3. Extract the archive (or run the Windows installer) and launch Artegame directly.
+3. On macOS, open the `.dmg` and drag `Artegame` to your `Applications` folder. On Windows, run the setup wizard or extract the standalone `.zip`.
 
 
 

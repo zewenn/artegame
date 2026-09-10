@@ -52,14 +52,14 @@ jobs:
             os: macos-latest
             target: aarch64-macos
             binary_name: artegame
-            archive_name: artegame-macos-arm64.zip
-            format: zip
+            archive_name: artegame-macos-arm64.dmg
+            format: dmg
           - name: macos-x86_64
             os: macos-latest
             target: x86_64-macos
             binary_name: artegame
-            archive_name: artegame-macos-x86_64.zip
-            format: zip
+            archive_name: artegame-macos-x86_64.dmg
+            format: dmg
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-windows
@@ -88,20 +88,23 @@ jobs:
         shell: bash
         run: |
           python3 -c "
-          import sys, os, shutil
+          import sys, os, shutil, subprocess
           archive_name = '${{ matrix.archive_name }}'
-          platform = archive_name.replace('.tar.gz', '').replace('.zip', '')
+          platform = archive_name.replace('.tar.gz', '').replace('.zip', '').replace('.dmg', '')
           binary = 'zig-out/bin/${{ matrix.binary_name }}'
           fmt = '${{ matrix.format }}'
           dist_dir = os.path.join('dist', platform)
           os.makedirs(dist_dir, exist_ok=True)
           is_macos = 'macos' in '${{ matrix.name }}'
           if is_macos:
-              # For macOS releases, only include the self-contained artegame.app bundle
-              app_src = 'zig-out/bin/artegame.app'
-              app_dest = os.path.join(dist_dir, 'artegame.app')
-              shutil.copytree(app_src, app_dest, dirs_exist_ok=True)
-              archive_path = shutil.make_archive(platform, fmt, root_dir=dist_dir)
+              # For macOS releases, package into a drag-to-Applications DMG
+              subprocess.run([
+                  'python3', 'packaging/macos/create_dmg.py',
+                  '--app', 'zig-out/bin/artegame.app',
+                  '--out', archive_name,
+                  '--volname', 'Artegame',
+              ], check=True)
+              print(f'DMG created: {archive_name}')
           else:
               # For Windows releases, include binary and assets
               dest_bin = os.path.join(dist_dir, os.path.basename(binary))
@@ -111,7 +114,7 @@ jobs:
               shutil.copytree('src/assets', os.path.join(dist_dir, 'assets'), dirs_exist_ok=True)
               shutil.copytree('src/assets', os.path.join(dist_dir, 'src', 'assets'), dirs_exist_ok=True)
               archive_path = shutil.make_archive(platform, fmt, root_dir='dist', base_dir=platform)
-          print(f'Archive created: {archive_path}')
+              print(f'Archive created: {archive_path}')
           "
 
       - name: Build Windows installer

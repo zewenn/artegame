@@ -133,5 +133,20 @@ pub fn build(b: *std.Build) void {
 
     makensis_cmd.step.dependOn(b.getInstallStep());
     installer_step.dependOn(&makensis_cmd.step);
+
+    const dmg_step = b.step("dmg", "Build macOS drag-and-drop DMG disk image (requires macOS)");
+    const create_dmg_cmd = b.addSystemCommand(&.{"python3"});
+    create_dmg_cmd.addFileArg(b.path("packaging/macos/create_dmg.py"));
+    create_dmg_cmd.addArgs(&.{
+        "--app",
+        b.fmt("{s}/artegame.app", .{b.getInstallPath(.bin, "")}),
+        "--out",
+        b.fmt("{s}/artegame-macos.dmg", .{b.getInstallPath(.bin, "")}),
+        "--volname",
+        "Artegame",
+    });
+    create_dmg_cmd.step.dependOn(b.getInstallStep());
+    dmg_step.dependOn(&create_dmg_cmd.step);
 }
+
 

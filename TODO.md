@@ -18,6 +18,21 @@
 
 ## Done
 
+### [20#OPS] macOS DMG installer packaging
+
+  - tags: [ci, release, macos, installer, dmg]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create packaging/macos/create_dmg.py script with Applications symlink and hdiutil
+      - [x] Add `zig build dmg` step in build.zig for macOS targets
+      - [x] Update .github/workflows/release.yml to package and publish .dmg files for macos-arm64 and macos-x86_64
+      - [x] Update README.md documentation for .dmg downloads
+      - [x] Verify local DMG build and test execution
+
+
+
+
 ### [18#OPS] Automated Windows Installer (NSIS)
 
   - tags: [ci, release, windows, installer]
