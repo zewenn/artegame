@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const app_version = "3.0.0";
+const app_version = "3.0.1";
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -64,19 +64,25 @@ pub fn build(b: *std.Build) void {
             \\    <string>6.0</string>
             \\    <key>CFBundleName</key>
             \\    <string>Artegame</string>
+            \\    <key>CFBundleDisplayName</key>
+            \\    <string>Artegame</string>
             \\    <key>CFBundlePackageType</key>
             \\    <string>APPL</string>
             \\    <key>CFBundleShortVersionString</key>
             \\    <string>{s}</string>
             \\    <key>CFBundleVersion</key>
-            \\    <string>1</string>
+            \\    <string>{s}</string>
+            \\    <key>CFBundleSupportedPlatforms</key>
+            \\    <array>
+            \\        <string>MacOSX</string>
+            \\    </array>
             \\    <key>LSMinimumSystemVersion</key>
             \\    <string>11.0</string>
             \\    <key>NSHighResolutionCapable</key>
             \\    <true/>
             \\</dict>
             \\</plist>
-        , .{app_version}));
+        , .{ app_version, app_version }));
 
         b.getInstallStep().dependOn(&b.addInstallFileWithDir(
             info_plist,
@@ -100,6 +106,20 @@ pub fn build(b: *std.Build) void {
             .install_dir = .bin,
             .install_subdir = b.fmt("{s}/Contents/Resources/assets", .{app_dir}),
         });
+
+        if (@import("builtin").os.tag == .macos) {
+            const sign_cmd = b.addSystemCommand(&.{
+                "codesign",
+                "--force",
+                "--deep",
+                "--sign",
+                "-",
+                b.fmt("{s}/artegame.app", .{b.getInstallPath(.bin, "")}),
+            });
+            sign_cmd.step.dependOn(b.getInstallStep());
+            const sign_step = b.step("sign", "Sign the macOS app bundle with an ad-hoc signature");
+            sign_step.dependOn(&sign_cmd.step);
+        }
     }
 
     const run_cmd = b.addRunArtifact(exe);

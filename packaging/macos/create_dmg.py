@@ -50,6 +50,17 @@ def create_dmg(app_path: str, out_path: str, volname: str, staging_dir: str):
             os.remove(apps_link)
         os.symlink("/Applications", apps_link)
 
+        # Ensure executable permissions on main binary
+        bin_path = os.path.join(dest_app, "Contents", "MacOS", "artegame")
+        if os.path.exists(bin_path):
+            os.chmod(bin_path, 0o755)
+
+        # Ad-hoc sign the app bundle so resources match the Mach-O signature
+        if shutil.which("codesign"):
+            print(f"Signing app bundle with ad-hoc signature: {dest_app}...")
+            subprocess.run(["codesign", "--force", "--deep", "--sign", "-", dest_app], check=True)
+            subprocess.run(["codesign", "--verify", "--deep", "--strict", dest_app], check=True)
+
         # Ensure parent output directory exists
         out_dir = os.path.dirname(out_path)
         if out_dir:
@@ -70,7 +81,13 @@ def create_dmg(app_path: str, out_path: str, volname: str, staging_dir: str):
             out_path,
         ]
         subprocess.run(cmd, check=True)
-        print(f"Successfully created DMG: {out_path}")
+
+        # Also ad-hoc sign the DMG image
+        if shutil.which("codesign"):
+            print(f"Signing DMG image: {out_path}...")
+            subprocess.run(["codesign", "--force", "--sign", "-", out_path], check=True)
+
+        print(f"Successfully created and signed DMG: {out_path}")
 
     finally:
         # Clean up staging directory

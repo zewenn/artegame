@@ -15,6 +15,17 @@
 
 ## Work in Progress
 
+### [21#OPS] Fix macOS release Gatekeeper damaged error via ad-hoc bundle signing
+
+  - tags: [ci, release, macos, codesign, gatekeeper]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Add ad-hoc bundle codesigning (`codesign --force --deep --sign -`) in packaging/macos/create_dmg.py
+      - [x] Add `zig build sign` step and enrich Info.plist metadata in build.zig
+      - [x] Ensure binary executable permissions (0755) in staged .app bundle
+      - [x] Document Gatekeeper first-launch instructions (right-click / xattr) in README.md
+      - [ ] User confirmation that release package launches properly
 
 ## Done
 

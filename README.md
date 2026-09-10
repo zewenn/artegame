@@ -31,6 +31,16 @@ Pre-compiled binaries and installers for **macOS** and **Windows** are available
    - `artegame-windows-x86_64.zip` (Windows 10/11 standalone zip)
 3. On macOS, open the `.dmg` and drag `Artegame` to your `Applications` folder. On Windows, run the setup wizard or extract the standalone `.zip`.
 
+> [!NOTE]
+> **macOS First-Time Launch (Gatekeeper):**  
+> Because Artegame is an independent open-source project and not signed with a paid Apple Developer ID, macOS Gatekeeper may warn when opening it for the first time:
+> - **Recommended:** Right-click (or Control-click) `Artegame` in your `Applications` folder, select **Open**, and click **Open** in the prompt.
+> - **System Settings:** If blocked, navigate to **System Settings > Privacy & Security**, scroll to the **Security** section, and click **Open Anyway**.
+> - **Terminal:** Alternatively, you can remove the quarantine flag directly in Terminal:
+>   ```bash
+>   xattr -cr /Applications/artegame.app
+>   ```
+
 
 
 # Build from source
