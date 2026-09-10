@@ -7,6 +7,20 @@
 
 ## Done
 
+### [18#OPS] Automated Windows Installer (NSIS)
+
+  - tags: [ci, release, windows, installer]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create packaging/windows/installer.nsi template with branding, shortcuts, and uninstaller
+      - [x] Add `zig build installer` step in build.zig with makensis detection
+      - [x] Update .github/workflows/release.yml to build and publish Windows installer executable
+      - [x] Verify local build and test execution
+
+
+
+
 ### [17#UIB] Standardize UI button ratios and integer scaling for pixel-art sprites
 
   - tags: [ui, scaling, buttons]

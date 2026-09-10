@@ -129,11 +129,40 @@ jobs:
           print(f'Archive created: {archive_path}')
           "
 
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          if ! command -v makensis &> /dev/null; then
+            if [ -f "/c/Program Files (x86)/NSIS/makensis.exe" ]; then
+              export PATH="/c/Program Files (x86)/NSIS:$PATH"
+            else
+              choco install nsis -y --no-progress
+              export PATH="/c/Program Files (x86)/NSIS:$PATH"
+            fi
+          fi
+          echo "Building Windows installer with NSIS..."
+          makensis \
+            -DVERSION="${{ needs.prepare-release.outputs.version }}" \
+            -DBIN_DIR="dist/artegame-windows-x86_64" \
+            -DOUTPUT_DIR="." \
+            -DOUTPUT_NAME="artegame-windows-x86_64-setup.exe" \
+            -DICON_PATH="src/assets/ui/branding/icon.ico" \
+            packaging/windows/installer.nsi
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.archive_name }}
           path: ${{ matrix.archive_name }}
+          if-no-files-found: error
+
+      - name: Upload Windows installer artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: artegame-windows-x86_64-setup.exe
+          path: artegame-windows-x86_64-setup.exe
           if-no-files-found: error
 
   publish-release:

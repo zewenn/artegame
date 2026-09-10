@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const app_version = "3.0.0";
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
@@ -45,7 +47,7 @@ pub fn build(b: *std.Build) void {
     if (target.result.os.tag.isDarwin()) {
         const app_dir = "artegame.app";
         const write_files = b.addWriteFiles();
-        const info_plist = write_files.add("Info.plist",
+        const info_plist = write_files.add("Info.plist", b.fmt(
             \\<?xml version="1.0" encoding="UTF-8"?>
             \\<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
             \\<plist version="1.0">
@@ -65,7 +67,7 @@ pub fn build(b: *std.Build) void {
             \\    <key>CFBundlePackageType</key>
             \\    <string>APPL</string>
             \\    <key>CFBundleShortVersionString</key>
-            \\    <string>3.0.0</string>
+            \\    <string>{s}</string>
             \\    <key>CFBundleVersion</key>
             \\    <string>1</string>
             \\    <key>LSMinimumSystemVersion</key>
@@ -74,7 +76,7 @@ pub fn build(b: *std.Build) void {
             \\    <true/>
             \\</dict>
             \\</plist>
-        );
+        , .{app_version}));
 
         b.getInstallStep().dependOn(&b.addInstallFileWithDir(
             info_plist,
@@ -119,4 +121,17 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_exe_unit_tests.step);
+
+    const installer_step = b.step("installer", "Build Windows installer with NSIS (requires makensis)");
+    const makensis_cmd = b.addSystemCommand(&.{"makensis"});
+    makensis_cmd.addArg(b.fmt("-DVERSION={s}", .{app_version}));
+    makensis_cmd.addArg(b.fmt("-DBIN_DIR={s}", .{b.getInstallPath(.bin, "")}));
+    makensis_cmd.addArg(b.fmt("-DOUTPUT_DIR={s}", .{b.getInstallPath(.bin, "")}));
+    makensis_cmd.addArg("-DOUTPUT_NAME=artegame-windows-x86_64-setup.exe");
+    makensis_cmd.addArg(b.fmt("-DICON_PATH={s}", .{b.pathFromRoot("src/assets/ui/branding/icon.ico")}));
+    makensis_cmd.addFileArg(b.path("packaging/windows/installer.nsi"));
+
+    makensis_cmd.step.dependOn(b.getInstallStep());
+    installer_step.dependOn(&makensis_cmd.step);
 }
+
