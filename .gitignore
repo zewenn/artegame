@@ -4,7 +4,6 @@ zig-pkg/
 
 **.zsh
 
-packaging/
 .VSCodeCounter/
 .DS_Store
 .vscode/

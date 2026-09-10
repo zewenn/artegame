@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Zig-0.16.0%2B-f7a41d?style=flat&logo=zig&logoColor=white" alt="Zig Version">
   <img src="https://img.shields.io/badge/Engine-Loom-blueviolet?style=flat" alt="Engine Loom">
   <img src="https://img.shields.io/badge/UI-Clay-4a90e2?style=flat" alt="UI Clay">
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=flat" alt="Supported Platforms">
+  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-lightgrey?style=flat" alt="Supported Platforms">
 </p>
 
 ---
@@ -21,15 +21,15 @@
 
 # Download
 
-Pre-compiled, standalone binaries for **macOS**, **Linux**, and **Windows** are available on GitHub:
+Pre-compiled, standalone binaries for **macOS** and **Windows** are available on GitHub (Linux builds coming soon):
 
 1. Visit the [Releases](https://github.com/zewenn/artegame/releases) page.
 2. Download the latest archive for your platform:
    - `artegame-macos-arm64.zip` (Apple Silicon M1/M2/M3/M4)
    - `artegame-macos-x86_64.zip` (Intel macOS)
-   - `artegame-linux-x86_64.tar.gz` (Standard Linux x86_64)
-   - `artegame-windows-x86_64.zip` (Windows 10/11)
-3. Extract the archive and launch the `artegame` executable directly.
+   - `artegame-windows-x86_64.zip` (Windows 10/11 standalone zip)
+   - `artegame-windows-x86_64-setup.exe` (Windows 10/11 installer)
+3. Extract the archive (or run the Windows installer) and launch Artegame directly.
 
 
 

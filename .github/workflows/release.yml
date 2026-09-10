@@ -48,12 +48,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: linux-x86_64
-            os: ubuntu-latest
-            target: x86_64-linux-gnu
-            binary_name: artegame
-            archive_name: artegame-linux-x86_64.tar.gz
-            format: gztar
           - name: macos-arm64
             os: macos-latest
             target: aarch64-macos
@@ -76,15 +70,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libx11-dev libxcursor-dev libxext-dev libxfixes-dev \
-            libxi-dev libxinerama-dev libxrandr-dev libxrender-dev \
-            libgl1-mesa-dev
 
       - name: Set up Zig
         uses: mlugg/setup-zig@v2
@@ -118,7 +103,7 @@ jobs:
               shutil.copytree(app_src, app_dest, dirs_exist_ok=True)
               archive_path = shutil.make_archive(platform, fmt, root_dir=dist_dir)
           else:
-              # For Windows and Linux releases, include binary and assets
+              # For Windows releases, include binary and assets
               dest_bin = os.path.join(dist_dir, os.path.basename(binary))
               shutil.copy2(binary, dest_bin)
               if not dest_bin.endswith('.exe'):

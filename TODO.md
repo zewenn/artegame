@@ -2,6 +2,17 @@
 
 ## Backlog
 
+### [19#OPS] Linux release build and packaging workflow
+
+  - tags: [ci, release, linux]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [ ] Resolve Linux build dependencies and headless CI compatibility (X11, GL, libc)
+      - [ ] Re-add linux-x86_64 target to matrix in .github/workflows/release.yml
+      - [ ] Package standalone Linux archive (.tar.gz) or AppImage with bundled assets
+      - [ ] Validate runtime execution across common Linux distributions
+
 ## Work in Progress
 
 
