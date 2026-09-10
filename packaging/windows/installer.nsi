@@ -9,16 +9,20 @@
 ; ------------------------------------------------------------------------------
 ; Default Definitions (Can be overridden via /D command-line arguments)
 ; ------------------------------------------------------------------------------
+!ifndef REPO_ROOT
+  !define REPO_ROOT "../.."
+!endif
+
 !ifndef VERSION
   !define VERSION "3.0.0"
 !endif
 
 !ifndef BIN_DIR
-  !define BIN_DIR "..\..\zig-out\bin"
+  !define BIN_DIR "${REPO_ROOT}/zig-out/bin"
 !endif
 
 !ifndef OUTPUT_DIR
-  !define OUTPUT_DIR "..\..\zig-out\bin"
+  !define OUTPUT_DIR "${REPO_ROOT}/zig-out/bin"
 !endif
 
 !ifndef OUTPUT_NAME
@@ -26,7 +30,7 @@
 !endif
 
 !ifndef ICON_PATH
-  !define ICON_PATH "..\..\src\assets\ui\branding\icon.ico"
+  !define ICON_PATH "${REPO_ROOT}/src/assets/ui/branding/icon.ico"
 !endif
 
 ; ------------------------------------------------------------------------------
@@ -91,7 +95,7 @@ Section "Artegame (required)" SecMain
     File /r "${BIN_DIR}\assets"
 
     ; Include src/assets directory if present in staging (for relative path compatibility)
-    !ifexists "${BIN_DIR}\src"
+    !if /FILEEXISTS "${BIN_DIR}\src\*.*"
         File /r "${BIN_DIR}\src"
     !endif
 
