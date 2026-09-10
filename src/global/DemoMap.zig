@@ -119,7 +119,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
             if (player.getComponent(Hands)) |hands| {
                 if (attack.currentWeapon()) |w| {
-                    hands.play(w.*) catch {};
+                    hands.setWeapon(w.*);
                 }
             }
         }

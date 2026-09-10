@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const app_version = "3.0.1";
+const app_version = @import("build.zig.zon").version;
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -23,6 +23,8 @@ pub fn build(b: *std.Build) void {
     exe_mod.addImport("loom", loom_mod);
 
     if (target.result.os.tag == .windows) {
+        exe_mod.addCMacro("_FORTIFY_SOURCE", "0");
+        loom_mod.addCMacro("_FORTIFY_SOURCE", "0");
         exe_mod.addWin32ResourceFile(.{
             .file = b.path("src/assets/ui/branding/icon.rc"),
             .include_paths = &.{
@@ -35,6 +37,10 @@ pub fn build(b: *std.Build) void {
         .name = "artegame",
         .root_module = exe_mod,
     });
+
+    if (target.result.os.tag == .windows) {
+        exe.subsystem = .windows;
+    }
 
     b.installArtifact(exe);
 
@@ -168,5 +174,3 @@ pub fn build(b: *std.Build) void {
     create_dmg_cmd.step.dependOn(b.getInstallStep());
     dmg_step.dependOn(&create_dmg_cmd.step);
 }
-
-

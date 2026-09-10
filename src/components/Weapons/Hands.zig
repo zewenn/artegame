@@ -174,6 +174,9 @@ pub fn Update(self: *Self) !void {
     const right_hand_animator: *lm.Animator = try lm.ensureComponent(self.right_hand_animator);
     const left_hand_animator: *lm.Animator = try lm.ensureComponent(self.left_hand_animator);
 
+    // Guard: wait until child hand entities are awakened by the scene controller
+    if (right_hand_animator.display == null or left_hand_animator.display == null) return;
+
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
@@ -222,11 +225,18 @@ fn aroundEquals(vec: lm.Vector2, other: lm.Vector2) bool {
         vec.y < 2 + other.y;
 }
 
+pub fn setWeapon(self: *Self, weapon: Weapon) void {
+    if (self.right_hand_renderer) |r| r.img_path = weapon.sprite_right;
+    if (self.left_hand_renderer) |l| l.img_path = weapon.sprite_left;
+}
+
 pub fn play(self: *Self, weapon: Weapon) !void {
     const right_hand_animator: *lm.Animator = try lm.ensureComponent(self.right_hand_animator);
     const left_hand_animator: *lm.Animator = try lm.ensureComponent(self.left_hand_animator);
     const right_hand_renderer: *lm.Renderer = try lm.ensureComponent(self.right_hand_renderer);
     const left_hand_renderer: *lm.Renderer = try lm.ensureComponent(self.left_hand_renderer);
+
+    if (right_hand_animator.display == null or left_hand_animator.display == null) return;
 
     switch (weapon.type) {
         .close => {
@@ -242,3 +252,4 @@ pub fn play(self: *Self, weapon: Weapon) !void {
     right_hand_renderer.img_path = weapon.sprite_right;
     left_hand_renderer.img_path = weapon.sprite_left;
 }
+

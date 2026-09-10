@@ -48,17 +48,13 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.dashing = try entity.pullComponent(Dashing);
     self.stats = try entity.pullComponent(Stats);
     self.hands = try entity.pullComponent(Hands);
-
-    if (self.hands) |hands| {
-        hands.play((self.currentWeapon() orelse return).*) catch {};
-    }
 }
 
 pub fn Start(self: *Self) void {
     self.camera = lm.activeScene().?.getCameraById("main");
     if (self.hands) |hands| {
         if (self.currentWeapon()) |w| {
-            hands.play(w.*) catch {};
+            hands.setWeapon(w.*);
         }
     }
 }

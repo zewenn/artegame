@@ -27,7 +27,20 @@
       - [x] Document Gatekeeper first-launch instructions (right-click / xattr) in README.md
       - [ ] User confirmation that release package launches properly
 
+
 ## Done
+
+### [22#WFX] Windows release fixes (terminal suppression, Play crash, ReleaseSafe build)
+
+  - tags: [release, windows, bugfix, build]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Configure Windows GUI subsystem (`exe.subsystem = .windows`) in build.zig to suppress terminal window
+      - [x] Decouple hand sprite setting and guard child animators until initialized in Hands.zig, Attack.zig, and DemoMap.zig
+      - [x] Add `_FORTIFY_SOURCE = 0` macro on Windows targets in build.zig to fix ReleaseSafe MinGW fortify build errors
+      - [x] Dynamically read app_version from build.zig.zon in build.zig
+      - [x] User confirmation that Windows release runs properly
 
 ### [20#OPS] macOS DMG installer packaging
 
@@ -41,9 +54,6 @@
       - [x] Update README.md documentation for .dmg downloads
       - [x] Verify local DMG build and test execution
 
-
-
-
 ### [18#OPS] Automated Windows Installer (NSIS)
 
   - tags: [ci, release, windows, installer]
@@ -54,9 +64,6 @@
       - [x] Add `zig build installer` step in build.zig with makensis detection
       - [x] Update .github/workflows/release.yml to build and publish Windows installer executable
       - [x] Verify local build and test execution
-
-
-
 
 ### [17#UIB] Standardize UI button ratios and integer scaling for pixel-art sprites
 
@@ -70,8 +77,6 @@
       - [x] Remove borders and corner radiuses from buttons and apply sprites from src/assets/ui/HUD/buttons
       - [x] Support normal and hovered sprite variants (large_button1/2, small_button1/2)
       - [x] Verify test suite and build verification
-
-
 
 ### [16#OPS] Multi-platform release GitHub Actions workflow
 
@@ -94,7 +99,6 @@
   - steps:
       - [x] Fill in About the game, Download, and Build from source sections in README.md
 
-
 ### [14#AST] Remove unused assets from assets directory
 
   - tags: [assets, cleanup]
@@ -103,8 +107,6 @@
   - steps:
       - [x] Remove obsolete background, font, character, card, HUD, and effect files (28 files)
       - [x] Verify build and tests pass with zero missing asset errors
-
-
 
 ### [10#INP] Dynamic button prompt overlays (keyboard vs controller)
 
