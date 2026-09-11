@@ -2,6 +2,241 @@
 
 ## Backlog
 
+### [24#ARC] Room progression architecture and dynamic room lifecycle
+
+  - tags: [architecture, room, progression, lifecycle]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [ ] Refactor DemoMap.zig into a modular RoomManager and room lifecycle state machine
+      - [ ] Automatically initialize round state to .combat on room entry
+      - [ ] Transition round state to .replenish and grant rewards when all room enemies are defeated
+      - [ ] Track total rooms cleared, room counters, and triggers for mini-boss (every 5) and boss (every 15) rooms
+      - [ ] Implement entity cleanup (projectiles, remnants, drops) and player repositioning between rooms
+      - [ ] User confirmation that room lifecycle and state transitions function as expected
+    ```md
+    Foundation architecture for v4.0.0 room-based progression. Replaces the single static arena loop with a dynamic RoomManager handling room entry, combat triggers, replenishment transitions, and room cleanup. Blocks mini-boss, boss, and tutorial room implementations.
+    ```
+
+### [25#ARC] Projectile and combat stream extensions: pull forces, ally healing, fixed angles, and channeled barrages
+
+  - tags: [architecture, combat, projectiles, abilities]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [ ] Add vector pull/drag on-hit mechanic in Projectile.zig pulling target toward caster (Magician "Where are you going?")
+      - [ ] Add healing projectile mode in Projectile.zig allowing projectiles to restore HP to matching team members (Shaman Remote Healing)
+      - [ ] Support absolute world angle firing in Ability.zig independent of player position (Angler & Bishop cardinal directions)
+      - [ ] Implement channeled continuous barrage execution in Attack.zig with rotating heading (Bishop 4-way radial sweep over 5s)
+      - [ ] Support staggered multi-wave projectile volleys in Ability.zig (Queen dash attack waves and Tank slow bursts)
+      - [ ] Implement projectile on-hit callback hook for global reactions (Shaman Grieving Wounds team heal, Queen Bond of Life early cancel)
+      - [ ] User confirmation that projectile extensions and channeled streams function as expected
+    ```md
+    Builds on existing Projectile.zig (which already supports passthrough piercing, lifetimes, on-hit slow/root/stun, and knockback) by implementing missing v4.0.0 combat capabilities: caster-directed pull forces (Magician), ally-targeted healing projectiles (Shaman), fixed-angle firing (Angler), channeled rotating continuous streams (Bishop/Queen), multi-wave bursts, and on-hit event hooks. Blocks Shaman, Magician, Angler, Bishop, and Queen abilities.
+    ```
+
+### [26#ARC] Universal enemy status effects and ability framework: stasis, proximity auras, and Bond of Life
+
+  - tags: [architecture, enemies, status-effects, combat]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [ ] Implement Stasis state component (invulnerable to damage, stunned/unable to act)
+      - [ ] Implement reactive damage aura framework (reactive root-on-hit and mark/rebound damage reflection)
+      - [ ] Implement proximity/distance-based scaling auras (Knight parabolic Armor/MR and drain; Magician slow)
+      - [ ] Implement ally-targeting and revive mechanics for support enemies (Shaman ally buffs, Lifeliner revive)
+      - [ ] Implement Bond of Life mark lifecycle: true damage on hit, damage rebound to caster on miss/expiry
+      - [ ] User confirmation that universal ability hooks and status effects trigger correctly
+    ```md
+    Extensible status effect and enemy ability framework. Introduces stasis invulnerability, proximity stat/damage scaling curves, ally targeted support abilities, and reactive damage mechanisms needed across new normal enemies, mini-bosses, and bosses.
+    ```
+
+### [27#ARC] Tile-based background engine, room layout serialization, and map editor
+
+  - tags: [architecture, tilemap, map-editor, assets]
+  - priority: high
+  - workload: Extreme
+  - steps:
+      - [ ] Implement tilemap grid data structures supporting ground and wall/obstacle tile layers
+      - [ ] Generate static boundary and obstacle Loom colliders dynamically from tilemap layout data
+      - [ ] Design file serialization format (.map / JSON) for persistent room layout saving and loading
+      - [ ] Modernize and integrate map editor tooling to design, edit, and export room layouts
+      - [ ] Build runtime room loader to instantiate tilemap backgrounds based on active room type
+      - [ ] User confirmation that tile-based maps load, render, and collide properly
+    ```md
+    Tile-based map engine replacing hardcoded single-texture arena backgrounds. Provides data-driven room layouts, serialization, and integrated editor tooling to author visually distinct regular rooms, boss arenas, and tutorial environments.
+    ```
+
+### [28#SPW] Dynamic wave spawner overhaul and 256 enemy cap scaling
+
+  - tags: [spawner, scaling, performance, waves]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [ ] Expand active enemy entity pool capacity and tracking limits from 128 to 256 enemies per room
+      - [ ] Decouple RoundSpawner from static arena coordinates to accept arbitrary room boundaries and spawn zones
+      - [ ] Add room-type spawn profiles: Tutorial (Dummy), Normal (scaling mob waves), Mini-Boss (solo), Boss (solo + phases)
+      - [ ] Scale enemy spawn quantities, composition, and stats dynamically based on current room number
+      - [ ] Benchmark and optimize collision, movement, and tick performance under 256 active entities
+      - [ ] User confirmation that spawner handles 256 enemies without frame drops or memory leaks
+    ```md
+    Overhauls RoundSpawner.zig to double enemy capacity to 256 per room, dynamically generate room-tailored encounter waves, scale mob difficulty with room index, and maintain 60 FPS under full capacity.
+    ```
+
+### [29#SYS] Save system reset and schema updates for room progression and tutorial persistence
+
+  - tags: [save, persistence, schema, tutorial]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [ ] Bump save version in SaveData.zig and automatically reset legacy saves to defaults on mismatch
+      - [ ] Add tutorial_completed boolean flag to persistent profile save data
+      - [ ] Extend active run save schema to persist current_room_index, rooms_cleared, and room category
+      - [ ] Update SaveSystem.zig to save and restore mid-run room progression state during replenish phase
+      - [ ] Add unit tests verifying legacy save reset on version mismatch and clean room/tutorial serialization
+      - [ ] User confirmation that save reset on v4.0.0 and room/tutorial persistence work as expected
+    ```md
+    Updates SaveData.zig and SaveSystem.zig to support room progression, active room state, and persistent tutorial completion. Bumps the save file version so incompatible legacy saves are cleanly reset to fresh defaults rather than migrated.
+    ```
+
+### [30#ARC] Boon category data structures and categorized reward pools
+
+  - tags: [architecture, boons, progression, rng]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [ ] Define BoonCategory struct with name, icon identifier, and boon collection slice
+      - [ ] Categorize all existing and planned boons into thematic category pools
+      - [ ] Update BoonPool.zig to support category-scoped boon rolling and candidate filtering
+      - [ ] Implement category selection logic to assign random BoonCategory items to room exit doors
+      - [ ] Enforce category restriction in BoonMenu so offered 3-card choices draw only from room category
+      - [ ] User confirmation that boon rewards accurately filter to the room's designated category
+    ```md
+    Implements BoonCategory data structures and pool filtering. Allows room doors to offer category-specific rewards (e.g. Plate Upgrades), giving players deterministic control over build progression while retaining the 3-card selection UI.
+    ```
+
+### [31#UIB] Interactive room exit doors with reward category icon overlays
+
+  - tags: [ui, doors, interaction, prefabs]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [ ] Create Door prefab entity with physical collider, interaction prompt, and open/closed visuals
+      - [ ] Render overhead reward icon badges on doors indicating upcoming room reward (Boon category, Mini-Boss, Boss)
+      - [ ] Implement door spawner generating 1 to 3 doors during replenish phase based on room rules
+      - [ ] Randomize door rewards after each round completion to prevent static progression routes
+      - [ ] Connect door interaction to RoomManager to trigger room transition and load selected room
+      - [ ] User confirmation that doors spawn with correct reward icons and transition rooms on interaction
+    ```md
+    Implements interactive exit doors appearing during the replenish phase. Displays reward category icons overhead and lets the player choose which room path to venture into next.
+    ```
+
+### [32#UIS] Dedicated top-of-screen boss health bar HUD component
+
+  - tags: [ui, hud, boss-bar, encounters]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [ ] Design top-of-screen boss health bar HUD layout in HUD.zig with boss name and stylized health bar
+      - [ ] Implement entity binding API to link boss bar to active Mini-Boss or Boss entity Stats component
+      - [ ] Hide default overhead health bar on entities currently bound to the top boss bar
+      - [ ] Add smooth health bar animation, damage lag gauge, and defeat fade-out transition
+      - [ ] User confirmation that top-of-screen boss health bar renders cleanly during boss fights
+    ```md
+    UI component for mini-boss and boss encounters. Replaces floating overhead health bars with a prominent screen-top boss health bar displaying boss name and current health percentage.
+    ```
+
+### [33#ENE] New normal enemy archetypes: Shaman, Magician, Lifeliner, Angler, and Tank
+
+  - tags: [enemies, ai, combat, archetypes]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [ ] Implement Shaman prefab & AI: pass-through heal burst, ally speed buff, grieving projectile, stasis backup call, on-death HP drain/buff
+      - [ ] Implement Magician prefab & AI: blink teleport, pull projectile, proximity slow aura, close-range stun burst
+      - [ ] Implement Lifeliner prefab & AI: low-HP ally rescue teleport and fallen enemy resurrection
+      - [ ] Implement Angler prefab & AI: 4-way rapid cardinal fire (0°, 90°, -90°, 180°) with scaling attack speed
+      - [ ] Implement Tank prefab & AI: reactive root-on-hit aura, stacking slow shots, knockback projectile, 8-way stun burst
+      - [ ] User confirmation that all 5 normal enemy archetypes display intended behaviors and abilities
+    ```md
+    Implements 5 new standard enemy archetypes specified in v4.0.0: Shaman (support/summoner), Magician (mobility/pull), Lifeliner (medic/reviver), Angler (rapid cardinal suppression), and Tank (crowd control/reactive defense).
+    ```
+
+### [34#ENE] Mini-boss encounters: Knight and Bishop with scaled clear rewards
+
+  - tags: [enemies, mini-boss, encounters, ai]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [ ] Implement Knight prefab & AI: close-range brawler, parabolic distance Armor/MR scaling, distance drain aura, beheading strike, Weaken vulnerability, low-HP heal channel
+      - [ ] Implement Bishop prefab & AI: sweeping 360° rotating cross barrages (Knockback, Slow, Root, Stun variants) with 5s duration and 750 projectile speed
+      - [ ] Trigger mini-boss room encounter automatically every 5th room after clearing 4 regular rooms
+      - [ ] Grant mini-boss clear rewards on defeat: full HP restore and permanent +10% max HP increase
+      - [ ] User confirmation that mini-boss encounters function correctly with distinct phases and rewards
+    ```md
+    Implements the two v4.0.0 mini-boss encounters appearing every 5 rooms. Defeating a mini-boss restores HP to max and permanently boosts max HP by 10%.
+    ```
+
+### [35#ENE] End-game boss encounters: The King and The Queen
+
+  - tags: [enemies, bosses, encounters, ai]
+  - priority: medium
+  - workload: Extreme
+  - steps:
+      - [ ] Implement The King prefab & AI: wide melee attacks, stasis minion summoning (2 mini-bosses or 40+ normal enemies followed by Weaken), sub-50% HP root and slow spells
+      - [ ] Implement The Queen prefab & AI: Bond of Life application (10% max HP true damage / rebound on miss), radial sweep, dash attack waves, and sniper stun projectile
+      - [ ] Trigger boss room encounter automatically every 15th room after clearing 14 rooms
+      - [ ] Grant boss clear rewards on defeat: full HP restore, permanent +15% max HP, +15 physical damage, and +10 magic damage
+      - [ ] User confirmation that King and Queen boss fights operate with proper multi-phase mechanics and rewards
+    ```md
+    Implements full boss encounters for The King and The Queen appearing every 15 rooms. Features complex phase shifts, summon phases, Bond of Life mechanics, and major permanent stat upgrade rewards on clear.
+    ```
+
+### [36#UIS] First-launch tutorial room, Training Dummy prefab, and objective sequence
+
+  - tags: [tutorial, hud, objectives, onboarding]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [ ] Create TrainingDummy prefab with infinite health, hit impact audio/visual feedback, and no offensive attacks
+      - [ ] Implement sequential tutorial objective HUD tracker: WASD move, Space dash, light/heavy/dash attacks, boon interact, door interact
+      - [ ] Spawn guaranteed starter boon selection and single exit door in tutorial room
+      - [ ] Persist tutorial completion in save data upon exiting the tutorial room and bypass on future runs
+      - [ ] User confirmation that tutorial room guides player through all core actions and saves completion
+    ```md
+    Implements the first-room onboarding tutorial. Features a non-hostile Training Dummy and sequential objective prompts teaching movement, dashes, attacks, boon collection, and door transitions.
+    ```
+
+### [37#UIM] Main menu dynamic "Tutorial" replay button
+
+  - tags: [ui, main-menu, buttons, tutorial]
+  - priority: low
+  - workload: Easy
+  - steps:
+      - [ ] Add query to SaveSystem to check if tutorial has been completed previously
+      - [ ] Dynamically render a standardized 6:1 "Tutorial" menu button in MainMenu.zig when tutorial_completed is true
+      - [ ] Connect button click to launch standalone practice tutorial room without altering active run stats
+      - [ ] Return cleanly to Main Menu upon exiting the practice tutorial room
+      - [ ] User confirmation that Tutorial button displays and launches practice room as expected
+    ```md
+    Adds a dynamic "Tutorial" button to the Main Menu when the player has previously completed the tutorial, allowing players to replay the tutorial / practice room anytime from the menu.
+    ```
+
+### [38#AST] Sprite, particle, and audio asset integration for v4.0.0 content
+
+  - tags: [assets, sprites, audio, vfx]
+  - priority: low
+  - workload: Normal
+  - steps:
+      - [ ] Source or generate pixel-art sprites for new enemies (Shaman, Magician, Lifeliner, Angler, Tank) and bosses (Knight, Bishop, King, Queen, Training Dummy)
+      - [ ] Create visual effect textures and particle animations: Bond of Life tether, stasis barrier, reactive root aura, distance drain beam, radial bullets
+      - [ ] Create door sprites (open, closed, category icon badges) and modular tilemap tilesets
+      - [ ] Integrate sound effects for new abilities (blink, bullet sweep, drain, stasis) and boss encounter BGM
+      - [ ] User confirmation that all v4.0.0 visual and audio assets load and render without glitches
+    ```md
+    Encompasses visual and audio assets required for v4.0.0: new enemy spritesheets, VFX overlays (Bond of Life, shields, beams), door/icon tiles, and audio sound effects/music tracks.
+    ```
+
 ### [19#OPS] Linux release build and packaging workflow
 
   - tags: [ci, release, linux]
@@ -15,6 +250,8 @@
 
 ## Work in Progress
 
+## Done
+
 ### [21#OPS] Fix macOS release Gatekeeper damaged error via ad-hoc bundle signing
 
   - tags: [ci, release, macos, codesign, gatekeeper]
@@ -27,7 +264,16 @@
       - [x] Document Gatekeeper first-launch instructions (right-click / xattr) in README.md
       - [ ] User confirmation that release package launches properly
 
-## Done
+### [23#DOC] Proofread and polish v4.0.0 specification
+
+  - tags: [docs, specs, v4]
+  - priority: low
+  - workload: Easy
+  - steps:
+      - [x] Review spelling, grammar, punctuation, and formatting in specs/v4.0.0.md
+      - [x] Correct logical and copy-paste errors (Magician vs Shaman, Bishop diagonal vs radial, King peasant minions)
+      - [x] Update specs/v4.0.0.md with polished documentation
+      - [x] User confirmation that proofread specification meets expectations
 
 ### [22#WFX] Windows release fixes (terminal suppression, Play crash, ReleaseSafe build)
 
