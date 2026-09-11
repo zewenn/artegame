@@ -8,7 +8,7 @@ const Stats = @import("../Stats.zig");
 const Attack = @import("../player/Attack.zig");
 const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
-const DemoMap = @import("../../global/DemoMap.zig");
+const RoomManager = @import("../../global/RoomManager.zig");
 
 const Self = @This();
 
@@ -70,7 +70,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         }
     }
 
-    DemoMap.removeDefeatedEnemy(entity.uuid);
+    RoomManager.removeDefeatedEnemy(entity.uuid, enemy_pos);
 
     lm.removeEntity(.{ .uuid = entity.uuid });
 }

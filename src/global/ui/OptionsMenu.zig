@@ -552,7 +552,7 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
         .{ .action = "Dash", .kbm = "Spacebar", .pad = "A Button (South)" },
         .{ .action = "Cast Spell 1", .kbm = "Q Key", .pad = "Left Bumper (LB)" },
         .{ .action = "Cast Spell 2", .kbm = "E Key", .pad = "Right Bumper (RB)" },
-        .{ .action = "Interact / Shrine", .kbm = "F Key", .pad = "X Button (West)" },
+        .{ .action = "Interact", .kbm = "F Key", .pad = "X Button (West)" },
         .{ .action = "Pause / Menu", .kbm = "Escape", .pad = "Start / Options" },
     };
 

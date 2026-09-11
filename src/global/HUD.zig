@@ -6,7 +6,7 @@ const Objectives = @import("../components/player/Objectives.zig");
 const Attack = @import("../components/player/Attack.zig");
 const Boon = @import("boons/Boon.zig");
 const Interactable = @import("../components/interaction/Interactable.zig");
-const DemoMap = @import("DemoMap.zig");
+const RoomManager = @import("RoomManager.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const MusicManager = @import("audio/MusicManager.zig");
 const InputHelper = @import("input/InputHelper.zig");
@@ -18,14 +18,6 @@ pub const BoonMenu = ui.BoonMenu;
 pub const InteractionPrompt = ui.InteractionPrompt;
 pub const PauseMenu = ui.PauseMenu;
 pub const GameOverMenu = ui.GameOverMenu;
-
-const Self = @This();
-
-pub var window_size: lm.Vector2 = .init(1280, 720);
-pub var scale: f32 = 1.0;
-pub var hud_height: f32 = 64.0;
-pub var hud_width: f32 = 512.0;
-pub var ui_scale: f32 = 1.0;
 
 pub const MENU_BUTTON_BASE_H: f32 = 48.0;
 pub const MENU_BUTTON_BASE_W: f32 = MENU_BUTTON_BASE_H * 6.0;
@@ -53,7 +45,14 @@ pub fn calculateUiScale(win_size: lm.Vector2) f32 {
     return @max(1.0, @floor(@min(scale_x, scale_y)));
 }
 
-player: ?*lm.Entity = null,
+const Self = @This();
+
+pub var window_size: lm.Vector2 = .init(1280, 720);
+pub var scale: f32 = 1.0;
+pub var hud_height: f32 = 64.0;
+pub var hud_width: f32 = 512.0;
+pub var ui_scale: f32 = 1.0;
+
 player_stats: ?*Stats = null,
 player_objectives: ?*Objectives = null,
 player_attack: ?*Attack = null,
@@ -62,30 +61,17 @@ arena: ?std.heap.ArenaAllocator = null,
 alloc: ?std.mem.Allocator = null,
 
 pub fn Awake(self: *Self) void {
-    self.player = null;
-    self.player_stats = null;
-    self.player_objectives = null;
-    self.player_attack = null;
-
-    self.arena = .init(lm.allocators.generic());
+    self.arena = std.heap.ArenaAllocator.init(lm.allocators.scene());
     self.alloc = self.arena.?.allocator();
+    GameOverMenu.reset();
 }
 
 pub fn Update(self: *Self, scene: *lm.Scene) !void {
-    InputHelper.update();
-    if (self.arena) |*arena| _ = arena.reset(.free_all);
+    if (self.arena) |*arena| _ = arena.reset(.retain_capacity);
 
-    if (self.player == null or self.player_stats == null or self.player_objectives == null) {
-        const player = scene.getEntityById("player") orelse {
-            self.player = null;
-            self.player_stats = null;
-            self.player_objectives = null;
-            self.player_attack = null;
-            return;
-        };
-
-        self.player = player;
-        self.player_stats = player.getComponentUnsafe(Stats).result;
+    if (self.player_stats == null or self.player_objectives == null or self.player_attack == null) {
+        const player = scene.getEntityById("player") orelse return;
+        self.player_stats = player.getComponent(Stats);
         self.player_objectives = player.getComponent(Objectives);
         self.player_attack = player.getComponent(Attack);
     }
@@ -95,7 +81,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         if (stats.current.health <= 0 and !GameOverMenu.isShowing()) {
             BoonMenu.hide();
             PauseMenu.hide();
-            GameOverMenu.show(DemoMap.getRunStats());
+            GameOverMenu.show(RoomManager.getRunStats());
             MusicManager.setGlobalPhase(.replenish);
         }
     }
@@ -114,7 +100,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     ui_scale = calculateUiScale(window_size);
 
     round_indicator: {
-        const progress = DemoMap.getWaveProgress() orelse break :round_indicator;
+        const progress = RoomManager.getWaveProgress() orelse break :round_indicator;
         if (progress.round == 0) break :round_indicator;
 
         drawRoundIndicator(progress, self.alloc);
@@ -171,10 +157,16 @@ pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
 }
 
 fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Allocator) void {
-    const round_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d}. Round", .{progress.round}) catch "Round"
+    const room_type = if (RoomManager.get()) |rm| rm.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
+    const room_str = if (alloc) |a|
+        switch (room_type) {
+            .mini_boss => std.fmt.allocPrint(a, "Room {d} • Mini-Boss", .{progress.round}) catch "Mini-Boss",
+            .boss => std.fmt.allocPrint(a, "Room {d} • Boss", .{progress.round}) catch "Boss",
+            .tutorial => std.fmt.allocPrint(a, "Tutorial Room", .{}) catch "Tutorial",
+            .normal => std.fmt.allocPrint(a, "Room {d}", .{progress.round}) catch "Room",
+        }
     else
-        "Round";
+        "Room";
 
     const count_str = if (alloc) |a|
         std.fmt.allocPrint(a, "{d} / {d}", .{ progress.killed, progress.total }) catch "0 / 0"
@@ -212,7 +204,7 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
         lm.ui.new(.{
             .id = .ID("hud-round-title"),
         })({
-            lm.ui.text(round_str, .{
+            lm.ui.text(room_str, .{
                 .color = lm.ui.color(255, 235, 170, 255),
                 .font_size = title_font_size,
                 .letter_spacing = 1,

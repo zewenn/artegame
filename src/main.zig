@@ -48,7 +48,7 @@ pub fn main() !void {
             lm.useMainCamera();
 
             lm.globalBehaviours(.{
-                gbl.DemoMap{},
+                gbl.RoomManager{},
                 gbl.HUD{},
                 gbl.MusicManager{},
             });
@@ -62,7 +62,7 @@ test {
     _ = @import("global/ui/OptionsMenu.zig");
     _ = @import("global/ui/BoonMenu.zig");
     _ = @import("global/ui/GameOverMenu.zig");
-    _ = @import("global/DemoMap.zig");
+    _ = @import("global/RoomManager.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Weapon.zig");
     _ = @import("components/Weapons/spells.zig");

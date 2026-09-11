@@ -2,22 +2,6 @@
 
 ## Backlog
 
-### [24#ARC] Room progression architecture and dynamic room lifecycle
-
-  - tags: [architecture, room, progression, lifecycle]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [ ] Refactor DemoMap.zig into a modular RoomManager and room lifecycle state machine
-      - [ ] Automatically initialize round state to .combat on room entry
-      - [ ] Transition round state to .replenish and grant rewards when all room enemies are defeated
-      - [ ] Track total rooms cleared, room counters, and triggers for mini-boss (every 5) and boss (every 15) rooms
-      - [ ] Implement entity cleanup (projectiles, remnants, drops) and player repositioning between rooms
-      - [ ] User confirmation that room lifecycle and state transitions function as expected
-    ```md
-    Foundation architecture for v4.0.0 room-based progression. Replaces the single static arena loop with a dynamic RoomManager handling room entry, combat triggers, replenishment transitions, and room cleanup. Blocks mini-boss, boss, and tutorial room implementations.
-    ```
-
 ### [25#ARC] Projectile and combat stream extensions: pull forces, ally healing, fixed angles, and channeled barrages
 
   - tags: [architecture, combat, projectiles, abilities]
@@ -249,6 +233,22 @@
       - [ ] Validate runtime execution across common Linux distributions
 
 ## Work in Progress
+
+### [24#ARC] Room progression architecture and dynamic room lifecycle
+
+  - tags: [architecture, room, progression, lifecycle]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Refactor DemoMap.zig into a modular RoomManager and room lifecycle state machine
+      - [x] Automatically initialize round state to .combat on room entry
+      - [x] Transition round state to .replenish and grant rewards when all room enemies are defeated
+      - [x] Track total rooms cleared, room counters, and triggers for mini-boss (every 5) and boss (every 15) rooms
+      - [x] Implement entity cleanup (projectiles, remnants, drops) and player repositioning between rooms
+      - [ ] User confirmation that room lifecycle and state transitions function as expected
+    ```md
+    Foundation architecture for v4.0.0 room-based progression. Replaces the single static arena loop with a dynamic RoomManager handling room entry, combat triggers, replenishment transitions, and room cleanup. Blocks mini-boss, boss, and tutorial room implementations.
+    ```
 
 ## Done
 

@@ -4,18 +4,18 @@ const ui = lm.ui;
 const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
-const DemoMap = @import("../DemoMap.zig");
+const RoomManager = @import("../RoomManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const InputHelper = @import("../input/InputHelper.zig");
 const HUD = @import("../HUD.zig");
 
 pub var is_showing: bool = false;
-pub var run_stats: DemoMap.RunStats = .{};
+pub var run_stats: RoomManager.RunStats = .{};
 pub var selected_index: usize = 0;
 pub var prev_selected_index: usize = 0;
 var just_opened: bool = false;
 
-pub fn show(stats: DemoMap.RunStats) void {
+pub fn show(stats: RoomManager.RunStats) void {
     if (is_showing) return;
     is_showing = true;
     run_stats = stats;
@@ -32,6 +32,13 @@ pub fn hide() void {
     is_showing = false;
     just_opened = false;
     lm.time.proceed();
+}
+
+pub fn reset() void {
+    is_showing = false;
+    just_opened = false;
+    selected_index = 0;
+    prev_selected_index = 0;
 }
 
 pub fn isShowing() bool {
@@ -139,8 +146,8 @@ fn drawStatsBox(box_w: f32, ui_scale: f32, alloc: ?std.mem.Allocator) void {
     const box_gap = lm.tou16(@round(8 * ui_scale));
     const row_h = @round(24 * ui_scale);
 
-    const rounds_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d}", .{run_stats.rounds_survived}) catch "0"
+    const rooms_str = if (alloc) |a|
+        std.fmt.allocPrint(a, "{d}", .{run_stats.rooms_cleared}) catch "0"
     else
         "0";
 
@@ -174,7 +181,7 @@ fn drawStatsBox(box_w: f32, ui_scale: f32, alloc: ?std.mem.Allocator) void {
             .width = .outside(1),
         },
     })({
-        drawStatRow("ROUNDS SURVIVED", rounds_str, ui.color(240, 205, 110, 255), box_w, row_h, ui_scale);
+        drawStatRow("ROOMS CLEARED", rooms_str, ui.color(240, 205, 110, 255), box_w, row_h, ui_scale);
         drawStatRow("ENEMIES DEFEATED", enemies_str, ui.color(235, 90, 95, 255), box_w, row_h, ui_scale);
         drawStatRow("EXPERIENCE", xp_str, ui.color(100, 200, 255, 255), box_w, row_h, ui_scale);
         drawStatRow("HIGH SCORE", high_score_str, ui.color(180, 230, 140, 255), box_w, row_h, ui_scale);
@@ -365,8 +372,8 @@ test "GameOverMenu show and hide lifecycle" {
     lm.time.proceed();
 
     show(.{
-        .rounds_survived = 2,
-        .current_round = 3,
+        .rooms_cleared = 2,
+        .current_room = 3,
         .enemies_defeated = 15,
         .experience_collected = 120,
     });
@@ -375,7 +382,7 @@ test "GameOverMenu show and hide lifecycle" {
     try std.testing.expect(isShowing());
     try std.testing.expect(lm.time.paused());
     try std.testing.expect(just_opened);
-    try std.testing.expectEqual(@as(u32, 2), run_stats.rounds_survived);
+    try std.testing.expectEqual(@as(u32, 2), run_stats.rooms_cleared);
     try std.testing.expectEqual(@as(u32, 15), run_stats.enemies_defeated);
     try std.testing.expectEqual(@as(usize, 120), run_stats.experience_collected);
 

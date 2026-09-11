@@ -6,7 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
-const DemoMap = @import("../DemoMap.zig");
+const RoomManager = @import("../RoomManager.zig");
 const InputHelper = @import("../input/InputHelper.zig");
 const HUD = @import("../HUD.zig");
 
@@ -405,14 +405,14 @@ fn activateAction(self: *Self, index: usize) void {
         switch (index) {
             0 => {
                 AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
-                DemoMap.resume_saved_run = true;
+                RoomManager.resume_saved_run = true;
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});
                 };
             },
             1 => {
                 SaveSystem.clearRun();
-                DemoMap.resume_saved_run = false;
+                RoomManager.resume_saved_run = false;
                 AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});
@@ -432,7 +432,7 @@ fn activateAction(self: *Self, index: usize) void {
     } else {
         switch (index) {
             0 => {
-                DemoMap.resume_saved_run = false;
+                RoomManager.resume_saved_run = false;
                 AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 lm.loadScene("demo_map") catch |err| {
                     std.log.err("Failed to load demo_map scene: {any}", .{err});

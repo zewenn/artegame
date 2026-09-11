@@ -2,7 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 
 const AudioManager = @import("../audio/AudioManager.zig");
-const DemoMap = @import("../DemoMap.zig");
+const RoomManager = @import("../RoomManager.zig");
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const Weapon = @import("../../components/Weapons/Weapon.zig");
@@ -166,7 +166,7 @@ pub fn getSavedRun() ?CurrentRunData {
 
 /// Records the conclusion of a run (on player defeat / death):
 /// updates high scores, cumulative totals, clears active run, and saves to disk.
-pub fn recordRunEnd(stats: DemoMap.RunStats) void {
+pub fn recordRunEnd(stats: RoomManager.RunStats) void {
     current_save.scores.total_runs_played += 1;
     current_save.scores.total_enemies_killed += stats.enemies_defeated;
     current_save.scores.total_experience_earned += stats.experience_collected;
@@ -174,8 +174,8 @@ pub fn recordRunEnd(stats: DemoMap.RunStats) void {
     if (stats.experience_collected > current_save.scores.high_score) {
         current_save.scores.high_score = stats.experience_collected;
     }
-    if (stats.rounds_survived > current_save.scores.highest_round) {
-        current_save.scores.highest_round = stats.rounds_survived;
+    if (stats.rooms_cleared > current_save.scores.highest_round) {
+        current_save.scores.highest_round = stats.rooms_cleared;
     }
     if (stats.enemies_defeated > current_save.scores.best_enemies_killed_in_run) {
         current_save.scores.best_enemies_killed_in_run = stats.enemies_defeated;
@@ -239,8 +239,8 @@ test "SaveSystem score recording and run lifecycle" {
 
     // Record a run end
     recordRunEnd(.{
-        .rounds_survived = 5,
-        .current_round = 6,
+        .rooms_cleared = 5,
+        .current_room = 6,
         .enemies_defeated = 35,
         .experience_collected = 1500,
     });
@@ -254,8 +254,8 @@ test "SaveSystem score recording and run lifecycle" {
 
     // Record a lower run end - high score shouldn't decrease
     recordRunEnd(.{
-        .rounds_survived = 2,
-        .current_round = 3,
+        .rooms_cleared = 2,
+        .current_room = 3,
         .enemies_defeated = 10,
         .experience_collected = 400,
     });

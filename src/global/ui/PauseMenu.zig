@@ -4,7 +4,7 @@ const ui = lm.ui;
 const clay = lm.deps.clay;
 
 const AudioManager = @import("../audio/AudioManager.zig");
-const DemoMap = @import("../DemoMap.zig");
+const RoomManager = @import("../RoomManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const InputHelper = @import("../input/InputHelper.zig");
@@ -117,17 +117,17 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
     const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
 
     const status_str = status_str: {
-        const progress_opt = DemoMap.getWaveProgress();
-        const state_opt = DemoMap.getState();
+        const progress_opt = RoomManager.getWaveProgress();
+        const state_opt = RoomManager.getState();
         if (progress_opt) |p| {
             if (state_opt) |s| {
                 if (s == .combat) {
                     if (alloc) |a| {
-                        break :status_str std.fmt.allocPrint(a, "Round {d} • Combat ({d}/{d} Defeated)", .{ p.round, p.killed, p.total }) catch "Combat Wave";
+                        break :status_str std.fmt.allocPrint(a, "Room {d} • Combat ({d}/{d} Defeated)", .{ p.round, p.killed, p.total }) catch "Combat Wave";
                     }
                 } else {
                     if (alloc) |a| {
-                        break :status_str std.fmt.allocPrint(a, "Round {d} • Replenish Phase", .{p.round}) catch "Replenish Phase";
+                        break :status_str std.fmt.allocPrint(a, "Room {d} • Replenish Phase", .{p.round}) catch "Replenish Phase";
                     }
                 }
             }
@@ -322,7 +322,7 @@ fn activateRootAction(index: usize) void {
             current_view = .options;
         },
         3 => {
-            DemoMap.saveCurrentRun();
+            RoomManager.saveCurrentRun();
             hide();
             AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
             lm.loadScene("main_menu") catch |err| {
