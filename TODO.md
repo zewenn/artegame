@@ -27,7 +27,6 @@
       - [x] Document Gatekeeper first-launch instructions (right-click / xattr) in README.md
       - [ ] User confirmation that release package launches properly
 
-
 ## Done
 
 ### [22#WFX] Windows release fixes (terminal suppression, Play crash, ReleaseSafe build)
