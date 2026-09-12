@@ -124,7 +124,7 @@ pub fn EliteEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Movement.init(.hybrid),
         Enemy.Attack.init(&elite_abilities, elite_fallback),
         Enemy.Animation{},
-        Enemy.Death{},
+        Enemy.Death{ .enemy_type = .elite },
         Enemy.OverheadUI{},
     });
 }

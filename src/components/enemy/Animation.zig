@@ -48,7 +48,7 @@ pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const animator: *lm.Animator = try lm.ensureComponent(self.animator);
 
-    if (stats.isStunned() or stats.isSleeping()) {
+    if (stats.isStunned() or stats.isSleeping() or stats.isStasis()) {
         animator.stop("walk-left");
         animator.stop("walk-right");
         animator.stop("idle-left");

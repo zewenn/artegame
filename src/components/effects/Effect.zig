@@ -11,6 +11,8 @@ pub const EffectType = enum {
     haste,
     goliath,
     regen,
+    stasis,
+    bond_of_life,
     custom,
 };
 

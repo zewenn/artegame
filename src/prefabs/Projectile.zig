@@ -5,6 +5,7 @@ const Stats = @import("../components/Stats.zig");
 const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
 const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
+const ReactiveAura = @import("../components/enemy/ReactiveAura.zig");
 
 pub const OnHitEffect = enum { slow, root, stun };
 
@@ -138,6 +139,18 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         if (!options.recordHit(other.uuid)) return;
     }
 
+    if (other_stats.isInvulnerable()) {
+        if (other.getComponent(lm.Transform)) |other_transform| {
+            const hit_position = lm.vec3ToVec2(other_transform.position);
+            var listener_position = hit_position;
+            if (player.getComponent(lm.Transform)) |player_transform| {
+                listener_position = lm.vec3ToVec2(player_transform.position);
+            }
+            SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", hit_position, listener_position, 600.0, 0.4, 0.2);
+        }
+        return;
+    }
+
     var damage_dealt: f32 = 0;
 
     if (options.on_hit_callback) |callback| {
@@ -176,6 +189,10 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         options.is_crit,
     ) * options.damage;
     other_stats.current.health -= damage_dealt;
+
+    if (other.getComponent(ReactiveAura)) |reactive_aura| {
+        reactive_aura.onHitByAttacker(other, player, damage_dealt);
+    }
 
     if (other.getComponent(lm.Transform)) |other_transform| {
         const hit_position = lm.vec3ToVec2(other_transform.position);

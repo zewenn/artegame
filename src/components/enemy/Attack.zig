@@ -75,7 +75,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
 
-    if (stats.isStunned() or stats.isSleeping()) {
+    if (stats.isStunned() or stats.isSleeping() or stats.isStasis()) {
         self.cancelCurrentAction();
         return;
     }

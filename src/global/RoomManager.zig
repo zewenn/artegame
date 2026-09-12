@@ -55,6 +55,11 @@ pub const RunStats = struct {
     experience_collected: usize = 0,
 };
 
+pub const FallenEnemyRecord = struct {
+    enemy_type: RoundSpawner.EnemyType = .melee,
+    death_position: lm.Vector2 = .init(0, 0),
+};
+
 state: RoomState = .combat,
 current_room: u32 = 1,
 rooms_cleared: u32 = 0,
@@ -64,6 +69,7 @@ boon_drop_spawned: bool = false,
 player: ?*lm.Entity = null,
 player_objectives: ?*player_components.Objectives = null,
 spawner: RoundSpawner = undefined,
+graveyard: lm.List(FallenEnemyRecord) = undefined,
 
 pub fn Awake(self: *Self) !void {
     if (resume_saved_run and SaveSystem.hasActiveRun()) {
@@ -81,6 +87,7 @@ pub fn Awake(self: *Self) !void {
     }
 
     BoonPool.reset();
+    self.graveyard = lm.List(FallenEnemyRecord).init(lm.allocators.scene());
     self.spawner = RoundSpawner.init(lm.allocators.scene());
     self.spawner.spawn_area = .{
         .min_x = -1100.0,
@@ -367,17 +374,29 @@ pub fn getWaveProgress() ?RoundSpawner.WaveProgress {
     return self.spawner.getProgress();
 }
 
-pub fn removeDefeatedEnemy(uuid: u128, death_pos: lm.Vector2) void {
+pub fn removeDefeatedEnemy(uuid: u128, death_position: lm.Vector2, enemy_type: RoundSpawner.EnemyType) void {
     const self = get() orelse return;
     self.enemies_defeated += 1;
+
+    self.graveyard.append(.{
+        .enemy_type = enemy_type,
+        .death_position = death_position,
+    }) catch {};
+
     self.spawner.removeDefeatedEnemy(uuid);
 
     if (self.spawner.isWaveFinished() and !self.boon_drop_spawned) {
         self.boon_drop_spawned = true;
-        self.spawnBoonDrop(death_pos) catch |err| {
+        self.spawnBoonDrop(death_position) catch |err| {
             std.log.err("Failed to spawn boon drop: {any}", .{err});
         };
     }
+}
+
+pub fn popFallenEnemyForRevive() ?FallenEnemyRecord {
+    const self = get() orelse return null;
+    if (self.graveyard.len() == 0) return null;
+    return self.graveyard.swapRemove(self.graveyard.len() - 1);
 }
 
 pub fn getRunStats() RunStats {
