@@ -97,7 +97,7 @@ pub fn MeleeEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Movement.init(.pursue),
         Enemy.Attack.init(&melee_abilities, melee_fallback),
         Enemy.Animation{},
-        Enemy.Death{},
+        Enemy.Death{ .enemy_type = .melee },
         Enemy.OverheadUI{},
     });
 }

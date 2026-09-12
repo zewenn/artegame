@@ -95,7 +95,7 @@ pub const EffectVisualRegistry = struct {
             .goliath => EffectVisual{
                 .icon = "ui/icons/goliath_icon.png",
             },
-            .slow, .custom => null,
+            .slow, .stasis, .bond_of_life, .custom => null,
         };
     }
 };

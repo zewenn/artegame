@@ -137,7 +137,7 @@ pub fn RangedEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Movement.init(.kite_strafe),
         Enemy.Attack.init(&ranged_abilities, ranged_fallback),
         Enemy.Animation{},
-        Enemy.Death{},
+        Enemy.Death{ .enemy_type = .ranged },
         Enemy.OverheadUI{},
     });
 }

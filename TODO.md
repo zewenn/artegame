@@ -2,22 +2,6 @@
 
 ## Backlog
 
-### [26#ARC] Universal enemy status effects and ability framework: stasis, proximity auras, and Bond of Life
-
-  - tags: [architecture, enemies, status-effects, combat]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [ ] Implement Stasis state component (invulnerable to damage, stunned/unable to act)
-      - [ ] Implement reactive damage aura framework (reactive root-on-hit and mark/rebound damage reflection)
-      - [ ] Implement proximity/distance-based scaling auras (Knight parabolic Armor/MR and drain; Magician slow)
-      - [ ] Implement ally-targeting and revive mechanics for support enemies (Shaman ally buffs, Lifeliner revive)
-      - [ ] Implement Bond of Life mark lifecycle: true damage on hit, damage rebound to caster on miss/expiry
-      - [ ] User confirmation that universal ability hooks and status effects trigger correctly
-    ```md
-    Extensible status effect and enemy ability framework. Introduces stasis invulnerability, proximity stat/damage scaling curves, ally targeted support abilities, and reactive damage mechanisms needed across new normal enemies, mini-bosses, and bosses.
-    ```
-
 ### [27#ARC] Tile-based background engine, room layout serialization, and map editor
 
   - tags: [architecture, tilemap, map-editor, assets]
@@ -233,6 +217,22 @@
 ## Work in Progress
 
 ## Done
+
+### [26#ARC] Universal enemy status effects and ability framework: stasis, proximity auras, and Bond of Life
+
+  - tags: [architecture, enemies, status-effects, combat]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Implement Stasis state component (invulnerable to damage, stunned/unable to act)
+      - [x] Implement reactive damage aura framework (reactive root-on-hit and mark/rebound damage reflection)
+      - [x] Implement proximity/distance-based scaling auras (Knight parabolic Armor/MR and drain; Magician slow)
+      - [x] Implement ally-targeting and revive mechanics for support enemies (Shaman ally buffs, Lifeliner revive)
+      - [x] Implement Bond of Life mark lifecycle: true damage on hit, damage rebound to caster on miss/expiry
+      - [x] User confirmation that universal ability hooks and status effects trigger correctly
+    ```md
+    Extensible status effect and enemy ability framework. Introduces stasis invulnerability, proximity stat/damage scaling curves, ally targeted support abilities, and reactive damage mechanisms needed across new normal enemies, mini-bosses, and bosses.
+    ```
 
 ### [40#DOC] Code style and design principles rule from CodeAesthetic video analysis
 

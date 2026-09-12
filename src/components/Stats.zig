@@ -134,8 +134,20 @@ pub fn isSleeping(self: Self) bool {
     return self.hasEffect(.{ .effect_type = .sleep });
 }
 
+pub fn isStasis(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .stasis });
+}
+
+pub fn isInvulnerable(self: Self) bool {
+    return self.isStasis();
+}
+
+pub fn isBondOfLifeActive(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .bond_of_life });
+}
+
 pub fn canMove(self: Self) bool {
-    return !self.isStunned() and !self.isRooted() and !self.isSleeping();
+    return !self.isStunned() and !self.isRooted() and !self.isSleeping() and !self.isStasis();
 }
 
 pub fn addEffect(self: *Self, effect: Effect) void {
@@ -240,6 +252,14 @@ pub fn applyStun(self: *Self, duration: f32) void {
         .id = "stun",
         .effect_type = .stun,
         .duration = duration,
+    });
+}
+
+pub fn applyStasis(self: *Self, duration_seconds: f32) void {
+    self.addEffect(.{
+        .id = "stasis",
+        .effect_type = .stasis,
+        .duration = duration_seconds,
     });
 }
 
