@@ -13,6 +13,8 @@ const Self = @This();
 pub const ActionState = enum {
     idle,
     winding_up,
+    channeling,
+    firing_waves,
     winding_down,
 };
 
@@ -30,6 +32,16 @@ action_state: ActionState = .idle,
 active_ability_index: ?usize = null,
 is_fallback_active: bool = false,
 action_timer: f32 = 0,
+
+channel_timer: f32 = 0,
+channel_fire_timer: f32 = 0,
+channel_current_angle: f32 = 0,
+channel_rotation_speed: f32 = 0,
+channel_fire_interval: f32 = 0,
+
+waves_remaining: u32 = 0,
+current_wave_index: u32 = 0,
+wave_interval_timer: f32 = 0,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     if (self.abilities == null) {
@@ -64,10 +76,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     const player_transform: *lm.Transform = try lm.ensureComponent(self.player_transform);
 
     if (stats.isStunned() or stats.isSleeping()) {
-        self.action_state = .idle;
-        self.active_ability_index = null;
-        self.is_fallback_active = false;
-        self.action_timer = 0;
+        self.cancelCurrentAction();
         return;
     }
 
@@ -86,43 +95,77 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
         if (!finished) return;
 
-        if (self.getActiveAbilityPtr()) |ability| ability_finish: {
-            ability.execute(
-                entity,
-                transform,
-                stats,
-                player_transform,
-                self.player_stats,
-            ) catch |err| {
-                std.log.err("Failed to execute ability {s}: {any}", .{ ability.id, err });
-            };
+        self.dispatchAbilityExecution(entity, transform, stats, player_transform);
+        return;
+    }
 
-            ability.cooldown_remaining = ability.cooldown;
+    if (self.action_state == .channeling) {
+        self.channel_timer -= dt;
+        self.channel_fire_timer -= dt;
+        self.channel_current_angle += self.channel_rotation_speed * dt;
 
-            const animator = self.animator orelse break :ability_finish;
-
-            if (ability.release_animation) |rel_anim| {
-                animator.play(rel_anim) catch std.log.err("failed to play release anim", .{});
+        if (self.channel_fire_timer <= 0) {
+            if (self.getActiveAbilityPtr()) |ability| {
+                ability.fireProjectileWave(
+                    entity,
+                    transform,
+                    stats,
+                    player_transform,
+                    self.player_stats,
+                    0,
+                    self.channel_current_angle,
+                ) catch |err| {
+                    std.log.err("Failed channeled barrage burst: {any}", .{err});
+                };
             }
+            self.channel_fire_timer = self.channel_fire_interval;
+        }
 
-            if (ability.winddown_animation) |wd_anim| {
-                self.action_state = .winding_down;
+        if (self.channel_timer <= 0) {
+            if (self.getActiveAbilityPtr()) |ability| {
+                ability.cooldown_remaining = ability.cooldown;
+                self.finishActionAfterCast(ability);
+            } else {
+                self.cancelCurrentAction();
+            }
+        }
+        return;
+    }
 
-                var duration = Animation.getAnimationDuration(animator, wd_anim);
-                if (duration <= 0) duration = 0.15;
+    if (self.action_state == .firing_waves) {
+        self.wave_interval_timer -= dt;
 
-                self.action_timer = duration;
-                animator.play(wd_anim) catch std.log.err("failed to play winddown anim", .{});
-
+        if (self.wave_interval_timer <= 0 and self.waves_remaining > 0) {
+            if (self.getActiveAbilityPtr()) |ability| {
+                ability.fireProjectileWave(
+                    entity,
+                    transform,
+                    stats,
+                    player_transform,
+                    self.player_stats,
+                    self.current_wave_index,
+                    null,
+                ) catch |err| {
+                    std.log.err("Failed wave {d} burst: {any}", .{ self.current_wave_index, err });
+                };
+                self.waves_remaining -= 1;
+                self.current_wave_index += 1;
+                const wave_int = if (ability.projectile_profile) |p| p.wave_interval else 0.15;
+                self.wave_interval_timer = wave_int;
+            } else {
+                self.cancelCurrentAction();
                 return;
             }
         }
 
-        self.action_state = .idle;
-        self.active_ability_index = null;
-        self.is_fallback_active = false;
-        self.action_timer = 0;
-
+        if (self.waves_remaining == 0) {
+            if (self.getActiveAbilityPtr()) |ability| {
+                ability.cooldown_remaining = ability.cooldown;
+                self.finishActionAfterCast(ability);
+            } else {
+                self.cancelCurrentAction();
+            }
+        }
         return;
     }
 
@@ -223,6 +266,26 @@ pub fn isActing(self: *const Self) bool {
     return self.action_state != .idle;
 }
 
+pub fn cancelCurrentAction(self: *Self) void {
+    if (self.getActiveAbilityPtr()) |ability| {
+        if (self.action_state == .channeling or self.action_state == .firing_waves or self.action_state == .winding_up) {
+            ability.cooldown_remaining = ability.cooldown;
+        }
+    }
+    self.action_state = .idle;
+    self.active_ability_index = null;
+    self.is_fallback_active = false;
+    self.action_timer = 0;
+    self.channel_timer = 0;
+    self.channel_fire_timer = 0;
+    self.channel_current_angle = 0;
+    self.channel_rotation_speed = 0;
+    self.channel_fire_interval = 0;
+    self.waves_remaining = 0;
+    self.current_wave_index = 0;
+    self.wave_interval_timer = 0;
+}
+
 fn startAbility(
     self: *Self,
     ability: *Ability,
@@ -233,11 +296,11 @@ fn startAbility(
     stats: *Stats,
     player_transform: *lm.Transform,
 ) void {
+    self.active_ability_index = index;
+    self.is_fallback_active = is_fallback;
+
     if (ability.windup_animation) |windup_anim| {
         self.action_state = .winding_up;
-        self.active_ability_index = index;
-        self.is_fallback_active = is_fallback;
-
         var duration: f32 = 0.2;
         if (self.animator) |animator| {
             const anim_dur = Animation.getAnimationDuration(animator, windup_anim);
@@ -246,6 +309,79 @@ fn startAbility(
         }
         self.action_timer = duration;
         return;
+    }
+
+    self.dispatchAbilityExecution(entity, transform, stats, player_transform);
+}
+
+fn dispatchAbilityExecution(
+    self: *Self,
+    entity: *lm.Entity,
+    transform: *lm.Transform,
+    stats: *Stats,
+    player_transform: *lm.Transform,
+) void {
+    const ability = self.getActiveAbilityPtr() orelse {
+        self.cancelCurrentAction();
+        return;
+    };
+
+    if (ability.execution_type == .projectile and ability.projectile_profile != null) {
+        const profile = ability.projectile_profile.?;
+
+        if (profile.is_channeled) {
+            self.action_state = .channeling;
+            self.channel_timer = profile.channel_duration;
+            self.channel_rotation_speed = profile.channel_rotation_speed;
+            self.channel_fire_interval = profile.channel_fire_interval;
+            self.channel_current_angle = profile.initial_angle;
+
+            ability.fireProjectileWave(
+                entity,
+                transform,
+                stats,
+                player_transform,
+                self.player_stats,
+                0,
+                self.channel_current_angle,
+            ) catch |err| {
+                std.log.err("Failed initial channel burst {s}: {any}", .{ ability.id, err });
+            };
+            self.channel_fire_timer = self.channel_fire_interval;
+
+            if (self.animator) |animator| {
+                if (ability.release_animation) |rel_anim| {
+                    animator.play(rel_anim) catch {};
+                }
+            }
+            return;
+        }
+
+        if (profile.wave_count > 1) {
+            self.action_state = .firing_waves;
+            self.waves_remaining = profile.wave_count - 1;
+            self.current_wave_index = 1;
+            self.wave_interval_timer = profile.wave_interval;
+
+            ability.fireProjectileWave(
+                entity,
+                transform,
+                stats,
+                player_transform,
+                self.player_stats,
+                0,
+                null,
+            ) catch |err| {
+                std.log.err("Failed initial wave 0 for {s}: {any}", .{ ability.id, err });
+            };
+
+            if (self.animator) |animator| {
+                if (ability.release_animation) |rel_anim| {
+                    animator.play(rel_anim) catch {};
+                }
+            }
+            return;
+        }
     }
 
     ability.execute(
@@ -259,7 +395,17 @@ fn startAbility(
     };
 
     ability.cooldown_remaining = ability.cooldown;
-    const animator = self.animator orelse return;
+    self.finishActionAfterCast(ability);
+}
+
+fn finishActionAfterCast(self: *Self, ability: *Ability) void {
+    const animator = self.animator orelse {
+        self.action_state = .idle;
+        self.active_ability_index = null;
+        self.is_fallback_active = false;
+        self.action_timer = 0;
+        return;
+    };
 
     if (ability.release_animation) |rel_anim| {
         animator.play(rel_anim) catch {};
@@ -267,15 +413,18 @@ fn startAbility(
 
     if (ability.winddown_animation) |wd_anim| {
         self.action_state = .winding_down;
-        self.active_ability_index = index;
-        self.is_fallback_active = is_fallback;
-
         var duration = Animation.getAnimationDuration(animator, wd_anim);
         if (duration <= 0) duration = 0.15;
-
+        
         self.action_timer = duration;
         animator.play(wd_anim) catch {};
+        return;
     }
+
+    self.action_state = .idle;
+    self.active_ability_index = null;
+    self.is_fallback_active = false;
+    self.action_timer = 0;
 }
 
 fn getActiveAbilityPtr(self: *Self) ?*Ability {
@@ -341,3 +490,141 @@ test "Enemy Attack with lm.List(Ability)" {
     }
     try std.testing.expectApproxEqAbs(@as(f32, 1.5), attack.abilities.?.items()[0].cooldown_remaining, 0.001);
 }
+
+test "Enemy Attack dynamic channeled barrage rotation angle progression (Bishop dynamic sweep)" {
+    const bishop_sweep = [_]Ability{
+        .{
+            .id = "bishop_sweep",
+            .execution_type = .projectile,
+            .cooldown = 4.0,
+            .projectile_profile = .{
+                .is_channeled = true,
+                .channel_duration = 5.0,
+                .channel_fire_interval = 0.05,
+                .channel_rotation_speed = 72.0,
+                .initial_angle = 0,
+                .spread_angles = &.{ 0, 90, -90, 180 },
+            },
+        },
+    };
+
+    var attack = Self.init(&bishop_sweep, null);
+    var list = lm.List(Ability).init(std.testing.allocator);
+    try list.append(bishop_sweep[0]);
+    attack.abilities = list;
+    defer attack.End();
+
+    attack.active_ability_index = 0;
+    attack.action_state = .channeling;
+    attack.channel_timer = 5.0;
+    attack.channel_fire_timer = 0.05;
+    attack.channel_current_angle = 0;
+    attack.channel_rotation_speed = 72.0;
+    attack.channel_fire_interval = 0.05;
+
+    try std.testing.expect(attack.isActing());
+
+    // Simulate 1.0 second elapsed: 72 deg/s * 1.0s = 72 degrees
+    const delta_time_1_seconds: f32 = 1.0;
+    attack.channel_timer -= delta_time_1_seconds;
+    attack.channel_current_angle += attack.channel_rotation_speed * delta_time_1_seconds;
+
+    try std.testing.expectApproxEqAbs(@as(f32, 4.0), attack.channel_timer, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 72.0), attack.channel_current_angle, 0.001);
+
+    // Simulate another 1.5 seconds: 72 + 1.5 * 72 = 180 degrees
+    const delta_time_2_seconds: f32 = 1.5;
+    attack.channel_timer -= delta_time_2_seconds;
+    attack.channel_current_angle += attack.channel_rotation_speed * delta_time_2_seconds;
+
+    try std.testing.expectApproxEqAbs(@as(f32, 2.5), attack.channel_timer, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 180.0), attack.channel_current_angle, 0.001);
+}
+
+test "Enemy Attack multi-wave volley staggered firing" {
+    const multi_wave = [_]Ability{
+        .{
+            .id = "tank_burst",
+            .execution_type = .projectile,
+            .cooldown = 3.0,
+            .projectile_profile = .{
+                .wave_count = 3,
+                .wave_interval = 0.2,
+                .wave_angle_offset = 15.0,
+            },
+        },
+    };
+
+    var attack = Self.init(&multi_wave, null);
+    var list = lm.List(Ability).init(std.testing.allocator);
+    try list.append(multi_wave[0]);
+    attack.abilities = list;
+    defer attack.End();
+
+    attack.active_ability_index = 0;
+    attack.action_state = .firing_waves;
+    attack.waves_remaining = 2; // wave 0 already fired
+    attack.current_wave_index = 1;
+    attack.wave_interval_timer = 0.2;
+
+    try std.testing.expect(attack.isActing());
+
+    // Advance interval to trigger wave 1
+    attack.wave_interval_timer -= 0.2;
+    try std.testing.expect(attack.wave_interval_timer <= 0);
+
+    attack.waves_remaining -= 1;
+    attack.current_wave_index += 1;
+    attack.wave_interval_timer = 0.2;
+
+    try std.testing.expectEqual(@as(u32, 1), attack.waves_remaining);
+    try std.testing.expectEqual(@as(u32, 2), attack.current_wave_index);
+
+    // Advance interval to trigger wave 2 (last wave)
+    attack.wave_interval_timer -= 0.2;
+    attack.waves_remaining -= 1;
+    attack.current_wave_index += 1;
+
+    try std.testing.expectEqual(@as(u32, 0), attack.waves_remaining);
+    try std.testing.expectEqual(@as(u32, 3), attack.current_wave_index);
+}
+
+test "Enemy Attack cancelCurrentAction cleanly halts channeling and sets cooldown" {
+    const template = [_]Ability{
+        .{
+            .id = "queen_sweep",
+            .execution_type = .projectile,
+            .cooldown = 8.0,
+            .projectile_profile = .{
+                .is_channeled = true,
+                .channel_duration = 5.0,
+            },
+        },
+    };
+
+    var attack = Self.init(&template, null);
+    var list = lm.List(Ability).init(std.testing.allocator);
+    try list.append(template[0]);
+    attack.abilities = list;
+    defer attack.End();
+
+    attack.active_ability_index = 0;
+    attack.action_state = .channeling;
+    attack.channel_timer = 3.5;
+    attack.channel_current_angle = 120.0;
+
+    try std.testing.expect(attack.isActing());
+
+    // Call cancelCurrentAction (e.g. from queenBondOfLifeEarlyCancel callback)
+    attack.cancelCurrentAction();
+
+    try std.testing.expect(!attack.isActing());
+    try std.testing.expectEqual(ActionState.idle, attack.action_state);
+    try std.testing.expectEqual(@as(f32, 0), attack.channel_timer);
+    try std.testing.expectEqual(@as(f32, 0), attack.channel_current_angle);
+    try std.testing.expect(attack.active_ability_index == null);
+
+    // Cooldown applied to cancelled ability
+    try std.testing.expectEqual(@as(f32, 8.0), attack.abilities.?.items()[0].cooldown_remaining);
+}
+

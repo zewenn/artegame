@@ -246,6 +246,8 @@
     Creates a comprehensive code style and software design principles rule file in .agents/rules/code_style.md based on CodeAesthetic guidelines: balancing abstraction vs coupling, strict naming conventions (no abbreviations, no Hungarian notation, units in names, no type prefixes in types, eliminating utils junk drawers), anti-nesting discipline (max 3 levels, inversion/guard clauses, extraction), and self-documenting code (constants, boolean decomposition, strong types, doc comments vs code comments).
     ```
 
+## Done
+
 ### [25#ARC] Projectile and combat stream extensions: pull forces, ally healing, fixed angles, and channeled barrages
 
   - tags: [architecture, combat, projectiles, abilities]
@@ -258,12 +260,10 @@
       - [x] Implement channeled continuous barrage execution in Attack.zig with dynamic rotating heading (Bishop sweeping 4-way cross over 5s)
       - [x] Support staggered multi-wave projectile volleys in Ability.zig (Queen dash attack waves and Tank slow bursts)
       - [x] Implement projectile on-hit callback hook for global reactions (Shaman Grieving Wounds team heal, Queen Bond of Life early cancel)
-      - [ ] User confirmation that projectile extensions and channeled streams function as expected
+      - [x] User confirmation that projectile extensions and channeled streams function as expected
     ```md
     Builds on existing Projectile.zig (which already supports passthrough piercing, lifetimes, on-hit slow/root/stun, and knockback) by implementing missing v4.0.0 combat capabilities: caster-directed pull forces (Magician), ally-targeted healing projectiles (Shaman), fixed-angle firing (Angler), channeled rotating continuous streams (Bishop/Queen), multi-wave bursts, and on-hit event hooks. Blocks Shaman, Magician, Angler, Bishop, and Queen abilities.
     ```
-
-## Done
 
 ### [24#ARC] Room progression architecture and dynamic room lifecycle
 
