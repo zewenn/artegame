@@ -2,23 +2,6 @@
 
 ## Backlog
 
-### [25#ARC] Projectile and combat stream extensions: pull forces, ally healing, fixed angles, and channeled barrages
-
-  - tags: [architecture, combat, projectiles, abilities]
-  - priority: high
-  - workload: Normal
-  - steps:
-      - [ ] Add vector pull/drag on-hit mechanic in Projectile.zig pulling target toward caster (Magician "Where are you going?")
-      - [ ] Add healing projectile mode in Projectile.zig allowing projectiles to restore HP to matching team members (Shaman Remote Healing)
-      - [ ] Support absolute world angle firing in Ability.zig independent of player position (Angler & Bishop cardinal directions)
-      - [ ] Implement channeled continuous barrage execution in Attack.zig with rotating heading (Bishop 4-way radial sweep over 5s)
-      - [ ] Support staggered multi-wave projectile volleys in Ability.zig (Queen dash attack waves and Tank slow bursts)
-      - [ ] Implement projectile on-hit callback hook for global reactions (Shaman Grieving Wounds team heal, Queen Bond of Life early cancel)
-      - [ ] User confirmation that projectile extensions and channeled streams function as expected
-    ```md
-    Builds on existing Projectile.zig (which already supports passthrough piercing, lifetimes, on-hit slow/root/stun, and knockback) by implementing missing v4.0.0 combat capabilities: caster-directed pull forces (Magician), ally-targeted healing projectiles (Shaman), fixed-angle firing (Angler), channeled rotating continuous streams (Bishop/Queen), multi-wave bursts, and on-hit event hooks. Blocks Shaman, Magician, Angler, Bishop, and Queen abilities.
-    ```
-
 ### [26#ARC] Universal enemy status effects and ability framework: stasis, proximity auras, and Bond of Life
 
   - tags: [architecture, enemies, status-effects, combat]
@@ -232,7 +215,53 @@
       - [ ] Package standalone Linux archive (.tar.gz) or AppImage with bundled assets
       - [ ] Validate runtime execution across common Linux distributions
 
+### [39#AST] Acquire missing assets across v4.0.0 gameplay mechanics
+
+  - tags: [assets, audio, sprites, vfx]
+  - priority: low
+  - workload: Normal
+  - steps:
+      - [ ] Source or record healing sound effect (SFX) and ally heal impact chime (25#ARC Shaman)
+      - [ ] Create dedicated healing projectile sprite and heal pulse particle animation (25#ARC)
+      - [ ] Source or synthesize drag/pull sound effect for caster-directed pull force (25#ARC Magician)
+      - [ ] Create room exit door sprites (open/closed states) and reward category icon badge overlays (24#ARC / 31#UIB)
+      - [ ] User confirmation that all acquired missing assets are integrated and functioning
+    ```md
+    Centralized collector task for missing assets identified during feature implementations (e.g. door sprites from 24#ARC, healing SFX and pull audio from 25#ARC) allowing feature tickets to proceed with fallbacks while queuing asset acquisition.
+    ```
+
 ## Work in Progress
+
+### [40#DOC] Code style and design principles rule from CodeAesthetic video analysis
+
+  - tags: [rules, style, code-quality, refactoring, best-practices]
+  - priority: medium
+  - workload: Easy
+  - steps:
+      - [x] Analyze 4 CodeAesthetic videos (abstraction vs coupling, naming, anti-nesting, self-documenting code)
+      - [x] Synthesize comprehensive rule file into .agents/rules/code_style.md
+      - [x] Verify build with zig build
+      - [ ] User confirmation that code style rule is comprehensive and matches project standards
+    ```md
+    Creates a comprehensive code style and software design principles rule file in .agents/rules/code_style.md based on CodeAesthetic guidelines: balancing abstraction vs coupling, strict naming conventions (no abbreviations, no Hungarian notation, units in names, no type prefixes in types, eliminating utils junk drawers), anti-nesting discipline (max 3 levels, inversion/guard clauses, extraction), and self-documenting code (constants, boolean decomposition, strong types, doc comments vs code comments).
+    ```
+
+### [25#ARC] Projectile and combat stream extensions: pull forces, ally healing, fixed angles, and channeled barrages
+
+  - tags: [architecture, combat, projectiles, abilities]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Add vector pull/drag on-hit mechanic in Projectile.zig pulling target toward caster (Magician "Where are you going?")
+      - [x] Add healing projectile mode in Projectile.zig allowing projectiles to restore HP to matching team members (Shaman Remote Healing)
+      - [x] Support absolute world angle firing in Ability.zig independent of player position (Angler fixed cardinal directions)
+      - [x] Implement channeled continuous barrage execution in Attack.zig with dynamic rotating heading (Bishop sweeping 4-way cross over 5s)
+      - [x] Support staggered multi-wave projectile volleys in Ability.zig (Queen dash attack waves and Tank slow bursts)
+      - [x] Implement projectile on-hit callback hook for global reactions (Shaman Grieving Wounds team heal, Queen Bond of Life early cancel)
+      - [ ] User confirmation that projectile extensions and channeled streams function as expected
+    ```md
+    Builds on existing Projectile.zig (which already supports passthrough piercing, lifetimes, on-hit slow/root/stun, and knockback) by implementing missing v4.0.0 combat capabilities: caster-directed pull forces (Magician), ally-targeted healing projectiles (Shaman), fixed-angle firing (Angler), channeled rotating continuous streams (Bishop/Queen), multi-wave bursts, and on-hit event hooks. Blocks Shaman, Magician, Angler, Bishop, and Queen abilities.
+    ```
 
 ## Done
 
