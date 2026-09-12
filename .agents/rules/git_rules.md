@@ -7,13 +7,12 @@ trigger: always_on
 ## General Guidelines
 
 You can run most git commands like:
-- git add
-- git commit
 - git log
 - git diff
 - etc.
 
 But you always need to ask for permission on commands like:
+- git commit
 - git push
 - git switch
 - git checkout

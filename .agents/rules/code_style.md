@@ -8,7 +8,7 @@ This rule defines the core software engineering principles and code style standa
 
 ---
 
-## 1. Abstraction vs. Coupling: The Hidden Trade-off
+## 1. Abstraction vs. Coupling
 
 > *"Coupling is an equal and opposite reaction of abstraction. For every bit of abstraction you add, you add more coupling."*
 
@@ -28,12 +28,6 @@ Do **NOT** introduce an abstraction, common parent struct, or interface if:
 Only introduce abstractions, polymorphic dispatch, or extracted interfaces when:
 1. **The Rule of Three**: There are **three or more** distinct implementations sharing meaningful structural behavior.
 2. **Separation of Decision from Execution**: You must decouple **which** concrete implementation is selected from **when or how** it is executed (e.g., deferred execution, interval tickers, dependency injection, room lifecycle handlers).
-
-```zig
-// AVOID: Premature coupling through artificial base wrappers
-// Keeping XML and JSON savers independent allows either to be deleted or 
-// refactored with zero ripple effects across unrelated code.
-```
 
 ---
 
@@ -189,18 +183,3 @@ Internal comments inside function bodies are permitted **only** in the following
 2. **External Algorithmic & Mathematical Sources**: Citing an external research paper, mathematical theorem, or specific reference link when implementing specialized algorithms.
 3. **External Platform/Engine Bug Workarounds**: Explaining a known driver, OS, or third-party framework defect that requires an otherwise illogical code workaround.
 - *Universal Rule: Comments must explain **WHY**, never **WHAT**.*
-
----
-
-## 5. Quick Implementation Checklist
-
-Before completing any task or code review, verify:
-- [ ] **No Abbreviations**: Are all variable, function, and struct names written out in full?
-- [ ] **No Hungarian Notation**: Are variable names free of redundant type tags (`_ptr`, `_int`, `_array`)?
-- [ ] **Units Included**: Do all durations, velocities, and dimensions declare their units (`_seconds`, `_pixels`, `_ms`)?
-- [ ] **No `I`, `Base`, or `Abstract` Types**: Are interfaces and structs named cleanly after their domain identity?
-- [ ] **No `utils.zig` Dumping Grounds**: Have helper routines been placed on their target types or dedicated domain modules?
-- [ ] **Max 3 Levels Indentation**: Have deep conditionals been flattened using inversion, guard clauses, and early returns?
-- [ ] **No Magic Values or Unexplained Booleans**: Have magic constants been replaced with enums/constants, and complex conditionals decomposed into descriptive boolean variables?
-- [ ] **Self-Documenting Code**: Do internal functions avoid line-by-line narrative comments, reserving comments solely for *why* (performance, citations, platform workarounds)?
-- [ ] **Balanced Abstraction**: Does the code avoid premature abstraction for trivial duplication, adhering to the Rule of Three?
