@@ -12,20 +12,20 @@ pub const heal: Spell = Spell{
     .slot = .left,
     .icon = "ui/icons/heal_icon.png",
     .cast_fn = struct {
-        fn onTick(s: *Stats) void {
-            if (s.getEffect(.{ .id = "heal_regen" })) |e| {
-                s.current.health = @min(s.max.health, s.current.health + e.value * lm.time.deltaTime());
+        fn onTick(stats: *Stats) void {
+            if (stats.getEffect(.{ .id = "heal_regen" })) |effect| {
+                stats.current.health = @min(stats.max.health, stats.current.health + effect.value * lm.time.deltaTime());
             }
         }
 
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
-            const regen_val = 20 * lm.tof32(level);
+            const regen_value = 20 * lm.tof32(level);
             stats.addEffect(.{
                 .id = "heal_regen",
                 .effect_type = .regen,
                 .duration = 2.0,
-                .value = regen_val,
+                .value = regen_value,
                 .on_tick = onTick,
                 .visual = .{
                     .frames = &.{
@@ -52,7 +52,7 @@ pub const root: Spell = Spell{
             const transform = target.getComponent(lm.Transform) orelse return;
 
             for (@as([]const f32, &.{ -180, -45, -90, -135, 0, 45, 90, 135 })) |value| {
-                const vec = lm.Vec2(1, 0)
+                const target_position = lm.Vec2(1, 0)
                     .rotate(std.math.degreesToRadians(value))
                     .add(lm.vec3ToVec2(transform.position));
 
@@ -64,7 +64,7 @@ pub const root: Spell = Spell{
                     .passtrough = true,
                     .damage = 0,
 
-                    .target_position = vec,
+                    .target_position = target_position,
                     .start_position = lm.vec3ToVec2(transform.position),
                 });
 
@@ -80,32 +80,32 @@ pub const goliath: Spell = Spell{
     .slot = .left,
     .icon = "ui/icons/goliath_icon.png",
     .cast_fn = struct {
-        fn onEnable(s: *Stats) void {
-            if (s.getEffect(.{ .id = "goliath" })) |e| {
-                s.max.health += e.value;
-                s.current.health += e.value;
-                s.current.physical_damage += e.secondary_value;
+        fn onEnable(stats: *Stats) void {
+            if (stats.getEffect(.{ .id = "goliath" })) |effect| {
+                stats.max.health += effect.value;
+                stats.current.health += effect.value;
+                stats.current.physical_damage += effect.secondary_value;
             }
         }
 
-        fn onDisable(s: *Stats) void {
-            if (s.getEffect(.{ .id = "goliath" })) |e| {
-                s.max.health = @max(1, s.max.health - e.value);
-                s.current.health = @min(s.current.health, s.max.health);
-                s.current.physical_damage = @max(0, s.current.physical_damage - e.secondary_value);
+        fn onDisable(stats: *Stats) void {
+            if (stats.getEffect(.{ .id = "goliath" })) |effect| {
+                stats.max.health = @max(1, stats.max.health - effect.value);
+                stats.current.health = @min(stats.current.health, stats.max.health);
+                stats.current.physical_damage = @max(0, stats.current.physical_damage - effect.secondary_value);
             }
         }
 
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
-            const hp_boost = 50 * lm.tof32(level);
-            const dmg_boost = 15 * lm.tof32(level);
+            const health_boost = 50 * lm.tof32(level);
+            const damage_boost = 15 * lm.tof32(level);
             stats.addEffect(.{
                 .id = "goliath",
                 .effect_type = .goliath,
                 .duration = 6.0,
-                .value = hp_boost,
-                .secondary_value = dmg_boost,
+                .value = health_boost,
+                .secondary_value = damage_boost,
                 .on_enable = onEnable,
                 .on_disable = onDisable,
                 .visual = .{
@@ -122,30 +122,30 @@ pub const haste: Spell = Spell{
     .slot = .right,
     .icon = "ui/icons/haste_icon.png",
     .cast_fn = struct {
-        fn onEnable(s: *Stats) void {
-            if (s.getEffect(.{ .id = "haste" })) |e| {
-                s.current.movement_speed += e.value;
-                s.current.attack_speed += e.secondary_value;
+        fn onEnable(stats: *Stats) void {
+            if (stats.getEffect(.{ .id = "haste" })) |effect| {
+                stats.current.movement_speed += effect.value;
+                stats.current.attack_speed += effect.secondary_value;
             }
         }
 
-        fn onDisable(s: *Stats) void {
-            if (s.getEffect(.{ .id = "haste" })) |e| {
-                s.current.movement_speed = @max(10, s.current.movement_speed - e.value);
-                s.current.attack_speed = @max(0.1, s.current.attack_speed - e.secondary_value);
+        fn onDisable(stats: *Stats) void {
+            if (stats.getEffect(.{ .id = "haste" })) |effect| {
+                stats.current.movement_speed = @max(10, stats.current.movement_speed - effect.value);
+                stats.current.attack_speed = @max(0.1, stats.current.attack_speed - effect.secondary_value);
             }
         }
 
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const stats = target.getComponent(Stats) orelse return;
             const speed_boost = 60 * lm.tof32(level);
-            const atk_speed_boost = 0.3 * lm.tof32(level);
+            const attack_speed_boost = 0.3 * lm.tof32(level);
             stats.addEffect(.{
                 .id = "haste",
                 .effect_type = .haste,
                 .duration = 5.0,
                 .value = speed_boost,
-                .secondary_value = atk_speed_boost,
+                .secondary_value = attack_speed_boost,
                 .on_enable = onEnable,
                 .on_disable = onDisable,
                 .visual = .{

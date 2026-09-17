@@ -203,6 +203,25 @@
 
 ## Done
 
+### [41#ARC] Code style and design principles refactoring across core systems
+
+  - tags: [architecture, refactoring, code-style, anti-nesting, naming]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Eliminate Helper junk drawer: rename InputHelper to DevicePrompts and clean internal abbreviations
+      - [x] Refactor audio subsystems (SpatialAudio, MusicManager) to remove prohibited abbreviations and encode units
+      - [x] Apply anti-nesting (guard clauses and extracted handlers) in enemy Attack, Movement, and Ability components
+      - [x] Clean prohibited abbreviations and ban single-letter variables in Stats, spells, and BoonPool
+      - [x] Refactor RoundSpawner and RoomManager for anti-nesting and full position naming
+      - [x] Minor cleanups in Projectile (recorded_damage), StatusOverlays, and Dashing
+      - [x] Verify test suite and clean compilation with zig build and zig build test
+      - [x] User confirmation that refactored systems maintain expected gameplay behavior
+    ```md
+    Systematic refactoring of large code style violations in accordance with .agents/rules/code_style.md: eliminating helper modules, strictly enforcing the Never-Nester rule (max 3 indentation levels), purging prohibited abbreviations (pos, idx, cnt, cur, mgr, dir, dmg), banning single-letter loop/capture variables, and suffixing temporal and physical quantities with explicit units.
+    ```
+
+
 ### [27#ARC] Tile-based background engine, room layout serialization, and map editor
 
   - tags: [architecture, tilemap, map-editor, assets, collision, walls, tools]

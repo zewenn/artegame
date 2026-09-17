@@ -9,7 +9,7 @@ const BoonPool = @import("../boons/BoonPool.zig");
 const HUD = @import("../HUD.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
-const InputHelper = @import("../input/InputHelper.zig");
+const DevicePrompts = @import("../input/DevicePrompts.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
@@ -19,8 +19,8 @@ var stick_moved_x: bool = false;
 var stick_moved_y: bool = false;
 
 pub fn findFirstAvailableIndex(slot_array: []const BoonSlot) usize {
-    for (slot_array, 0..) |s, i| {
-        if (!s.is_purchased) return i;
+    for (slot_array, 0..) |slot, slot_index| {
+        if (!slot.is_purchased) return slot_index;
     }
     return slot_array.len;
 }
@@ -399,7 +399,7 @@ pub fn draw(
     alloc: ?std.mem.Allocator,
 ) void {
     if (slots == null) return;
-    InputHelper.update();
+    DevicePrompts.update();
 
     if (lm.keyboard.getKeyDown(.escape)) {
         hide();
@@ -578,7 +578,7 @@ pub fn draw(
                 }
             }
 
-            const close_label = if (InputHelper.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
+            const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
             ui.text(close_label, .{
                 .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
                 .letter_spacing = 1,
@@ -596,7 +596,7 @@ pub fn draw(
             .id = .ID("boon-footer-container"),
             .layout = .{ .child_alignment = .{ .x = .center } },
         })({
-            const nav_hint = if (InputHelper.isGamepad())
+            const nav_hint = if (DevicePrompts.isGamepad())
                 "Navigate: D-Pad / L-Stick  |  Select: A  |  Close: B"
             else
                 "Navigate: WASD / Arrows / Click  |  Select: Enter / Click  |  Close: Esc";

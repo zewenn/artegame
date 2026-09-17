@@ -5,14 +5,14 @@ const ui = lm.ui;
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const HUD = @import("../HUD.zig");
-const InputHelper = @import("../input/InputHelper.zig");
+const DevicePrompts = @import("../input/DevicePrompts.zig");
 
 const Spell = @import("../../components/Weapons/Spell.zig");
 
-fn progressBar(bar_index: u32, current: f32, max: f32, bg_color: lm.Color, color: lm.Color, height: f32) void {
+fn progressBar(bar_index: u32, current: f32, max: f32, background_color: lm.Color, color: lm.Color, height: f32) void {
     ui.new(.{
         .id = .IDI("progress-bar-", bar_index),
-        .background_color = ui.color(bg_color.r, bg_color.g, bg_color.b, bg_color.a),
+        .background_color = ui.color(background_color.r, background_color.g, background_color.b, background_color.a),
         .layout = .{
             .sizing = .{ .h = .percent(height), .w = .percent(1) },
         },
@@ -33,13 +33,13 @@ fn spellShower(
     alloc: ?std.mem.Allocator,
 ) void {
     const slot_size = HUD.hud_height;
-    const badge_pad_y = lm.tou16(@max(1, @round(1 * HUD.scale)));
-    const badge_pad_x = lm.tou16(@max(2, @round(3 * HUD.scale)));
-    const font_sz = lm.tou16(@max(9, @round(10 * HUD.scale)));
-    const key_font_sz = lm.tou16(@max(8, @round(9 * HUD.scale)));
+    const badge_padding_y = lm.tou16(@max(1, @round(1 * HUD.scale)));
+    const badge_padding_x = lm.tou16(@max(2, @round(3 * HUD.scale)));
+    const font_size = lm.tou16(@max(9, @round(10 * HUD.scale)));
+    const key_font_size = lm.tou16(@max(8, @round(9 * HUD.scale)));
 
-    const prompt = InputHelper.getActionPrompt(if (slot_index == 0) .spell_0 else .spell_1);
-    const is_gamepad = InputHelper.isGamepad();
+    const prompt = DevicePrompts.getActionPrompt(if (slot_index == 0) .spell_0 else .spell_1);
+    const is_gamepad = DevicePrompts.isGamepad();
 
     if (maybe_spell) |spell| {
         const is_on_cooldown = spell.cooldown_remaining > 0;
@@ -68,20 +68,20 @@ fn spellShower(
             })({
                 ui.new(.{
                     .id = .IDI("spell-key-badge-", slot_index),
-                    .background_color = prompt.badge_bg,
+                    .background_color = prompt.badge_background_color,
                     .corner_radius = .all(if (is_gamepad) 6 * HUD.scale else 3 * HUD.scale),
                     .border = .{
-                        .color = prompt.badge_border,
+                        .color = prompt.badge_border_color,
                         .width = .outside(1),
                     },
                     .layout = .{
-                        .padding = .axes(badge_pad_y, if (is_gamepad) lm.tou16(@max(3, @round(4 * HUD.scale))) else badge_pad_x),
+                        .padding = .axes(badge_padding_y, if (is_gamepad) lm.tou16(@max(3, @round(4 * HUD.scale))) else badge_padding_x),
                         .child_alignment = .{ .x = .center, .y = .center },
                     },
                 })({
                     ui.text(prompt.label, .{
                         .color = prompt.text_color,
-                        .font_size = key_font_sz,
+                        .font_size = key_font_size,
                         .letter_spacing = 1,
                     });
                 });
@@ -115,21 +115,21 @@ fn spellShower(
                         .background_color = ui.color(16, 18, 24, 230),
                         .corner_radius = .all(3 * HUD.scale),
                         .layout = .{
-                            .padding = .axes(badge_pad_y, badge_pad_x),
+                            .padding = .axes(badge_padding_y, badge_padding_x),
                             .child_alignment = .{ .x = .center, .y = .center },
                         },
                     })({
-                        const cd_str = if (alloc) |a| blk: {
+                        const cooldown_string = if (alloc) |allocator| blk: {
                             if (spell.cooldown_remaining >= 10.0) {
-                                break :blk std.fmt.allocPrint(a, "{d:.0}s", .{@ceil(spell.cooldown_remaining)}) catch "0s";
+                                break :blk std.fmt.allocPrint(allocator, "{d:.0}s", .{@ceil(spell.cooldown_remaining)}) catch "0s";
                             } else {
-                                break :blk std.fmt.allocPrint(a, "{d:.1}s", .{spell.cooldown_remaining}) catch "0s";
+                                break :blk std.fmt.allocPrint(allocator, "{d:.1}s", .{spell.cooldown_remaining}) catch "0s";
                             }
                         } else "0s";
 
-                        ui.text(cd_str, .{
+                        ui.text(cooldown_string, .{
                             .color = ui.color(255, 255, 255, 255),
-                            .font_size = font_sz,
+                            .font_size = font_size,
                             .letter_spacing = 1,
                         });
                     });

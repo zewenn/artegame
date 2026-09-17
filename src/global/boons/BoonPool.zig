@@ -20,27 +20,27 @@ pub fn reroll(stats: Stats, attack: Attack) void {
     var valid_indices: [boons.all_boons.len]usize = undefined;
     var valid_count: usize = 0;
 
-    for (boons.all_boons, 0..) |b, i| {
-        if (b.isAvailable(stats, attack)) {
-            valid_indices[valid_count] = i;
+    for (boons.all_boons, 0..) |boon, boon_index| {
+        if (boon.isAvailable(stats, attack)) {
+            valid_indices[valid_count] = boon_index;
             valid_count += 1;
         }
     }
 
     const draw_count = @min(3, valid_count);
-    for (0..draw_count) |i| {
-        const pick_index = lm.random.intRangeLessThan(usize, i, valid_count);
+    for (0..draw_count) |slot_index| {
+        const pick_index = lm.random.intRangeLessThan(usize, slot_index, valid_count);
         const chosen_boon_index = valid_indices[pick_index];
-        valid_indices[pick_index] = valid_indices[i];
-        valid_indices[i] = chosen_boon_index;
+        valid_indices[pick_index] = valid_indices[slot_index];
+        valid_indices[slot_index] = chosen_boon_index;
 
-        current_slots[i] = .{
+        current_slots[slot_index] = .{
             .boon = boons.all_boons[chosen_boon_index],
             .is_purchased = false,
         };
     }
-    for (draw_count..3) |i| {
-        current_slots[i] = null;
+    for (draw_count..3) |slot_index| {
+        current_slots[slot_index] = null;
     }
     has_rolled = true;
 }
@@ -52,10 +52,9 @@ pub fn getSlots(stats: Stats, attack: Attack) []const BoonSlot {
 
     var count: usize = 0;
     for (current_slots) |maybe_slot| {
-        if (maybe_slot) |slot| {
-            active_slots_buffer[count] = slot;
-            count += 1;
-        }
+        const slot = maybe_slot orelse continue;
+        active_slots_buffer[count] = slot;
+        count += 1;
     }
     return active_slots_buffer[0..count];
 }
@@ -67,23 +66,20 @@ pub fn getCurrentBoons(stats: Stats, attack: Attack) []const Boon {
 
     var count: usize = 0;
     for (current_slots) |maybe_slot| {
-        if (maybe_slot) |slot| {
-            if (!slot.is_purchased) {
-                active_slice_buffer[count] = slot.boon;
-                count += 1;
-            }
-        }
+        const slot = maybe_slot orelse continue;
+        if (slot.is_purchased) continue;
+        active_slice_buffer[count] = slot.boon;
+        count += 1;
     }
     return active_slice_buffer[0..count];
 }
 
 pub fn consumeBoon(boon: Boon) void {
     for (&current_slots) |*maybe_slot| {
-        if (maybe_slot.*) |*slot| {
-            if (slot.boon.eql(boon)) {
-                slot.is_purchased = true;
-                break;
-            }
+        const slot = &(maybe_slot.* orelse continue);
+        if (slot.boon.eql(boon)) {
+            slot.is_purchased = true;
+            break;
         }
     }
 }
@@ -108,8 +104,8 @@ test "BoonPool rolls 3 distinct valid boons and handles consumption & reroll" {
     try std.testing.expect(!initial_boons[0].eql(initial_boons[2]));
     try std.testing.expect(!initial_boons[1].eql(initial_boons[2]));
 
-    for (initial_boons) |b| {
-        try std.testing.expect(b.isAvailable(stats, attack));
+    for (initial_boons) |boon| {
+        try std.testing.expect(boon.isAvailable(stats, attack));
     }
 
     const first_boon = initial_boons[0];
@@ -117,8 +113,8 @@ test "BoonPool rolls 3 distinct valid boons and handles consumption & reroll" {
 
     const remaining_after_one = getCurrentBoons(stats, attack);
     try std.testing.expectEqual(@as(usize, 2), remaining_after_one.len);
-    for (remaining_after_one) |b| {
-        try std.testing.expect(!b.eql(first_boon));
+    for (remaining_after_one) |boon| {
+        try std.testing.expect(!boon.eql(first_boon));
     }
 
     consumeBoon(remaining_after_one[0]);
@@ -147,8 +143,8 @@ test "BoonPool respects weapon availability conditions" {
     for (0..10) |_| {
         reroll(stats, attack);
         const drawn = getCurrentBoons(stats, attack);
-        for (drawn) |b| {
-            try std.testing.expect(b.isAvailable(stats, attack));
+        for (drawn) |boon| {
+            try std.testing.expect(boon.isAvailable(stats, attack));
         }
     }
 }

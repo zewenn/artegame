@@ -43,14 +43,14 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         else
             0;
 
-        const overlay_pos = transform.position
+        const overlay_position = transform.position
             .add(lm.vec2ToVec3(visual.offset))
             .add(.init(0, 0, 1.0));
 
         try lm.display.add(.{
             .texture = texture.*,
             .transform = lm.Transform{
-                .position = overlay_pos,
+                .position = overlay_position,
                 .rotation = rotation,
                 .scale = visual.scale,
             },
@@ -67,45 +67,45 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn End(self: *Self) void {
-    if (self.textures) |*tex_list| {
-        for (tex_list.items()) |cached| {
+    if (self.textures) |*texture_list| {
+        for (texture_list.items()) |cached| {
             lm.assets.texture.release(cached.path, &.{ lm.toi32(cached.scale.x), lm.toi32(cached.scale.y) });
         }
-        tex_list.deinit();
+        texture_list.deinit();
         self.textures = null;
     }
 }
 
 pub fn getOrLoadTexture(self: *Self, path: []const u8, scale: lm.Vector2) ?*lm.Texture {
-    const tex_list = &(self.textures orelse return null);
-    for (tex_list.items()) |cached| {
+    const texture_list = &(self.textures orelse return null);
+    for (texture_list.items()) |cached| {
         if (std.mem.eql(u8, cached.path, path) and cached.scale.x == scale.x and cached.scale.y == scale.y) {
             return cached.texture;
         }
     }
 
-    const tex = lm.assets.texture.get(path, &.{ lm.toi32(scale.x), lm.toi32(scale.y) }) orelse return null;
-    tex_list.append(.{
+    const texture = lm.assets.texture.get(path, &.{ lm.toi32(scale.x), lm.toi32(scale.y) }) orelse return null;
+    texture_list.append(.{
         .path = path,
         .scale = scale,
-        .texture = tex,
+        .texture = texture,
     }) catch return null;
 
-    return tex;
+    return texture;
 }
 
 fn pruneUnusedTextures(self: *Self, active_effects: []const Effect) void {
-    const tex_list = &(self.textures orelse return);
-    const len = tex_list.len();
+    const texture_list = &(self.textures orelse return);
+    const length = texture_list.len();
 
-    for (1..len + 1) |j| {
-        const index = len - j;
+    for (1..length + 1) |step| {
+        const index = length - step;
 
-        const cached = tex_list.items()[index];
+        const cached = texture_list.items()[index];
         var is_used = false;
 
-        for (active_effects) |eff| active: {
-            const visual = EffectVisualRegistry.resolve(eff) orelse continue;
+        for (active_effects) |effect| active: {
+            const visual = EffectVisualRegistry.resolve(effect) orelse continue;
 
             for (visual.frames) |frame_path| {
                 is_used =
@@ -119,7 +119,7 @@ fn pruneUnusedTextures(self: *Self, active_effects: []const Effect) void {
 
         if (!is_used) {
             lm.assets.texture.release(cached.path, &.{ lm.toi32(cached.scale.x), lm.toi32(cached.scale.y) });
-            _ = tex_list.swapRemove(index);
+            _ = texture_list.swapRemove(index);
         }
     }
 }

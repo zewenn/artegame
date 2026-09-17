@@ -6,7 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
-const InputHelper = @import("../input/InputHelper.zig");
+const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 
 pub var is_showing: bool = false;
@@ -253,7 +253,7 @@ fn drawActionButtons(btn_max_w: f32, ui_scale: f32) void {
             .id = .ID("gameover-footer-container"),
             .layout = .{ .child_alignment = .{ .x = .center } },
         })({
-            const footer_text = if (InputHelper.isGamepad())
+            const footer_text = if (DevicePrompts.isGamepad())
                 "Navigate: D-Pad / L-Stick  |  Select: A"
             else
                 "Navigate: WASD / Arrows  |  Select: Enter / Space / Click";
@@ -313,7 +313,7 @@ fn drawButton(
 }
 
 fn handleInput() void {
-    InputHelper.update();
+    DevicePrompts.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);

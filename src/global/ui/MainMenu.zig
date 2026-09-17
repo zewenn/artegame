@@ -8,7 +8,7 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const RoomManager = @import("../RoomManager.zig");
-const InputHelper = @import("../input/InputHelper.zig");
+const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 
 const Self = @This();
@@ -41,7 +41,7 @@ pub fn Start(self: *Self) void {
 }
 
 pub fn Update(self: *Self) !void {
-    InputHelper.update();
+    DevicePrompts.update();
     if (self.arena) |*arena| _ = arena.reset(.free_all);
 
     const window_size = lm.window.size.get();
@@ -358,7 +358,7 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             .child_alignment = .{ .x = .center },
         },
     })({
-        const footer_text = if (InputHelper.isGamepad())
+        const footer_text = if (DevicePrompts.isGamepad())
             "Navigate: D-Pad / L-Stick  |  Select: A"
         else
             "Navigate: WASD / Arrows  |  Select: Enter / Space / Click";

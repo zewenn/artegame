@@ -1,4 +1,4 @@
-pub const InputHelper = @import("InputHelper.zig");
-pub const InputDevice = InputHelper.InputDevice;
-pub const PromptAction = InputHelper.PromptAction;
-pub const ActionPrompt = InputHelper.ActionPrompt;
+pub const DevicePrompts = @import("DevicePrompts.zig");
+pub const InputDevice = DevicePrompts.InputDevice;
+pub const PromptAction = DevicePrompts.PromptAction;
+pub const ActionPrompt = DevicePrompts.ActionPrompt;

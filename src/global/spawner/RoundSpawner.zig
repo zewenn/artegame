@@ -38,10 +38,10 @@ pub const WaveProgress = struct {
 pub fn calculateBudget(round: u32) u32 {
     if (round <= 1) return 8;
 
-    const r = round - 1;
+    const round_offset = round - 1;
 
     if (round <= 5) {
-        return 8 + (r * 6) + (r * r);
+        return 8 + (round_offset * 6) + (round_offset * round_offset);
     }
 
     return 48 + (round - 5) * 16;
@@ -97,8 +97,8 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     }
 
     while (melee_left > 0 or ranged_left > 0 or elite_left > 0) {
-        const m_batch = @min(melee_left, 2);
-        for (0..m_batch) |_| {
+        const melee_batch = @min(melee_left, 2);
+        for (0..melee_batch) |_| {
             try list.append(.melee);
             melee_left -= 1;
         }
@@ -119,8 +119,8 @@ pub const ExclusionZone = struct {
     min: lm.Vector2,
     max: lm.Vector2,
 
-    pub fn contains(self: ExclusionZone, pos: lm.Vector2) bool {
-        return pos.x >= self.min.x and pos.x <= self.max.x and pos.y >= self.min.y and pos.y <= self.max.y;
+    pub fn contains(self: ExclusionZone, position: lm.Vector2) bool {
+        return position.x >= self.min.x and position.x <= self.max.x and position.y >= self.min.y and position.y <= self.max.y;
     }
 };
 
@@ -129,12 +129,12 @@ pub const SpawnAreaConfig = struct {
     max_x: f32 = 1100.0,
     min_y: f32 = -520.0,
     max_y: f32 = 520.0,
-    min_player_dist: f32 = 420.0,
+    min_player_distance_pixels: f32 = 420.0,
     edge_depth: f32 = 80.0,
     exclusion_zones: []const ExclusionZone = &.{},
 };
 
-pub fn pickSpawnPositionWithConfig(player_pos: lm.Vector2, config: SpawnAreaConfig) lm.Vector2 {
+pub fn pickSpawnPositionWithConfig(player_position: lm.Vector2, config: SpawnAreaConfig) lm.Vector2 {
     var attempt: usize = 0;
     while (attempt < 10) : (attempt += 1) {
         const edge = lm.random.intRangeAtMost(u32, 0, 3);
@@ -169,21 +169,21 @@ pub fn pickSpawnPositionWithConfig(player_pos: lm.Vector2, config: SpawnAreaConf
         }
         if (in_exclusion) continue;
 
-        const dx = x - player_pos.x;
-        const dy = y - player_pos.y;
-        const dist = std.math.hypot(dx, dy);
-        if (dist >= config.min_player_dist) {
+        const delta_x = x - player_position.x;
+        const delta_y = y - player_position.y;
+        const distance_to_player = std.math.hypot(delta_x, delta_y);
+        if (distance_to_player >= config.min_player_distance_pixels) {
             return lm.Vec2(x, y);
         }
     }
 
-    const fallback_x = if (player_pos.x > 0) config.min_x + 50 else config.max_x - 50;
-    const fallback_y = if (player_pos.y > 0) config.min_y + 50 else config.max_y - 50;
+    const fallback_x = if (player_position.x > 0) config.min_x + 50 else config.max_x - 50;
+    const fallback_y = if (player_position.y > 0) config.min_y + 50 else config.max_y - 50;
     return lm.Vec2(fallback_x, fallback_y);
 }
 
-pub fn pickSpawnPosition(player_pos: lm.Vector2) lm.Vector2 {
-    return pickSpawnPositionWithConfig(player_pos, .{});
+pub fn pickSpawnPosition(player_position: lm.Vector2) lm.Vector2 {
+    return pickSpawnPositionWithConfig(player_position, .{});
 }
 
 const Self = @This();
@@ -200,8 +200,8 @@ round: u32 = 0,
 total_wave_enemies: u32 = 0,
 killed_enemies: u32 = 0,
 
-spawn_timer: f32 = 0,
-spawn_interval: f32 = 0.65,
+spawn_timer_seconds: f32 = 0,
+spawn_interval_seconds: f32 = 0.65,
 max_active_enemies: u32 = 12,
 
 is_active: bool = false,
@@ -258,8 +258,8 @@ pub fn startWave(self: *Self, round: u32) !void {
     self.active_enemies.clearRetainingCapacity();
 
     self.max_active_enemies = @min(@min(10 + round * 2, 18), MAX_CONCURRENT_ENEMIES);
-    self.spawn_interval = @max(0.40, 0.70 - @as(f32, @floatFromInt(round)) * 0.03);
-    self.spawn_timer = 0.2;
+    self.spawn_interval_seconds = @max(0.40, 0.70 - @as(f32, @floatFromInt(round)) * 0.03);
+    self.spawn_timer_seconds = 0.2;
     self.is_active = true;
 }
 
@@ -275,7 +275,7 @@ pub fn removeDefeatedEnemy(self: *Self, uuid: u128) void {
     }
 }
 
-pub fn update(self: *Self, dt: f32, scene: ?*lm.Scene, player_pos: lm.Vector2) !void {
+pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_position: lm.Vector2) !void {
     _ = scene;
     if (!self.is_active) return;
 
@@ -283,30 +283,30 @@ pub fn update(self: *Self, dt: f32, scene: ?*lm.Scene, player_pos: lm.Vector2) !
 
     if (self.active_enemies.len() >= self.max_active_enemies or self.active_enemies.len() >= MAX_CONCURRENT_ENEMIES) return;
 
-    self.spawn_timer -= dt;
+    self.spawn_timer_seconds -= delta_seconds;
 
     if (self.active_enemies.len() < 3) {
-        self.spawn_timer -= dt * 0.5;
+        self.spawn_timer_seconds -= delta_seconds * 0.5;
     }
 
-    if (self.spawn_timer > 0) return;
+    if (self.spawn_timer_seconds > 0) return;
 
     const enemy_type = self.spawn_queue.items()[self.spawn_cursor];
     self.spawn_cursor += 1;
-    const pos = self.pickSpawnPositionFromZonesOrConfig(player_pos);
+    const spawn_position = self.pickSpawnPositionFromZonesOrConfig(player_position);
 
     const enemy = switch (enemy_type) {
-        .melee => try prefabs.enemies.Melee(pos),
-        .ranged => try prefabs.enemies.Ranged(pos),
-        .elite => try prefabs.enemies.Elite(pos),
+        .melee => try prefabs.enemies.Melee(spawn_position),
+        .ranged => try prefabs.enemies.Ranged(spawn_position),
+        .elite => try prefabs.enemies.Elite(spawn_position),
     };
 
     try self.active_enemies.append(enemy.uuid);
     try lm.summoning.entity(enemy);
 
-    SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", pos, player_pos, 800.0, 0.35, 0.15);
+    SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", spawn_position, player_position, 800.0, 0.35, 0.15);
 
-    self.spawn_timer = self.spawn_interval + lm.randFloat(f32, -0.08, 0.08);
+    self.spawn_timer_seconds = self.spawn_interval_seconds + lm.randFloat(f32, -0.08, 0.08);
 }
 
 pub fn isWaveFinished(self: *const Self) bool {
@@ -449,18 +449,18 @@ test "pickSpawnPositionWithConfig obeys custom boundaries and exclusion zones" {
         .max_x = 500.0,
         .min_y = 100.0,
         .max_y = 500.0,
-        .min_player_dist = 50.0,
+        .min_player_distance_pixels = 50.0,
         .exclusion_zones = &.{
             .{ .min = .init(200, 200), .max = .init(300, 300) },
         },
     };
 
-    const player_pos = lm.Vec2(0, 0);
+    const player_position = lm.Vec2(0, 0);
     for (0..20) |_| {
-        const pos = pickSpawnPositionWithConfig(player_pos, custom_config);
-        try std.testing.expect(pos.x >= 50.0 and pos.x <= 550.0);
-        try std.testing.expect(pos.y >= 50.0 and pos.y <= 550.0);
-        const in_exclusion = pos.x >= 200 and pos.x <= 300 and pos.y >= 200 and pos.y <= 300;
+        const spawn_position = pickSpawnPositionWithConfig(player_position, custom_config);
+        try std.testing.expect(spawn_position.x >= 50.0 and spawn_position.x <= 550.0);
+        try std.testing.expect(spawn_position.y >= 50.0 and spawn_position.y <= 550.0);
+        const in_exclusion = spawn_position.x >= 200 and spawn_position.x <= 300 and spawn_position.y >= 200 and spawn_position.y <= 300;
         try std.testing.expect(!in_exclusion);
     }
 }

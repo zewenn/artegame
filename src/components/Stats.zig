@@ -67,8 +67,8 @@ pub fn Update(self: *Self) void {
 }
 
 pub fn End(self: *Self) void {
-    if (self.effects) |*effs| {
-        effs.deinit();
+    if (self.effects) |*effects_list| {
+        effects_list.deinit();
         self.effects = null;
     }
 }
@@ -96,10 +96,10 @@ pub fn getEffectsList(self: *Self) *lm.List(Effect) {
 
 pub fn hasEffect(self: Self, target: EffectTarget) bool {
     const effects = self.effects orelse return false;
-    for (effects.items()) |eff| {
+    for (effects.items()) |effect| {
         const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, eff.id, id),
-            .effect_type => |et| eff.effect_type == et,
+            .id => |id| std.mem.eql(u8, effect.id, id),
+            .effect_type => |effect_type| effect.effect_type == effect_type,
         };
         if (matches) return true;
     }
@@ -108,12 +108,12 @@ pub fn hasEffect(self: Self, target: EffectTarget) bool {
 
 pub fn getEffect(self: *Self, target: EffectTarget) ?*Effect {
     const effects = &(self.effects orelse return null);
-    for (effects.items()) |*eff| {
+    for (effects.items()) |*effect| {
         const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, eff.id, id),
-            .effect_type => |et| eff.effect_type == et,
+            .id => |id| std.mem.eql(u8, effect.id, id),
+            .effect_type => |effect_type| effect.effect_type == effect_type,
         };
-        if (matches) return eff;
+        if (matches) return effect;
     }
     return null;
 }
@@ -151,19 +151,19 @@ pub fn canMove(self: Self) bool {
 }
 
 pub fn addEffect(self: *Self, effect: Effect) void {
-    var eff = effect;
-    if (eff.time_remaining <= 0) {
-        eff.time_remaining = eff.duration;
+    var new_effect = effect;
+    if (new_effect.time_remaining <= 0) {
+        new_effect.time_remaining = new_effect.duration;
     }
 
     const effects = self.getEffectsList();
 
     for (effects.items()) |*existing| {
-        if (std.mem.eql(u8, existing.id, eff.id)) {
+        if (std.mem.eql(u8, existing.id, new_effect.id)) {
             if (existing.on_disable) |on_disable| {
                 on_disable(self);
             }
-            existing.* = eff;
+            existing.* = new_effect;
             if (existing.on_enable) |on_enable| {
                 on_enable(self);
             }
@@ -171,40 +171,40 @@ pub fn addEffect(self: *Self, effect: Effect) void {
         }
     }
 
-    effects.append(eff) catch |err| {
-        std.log.err("Failed to append effect '{s}': {s}", .{ eff.id, @errorName(err) });
+    effects.append(new_effect) catch |err| {
+        std.log.err("Failed to append effect '{s}': {s}", .{ new_effect.id, @errorName(err) });
         return;
     };
 
-    const new_idx = effects.len() - 1;
-    if (effects.items()[new_idx].on_enable) |on_enable| {
+    const new_index = effects.len() - 1;
+    if (effects.items()[new_index].on_enable) |on_enable| {
         on_enable(self);
     }
 }
 
-pub fn removeEffectAtIndex(self: *Self, idx: usize) void {
+pub fn removeEffectAtIndex(self: *Self, index: usize) void {
     const effects = &(self.effects orelse return);
-    if (idx >= effects.len()) return;
+    if (index >= effects.len()) return;
 
-    if (effects.items()[idx].on_disable) |on_disable| {
+    if (effects.items()[index].on_disable) |on_disable| {
         on_disable(self);
     }
 
-    _ = effects.orderedRemove(idx);
+    _ = effects.orderedRemove(index);
 }
 
 pub fn removeEffect(self: *Self, target: EffectTarget) void {
     const effects = &(self.effects orelse return);
-    var i: usize = 0;
-    while (i < effects.len()) {
+    var effect_index: usize = 0;
+    while (effect_index < effects.len()) {
         const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, effects.items()[i].id, id),
-            .effect_type => |et| effects.items()[i].effect_type == et,
+            .id => |id| std.mem.eql(u8, effects.items()[effect_index].id, id),
+            .effect_type => |effect_type| effects.items()[effect_index].effect_type == effect_type,
         };
         if (matches) {
-            self.removeEffectAtIndex(i);
+            self.removeEffectAtIndex(effect_index);
         } else {
-            i += 1;
+            effect_index += 1;
         }
     }
 }
@@ -216,42 +216,42 @@ pub fn clearEffects(self: *Self) void {
     }
 }
 
-pub fn applySlow(self: *Self, strength: f32, duration: f32) void {
+pub fn applySlow(self: *Self, strength: f32, duration_seconds: f32) void {
     self.addEffect(.{
         .id = "slow",
         .effect_type = .slow,
-        .duration = duration,
+        .duration = duration_seconds,
         .value = strength,
         .on_enable = struct {
             pub fn onEnable(stats: *Self) void {
-                if (stats.getEffect(.{ .id = "slow" })) |e| {
-                    stats.current.movement_speed = @max(10, stats.current.movement_speed - e.value);
+                if (stats.getEffect(.{ .id = "slow" })) |effect| {
+                    stats.current.movement_speed = @max(10, stats.current.movement_speed - effect.value);
                 }
             }
         }.onEnable,
         .on_disable = struct {
             pub fn onDisable(stats: *Self) void {
-                if (stats.getEffect(.{ .id = "slow" })) |e| {
-                    stats.current.movement_speed += e.value;
+                if (stats.getEffect(.{ .id = "slow" })) |effect| {
+                    stats.current.movement_speed += effect.value;
                 }
             }
         }.onDisable,
     });
 }
 
-pub fn applyRoot(self: *Self, duration: f32) void {
+pub fn applyRoot(self: *Self, duration_seconds: f32) void {
     self.addEffect(.{
         .id = "root",
         .effect_type = .root,
-        .duration = duration,
+        .duration = duration_seconds,
     });
 }
 
-pub fn applyStun(self: *Self, duration: f32) void {
+pub fn applyStun(self: *Self, duration_seconds: f32) void {
     self.addEffect(.{
         .id = "stun",
         .effect_type = .stun,
-        .duration = duration,
+        .duration = duration_seconds,
     });
 }
 
@@ -263,20 +263,20 @@ pub fn applyStasis(self: *Self, duration_seconds: f32) void {
     });
 }
 
-pub fn tickEffects(self: *Self, dt: f32) void {
+pub fn tickEffects(self: *Self, delta_seconds: f32) void {
     const effects = &(self.effects orelse return);
-    const len = effects.len();
+    const length = effects.len();
 
-    for (1..len + 1) |j| {
-        const index = len - j;
+    for (1..length + 1) |step| {
+        const index = length - step;
         const effect = &(effects.items()[index]);
-        effect.anim_time += dt;
+        effect.anim_time += delta_seconds;
 
         if (effect.on_tick) |tick|
             @call(.auto, tick, .{self});
 
         if (effect.duration > 0) {
-            effect.time_remaining -= dt;
+            effect.time_remaining -= delta_seconds;
             if (effect.time_remaining <= 0) {
                 self.removeEffectAtIndex(index);
                 continue;
@@ -306,11 +306,11 @@ test "Stats effect lifecycle with on_enable and on_disable callbacks using lm.Li
     defer stats.deinit();
 
     const CustomBuff = struct {
-        pub fn onEnable(s: *Self) void {
-            s.current.physical_damage += 15;
+        pub fn onEnable(target_stats: *Self) void {
+            target_stats.current.physical_damage += 15;
         }
-        pub fn onDisable(s: *Self) void {
-            s.current.physical_damage -= 15;
+        pub fn onDisable(target_stats: *Self) void {
+            target_stats.current.physical_damage -= 15;
         }
     };
 
@@ -422,9 +422,9 @@ test "Stats effect on_tick periodic callback execution" {
     defer stats.deinit();
 
     const PeriodicHealing = struct {
-        pub fn onTick(s: *Self) void {
-            if (s.getEffect(.{ .id = "periodic_heal" })) |e| {
-                s.current.health = @min(s.max.health, s.current.health + e.value);
+        pub fn onTick(target_stats: *Self) void {
+            if (target_stats.getEffect(.{ .id = "periodic_heal" })) |effect| {
+                target_stats.current.health = @min(target_stats.max.health, target_stats.current.health + effect.value);
             }
         }
     };

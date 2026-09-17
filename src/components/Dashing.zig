@@ -10,12 +10,12 @@ const Self = @This();
 
 const Dash = struct {
     direction: lm.Vector2,
-    cooldown: f32,
+    cooldown_seconds: f32,
 
-    pub fn init(direction: lm.Vector2, cooldown: f32) Dash {
+    pub fn init(direction: lm.Vector2, cooldown_seconds: f32) Dash {
         return Dash{
             .direction = direction,
-            .cooldown = cooldown,
+            .cooldown_seconds = cooldown_seconds,
         };
     }
 };
@@ -24,7 +24,7 @@ transform: ?*lm.Transform = null,
 stats: ?*Stats = null,
 
 dashes: ?lm.List(Dash) = null,
-last_dash_at: f32 = -1,
+last_dash_at_seconds: f32 = -1,
 
 pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     const stats = self.stats orelse return;
@@ -37,11 +37,11 @@ pub fn apply(self: *Self, direction_vector: lm.Vector2) void {
     stats.current.stamina -= 50;
 }
 
-pub fn applyEx(self: *Self, direction_vector: lm.Vector2, cooldown: f32, reduce_stamina: bool) void {
+pub fn applyEx(self: *Self, direction_vector: lm.Vector2, cooldown_seconds: f32, reduce_stamina: bool) void {
     const stats = self.stats orelse return;
     const dashes = &(self.dashes orelse return);
 
-    dashes.append(.init(direction_vector, cooldown)) catch return;
+    dashes.append(.init(direction_vector, cooldown_seconds)) catch return;
     if (reduce_stamina) stats.current.stamina -= 50;
 }
 
@@ -64,22 +64,22 @@ pub fn Update(self: *Self) !void {
 
     const dashes = &(self.dashes orelse return);
 
-    const len = dashes.len();
-    if (len == 0) return;
+    const length = dashes.len();
+    if (length == 0) return;
 
-    self.last_dash_at = lm.time.gameTime();
+    self.last_dash_at_seconds = lm.time.gameTime();
 
-    for (1..len + 1) |j| {
-        const index = len - j;
+    for (1..length + 1) |step| {
+        const index = length - step;
         const dash: *Dash = &dashes.items()[index];
 
-        if (dash.cooldown < 0) dash.cooldown = 0;
-        if (dash.cooldown == 0) {
+        if (dash.cooldown_seconds < 0) dash.cooldown_seconds = 0;
+        if (dash.cooldown_seconds == 0) {
             _ = dashes.swapRemove(index);
             continue;
         }
 
-        dash.cooldown -= lm.time.deltaTime();
+        dash.cooldown_seconds -= lm.time.deltaTime();
 
         const direction_vector = dash.direction;
         const speed = stats.current.movement_speed * stats.current.dash_speed_multiplier;
@@ -93,7 +93,7 @@ pub fn Update(self: *Self) !void {
 }
 
 pub fn Tick(self: *Self) !void {
-    if (lm.time.gameTime() - self.last_dash_at < 0.5) return;
+    if (lm.time.gameTime() - self.last_dash_at_seconds < 0.5) return;
 
     const stats: *Stats = try lm.ensureComponent(self.stats);
 

@@ -43,9 +43,9 @@ outgoing_track_path: ?[]const u8 = null,
 current_music: ?rl.Music = null,
 outgoing_music: ?rl.Music = null,
 
-current_vol: f32 = 0.0,
-outgoing_vol: f32 = 0.0,
-fade_duration: f32 = 1.5,
+current_volume: f32 = 0.0,
+outgoing_volume: f32 = 0.0,
+fade_duration_seconds: f32 = 1.5,
 
 fight_track_index: usize = 0,
 
@@ -55,11 +55,11 @@ pub fn get() ?*Self {
 }
 
 pub fn setGlobalPhase(phase: Phase) void {
-    if (get()) |mgr| mgr.setPhase(phase);
+    if (get()) |music_manager| music_manager.setPhase(phase);
 }
 
 pub fn stopGlobal() void {
-    if (get()) |mgr| mgr.stop();
+    if (get()) |music_manager| music_manager.stop();
 }
 
 pub fn Awake(self: *Self) void {
@@ -67,25 +67,25 @@ pub fn Awake(self: *Self) void {
 }
 
 pub fn Update(self: *Self) void {
-    const dt = lm.time.deltaTime();
+    const delta_seconds = lm.time.deltaTime();
 
     if (self.outgoing_music) |out| {
-        self.outgoing_vol = @max(0.0, self.outgoing_vol - (dt / self.fade_duration));
-        if (self.outgoing_vol <= 0.001) {
+        self.outgoing_volume = @max(0.0, self.outgoing_volume - (delta_seconds / self.fade_duration_seconds));
+        if (self.outgoing_volume <= 0.001) {
             rl.stopMusicStream(out);
             rl.unloadMusicStream(out);
             self.outgoing_music = null;
             self.outgoing_track_path = null;
-            self.outgoing_vol = 0.0;
+            self.outgoing_volume = 0.0;
         } else {
-            rl.setMusicVolume(out, AudioManager.effectiveMusic(self.outgoing_vol));
+            rl.setMusicVolume(out, AudioManager.effectiveMusic(self.outgoing_volume));
             rl.updateMusicStream(out);
         }
     }
 
     if (self.current_music) |curr| {
-        self.current_vol = @min(1.0, self.current_vol + (dt / self.fade_duration));
-        rl.setMusicVolume(curr, AudioManager.effectiveMusic(self.current_vol));
+        self.current_volume = @min(1.0, self.current_volume + (delta_seconds / self.fade_duration_seconds));
+        rl.setMusicVolume(curr, AudioManager.effectiveMusic(self.current_volume));
         rl.updateMusicStream(curr);
     }
 }
@@ -122,12 +122,12 @@ fn transitionTo(self: *Self, next_track: ?[]const u8) void {
     if (self.current_music) |curr| {
         self.outgoing_music = curr;
         self.outgoing_track_path = self.current_track_path;
-        self.outgoing_vol = self.current_vol;
+        self.outgoing_volume = self.current_volume;
     }
 
     self.current_music = null;
     self.current_track_path = next_track;
-    self.current_vol = 0.0;
+    self.current_volume = 0.0;
 
     if (next_track) |track_path| {
         const full_path = lm.assets.files.getFilePath(track_path) catch return;
@@ -150,7 +150,7 @@ pub fn stop(self: *Self) void {
         rl.unloadMusicStream(out);
         self.outgoing_music = null;
         self.outgoing_track_path = null;
-        self.outgoing_vol = 0.0;
+        self.outgoing_volume = 0.0;
     }
 
     if (self.current_music) |curr| {
@@ -158,33 +158,33 @@ pub fn stop(self: *Self) void {
         rl.unloadMusicStream(curr);
         self.current_music = null;
         self.current_track_path = null;
-        self.current_vol = 0.0;
+        self.current_volume = 0.0;
     }
 
     self.current_phase = .stopped;
 }
 
 test "MusicManager phase selection and transition logic" {
-    var mgr = Self{};
-    try std.testing.expectEqual(Phase.stopped, mgr.current_phase);
+    var music_manager = Self{};
+    try std.testing.expectEqual(Phase.stopped, music_manager.current_phase);
 
-    mgr.setPhase(.replenish);
-    try std.testing.expectEqual(Phase.replenish, mgr.current_phase);
-    try std.testing.expect(mgr.current_track_path != null);
-    try std.testing.expectEqualStrings(ambient_track, mgr.current_track_path.?);
+    music_manager.setPhase(.replenish);
+    try std.testing.expectEqual(Phase.replenish, music_manager.current_phase);
+    try std.testing.expect(music_manager.current_track_path != null);
+    try std.testing.expectEqualStrings(ambient_track, music_manager.current_track_path.?);
 
-    mgr.setPhase(.combat);
-    try std.testing.expectEqual(Phase.combat, mgr.current_phase);
-    try std.testing.expect(mgr.outgoing_track_path != null);
-    try std.testing.expectEqualStrings(ambient_track, mgr.outgoing_track_path.?);
-    try std.testing.expect(mgr.current_track_path != null);
-    try std.testing.expect(std.mem.startsWith(u8, mgr.current_track_path.?, "audio/music/fight_"));
+    music_manager.setPhase(.combat);
+    try std.testing.expectEqual(Phase.combat, music_manager.current_phase);
+    try std.testing.expect(music_manager.outgoing_track_path != null);
+    try std.testing.expectEqualStrings(ambient_track, music_manager.outgoing_track_path.?);
+    try std.testing.expect(music_manager.current_track_path != null);
+    try std.testing.expect(std.mem.startsWith(u8, music_manager.current_track_path.?, "audio/music/fight_"));
 
-    mgr.End();
-    try std.testing.expectEqual(Phase.stopped, mgr.current_phase);
-    try std.testing.expect(mgr.current_music == null);
-    try std.testing.expect(mgr.outgoing_music == null);
-    try std.testing.expect(mgr.current_track_path == null);
-    try std.testing.expect(mgr.outgoing_track_path == null);
+    music_manager.End();
+    try std.testing.expectEqual(Phase.stopped, music_manager.current_phase);
+    try std.testing.expect(music_manager.current_music == null);
+    try std.testing.expect(music_manager.outgoing_music == null);
+    try std.testing.expect(music_manager.current_track_path == null);
+    try std.testing.expect(music_manager.outgoing_track_path == null);
 }
 

@@ -297,69 +297,69 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
 }
 
 test "Projectile Options per-target hit tracking" {
-    var opts = Options{ .passtrough = true };
-    try std.testing.expectEqual(false, opts.hasHit(101));
+    var options = Options{ .passtrough = true };
+    try std.testing.expectEqual(false, options.hasHit(101));
 
-    try std.testing.expect(opts.recordHit(101));
-    try std.testing.expect(opts.hasHit(101));
+    try std.testing.expect(options.recordHit(101));
+    try std.testing.expect(options.hasHit(101));
 
-    try std.testing.expectEqual(false, opts.recordHit(101));
+    try std.testing.expectEqual(false, options.recordHit(101));
 
-    try std.testing.expect(opts.recordHit(202));
-    try std.testing.expect(opts.hasHit(202));
-    try std.testing.expectEqual(2, opts.hit_count);
+    try std.testing.expect(options.recordHit(202));
+    try std.testing.expect(options.hasHit(202));
+    try std.testing.expectEqual(2, options.hit_count);
 }
 
 test "Projectile healing and pull options defaults" {
-    const opts = Options{};
-    try std.testing.expectEqual(false, opts.is_healing);
-    try std.testing.expectEqual(@as(f32, 0), opts.heal_amount);
-    try std.testing.expectEqual(@as(f32, 0), opts.pull_strength);
-    try std.testing.expectEqual(@as(?f32, null), opts.pull_speed);
-    try std.testing.expectEqual(@as(f32, 0), opts.pull_duration);
-    try std.testing.expect(opts.on_hit_callback == null);
+    const options = Options{};
+    try std.testing.expectEqual(false, options.is_healing);
+    try std.testing.expectEqual(@as(f32, 0), options.heal_amount);
+    try std.testing.expectEqual(@as(f32, 0), options.pull_strength);
+    try std.testing.expectEqual(@as(?f32, null), options.pull_speed);
+    try std.testing.expectEqual(@as(f32, 0), options.pull_duration);
+    try std.testing.expect(options.on_hit_callback == null);
 }
 
 test "Projectile HitInfo callback invocation" {
     const Context = struct {
         var called: bool = false;
-        var recorded_dmg: f32 = 0;
+        var recorded_damage: f32 = 0;
         var recorded_caster: ?u128 = null;
 
         fn onHit(hit: HitInfo) void {
             called = true;
-            recorded_dmg = hit.damage_dealt;
+            recorded_damage = hit.damage_dealt;
             recorded_caster = hit.caster_uuid;
         }
     };
 
-    var opts = Options{
+    var options = Options{
         .caster_uuid = 987654,
         .on_hit_callback = Context.onHit,
     };
 
-    var dummy_proj = lm.Entity.init(std.testing.allocator, "proj");
-    defer dummy_proj.prepared_components.deinit();
-    defer dummy_proj.components.deinit();
+    var dummy_projectile = lm.Entity.init(std.testing.allocator, "proj");
+    defer dummy_projectile.prepared_components.deinit();
+    defer dummy_projectile.components.deinit();
 
     var dummy_target = lm.Entity.init(std.testing.allocator, "target");
     defer dummy_target.prepared_components.deinit();
     defer dummy_target.components.deinit();
 
-    if (opts.on_hit_callback) |cb| {
-        cb(.{
-            .projectile = &dummy_proj,
+    if (options.on_hit_callback) |callback| {
+        callback(.{
+            .projectile = &dummy_projectile,
             .target = &dummy_target,
-            .caster_uuid = opts.caster_uuid,
+            .caster_uuid = options.caster_uuid,
             .damage_dealt = 42.5,
             .is_crit = false,
             .is_healing = false,
-            .options = &opts,
+            .options = &options,
         });
     }
 
     try std.testing.expect(Context.called);
-    try std.testing.expectEqual(@as(f32, 42.5), Context.recorded_dmg);
+    try std.testing.expectEqual(@as(f32, 42.5), Context.recorded_damage);
     try std.testing.expectEqual(@as(?u128, 987654), Context.recorded_caster);
 }
 
@@ -370,14 +370,14 @@ test "Projectile healing mode restores HP up to max" {
         .current = .{ .health = 50 },
     };
 
-    const heal_opts = Options{
+    const heal_options = Options{
         .target_team = .enemy,
         .is_healing = true,
         .heal_amount = 30,
     };
 
-    const heal_val = if (heal_opts.heal_amount > 0) heal_opts.heal_amount else heal_opts.damage;
-    target_stats.current.health = @min(target_stats.max.health, target_stats.current.health + heal_val);
+    const heal_value = if (heal_options.heal_amount > 0) heal_options.heal_amount else heal_options.damage;
+    target_stats.current.health = @min(target_stats.max.health, target_stats.current.health + heal_value);
 
     try std.testing.expectEqual(@as(f32, 80), target_stats.current.health);
 

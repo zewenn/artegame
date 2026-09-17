@@ -9,7 +9,7 @@ const Interactable = @import("../components/interaction/Interactable.zig");
 const RoomManager = @import("RoomManager.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const MusicManager = @import("audio/MusicManager.zig");
-const InputHelper = @import("input/InputHelper.zig");
+const DevicePrompts = @import("input/DevicePrompts.zig");
 
 pub const ui = @import("ui/ui.zig");
 pub const PlayerStats = ui.PlayerStats;

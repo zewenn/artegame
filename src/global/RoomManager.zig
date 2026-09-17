@@ -32,10 +32,10 @@ pub const RoomType = enum {
     mini_boss,
     boss,
 
-    pub fn fromRoomNumber(room_num: u32) RoomType {
-        if (room_num == 0) return .tutorial;
-        if (room_num % 15 == 0) return .boss;
-        if (room_num % 5 == 0) return .mini_boss;
+    pub fn fromRoomNumber(room_number: u32) RoomType {
+        if (room_number == 0) return .tutorial;
+        if (room_number % 15 == 0) return .boss;
+        if (room_number % 5 == 0) return .mini_boss;
         return .normal;
     }
 
@@ -95,7 +95,7 @@ pub fn Awake(self: *Self) !void {
         .max_x = 1100.0,
         .min_y = -520.0,
         .max_y = 520.0,
-        .min_player_dist = 420.0,
+        .min_player_distance_pixels = 420.0,
         .exclusion_zones = &.{
             .{ .min = .init(-160, -280), .max = .init(160, -120) },
         },
@@ -107,11 +107,11 @@ pub fn Awake(self: *Self) !void {
     };
     self.spawner.setSpawnZones(MapLoader.getSpawnZones());
     const player_spawn = MapLoader.getPlayerSpawnPosition();
-    const exit_door_pos = MapLoader.getExitDoorPosition();
+    const exit_door_position = MapLoader.getExitDoorPosition();
 
     try lm.summoning.entities(&.{
         try prefabs.Player(player_spawn),
-        try prefabs.ExitDoor(exit_door_pos),
+        try prefabs.ExitDoor(exit_door_position),
     });
 }
 
@@ -155,24 +155,24 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             attack.equipped_weapons = saved.equipped_weapons;
             attack.current_weapon_number = saved.current_weapon_number;
 
-            for (0..2, saved.equipped_spells) |i, maybe_spell| {
+            for (0..2, saved.equipped_spells) |spell_index, maybe_spell| {
                 const spell = maybe_spell orelse {
-                    attack.equipped_spells[i] = null;
+                    attack.equipped_spells[spell_index] = null;
                     continue;
                 };
                 const base_spell = spells.getById(spell.id) orelse {
-                    attack.equipped_spells[i] = null;
+                    attack.equipped_spells[spell_index] = null;
                     continue;
                 };
 
-                var s = base_spell;
-                s.level = spell.level;
-                attack.equipped_spells[i] = s;
+                var equipped_spell = base_spell;
+                equipped_spell.level = spell.level;
+                attack.equipped_spells[spell_index] = equipped_spell;
             }
 
             if (player.getComponent(Hands)) |hands| {
-                if (attack.currentWeapon()) |w| {
-                    hands.setWeapon(w.*);
+                if (attack.currentWeapon()) |weapon| {
+                    hands.setWeapon(weapon.*);
                 }
             }
         }
@@ -186,16 +186,16 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    const player_pos: lm.Vector2 = player_pos: {
-        const player = self.player orelse break :player_pos lm.Vec2(0, 0);
-        const transform = player.getComponent(lm.Transform) orelse break :player_pos lm.Vec2(0, 0);
-        break :player_pos lm.vec3ToVec2(transform.position);
+    const player_position: lm.Vector2 = player_position: {
+        const player = self.player orelse break :player_position lm.Vec2(0, 0);
+        const transform = player.getComponent(lm.Transform) orelse break :player_position lm.Vec2(0, 0);
+        break :player_position lm.vec3ToVec2(transform.position);
     };
 
     if (lm.time.paused()) return;
 
-    const dt = lm.time.deltaTime();
-    try self.spawner.update(dt, scene, player_pos);
+    const delta_seconds = lm.time.deltaTime();
+    try self.spawner.update(delta_seconds, scene, player_position);
 
     if (self.state == .combat and self.spawner.isWaveFinished()) {
         try self.completeCurrentRoomCombat();
@@ -238,9 +238,9 @@ fn completeCurrentRoomCombat(self: *Self) !void {
 
     if (!self.boon_drop_spawned) {
         self.boon_drop_spawned = true;
-        const fallback_pos: lm.Vector2 = if (self.player) |p| pos: {
-            if (p.getComponent(lm.Transform)) |t| {
-                break :pos lm.vec3ToVec2(t.position).add(.init(48, 0));
+        const fallback_pos: lm.Vector2 = if (self.player) |player_entity| pos: {
+            if (player_entity.getComponent(lm.Transform)) |transform| {
+                break :pos lm.vec3ToVec2(transform.position).add(.init(48, 0));
             }
             break :pos .init(0, 0);
         } else .init(0, 0);
@@ -335,9 +335,9 @@ pub fn cleanupRoomEntities() void {
 pub fn repositionPlayer() void {
     const self = get() orelse return;
     const player = self.player orelse return;
-    const spawn_pos = MapLoader.getPlayerSpawnPosition();
+    const spawn_position = MapLoader.getPlayerSpawnPosition();
     if (player.getComponent(lm.Transform)) |transform| {
-        transform.position = lm.Vec3(spawn_pos.x, spawn_pos.y, 0);
+        transform.position = lm.Vec3(spawn_position.x, spawn_position.y, 0);
     }
     if (player.getComponent(Dashing)) |dashing| {
         if (dashing.dashes) |*dashes| {
@@ -428,15 +428,15 @@ pub fn popFallenEnemyForRevive() ?FallenEnemyRecord {
 
 pub fn getRunStats() RunStats {
     const self = get() orelse return .{};
-    const xp = if (self.player) |p|
-        if (p.getComponent(Stats)) |s| s.current.experience else 0
+    const experience_amount = if (self.player) |player_entity|
+        if (player_entity.getComponent(Stats)) |stats| stats.current.experience else 0
     else
         0;
     return .{
         .rooms_cleared = self.rooms_cleared,
         .current_room = self.current_room,
         .enemies_defeated = self.enemies_defeated,
-        .experience_collected = xp,
+        .experience_collected = experience_amount,
     };
 }
 

@@ -104,9 +104,9 @@ release_animation: ?[]const u8 = null,
 winddown_animation: ?[]const u8 = null,
 root_movement_during_action: bool = true,
 
-pub fn updateCooldown(self: *Self, dt: f32) void {
+pub fn updateCooldown(self: *Self, delta_seconds: f32) void {
     if (self.cooldown_remaining > 0) {
-        self.cooldown_remaining = @max(0, self.cooldown_remaining - dt);
+        self.cooldown_remaining = @max(0, self.cooldown_remaining - delta_seconds);
     }
 }
 
@@ -119,22 +119,26 @@ pub fn canExecute(
     if (self.cooldown_remaining > 0) return false;
     if (distance < self.min_range or distance > self.max_range) return false;
 
-    const enemy_hp_pct = switch (enemy_stats.max.health > 0) {
+    const enemy_health_percentage = switch (enemy_stats.max.health > 0) {
         true => enemy_stats.current.health / enemy_stats.max.health,
         false => 0,
     };
 
-    if (self.conditions.health_below_pct) |threshold|
-        if (enemy_hp_pct > threshold) return false;
+    if (self.conditions.health_below_pct) |threshold| {
+        if (enemy_health_percentage > threshold) return false;
+    }
 
-    if (self.conditions.health_above_pct) |threshold|
-        if (enemy_hp_pct < threshold) return false;
+    if (self.conditions.health_above_pct) |threshold| {
+        if (enemy_health_percentage < threshold) return false;
+    }
 
-    if (self.conditions.self_has_effect) |eff|
-        if (!enemy_stats.hasEffect(eff)) return false;
+    if (self.conditions.self_has_effect) |effect_target| {
+        if (!enemy_stats.hasEffect(effect_target)) return false;
+    }
 
-    if (self.conditions.self_lacks_effect) |eff|
-        if (enemy_stats.hasEffect(eff)) return false;
+    if (self.conditions.self_lacks_effect) |effect_target| {
+        if (enemy_stats.hasEffect(effect_target)) return false;
+    }
 
     has_or_lacks_effect: {
         const stats = player_stats orelse break :has_or_lacks_effect;
@@ -157,17 +161,17 @@ pub fn fireProjectileWave(
     player_transform: *lm.Transform,
     player_stats: ?*Stats,
     wave_index: u32,
-    angle_override_deg: ?f32,
+    angle_override_degrees: ?f32,
 ) !void {
     _ = player_stats;
     const profile = self.projectile_profile orelse return;
-    const start_pos = lm.vec3ToVec2(enemy_transform.position);
-    const player_pos = lm.vec3ToVec2(player_transform.position);
+    const start_position = lm.vec3ToVec2(enemy_transform.position);
+    const player_position = lm.vec3ToVec2(player_transform.position);
 
-    const base_angle_rad: f32 = if (angle_override_deg) |override_deg|
-        std.math.degreesToRadians(override_deg)
+    const base_angle_rad: f32 = if (angle_override_degrees) |override_degrees|
+        std.math.degreesToRadians(override_degrees)
     else switch (profile.aim_mode) {
-        .towards_player => std.math.atan2(player_pos.y - start_pos.y, player_pos.x - start_pos.x),
+        .towards_player => std.math.atan2(player_position.y - start_position.y, player_position.x - start_position.x),
         .absolute_world => std.math.degreesToRadians(profile.base_angle),
     };
 
@@ -175,12 +179,12 @@ pub fn fireProjectileWave(
 
     for (profile.spread_angles) |degree_offset| {
         const angle = base_angle_rad + wave_offset_rad + std.math.degreesToRadians(degree_offset);
-        const target_dir = lm.Vec2(std.math.cos(angle), std.math.sin(angle));
-        const target_pos = start_pos.add(target_dir.multiply(.init(100, 100)));
+        const target_direction = lm.Vec2(std.math.cos(angle), std.math.sin(angle));
+        const target_position = start_position.add(target_direction.multiply(.init(100, 100)));
 
         try lm.summoning.entity(try Projectile(.{
-            .start_position = start_pos,
-            .target_position = target_pos,
+            .start_position = start_position,
+            .target_position = target_position,
             .shooter_stats = enemy_stats.*,
             .is_crit = profile.is_crit or (lm.randFloat(f32, 0, 1) <= enemy_stats.current.crit_chance),
             .target_team = profile.target_team,
@@ -201,14 +205,14 @@ pub fn fireProjectileWave(
             .pull_strength = profile.pull_strength,
             .pull_speed = profile.pull_speed,
             .pull_duration = profile.pull_duration,
-            .caster_position = start_pos,
+            .caster_position = start_position,
             .caster_uuid = enemy_entity.uuid,
             .on_hit_callback = profile.on_hit_callback,
         }));
     }
 
-    if (profile.sfx_path) |sfx| {
-        SpatialAudio.playSpatialPitched(sfx, start_pos, player_pos, 700.0, 0.45, 0.1);
+    if (profile.sfx_path) |sfx_path| {
+        SpatialAudio.playSpatialPitched(sfx_path, start_position, player_position, 700.0, 0.45, 0.1);
     }
 }
 
@@ -220,8 +224,8 @@ pub fn execute(
     player_transform: *lm.Transform,
     player_stats: ?*Stats,
 ) !void {
-    const start_pos = lm.vec3ToVec2(enemy_transform.position);
-    const player_pos = lm.vec3ToVec2(player_transform.position);
+    const start_position = lm.vec3ToVec2(enemy_transform.position);
+    const player_position = lm.vec3ToVec2(player_transform.position);
 
     switch (self.execution_type) {
         .projectile => {
@@ -236,39 +240,56 @@ pub fn execute(
             );
         },
         .spell => {
-            const profile = self.spell_profile orelse return;
-
-            switch (profile.target_type) {
-                .self => self: {
-                    const effect = profile.effect orelse break :self;
-                    enemy_stats.addEffect(effect);
-                },
-                .target => player: {
-                    const stats = player_stats orelse break :player;
-                    const effect = profile.effect orelse break :player;
-
-                    stats.addEffect(effect);
-                },
-            }
-
-            if (profile.sfx_path) |sfx| {
-                SpatialAudio.playSpatialPitched(sfx, start_pos, player_pos, 700.0, 0.55, 0.1);
-            }
+            self.executeSpell(enemy_stats, player_stats, start_position, player_position);
         },
         .mobility => {
-            const profile = self.mobility_profile orelse MobilityProfile{};
-            if (enemy_entity.getComponent(Dashing)) |dashing| {
-                var dash_dir = player_pos.subtract(start_pos).normalize();
-                if (profile.direction == .away_from_target) {
-                    dash_dir = dash_dir.negate();
-                }
-                dashing.apply(dash_dir);
-            }
+            self.executeMobility(enemy_entity, start_position, player_position);
+        },
+    }
+}
 
-            if (profile.sfx_path) |sfx| {
-                SpatialAudio.playSpatialPitched(sfx, start_pos, player_pos, 700.0, 0.5, 0.1);
+fn executeSpell(
+    self: *const Self,
+    enemy_stats: *Stats,
+    player_stats: ?*Stats,
+    start_position: lm.Vector2,
+    player_position: lm.Vector2,
+) void {
+    const profile = self.spell_profile orelse return;
+
+    switch (profile.target_type) {
+        .self => {
+            if (profile.effect) |effect| enemy_stats.addEffect(effect);
+        },
+        .target => {
+            if (player_stats) |stats| {
+                if (profile.effect) |effect| stats.addEffect(effect);
             }
         },
+    }
+
+    if (profile.sfx_path) |sfx_path| {
+        SpatialAudio.playSpatialPitched(sfx_path, start_position, player_position, 700.0, 0.55, 0.1);
+    }
+}
+
+fn executeMobility(
+    self: *const Self,
+    enemy_entity: *lm.Entity,
+    start_position: lm.Vector2,
+    player_position: lm.Vector2,
+) void {
+    const profile = self.mobility_profile orelse MobilityProfile{};
+    if (enemy_entity.getComponent(Dashing)) |dashing| {
+        var dash_direction = player_position.subtract(start_position).normalize();
+        if (profile.direction == .away_from_target) {
+            dash_direction = dash_direction.negate();
+        }
+        dashing.apply(dash_direction);
+    }
+
+    if (profile.sfx_path) |sfx_path| {
+        SpatialAudio.playSpatialPitched(sfx_path, start_position, player_position, 700.0, 0.5, 0.1);
     }
 }
 
@@ -383,15 +404,15 @@ test "Ability absolute_world cardinal angle calculation" {
 }
 
 test "Ability ProjectileProfile multi-wave and channeled options defaults" {
-    const prof = ProjectileProfile{};
-    try std.testing.expectEqual(AimMode.towards_player, prof.aim_mode);
-    try std.testing.expectEqual(@as(f32, 0), prof.base_angle);
-    try std.testing.expectEqual(@as(u32, 1), prof.wave_count);
-    try std.testing.expectEqual(@as(f32, 0.15), prof.wave_interval);
-    try std.testing.expectEqual(@as(f32, 0), prof.wave_angle_offset);
-    try std.testing.expectEqual(false, prof.is_channeled);
-    try std.testing.expectEqual(@as(f32, 5.0), prof.channel_duration);
-    try std.testing.expectEqual(@as(f32, 0.05), prof.channel_fire_interval);
-    try std.testing.expectEqual(@as(f32, 72.0), prof.channel_rotation_speed);
+    const profile = ProjectileProfile{};
+    try std.testing.expectEqual(AimMode.towards_player, profile.aim_mode);
+    try std.testing.expectEqual(@as(f32, 0), profile.base_angle);
+    try std.testing.expectEqual(@as(u32, 1), profile.wave_count);
+    try std.testing.expectEqual(@as(f32, 0.15), profile.wave_interval);
+    try std.testing.expectEqual(@as(f32, 0), profile.wave_angle_offset);
+    try std.testing.expectEqual(false, profile.is_channeled);
+    try std.testing.expectEqual(@as(f32, 5.0), profile.channel_duration);
+    try std.testing.expectEqual(@as(f32, 0.05), profile.channel_fire_interval);
+    try std.testing.expectEqual(@as(f32, 72.0), profile.channel_rotation_speed);
 }
 

@@ -4,26 +4,26 @@ const ui = lm.ui;
 
 const Interactable = @import("../../components/interaction/Interactable.zig");
 const HUD = @import("../HUD.zig");
-const InputHelper = @import("../input/InputHelper.zig");
+const DevicePrompts = @import("../input/DevicePrompts.zig");
 
-pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
-    const camera = camera_opt orelse return;
+pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
+    const camera = maybe_camera orelse return;
     const transform = interactable.transform orelse return;
 
-    const world_pos = lm.vec3ToVec2(transform.position).add(interactable.prompt_offset);
-    const screen_pos = camera.worldToScreenPos(world_pos);
+    const world_position = lm.vec3ToVec2(transform.position).add(interactable.prompt_offset);
+    const screen_position = camera.worldToScreenPos(world_position);
 
     const ui_scale = HUD.ui_scale;
-    const is_gamepad = InputHelper.isGamepad();
-    const prompt = InputHelper.getActionPrompt(.interact);
+    const is_gamepad = DevicePrompts.isGamepad();
+    const prompt = DevicePrompts.getActionPrompt(.interact);
 
     ui.new(.{
         .id = .ID("interaction-prompt-container"),
         .floating = .{
             .attach_to = .to_root,
             .offset = .{
-                .x = screen_pos.x,
-                .y = screen_pos.y,
+                .x = screen_position.x,
+                .y = screen_position.y,
             },
             .attach_points = .{
                 .element = .center_bottom,
@@ -48,10 +48,10 @@ pub fn draw(camera_opt: ?*lm.Camera, interactable: *Interactable) void {
     })({
         ui.new(.{
             .id = .ID("interaction-prompt-key-badge"),
-            .background_color = prompt.badge_bg,
+            .background_color = prompt.badge_background_color,
             .corner_radius = .all(if (is_gamepad) 8 * ui_scale else 4 * ui_scale),
             .border = .{
-                .color = prompt.badge_border,
+                .color = prompt.badge_border_color,
                 .width = .outside(1),
             },
             .layout = .{
