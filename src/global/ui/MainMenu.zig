@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const lm = @import("loom");
 const ui = lm.ui;
 const clay = lm.deps.clay;
@@ -250,16 +251,40 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
                 false,
             );
 
-            self.drawMenuButton(
-                3,
-                "QUIT",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                false,
-            );
+            if (builtin.mode == .Debug) {
+                self.drawMenuButton(
+                    3,
+                    "MAP EDITOR",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+
+                self.drawMenuButton(
+                    4,
+                    "QUIT",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+            } else {
+                self.drawMenuButton(
+                    3,
+                    "QUIT",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+            }
         } else {
             self.drawMenuButton(
                 0,
@@ -283,16 +308,40 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
                 false,
             );
 
-            self.drawMenuButton(
-                2,
-                "QUIT",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                false,
-            );
+            if (builtin.mode == .Debug) {
+                self.drawMenuButton(
+                    2,
+                    "MAP EDITOR",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+
+                self.drawMenuButton(
+                    3,
+                    "QUIT",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+            } else {
+                self.drawMenuButton(
+                    2,
+                    "QUIT",
+                    button_w,
+                    button_h,
+                    ui_scale,
+                    font_size,
+                    letter_spacing,
+                    false,
+                );
+            }
         }
     });
 
@@ -388,7 +437,11 @@ fn handleInput(self: *Self) void {
         if (stick.y > 0.5) nav_down = true;
     }
 
-    const max_index: usize = if (SaveSystem.hasActiveRun()) 3 else 2;
+    const max_index: usize = if (SaveSystem.hasActiveRun())
+        (if (builtin.mode == .Debug) 4 else 3)
+    else
+        (if (builtin.mode == .Debug) 3 else 2);
+
     if (nav_up) {
         if (self.selected_index == 0) self.selected_index = max_index else self.selected_index -= 1;
     }
@@ -424,8 +477,21 @@ fn activateAction(self: *Self, index: usize) void {
                 self.screen = .options;
             },
             3 => {
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                lm.quit();
+                if (builtin.mode == .Debug) {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.loadScene("map_editor") catch |err| {
+                        std.log.err("Failed to load map_editor scene: {any}", .{err});
+                    };
+                } else {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.quit();
+                }
+            },
+            4 => {
+                if (builtin.mode == .Debug) {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.quit();
+                }
             },
             else => {},
         }
@@ -444,8 +510,21 @@ fn activateAction(self: *Self, index: usize) void {
                 self.screen = .options;
             },
             2 => {
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                lm.quit();
+                if (builtin.mode == .Debug) {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.loadScene("map_editor") catch |err| {
+                        std.log.err("Failed to load map_editor scene: {any}", .{err});
+                    };
+                } else {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.quit();
+                }
+            },
+            3 => {
+                if (builtin.mode == .Debug) {
+                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+                    lm.quit();
+                }
             },
             else => {},
         }

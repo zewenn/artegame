@@ -2,6 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../audio/SpatialAudio.zig");
+const MapTypes = @import("../map/MapTypes.zig");
 
 pub const EnemyType = enum {
     melee,
@@ -193,6 +194,7 @@ spawn_queue: lm.List(EnemyType),
 spawn_cursor: usize = 0,
 active_enemies: lm.List(u128),
 spawn_area: SpawnAreaConfig = .{},
+spawn_zones: []const MapTypes.SpawnZoneRecord = &.{},
 
 round: u32 = 0,
 total_wave_enemies: u32 = 0,
@@ -203,6 +205,32 @@ spawn_interval: f32 = 0.65,
 max_active_enemies: u32 = 12,
 
 is_active: bool = false,
+
+pub fn setSpawnZones(self: *Self, zones: []const MapTypes.SpawnZoneRecord) void {
+    self.spawn_zones = zones;
+}
+
+pub fn pickSpawnPositionFromZonesOrConfig(self: *Self, player_position: lm.Vector2) lm.Vector2 {
+    if (self.spawn_zones.len > 0) {
+        var attempt: usize = 0;
+        while (attempt < 10) : (attempt += 1) {
+            const random_zone_index = lm.random.intRangeLessThan(usize, 0, self.spawn_zones.len);
+            const selected_zone = self.spawn_zones[random_zone_index];
+            const half_width = selected_zone.width_pixels / 2.0;
+            const half_height = selected_zone.height_pixels / 2.0;
+
+            const spawn_x = selected_zone.center_x_pixels + lm.randFloat(f32, -half_width, half_width);
+            const spawn_y = selected_zone.center_y_pixels + lm.randFloat(f32, -half_height, half_height);
+            const spawn_position = lm.Vec2(spawn_x, spawn_y);
+
+            const distance_to_player = std.math.hypot(spawn_x - player_position.x, spawn_y - player_position.y);
+            if (distance_to_player >= 200.0 or attempt >= 8) {
+                return spawn_position;
+            }
+        }
+    }
+    return pickSpawnPositionWithConfig(player_position, self.spawn_area);
+}
 
 pub fn init(allocator: std.mem.Allocator) Self {
     return Self{
@@ -265,7 +293,7 @@ pub fn update(self: *Self, dt: f32, scene: ?*lm.Scene, player_pos: lm.Vector2) !
 
     const enemy_type = self.spawn_queue.items()[self.spawn_cursor];
     self.spawn_cursor += 1;
-    const pos = pickSpawnPositionWithConfig(player_pos, self.spawn_area);
+    const pos = self.pickSpawnPositionFromZonesOrConfig(player_pos);
 
     const enemy = switch (enemy_type) {
         .melee => try prefabs.enemies.Melee(pos),

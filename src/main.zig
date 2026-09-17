@@ -53,6 +53,16 @@ pub fn main() !void {
                 gbl.MusicManager{},
             });
         });
+
+        if (@import("builtin").mode == .Debug) {
+            lm.scene("map_editor")({
+                lm.useMainCamera();
+
+                lm.globalBehaviours(.{
+                    gbl.MapEditor{},
+                });
+            });
+        }
     });
 }
 
@@ -80,4 +90,8 @@ test {
     _ = @import("global/spawner/RoundSpawner.zig");
     _ = @import("global/input/InputHelper.zig");
     _ = @import("global/ui/PromptBadge.zig");
+    _ = @import("global/map/DualGridMesher.zig");
+    _ = @import("global/map/WallMesher.zig");
+    _ = @import("global/map/MapSerializer.zig");
+    _ = @import("prefabs/Projectile.zig");
 }

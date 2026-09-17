@@ -6,6 +6,8 @@ const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
 const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 const ReactiveAura = @import("../components/enemy/ReactiveAura.zig");
+const MapTypes = @import("../global/map/MapTypes.zig");
+const Wall = MapTypes.Wall;
 
 pub const OnHitEffect = enum { slow, root, stun };
 
@@ -122,10 +124,39 @@ pub fn Projectile(options: Options) !*lm.Entity {
     });
 }
 
+pub fn processWallCollision(options: *Options, wall: Wall) bool {
+    if (wall.wall_type == .solid) {
+        if (options.inactive) return true;
+        options.inactive = true;
+        return true;
+    }
+    return false;
+}
+
+fn playWallHitAudio(projectile_transform: *const lm.Transform) void {
+    const hit_position = lm.vec3ToVec2(projectile_transform.position);
+    var listener_position = hit_position;
+    if (lm.getEntity(.{ .id = "player" })) |player_entity| {
+        if (player_entity.getComponent(lm.Transform)) |player_transform| {
+            listener_position = lm.vec3ToVec2(player_transform.position);
+        }
+    }
+    SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", hit_position, listener_position, 600.0, 0.3, 0.2);
+}
+
 fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
-    const other_stats = other.getComponent(Stats) orelse return;
     const options = try self.pullComponent(Options);
 
+    if (other.getComponent(Wall)) |wall| {
+        const should_destroy_projectile = processWallCollision(options, wall.*);
+        if (should_destroy_projectile) {
+            lm.removeEntity(.{ .uuid = self.uuid });
+            if (self.getComponent(lm.Transform)) |transform| playWallHitAudio(transform);
+        }
+        return;
+    }
+
+    const other_stats = other.getComponent(Stats) orelse return;
     const player = lm.getEntity(.{ .id = "player" }) orelse return;
 
     if (other_stats.team != options.target_team) return;
@@ -352,4 +383,20 @@ test "Projectile healing mode restores HP up to max" {
 
     target_stats.current.health = @min(target_stats.max.health, target_stats.current.health + 50);
     try std.testing.expectEqual(@as(f32, 100), target_stats.current.health);
+}
+
+test "Projectile wall collision: solid destroys, low passes through" {
+    var projectile_options = Options{};
+
+    // 1. Collide with low wall: projectile is not destroyed and passes through
+    const low_wall = Wall{ .wall_type = .low };
+    const low_result = processWallCollision(&projectile_options, low_wall);
+    try std.testing.expectEqual(false, low_result);
+    try std.testing.expectEqual(false, projectile_options.inactive);
+
+    // 2. Collide with solid wall: projectile is marked inactive and destroyed
+    const solid_wall = Wall{ .wall_type = .solid };
+    const solid_result = processWallCollision(&projectile_options, solid_wall);
+    try std.testing.expectEqual(true, solid_result);
+    try std.testing.expectEqual(true, projectile_options.inactive);
 }

@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [27#ARC] Tile-based background engine, room layout serialization, and map editor
-
-  - tags: [architecture, tilemap, map-editor, assets]
-  - priority: high
-  - workload: Extreme
-  - steps:
-      - [ ] Implement tilemap grid data structures supporting ground and wall/obstacle tile layers
-      - [ ] Generate static boundary and obstacle Loom colliders dynamically from tilemap layout data
-      - [ ] Design file serialization format (.map / JSON) for persistent room layout saving and loading
-      - [ ] Modernize and integrate map editor tooling to design, edit, and export room layouts
-      - [ ] Build runtime room loader to instantiate tilemap backgrounds based on active room type
-      - [ ] User confirmation that tile-based maps load, render, and collide properly
-    ```md
-    Tile-based map engine replacing hardcoded single-texture arena backgrounds. Provides data-driven room layouts, serialization, and integrated editor tooling to author visually distinct regular rooms, boss arenas, and tutorial environments.
-    ```
 
 ### [28#SPW] Dynamic wave spawner overhaul and 256 enemy cap scaling
 
@@ -217,6 +202,27 @@
 ## Work in Progress
 
 ## Done
+
+### [27#ARC] Tile-based background engine, room layout serialization, and map editor
+
+  - tags: [architecture, tilemap, map-editor, assets, collision, walls, tools]
+  - priority: high
+  - workload: Extreme
+  - steps:
+      - [x] Implement tilemap grid data structures supporting ground and wall/obstacle tile layers
+      - [x] Generate static boundary and obstacle Loom colliders dynamically from tilemap layout data
+      - [x] Design file serialization format (.map / JSON) for persistent room layout saving and loading
+      - [x] Modernize and integrate map editor tooling to design, edit, and export room layouts
+      - [x] Build runtime room loader to instantiate tilemap backgrounds based on active room type
+      - [x] Define WallType enum (solid, low) and Wall component in MapTypes.zig
+      - [x] Update Projectile.zig collision handling to destroy on solid walls and pass through low walls
+      - [x] Implement targeted wall segment eraser and enemy spawn zone eraser tools with red hover highlight
+      - [x] Add letter spacing to editor UI text and automatic first tool/asset selection on panel switch
+      - [x] Add Map Editor save modal popup with custom map naming and category organization (normal, mini-boss, boss)
+      - [x] User confirmation that tile-based maps load, render, collide, and editor tools work as expected
+    ```md
+    Tile-based map engine replacing hardcoded single-texture arena backgrounds. Provides data-driven room layouts, serialization, and integrated editor tooling to author visually distinct regular rooms, boss arenas, and tutorial environments. Includes solid vs low wall types with differentiated projectile collision physics, targeted removal tools for wall segments and 192x192 spawn zones with hover highlights, crisp UI text letter spacing, auto-selection of default tools and assets on panel switching, and save modal popup with custom naming and categorized directory organization (normal, mini_boss, boss).
+    ```
 
 ### [26#ARC] Universal enemy status effects and ability framework: stasis, proximity auras, and Bond of Life
 

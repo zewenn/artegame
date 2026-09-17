@@ -14,6 +14,7 @@ const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const SaveSystem = @import("save/SaveSystem.zig");
 const spells = @import("../components/Weapons/spells.zig");
 const Hands = @import("../components/Weapons/Hands.zig");
+const MapLoader = @import("map/MapLoader.zig");
 
 const Self = @This();
 
@@ -100,11 +101,27 @@ pub fn Awake(self: *Self) !void {
         },
     };
 
+    const map_path = getMapPathForRoomType(self.getRoomType());
+    MapLoader.loadAndInstantiate(map_path) catch |err| {
+        std.log.warn("Failed to load map {s}, using defaults: {any}", .{ map_path, err });
+    };
+    self.spawner.setSpawnZones(MapLoader.getSpawnZones());
+    const player_spawn = MapLoader.getPlayerSpawnPosition();
+    const exit_door_pos = MapLoader.getExitDoorPosition();
+
     try lm.summoning.entities(&.{
-        try prefabs.Player(.init(0, 0)),
-        try prefabs.Background(20, 10),
-        try prefabs.ExitDoor(.init(128, -200)),
+        try prefabs.Player(player_spawn),
+        try prefabs.ExitDoor(exit_door_pos),
     });
+}
+
+pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
+    return switch (room_type) {
+        .tutorial => "maps/tutorial.json",
+        .boss => "maps/boss/arena_boss.json",
+        .mini_boss => "maps/mini_boss/arena_normal.json",
+        .normal => "maps/normal/arena_normal.json",
+    };
 }
 
 fn initFreshRun(self: *Self) void {
@@ -189,6 +206,7 @@ pub fn End(self: *Self) !void {
     MusicManager.stopGlobal();
     self.spawner.deinit();
     BoonPool.reset();
+    MapLoader.unload();
 }
 
 fn startCurrentRoomCombat(self: *Self) !void {
@@ -279,10 +297,16 @@ pub fn enterNextRoom() !void {
     if (self.state != .replenish) return;
 
     cleanupRoomEntities();
-    repositionPlayer();
-
     self.current_room += 1;
     self.boon_drop_spawned = false;
+
+    const map_path = getMapPathForRoomType(self.getRoomType());
+    MapLoader.loadAndInstantiate(map_path) catch |err| {
+        std.log.warn("Failed to load map {s}: {any}", .{ map_path, err });
+    };
+    self.spawner.setSpawnZones(MapLoader.getSpawnZones());
+    repositionPlayer();
+
     try self.startCurrentRoomCombat();
 }
 
@@ -291,6 +315,8 @@ pub fn cleanupRoomEntities() void {
     for (scene.entities.items()) |entity| {
         if (std.mem.eql(u8, entity.id, "player")) continue;
         if (std.mem.eql(u8, entity.id, "background")) continue;
+        if (std.mem.eql(u8, entity.id, "map_background")) continue;
+        if (std.mem.startsWith(u8, entity.id, "wall_")) continue;
         if (std.mem.startsWith(u8, entity.id, "exit-door")) continue;
 
         if (std.mem.startsWith(u8, entity.id, "projectile") or
@@ -309,8 +335,9 @@ pub fn cleanupRoomEntities() void {
 pub fn repositionPlayer() void {
     const self = get() orelse return;
     const player = self.player orelse return;
+    const spawn_pos = MapLoader.getPlayerSpawnPosition();
     if (player.getComponent(lm.Transform)) |transform| {
-        transform.position = lm.Vec3(0, 0, 0);
+        transform.position = lm.Vec3(spawn_pos.x, spawn_pos.y, 0);
     }
     if (player.getComponent(Dashing)) |dashing| {
         if (dashing.dashes) |*dashes| {

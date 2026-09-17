@@ -17,4 +17,5 @@ pub const input = @import("input/input.zig");
 pub const InputHelper = input.InputHelper;
 pub const Weapon = @import("../components/Weapons/Weapon.zig");
 pub const weapons = @import("../components/Weapons/weapons.zig");
-
+pub const map = @import("map/map.zig");
+pub const MapEditor = map.MapEditor;
