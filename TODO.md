@@ -203,6 +203,25 @@
 
 ## Done
 
+### [42#ARC] Overhaul wall display system with tilemap rendering and automatic collision generation
+
+  - tags: [map, tilemap, walls, collision, visuals, map-editor]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Extend TerrainType in MapTypes.zig with wall_top and wall_low_top dual-grid layers
+      - [x] Update MapRenderer.bake to render wall_top and wall_low_top dual-grid layers
+      - [x] Implement side sprite decoration rendering (wall_normal and wall_short) under wall blocks in MapRenderer
+      - [x] Implement greedy 2D bounding box collider generator from tile grid in WallMesher
+      - [x] Remove obsolete wall panel and wall-drawing tools from MapEditor, enabling wall painting via terrain tool
+      - [x] Update MapLoader to generate colliders from background tiles and migrate existing map layouts
+      - [x] Verify test suite and build with zig build test and zig build
+      - [x] User confirmation that overhauled wall display system and automatic collider generation work as expected
+    ```md
+    Overhauls the wall system to treat walls as paintable background tiles using dual-grid spritemaps (wall_top.png, wall_low_top.png) and decorative south-facing side sprites (wall_normal.png, wall_short.png). Eliminates the standalone wall panel in MapEditor, automatically generates minimal 2D bounding box colliders via greedy meshing, and updates MapLoader to instantiate colliders directly from background tile data.
+    ```
+
+
 ### [41#ARC] Code style and design principles refactoring across core systems
 
   - tags: [architecture, refactoring, code-style, anti-nesting, naming]

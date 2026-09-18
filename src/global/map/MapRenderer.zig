@@ -2,6 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 const MapTypes = @import("MapTypes.zig");
 const TerrainType = MapTypes.TerrainType;
+const WallType = MapTypes.WallType;
 const DualGridMesher = @import("DualGridMesher.zig");
 
 const rl = lm.deps.rl;
@@ -69,7 +70,7 @@ pub fn configureDimensions(self: *Self, width_tiles: u32, height_tiles: u32, til
     self.is_baked = false;
 }
 
-/// Bakes all background tiles and dual-grid transitions into the single RenderTexture.
+/// Bakes all background tiles, dual-grid transitions, and decorative side sprites into the RenderTexture.
 /// Upscales 16x16 tiles by 4x to 64x64 destination pixels.
 pub fn bake(self: *Self, background_tiles: []const u8) !void {
     const target_texture = &(self.render_texture orelse return error.RenderTextureNotConfigured);
@@ -122,6 +123,8 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
         }
     }
 
+    self.renderSideSprites(background_tiles);
+
     target_texture.end();
 
     var image = try rl.loadImageFromTexture(target_texture.texture);
@@ -134,6 +137,83 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
     }
     self.baked_texture = try rl.loadTextureFromImage(image);
     self.is_baked = true;
+}
+
+fn renderSideSprites(self: *Self, background_tiles: []const u8) void {
+    const normal_side_texture = lm.assets.texture.get("backgrounds/wall_normal.png", &.{ 16, 16 });
+    const short_side_texture = lm.assets.texture.get("backgrounds/wall_short.png", &.{ 16, 12 });
+
+    for (0..self.height_tiles) |row_index| {
+        for (0..self.width_tiles) |column_index| {
+            self.drawTileSideSprite(
+                background_tiles,
+                @intCast(column_index),
+                @intCast(row_index),
+                normal_side_texture,
+                short_side_texture,
+            );
+        }
+    }
+}
+
+fn drawTileSideSprite(
+    self: *Self,
+    background_tiles: []const u8,
+    column_index: u32,
+    row_index: u32,
+    normal_side_texture: ?*const rl.Texture,
+    short_side_texture: ?*const rl.Texture,
+) void {
+    const tile_index = row_index * self.width_tiles + column_index;
+    const terrain_type = lm.coerceTo(TerrainType, background_tiles[tile_index]) orelse return;
+    const wall_type = terrain_type.toWallType() orelse return;
+
+    if (!self.isWallBlockBottom(background_tiles, column_index, row_index, terrain_type)) return;
+
+    const half_tile_pixels = self.tile_size_pixels * 0.5;
+    const destination_x_pixels = @as(f32, @floatFromInt(column_index)) * self.tile_size_pixels - half_tile_pixels;
+    const destination_y_pixels = @as(f32, @floatFromInt(row_index)) * self.tile_size_pixels + half_tile_pixels;
+
+    switch (wall_type) {
+        .solid => {
+            const texture = normal_side_texture orelse return;
+            const source_rectangle = lm.Rect(0.0, 0.0, 16.0, 16.0);
+            const destination_rectangle = lm.Rect(
+                destination_x_pixels,
+                destination_y_pixels,
+                self.tile_size_pixels,
+                self.tile_size_pixels,
+            );
+            rl.drawTexturePro(texture.*, source_rectangle, destination_rectangle, lm.Vec2(0, 0), 0.0, rl.Color.white);
+        },
+        .low => {
+            const texture = short_side_texture orelse return;
+            const short_height_pixels = self.tile_size_pixels * (12.0 / 16.0);
+            const source_rectangle = lm.Rect(0.0, 0.0, 16.0, 12.0);
+            const destination_rectangle = lm.Rect(
+                destination_x_pixels,
+                destination_y_pixels,
+                self.tile_size_pixels,
+                short_height_pixels,
+            );
+            rl.drawTexturePro(texture.*, source_rectangle, destination_rectangle, lm.Vec2(0, 0), 0.0, rl.Color.white);
+        },
+    }
+}
+
+fn isWallBlockBottom(
+    self: *Self,
+    background_tiles: []const u8,
+    column_index: u32,
+    row_index: u32,
+    current_terrain: TerrainType,
+) bool {
+    const next_row_index = row_index + 1;
+    if (next_row_index >= self.height_tiles) return false;
+
+    const next_tile_index = next_row_index * self.width_tiles + column_index;
+    const next_terrain = lm.coerceTo(TerrainType, background_tiles[next_tile_index]) orelse return false;
+    return next_terrain != current_terrain;
 }
 
 /// Returns the baked upright Texture suitable for Loom display.add.

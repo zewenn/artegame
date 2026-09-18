@@ -4,6 +4,8 @@ const lm = @import("loom");
 pub const TerrainType = enum(u8) {
     stone = 0,
     carpet = 1,
+    wall_top = 2,
+    wall_low_top = 3,
 
     pub const count = @typeInfo(TerrainType).@"enum".fields.len;
 
@@ -11,6 +13,8 @@ pub const TerrainType = enum(u8) {
         return switch (self) {
             .stone => "backgrounds/tiles/stone.png",
             .carpet => "backgrounds/tiles/carpet.png",
+            .wall_top => "backgrounds/tiles/wall_top.png",
+            .wall_low_top => "backgrounds/tiles/wall_low_top.png",
         };
     }
 
@@ -18,6 +22,23 @@ pub const TerrainType = enum(u8) {
         return switch (self) {
             .stone => "Stone",
             .carpet => "Carpet",
+            .wall_top => "Solid Wall",
+            .wall_low_top => "Low Wall",
+        };
+    }
+
+    pub fn isWall(self: TerrainType) bool {
+        return switch (self) {
+            .wall_top, .wall_low_top => true,
+            else => false,
+        };
+    }
+
+    pub fn toWallType(self: TerrainType) ?WallType {
+        return switch (self) {
+            .wall_top => .solid,
+            .wall_low_top => .low,
+            else => null,
         };
     }
 };

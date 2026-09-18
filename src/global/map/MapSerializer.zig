@@ -133,3 +133,60 @@ test "MapSerializer roundtrip JSON" {
     try std.testing.expectEqual(original_map.spawn_zones.len, parsed_map.spawn_zones.len);
     try std.testing.expectEqual(original_map.entities.len, parsed_map.entities.len);
 }
+
+test "MapSerializer deserializeFromJson supports integer array background_tiles" {
+    const testing_allocator = std.testing.allocator;
+    var arena = std.heap.ArenaAllocator.init(testing_allocator);
+    defer arena.deinit();
+    const arena_allocator = arena.allocator();
+
+    const sample_json =
+        \\{
+        \\  "version": 1,
+        \\  "name": "array_test",
+        \\  "width_tiles": 2,
+        \\  "height_tiles": 2,
+        \\  "tile_size_pixels": 64,
+        \\  "background_tiles": [2, 3, 0, 1],
+        \\  "walls": [],
+        \\  "spawn_zones": [],
+        \\  "entities": []
+        \\}
+    ;
+
+    const parsed_map = try deserializeFromJson(arena_allocator, sample_json);
+    try std.testing.expectEqual(@as(usize, 4), parsed_map.background_tiles.len);
+    try std.testing.expectEqual(@as(u8, 2), parsed_map.background_tiles[0]);
+    try std.testing.expectEqual(@as(u8, 3), parsed_map.background_tiles[1]);
+    try std.testing.expectEqual(@as(u8, 0), parsed_map.background_tiles[2]);
+    try std.testing.expectEqual(@as(u8, 1), parsed_map.background_tiles[3]);
+}
+
+test "MapSerializer verify all bundled map assets deserialize correctly" {
+    const testing_allocator = std.testing.allocator;
+    const io = lm.io.singleThreaded();
+
+    const map_file_paths = [_][]const u8{
+        "src/assets/maps/boss/arena_boss.json",
+        "src/assets/maps/mini_boss/arena_normal.json",
+        "src/assets/maps/normal/arena_normal.json",
+        "src/assets/maps/tutorial.json",
+    };
+
+    for (map_file_paths) |map_path| {
+        var arena = std.heap.ArenaAllocator.init(testing_allocator);
+        defer arena.deinit();
+        const arena_allocator = arena.allocator();
+
+        var file = try std.Io.Dir.cwd().openFile(io, map_path, .{ .mode = .read_only });
+        defer file.close(io);
+
+        var buffer: [1024 * 256]u8 = undefined;
+        const bytes_read = try file.readPositionalAll(io, &buffer, 0);
+        const map_data = try deserializeFromJson(arena_allocator, buffer[0..bytes_read]);
+
+        const expected_tile_count = map_data.width_tiles * map_data.height_tiles;
+        try std.testing.expectEqual(expected_tile_count, map_data.background_tiles.len);
+        try std.testing.expect(map_data.walls.len > 0);
+    }
+}

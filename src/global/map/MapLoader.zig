@@ -120,7 +120,27 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     const top_left_y = -height_pixels / 2.0;
     active_map_top_left = lm.Vec2(top_left_x, top_left_y);
 
-    // Bake background into single RenderTexture
+    // Stamp any legacy wall segments into background_tiles if needed
+    for (map_data.walls) |wall| {
+        const wall_value: u8 = switch (wall.wall_type) {
+            .solid => @intFromEnum(MapTypes.TerrainType.wall_top),
+            .low => @intFromEnum(MapTypes.TerrainType.wall_low_top),
+        };
+        const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
+        const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
+        const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
+        const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
+
+        var row_index = min_row;
+        while (row_index <= max_row and row_index < map_data.height_tiles) : (row_index += 1) {
+            var column_index = min_column;
+            while (column_index <= max_column and column_index < map_data.width_tiles) : (column_index += 1) {
+                map_data.background_tiles[row_index * map_data.width_tiles + column_index] = wall_value;
+            }
+        }
+    }
+
+    // Bake background into single RenderTexture (including dual-grid wall tops and side sprites)
     try global_renderer.configureDimensions(
         map_data.width_tiles,
         map_data.height_tiles,
@@ -128,9 +148,15 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     );
     try global_renderer.bake(map_data.background_tiles);
 
-    // Generate 1D greedy meshed colliders for walls
+    // Generate 2D greedy meshed colliders for walls directly from background_tiles
     const tile_size = @as(f32, @floatFromInt(map_data.tile_size_pixels));
-    const wall_colliders = try WallMesher.meshSegments(arena_allocator, map_data.walls, tile_size);
+    const wall_colliders = try WallMesher.meshGridFromTiles(
+        arena_allocator,
+        map_data.background_tiles,
+        map_data.width_tiles,
+        map_data.height_tiles,
+        tile_size,
+    );
 
     for (wall_colliders, 0..) |collider, wall_index| {
         const world_center_x = top_left_x + collider.center_position.x;

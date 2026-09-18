@@ -22,7 +22,6 @@ var active_editor_instance: ?*Self = null;
 
 pub const EditorCategory = enum {
     terrain,
-    walls,
     spawners,
     entities,
     file_management,
@@ -56,8 +55,6 @@ pub const EditorTool = enum {
     brush_3x3,
     bucket_fill,
     box_fill,
-    wall_line,
-    wall_erase,
     spawn_zone,
     spawn_zone_erase,
     player_spawn,
@@ -85,11 +82,9 @@ exit_door_position: lm.Vector2 = .init(1024, 160),
 current_category: EditorCategory = .terrain,
 current_tool: EditorTool = .brush_1x1,
 selected_terrain: TerrainType = .stone,
-selected_wall_type: WallType = .solid,
 selected_arena_category: ArenaCategory = .normal,
 show_save_popup: bool = false,
 
-line_tool_start: ?struct { column_index: u32, row_index: u32 } = null,
 box_fill_start: ?struct { column_index: u32, row_index: u32 } = null,
 
 pan_drag_start: ?lm.Vector2 = null,
@@ -140,6 +135,7 @@ pub fn Update(self: *Self) !void {
     if (self.is_dirty) {
         try self.renderer.configureDimensions(self.width_tiles, self.height_tiles, self.tile_size_pixels);
         try self.renderer.bake(self.background_tiles);
+        self.regenerateWallBoundingBoxes();
         self.is_dirty = false;
     }
 
@@ -148,6 +144,16 @@ pub fn Update(self: *Self) !void {
 
     const window_size = lm.window.size.get();
     self.drawEditorUi(window_size);
+}
+
+pub fn regenerateWallBoundingBoxes(self: *Self) void {
+    self.walls.clearRetainingCapacity();
+    const alloc = self.allocator orelse return;
+    const generated = WallMesher.generateSegmentsFromTiles(alloc, self.background_tiles, self.width_tiles, self.height_tiles) catch return;
+    defer alloc.free(generated);
+    for (generated) |segment| {
+        self.walls.append(segment) catch break;
+    }
 }
 
 pub fn End(self: *Self) void {
@@ -209,82 +215,47 @@ pub fn resetMapGrid(self: *Self, new_width_tiles: u32, new_height_tiles: u32) !v
 }
 
 pub fn generatePerimeterWalls(self: *Self) void {
-    self.walls.clearRetainingCapacity();
     if (self.width_tiles == 0 or self.height_tiles == 0) return;
+    const wall_value = @intFromEnum(TerrainType.wall_top);
 
-    // Top wall
-    self.walls.append(WallSegment{
-        .start_x_tiles = 0,
-        .start_y_tiles = 0,
-        .end_x_tiles = self.width_tiles - 1,
-        .end_y_tiles = 0,
-        .wall_type = .solid,
-    }) catch return;
-
-    // Bottom wall
-    self.walls.append(WallSegment{
-        .start_x_tiles = 0,
-        .start_y_tiles = self.height_tiles - 1,
-        .end_x_tiles = self.width_tiles - 1,
-        .end_y_tiles = self.height_tiles - 1,
-        .wall_type = .solid,
-    }) catch return;
-
-    // Left wall
-    if (self.height_tiles > 2) {
-        self.walls.append(WallSegment{
-            .start_x_tiles = 0,
-            .start_y_tiles = 1,
-            .end_x_tiles = 0,
-            .end_y_tiles = self.height_tiles - 2,
-            .wall_type = .solid,
-        }) catch return;
+    for (0..self.width_tiles) |column_index| {
+        self.background_tiles[column_index] = wall_value;
+        const bottom_row_index = (self.height_tiles - 1) * self.width_tiles + column_index;
+        self.background_tiles[bottom_row_index] = wall_value;
     }
 
-    // Right wall
-    if (self.height_tiles > 2) {
-        self.walls.append(WallSegment{
-            .start_x_tiles = self.width_tiles - 1,
-            .start_y_tiles = 1,
-            .end_x_tiles = self.width_tiles - 1,
-            .end_y_tiles = self.height_tiles - 2,
-            .wall_type = .solid,
-        }) catch return;
+    for (1..self.height_tiles - 1) |row_index| {
+        self.background_tiles[row_index * self.width_tiles] = wall_value;
+        self.background_tiles[row_index * self.width_tiles + (self.width_tiles - 1)] = wall_value;
     }
+
+    self.is_dirty = true;
+    self.status_message = "Perimeter walls generated";
+}
+
+pub fn clearPerimeterWalls(self: *Self) void {
+    if (self.width_tiles == 0 or self.height_tiles == 0) return;
+    const stone_value = @intFromEnum(TerrainType.stone);
+
+    for (0..self.width_tiles) |column_index| {
+        self.background_tiles[column_index] = stone_value;
+        const bottom_row_index = (self.height_tiles - 1) * self.width_tiles + column_index;
+        self.background_tiles[bottom_row_index] = stone_value;
+    }
+
+    for (1..self.height_tiles - 1) |row_index| {
+        self.background_tiles[row_index * self.width_tiles] = stone_value;
+        self.background_tiles[row_index * self.width_tiles + (self.width_tiles - 1)] = stone_value;
+    }
+
+    self.is_dirty = true;
+    self.status_message = "Perimeter walls cleared";
 }
 
 pub fn getTopLeftPosition(self: *Self) lm.Vector2 {
     const total_width_pixels = @as(f32, @floatFromInt(self.width_tiles)) * self.tile_size_pixels;
     const total_height_pixels = @as(f32, @floatFromInt(self.height_tiles)) * self.tile_size_pixels;
     return lm.Vec2(-total_width_pixels / 2.0, -total_height_pixels / 2.0);
-}
-
-pub fn findWallIndexAtTile(self: *Self, column_index: u32, row_index: u32) ?usize {
-    var wall_index: usize = self.walls.len();
-    while (wall_index > 0) {
-        wall_index -= 1;
-        const wall = self.walls.items()[wall_index];
-        const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
-        const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
-        const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
-        const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
-
-        const is_matching_column = column_index >= min_column and column_index <= max_column;
-        const is_matching_row = row_index >= min_row and row_index <= max_row;
-
-        if (is_matching_column and is_matching_row) {
-            return wall_index;
-        }
-    }
-    return null;
-}
-
-pub fn removeWallAt(self: *Self, column_index: u32, row_index: u32) bool {
-    const wall_index = self.findWallIndexAtTile(column_index, row_index) orelse return false;
-    _ = self.walls.orderedRemove(wall_index);
-    self.is_dirty = true;
-    self.status_message = "Wall segment removed";
-    return true;
 }
 
 pub fn findSpawnZoneIndexAtPosition(self: *Self, relative_position: lm.Vector2) ?usize {
@@ -449,16 +420,6 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
         .brush_2x2 => self.paintBrush(column_index, row_index, 2),
         .brush_3x3 => self.paintBrush(column_index, row_index, 3),
         .eraser => self.paintTile(column_index, row_index, @intFromEnum(TerrainType.stone)),
-        .wall_line => {
-            if (self.line_tool_start == null) {
-                self.line_tool_start = .{ .column_index = column_index, .row_index = row_index };
-            }
-        },
-        .wall_erase => {
-            if (lm.mouse.getButtonDown(.left)) {
-                _ = self.removeWallAt(column_index, row_index);
-            }
-        },
         .spawn_zone_erase => {
             if (lm.mouse.getButtonDown(.left)) {
                 if (self.getRelativeMousePosition()) |relative_position| {
@@ -499,17 +460,6 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
 }
 
 fn commitToolAction(self: *Self, column_index: u32, row_index: u32) void {
-    if (self.line_tool_start) |start| {
-        self.walls.append(WallSegment{
-            .start_x_tiles = start.column_index,
-            .start_y_tiles = start.row_index,
-            .end_x_tiles = column_index,
-            .end_y_tiles = row_index,
-            .wall_type = self.selected_wall_type,
-        }) catch return;
-        self.line_tool_start = null;
-        self.status_message = "Wall line placed";
-    }
 
     if (self.box_fill_start) |start| {
         const min_column = @min(start.column_index, column_index);
@@ -656,7 +606,7 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         const height_pixels = @as(f32, @floatFromInt(max_row - min_row + 1)) * self.tile_size_pixels;
 
         const rect_x = top_left.x + @as(f32, @floatFromInt(min_column)) * self.tile_size_pixels;
-        const rect_y = top_left.y + @as(f32, @floatFromInt(min_row)) * self.tile_size_pixels;
+        const rect_y = top_left.y + @as(f32, @floatFromInt(min_row)) * self.tile_size_pixels + WallMesher.wall_collider_vertical_offset_pixels;
 
         const wall_outline_color = switch (wall.wall_type) {
             .solid => rl.Color.lime,
@@ -670,9 +620,7 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         );
     }
 
-    if (self.current_tool == .wall_erase) {
-        self.drawWallRemovalHighlight(top_left);
-    } else if (self.current_tool == .spawn_zone_erase) {
+    if (self.current_tool == .spawn_zone_erase) {
         self.drawSpawnZoneRemovalHighlight(top_left);
     }
 
@@ -743,7 +691,6 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
         // Selected Category Content
         switch (self.current_category) {
             .terrain => self.drawTerrainCategory(),
-            .walls => self.drawWallsCategory(),
             .spawners => self.drawSpawnersCategory(),
             .entities => self.drawEntitiesCategory(),
             .file_management => self.drawFileCategory(),
@@ -772,7 +719,6 @@ fn drawCategoryTabs(self: *Self) void {
         },
     })({
         self.drawCategoryButton(.terrain, "TILES");
-        self.drawCategoryButton(.walls, "WALLS");
         self.drawCategoryButton(.spawners, "SPAWN");
         self.drawCategoryButton(.entities, "ENTITY");
         self.drawCategoryButton(.file_management, "FILE");
@@ -786,11 +732,6 @@ pub fn selectCategory(self: *Self, category: EditorCategory) void {
             self.current_tool = .brush_1x1;
             self.selected_terrain = .stone;
             self.status_message = "Switched to Terrain panel";
-        },
-        .walls => {
-            self.current_tool = .wall_line;
-            self.selected_wall_type = .solid;
-            self.status_message = "Switched to Walls panel";
         },
         .spawners => {
             self.current_tool = .spawn_zone;
@@ -834,21 +775,26 @@ fn drawTerrainCategory(self: *Self) void {
         .id = .ID("terrain-panel"),
         .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
     })({
-        ui.text("SELECT TERRAIN:", .{
+        ui.text("SELECT TILE:", .{
             .color = ui.color(160, 175, 200, 255),
             .font_size = 11,
             .letter_spacing = 1,
         });
 
         ui.new(.{
-            .id = .ID("terrain-selector"),
-            .layout = .{ .direction = .left_to_right, .child_gap = 6 },
+            .id = .ID("terrain-row-1"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
         })({
-            for (0..TerrainType.count) |terrain_index| {
-                const terrain_type = lm.coerceTo(TerrainType, terrain_index) orelse continue;
-                const label = capitalizedEnumFieldName(TerrainType, terrain_index);
-                self.drawTerrainOption(terrain_type, label);
-            }
+            self.drawTerrainOption(.stone, "Stone");
+            self.drawTerrainOption(.carpet, "Carpet");
+        });
+
+        ui.new(.{
+            .id = .ID("terrain-row-2"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawTerrainOption(.wall_top, "Solid Wall");
+            self.drawTerrainOption(.wall_low_top, "Low Wall");
         });
 
         ui.text("PAINT TOOLS:", .{
@@ -863,6 +809,44 @@ fn drawTerrainCategory(self: *Self) void {
         self.drawToolButton(.bucket_fill, "Bucket / Flood Fill");
         self.drawToolButton(.box_fill, "Rectangle Fill");
         self.drawToolButton(.eraser, "Eraser (Clear to Stone)");
+
+        ui.text("BOUNDARY ACTIONS:", .{
+            .color = ui.color(160, 175, 200, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        clay.UI()(.{
+            .id = .ID("gen-boundary-btn"),
+            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+            .background_color = ui.color(45, 55, 75, 220),
+            .corner_radius = .all(4),
+        })({
+            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                self.generatePerimeterWalls();
+            }
+            ui.text("Generate Perimeter Walls", .{
+                .color = ui.color(220, 230, 245, 255),
+                .font_size = 12,
+                .letter_spacing = 1,
+            });
+        });
+
+        clay.UI()(.{
+            .id = .ID("clear-boundary-btn"),
+            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+            .background_color = ui.color(75, 35, 40, 220),
+            .corner_radius = .all(4),
+        })({
+            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                self.clearPerimeterWalls();
+            }
+            ui.text("Clear Perimeter Walls", .{
+                .color = ui.color(255, 180, 180, 255),
+                .font_size = 12,
+                .letter_spacing = 1,
+            });
+        });
     });
 }
 
@@ -888,17 +872,17 @@ fn drawTerrainOption(self: *Self, terrain: TerrainType, label: []const u8) void 
     const is_selected = (self.selected_terrain == terrain);
     clay.UI()(.{
         .id = .IDI("terrain-opt-", @intFromEnum(terrain)),
-        .layout = .{ .padding = .axes(6, 12) },
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow }, .child_alignment = .{ .x = .center } },
         .background_color = if (is_selected) ui.color(70, 130, 220, 240) else ui.color(35, 42, 56, 200),
         .corner_radius = .all(4),
     })({
         if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
             self.selected_terrain = terrain;
-            self.status_message = "Terrain selected";
+            self.status_message = "Tile selected";
         }
         ui.text(label, .{
             .color = ui.color(255, 255, 255, 255),
-            .font_size = 12,
+            .font_size = 11,
             .letter_spacing = 1,
         });
     });
@@ -920,81 +904,6 @@ fn drawToolButton(self: *Self, tool: EditorTool, label: []const u8) void {
             .color = if (is_active) ui.color(10, 12, 16, 255) else ui.color(200, 210, 230, 255),
             .font_size = 12,
             .letter_spacing = 1,
-        });
-    });
-}
-
-fn drawWallTypeOption(self: *Self, wall_type: WallType, label: []const u8) void {
-    const is_selected = (self.selected_wall_type == wall_type);
-    clay.UI()(.{
-        .id = .IDI("wall-type-opt-", @intFromEnum(wall_type)),
-        .layout = .{ .padding = .axes(6, 12), .sizing = .{ .w = .grow } },
-        .background_color = if (is_selected) ui.color(70, 130, 220, 240) else ui.color(35, 42, 56, 200),
-        .corner_radius = .all(4),
-    })({
-        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-            self.selected_wall_type = wall_type;
-            self.status_message = "Wall type selected";
-        }
-        ui.text(label, .{
-            .color = ui.color(255, 255, 255, 255),
-            .font_size = 12,
-            .letter_spacing = 1,
-        });
-    });
-}
-
-fn drawWallsCategory(self: *Self) void {
-    ui.new(.{
-        .id = .ID("walls-panel"),
-        .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
-    })({
-        self.drawToolButton(.wall_line, "Wall Line Tool");
-        self.drawToolButton(.wall_erase, "Remove Wall Tool");
-
-        ui.text("Wall Type:", .{
-            .color = ui.color(180, 195, 215, 255),
-            .font_size = 12,
-            .letter_spacing = 1,
-        });
-
-        inline for (@typeInfo(WallType).@"enum".fields) |field| {
-            const wall_type_value: WallType = @enumFromInt(field.value);
-            self.drawWallTypeOption(wall_type_value, wall_type_value.displayName());
-        }
-
-        clay.UI()(.{
-            .id = .ID("gen-boundary-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(45, 55, 75, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.generatePerimeterWalls();
-                self.status_message = "Perimeter boundary regenerated";
-            }
-            ui.text("Regenerate Boundary Walls", .{
-                .color = ui.color(220, 230, 245, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
-
-        clay.UI()(.{
-            .id = .ID("clear-walls-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(75, 35, 40, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.walls.clearRetainingCapacity();
-                self.status_message = "All walls cleared";
-            }
-            ui.text("Clear All Walls", .{
-                .color = ui.color(255, 180, 180, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
         });
     });
 }
@@ -1514,10 +1423,26 @@ fn loadMapFromPath(self: *Self, path: []const u8) void {
     }
     self.background_tiles = alloc.dupe(u8, loaded_data.background_tiles) catch return;
 
-    self.walls.clearRetainingCapacity();
     for (loaded_data.walls) |wall| {
-        self.walls.append(wall) catch break;
+        const wall_value: u8 = switch (wall.wall_type) {
+            .solid => @intFromEnum(TerrainType.wall_top),
+            .low => @intFromEnum(TerrainType.wall_low_top),
+        };
+        const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
+        const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
+        const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
+        const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
+
+        var row_index = min_row;
+        while (row_index <= max_row and row_index < self.height_tiles) : (row_index += 1) {
+            var column_index = min_column;
+            while (column_index <= max_column and column_index < self.width_tiles) : (column_index += 1) {
+                self.background_tiles[row_index * self.width_tiles + column_index] = wall_value;
+            }
+        }
     }
+
+    self.regenerateWallBoundingBoxes();
 
     self.spawn_zones.clearRetainingCapacity();
     for (loaded_data.spawn_zones) |zone| {
@@ -1534,33 +1459,6 @@ fn loadMapFromPath(self: *Self, path: []const u8) void {
 
     self.is_dirty = true;
     self.status_message = "Map loaded";
-}
-
-fn drawWallRemovalHighlight(self: *Self, top_left: lm.Vector2) void {
-    const hovered_tile = self.getHoveredTile() orelse return;
-    const wall_index = self.findWallIndexAtTile(hovered_tile.column_index, hovered_tile.row_index) orelse return;
-    const wall = self.walls.items()[wall_index];
-
-    const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
-    const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
-    const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
-    const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
-
-    const width_pixels = @as(f32, @floatFromInt(max_column - min_column + 1)) * self.tile_size_pixels;
-    const height_pixels = @as(f32, @floatFromInt(max_row - min_row + 1)) * self.tile_size_pixels;
-
-    const rect_x = top_left.x + @as(f32, @floatFromInt(min_column)) * self.tile_size_pixels;
-    const rect_y = top_left.y + @as(f32, @floatFromInt(min_row)) * self.tile_size_pixels;
-
-    rl.drawRectangleRec(
-        lm.Rect(rect_x, rect_y, width_pixels, height_pixels),
-        rl.Color{ .r = 240, .g = 50, .b = 50, .a = 90 },
-    );
-    rl.drawRectangleLinesEx(
-        lm.Rect(rect_x, rect_y, width_pixels, height_pixels),
-        3.0,
-        rl.Color.red,
-    );
 }
 
 fn drawSpawnZoneRemovalHighlight(self: *Self, top_left: lm.Vector2) void {
@@ -1582,43 +1480,28 @@ fn drawSpawnZoneRemovalHighlight(self: *Self, top_left: lm.Vector2) void {
     );
 }
 
-test "MapEditor removeWallAt targeted deletion" {
+test "MapEditor generatePerimeterWalls and clearPerimeterWalls" {
     var editor = Self{};
-    editor.walls = lm.List(WallSegment).init(std.testing.allocator);
-    defer editor.walls.deinit();
+    editor.width_tiles = 4;
+    editor.height_tiles = 4;
+    const total_tile_count: usize = 16;
 
-    try editor.walls.append(.{
-        .start_x_tiles = 0,
-        .start_y_tiles = 0,
-        .end_x_tiles = 10,
-        .end_y_tiles = 0,
-        .wall_type = .solid,
-    });
-    try editor.walls.append(.{
-        .start_x_tiles = 5,
-        .start_y_tiles = 5,
-        .end_x_tiles = 5,
-        .end_y_tiles = 10,
-        .wall_type = .low,
-    });
+    var tiles: [total_tile_count]u8 = [_]u8{0} ** total_tile_count;
+    editor.background_tiles = &tiles;
 
-    try std.testing.expectEqual(@as(usize, 2), editor.walls.len());
+    editor.generatePerimeterWalls();
 
-    // 1. Trying to remove at empty tile returns false
-    const removed_empty = editor.removeWallAt(100, 100);
-    try std.testing.expectEqual(false, removed_empty);
-    try std.testing.expectEqual(@as(usize, 2), editor.walls.len());
+    // Top and bottom row should be wall_top (2)
+    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[0]);
+    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[3]);
+    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[12]);
+    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[15]);
+    // Center tiles should still be stone (0)
+    try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[5]);
 
-    // 2. Removing first wall segment at (3, 0) succeeds
-    const removed_first = editor.removeWallAt(3, 0);
-    try std.testing.expectEqual(true, removed_first);
-    try std.testing.expectEqual(@as(usize, 1), editor.walls.len());
-    try std.testing.expectEqual(@as(u32, 5), editor.walls.items()[0].start_x_tiles);
-
-    // 3. Removing second wall segment at (5, 8) succeeds
-    const removed_second = editor.removeWallAt(5, 8);
-    try std.testing.expectEqual(true, removed_second);
-    try std.testing.expectEqual(@as(usize, 0), editor.walls.len());
+    editor.clearPerimeterWalls();
+    try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[0]);
+    try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[15]);
 }
 
 test "MapEditor removeSpawnZoneAt targeted deletion" {
@@ -1653,7 +1536,6 @@ test "MapEditor removeSpawnZoneAt targeted deletion" {
     try std.testing.expectEqual(@as(f32, 800.0), editor.spawn_zones.items()[0].center_x_pixels);
 
     // 3. Removing second zone via removeSpawnZoneAtTile succeeds
-    // 800 / 64 = 12.5 -> column 12, 600 / 64 = 9.375 -> row 9
     const removed_second = editor.removeSpawnZoneAtTile(12, 9);
     try std.testing.expectEqual(true, removed_second);
     try std.testing.expectEqual(@as(usize, 0), editor.spawn_zones.len());
@@ -1661,11 +1543,6 @@ test "MapEditor removeSpawnZoneAt targeted deletion" {
 
 test "MapEditor selectCategory automatically selects first tool and first asset" {
     var editor = Self{};
-
-    editor.selectCategory(.walls);
-    try std.testing.expectEqual(EditorCategory.walls, editor.current_category);
-    try std.testing.expectEqual(EditorTool.wall_line, editor.current_tool);
-    try std.testing.expectEqual(WallType.solid, editor.selected_wall_type);
 
     editor.selectCategory(.spawners);
     try std.testing.expectEqual(EditorCategory.spawners, editor.current_category);
