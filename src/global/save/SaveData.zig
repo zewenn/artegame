@@ -83,10 +83,17 @@ pub const SavedPlayerStats = struct {
     }
 };
 
+pub const CURRENT_SAVE_VERSION: u32 = 4;
+
+pub const ProfileData = struct {
+    tutorial_completed: bool = false,
+};
+
 pub const CurrentRunData = struct {
     has_active_run: bool = false,
-    round: u32 = 1,
-    rounds_survived: u32 = 0,
+    current_room_index: u32 = 1,
+    rooms_cleared: u32 = 0,
+    room_category: []const u8 = "normal",
     enemies_defeated: u32 = 0,
     player_stats: SavedPlayerStats = .{},
     equipped_weapons: [2]?Weapon = [_]?Weapon{ null, null },
@@ -95,22 +102,23 @@ pub const CurrentRunData = struct {
 };
 
 pub const SaveFile = struct {
-    version: u32 = 1,
+    version: u32 = CURRENT_SAVE_VERSION,
     settings: SettingsData = .{},
+    profile: ProfileData = .{},
     scores: AllTimeScores = .{},
     current_run: CurrentRunData = .{},
 };
 
 test "SaveFile serialization and deserialization roundtrip" {
     const testing = std.testing;
-    const alloc = testing.allocator;
+    const allocator = testing.allocator;
 
     var save_file = SaveFile{};
     save_file.scores.high_score = 9999;
     save_file.scores.highest_round = 12;
     save_file.settings.master_volume = 0.5;
     save_file.current_run.has_active_run = true;
-    save_file.current_run.round = 3;
+    save_file.current_run.current_room_index = 3;
     save_file.current_run.equipped_weapons[0] = Weapon{
         .id = "CustomFists",
         .light_attack = .{
@@ -119,18 +127,18 @@ test "SaveFile serialization and deserialization roundtrip" {
     };
     save_file.current_run.equipped_spells[0] = .{ .id = "Heal", .level = 3 };
 
-    const json_str = try std.fmt.allocPrint(alloc, "{f}", .{std.json.fmt(save_file, .{})});
-    defer alloc.free(json_str);
+    const json_string = try std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(save_file, .{})});
+    defer allocator.free(json_string);
 
-    var parsed = try std.json.parseFromSlice(SaveFile, alloc, json_str, .{ .ignore_unknown_fields = true });
+    var parsed = try std.json.parseFromSlice(SaveFile, allocator, json_string, .{ .ignore_unknown_fields = true });
     defer parsed.deinit();
 
-    try testing.expectEqual(@as(u32, 1), parsed.value.version);
+    try testing.expectEqual(@as(u32, CURRENT_SAVE_VERSION), parsed.value.version);
     try testing.expectEqual(@as(usize, 9999), parsed.value.scores.high_score);
     try testing.expectEqual(@as(u32, 12), parsed.value.scores.highest_round);
     try testing.expectEqual(@as(f32, 0.5), parsed.value.settings.master_volume);
     try testing.expect(parsed.value.current_run.has_active_run);
-    try testing.expectEqual(@as(u32, 3), parsed.value.current_run.round);
+    try testing.expectEqual(@as(u32, 3), parsed.value.current_run.current_room_index);
     try testing.expectEqualStrings("CustomFists", parsed.value.current_run.equipped_weapons[0].?.id);
     try testing.expectEqual(@as(f32, 15.5), parsed.value.current_run.equipped_weapons[0].?.light_attack.projectile_options.damage);
     try testing.expectEqualStrings("Heal", parsed.value.current_run.equipped_spells[0].?.id);

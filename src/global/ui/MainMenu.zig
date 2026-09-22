@@ -498,6 +498,7 @@ fn activateAction(self: *Self, index: usize) void {
     } else {
         switch (index) {
             0 => {
+                SaveSystem.clearRun();
                 RoomManager.resume_saved_run = false;
                 AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
                 lm.loadScene("demo_map") catch |err| {

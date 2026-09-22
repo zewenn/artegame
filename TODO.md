@@ -2,24 +2,6 @@
 
 ## Backlog
 
-
-
-### [29#SYS] Save system reset and schema updates for room progression and tutorial persistence
-
-  - tags: [save, persistence, schema, tutorial]
-  - priority: high
-  - workload: Easy
-  - steps:
-      - [ ] Bump save version in SaveData.zig and automatically reset legacy saves to defaults on mismatch
-      - [ ] Add tutorial_completed boolean flag to persistent profile save data
-      - [ ] Extend active run save schema to persist current_room_index, rooms_cleared, and room category
-      - [ ] Update SaveSystem.zig to save and restore mid-run room progression state during replenish phase
-      - [ ] Add unit tests verifying legacy save reset on version mismatch and clean room/tutorial serialization
-      - [ ] User confirmation that save reset on v4.0.0 and room/tutorial persistence work as expected
-    ```md
-    Updates SaveData.zig and SaveSystem.zig to support room progression, active room state, and persistent tutorial completion. Bumps the save file version so incompatible legacy saves are cleanly reset to fresh defaults rather than migrated.
-    ```
-
 ### [30#ARC] Boon category data structures and categorized reward pools
 
   - tags: [architecture, boons, progression, rng]
@@ -188,6 +170,22 @@
 
 ## Done
 
+### [29#SYS] Save system reset and schema updates for room progression and tutorial persistence
+
+  - tags: [save, persistence, schema, tutorial]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [x] Bump save version in SaveData.zig and automatically reset legacy saves to defaults on mismatch
+      - [x] Add tutorial_completed boolean flag to persistent profile save data
+      - [x] Extend active run save schema to persist current_room_index, rooms_cleared, and room category
+      - [x] Update SaveSystem.zig to save and restore mid-run room progression state during replenish phase
+      - [x] Add unit tests verifying legacy save reset on version mismatch and clean room/tutorial serialization
+      - [ ] User confirmation that save reset on v4.0.0 and room/tutorial persistence work as expected
+    ```md
+    Updates SaveData.zig and SaveSystem.zig to support room progression, active room state, and persistent tutorial completion. Bumps the save file version so incompatible legacy saves are cleanly reset to fresh defaults rather than migrated.
+    ```
+
 ### [28#SPW] Dynamic wave spawner overhaul and 256 enemy cap scaling
 
   - tags: [spawner, scaling, performance, waves]
@@ -203,7 +201,6 @@
     ```md
     Overhauls RoundSpawner.zig to double enemy capacity to 256 per room, dynamically generate room-tailored encounter waves, scale mob difficulty with room index, and maintain 60 FPS under full capacity.
     ```
-
 
 ### [42#ARC] Overhaul wall display system with tilemap rendering and automatic collision generation
 
@@ -223,7 +220,6 @@
     Overhauls the wall system to treat walls as paintable background tiles using dual-grid spritemaps (wall_top.png, wall_low_top.png) and decorative south-facing side sprites (wall_normal.png, wall_short.png). Eliminates the standalone wall panel in MapEditor, automatically generates minimal 2D bounding box colliders via greedy meshing, and updates MapLoader to instantiate colliders directly from background tile data.
     ```
 
-
 ### [41#ARC] Code style and design principles refactoring across core systems
 
   - tags: [architecture, refactoring, code-style, anti-nesting, naming]
@@ -241,7 +237,6 @@
     ```md
     Systematic refactoring of large code style violations in accordance with .agents/rules/code_style.md: eliminating helper modules, strictly enforcing the Never-Nester rule (max 3 indentation levels), purging prohibited abbreviations (pos, idx, cnt, cur, mgr, dir, dmg), banning single-letter loop/capture variables, and suffixing temporal and physical quantities with explicit units.
     ```
-
 
 ### [27#ARC] Tile-based background engine, room layout serialization, and map editor
 

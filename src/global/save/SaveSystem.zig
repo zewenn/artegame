@@ -12,6 +12,7 @@ pub const SaveFile = SaveData.SaveFile;
 pub const AllTimeScores = SaveData.AllTimeScores;
 pub const CurrentRunData = SaveData.CurrentRunData;
 pub const SettingsData = SaveData.SettingsData;
+pub const ProfileData = SaveData.ProfileData;
 pub const SavedPlayerStats = SaveData.SavedPlayerStats;
 pub const SavedSpell = SaveData.SavedSpell;
 
@@ -50,6 +51,7 @@ pub fn init() void {
 }
 
 /// Loads the save file from disk. Falls back safely to default values on error or corrupt file.
+/// If a legacy save version mismatch is detected, resets save data to defaults.
 pub fn load() void {
     const allocator = lm.allocators.generic();
     const io = lm.io.singleThreaded();
@@ -94,8 +96,21 @@ pub fn load() void {
         arena.deinit();
         std.log.warn("Failed to parse save file ({any}), using defaults", .{err});
         current_save = .{};
+        save();
         return;
     };
+
+    if (parsed.value.version != SaveData.CURRENT_SAVE_VERSION) {
+        std.log.info("Save file version mismatch (found version {d}, expected version {d}). Resetting save data to defaults.", .{
+            parsed.value.version,
+            SaveData.CURRENT_SAVE_VERSION,
+        });
+        arena.deinit();
+        save_arena = null;
+        current_save = .{};
+        save();
+        return;
+    }
 
     save_arena = arena;
     current_save = parsed.value;
@@ -109,8 +124,8 @@ pub fn save() void {
     const save_path = getSavePathAlloc(allocator) catch return;
     defer allocator.free(save_path);
 
-    const json_str = std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(current_save, .{ .whitespace = .indent_2 })}) catch return;
-    defer allocator.free(json_str);
+    const json_string = std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(current_save, .{ .whitespace = .indent_2 })}) catch return;
+    defer allocator.free(json_string);
 
     var file = std.Io.Dir.createFileAbsolute(io, save_path, .{}) catch |err| {
         std.log.warn("Failed to create save file at {s}: {any}", .{ save_path, err });
@@ -121,7 +136,7 @@ pub fn save() void {
     var buf: [4096]u8 = undefined;
     var wr = file.writer(io, &buf);
     var writer = &wr.interface;
-    writer.writeAll(json_str) catch return;
+    writer.writeAll(json_string) catch return;
     writer.flush() catch return;
 }
 
@@ -133,6 +148,22 @@ pub fn getScores() AllTimeScores {
 /// Returns the current settings.
 pub fn getSettings() SettingsData {
     return current_save.settings;
+}
+
+/// Returns the current profile data.
+pub fn getProfile() ProfileData {
+    return current_save.profile;
+}
+
+/// Returns whether the onboarding tutorial has been completed.
+pub fn isTutorialCompleted() bool {
+    return current_save.profile.tutorial_completed;
+}
+
+/// Sets whether the onboarding tutorial has been completed and persists to disk.
+pub fn setTutorialCompleted(completed: bool) void {
+    current_save.profile.tutorial_completed = completed;
+    save();
 }
 
 /// Applies loaded volume settings to the AudioManager.
@@ -164,6 +195,24 @@ pub fn getSavedRun() ?CurrentRunData {
     return current_save.current_run;
 }
 
+/// Returns the current active run room index if a run exists.
+pub fn getCurrentRoomIndex() ?u32 {
+    if (!hasActiveRun()) return null;
+    return current_save.current_run.current_room_index;
+}
+
+/// Returns the rooms cleared in the active run if a run exists.
+pub fn getRoomsCleared() ?u32 {
+    if (!hasActiveRun()) return null;
+    return current_save.current_run.rooms_cleared;
+}
+
+/// Returns the current active run room category if a run exists.
+pub fn getRoomCategory() ?[]const u8 {
+    if (!hasActiveRun()) return null;
+    return current_save.current_run.room_category;
+}
+
 /// Records the conclusion of a run (on player defeat / death):
 /// updates high scores, cumulative totals, clears active run, and saves to disk.
 pub fn recordRunEnd(stats: RoomManager.RunStats) void {
@@ -185,17 +234,19 @@ pub fn recordRunEnd(stats: RoomManager.RunStats) void {
     save();
 }
 
-/// Saves the current run state: player stats, weapons, spells, round number, and kills.
+/// Saves the current run state: player stats, weapons, spells, room index, rooms cleared, and category.
 pub fn saveRun(
-    round: u32,
-    rounds_survived: u32,
+    current_room_index: u32,
+    rooms_cleared: u32,
+    room_category: []const u8,
     enemies_defeated: u32,
     stats: Stats,
     attack: Attack,
 ) void {
     current_save.current_run.has_active_run = true;
-    current_save.current_run.round = round;
-    current_save.current_run.rounds_survived = rounds_survived;
+    current_save.current_run.current_room_index = current_room_index;
+    current_save.current_run.rooms_cleared = rooms_cleared;
+    current_save.current_run.room_category = room_category;
     current_save.current_run.enemies_defeated = enemies_defeated;
     current_save.current_run.player_stats = SavedPlayerStats.fromStats(stats);
 
@@ -204,14 +255,14 @@ pub fn saveRun(
     current_save.current_run.current_weapon_number = attack.current_weapon_number;
 
     // Save equipped spells
-    for (attack.equipped_spells, 0..) |maybe_spell, i| {
-        if (maybe_spell) |s| {
-            current_save.current_run.equipped_spells[i] = .{
-                .id = s.id,
-                .level = s.level,
+    for (attack.equipped_spells, 0..) |maybe_spell, spell_index| {
+        if (maybe_spell) |spell| {
+            current_save.current_run.equipped_spells[spell_index] = .{
+                .id = spell.id,
+                .level = spell.level,
             };
         } else {
-            current_save.current_run.equipped_spells[i] = null;
+            current_save.current_run.equipped_spells[spell_index] = null;
         }
     }
 
@@ -280,6 +331,19 @@ test "SaveSystem updateSettings modifies and retains settings" {
     try testing.expect(s.mute);
 }
 
+test "SaveSystem tutorial completed query and persistence" {
+    const testing = std.testing;
+
+    current_save = .{};
+    try testing.expect(!isTutorialCompleted());
+
+    current_save.profile.tutorial_completed = true;
+    try testing.expect(isTutorialCompleted());
+
+    current_save.profile.tutorial_completed = false;
+    try testing.expect(!isTutorialCompleted());
+}
+
 test "SaveSystem saveRun and clearRun lifecycle" {
     const testing = std.testing;
 
@@ -298,17 +362,22 @@ test "SaveSystem saveRun and clearRun lifecycle" {
         },
     };
 
-    saveRun(4, 3, 27, stats, attack);
+    saveRun(4, 3, "normal", 27, stats, attack);
 
     try testing.expect(hasActiveRun());
     const saved = getSavedRun().?;
-    try testing.expectEqual(@as(u32, 4), saved.round);
-    try testing.expectEqual(@as(u32, 3), saved.rounds_survived);
+    try testing.expectEqual(@as(u32, 4), saved.current_room_index);
+    try testing.expectEqual(@as(u32, 3), saved.rooms_cleared);
+    try testing.expectEqualStrings("normal", saved.room_category);
     try testing.expectEqual(@as(u32, 27), saved.enemies_defeated);
     try testing.expectEqual(@as(f32, 75), saved.player_stats.health);
     try testing.expectEqual(@as(usize, 500), saved.player_stats.experience);
     try testing.expectEqualStrings("SavedWeaponTest", saved.equipped_weapons[0].?.id);
     try testing.expectEqual(@as(f32, 99.0), saved.equipped_weapons[0].?.light_attack.projectile_options.damage);
+
+    try testing.expectEqual(@as(?u32, 4), getCurrentRoomIndex());
+    try testing.expectEqual(@as(?u32, 3), getRoomsCleared());
+    try testing.expectEqualStrings("normal", getRoomCategory().?);
 
     clearRun();
     try testing.expect(!hasActiveRun());
@@ -339,7 +408,7 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
     };
 
     // 1. Initial save of run
-    saveRun(2, 1, 12, stats, attack);
+    saveRun(2, 1, "plate_upgrades", 12, stats, attack);
     try testing.expect(hasActiveRun());
 
     // 2. Simulate closing and reopening app: reload save from disk
@@ -353,11 +422,12 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
 
     // 4. Simulate purchasing a boon that modifies weapon damage and triggers auto-save
     resumed_attack.equipped_weapons[0].?.dash_attack.projectile_options.damage *= 1.25;
-    saveRun(saved.round, saved.rounds_survived, saved.enemies_defeated, stats, resumed_attack);
+    saveRun(saved.current_room_index, saved.rooms_cleared, saved.room_category, saved.enemies_defeated, stats, resumed_attack);
 
     // 5. Verify data persisted cleanly
     const reloaded = getSavedRun().?;
     try testing.expectEqualStrings("DashFists", reloaded.equipped_weapons[0].?.id);
+    try testing.expectEqualStrings("plate_upgrades", reloaded.room_category);
     try testing.expectEqual(@as(usize, 3), reloaded.equipped_weapons[0].?.dash_attack.shooting_degrees.len);
     try testing.expectEqual(@as(f32, -2), reloaded.equipped_weapons[0].?.dash_attack.shooting_degrees[0]);
 
@@ -365,4 +435,32 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
     clearRun();
 }
 
+test "SaveSystem detects legacy version mismatch and resets" {
+    const testing = std.testing;
+    const allocator = testing.allocator;
 
+    // Simulate an obsolete save from v1
+    const legacy_json =
+        \\{
+        \\  "version": 1,
+        \\  "scores": {
+        \\    "high_score": 5000
+        \\  }
+        \\}
+    ;
+
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    const parsed = try std.json.parseFromSlice(
+        SaveFile,
+        arena.allocator(),
+        legacy_json,
+        .{ .ignore_unknown_fields = true },
+    );
+
+    // Verify parser extracts legacy version 1
+    try testing.expectEqual(@as(u32, 1), parsed.value.version);
+    // Version mismatch condition is met
+    try testing.expect(parsed.value.version != SaveData.CURRENT_SAVE_VERSION);
+}

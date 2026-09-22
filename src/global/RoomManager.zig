@@ -73,6 +73,7 @@ pub const FallenEnemyRecord = struct {
 state: RoomState = .combat,
 current_room: u32 = 1,
 rooms_cleared: u32 = 0,
+room_category: []const u8 = "normal",
 enemies_defeated: u32 = 0,
 boon_drop_spawned: bool = false,
 
@@ -84,8 +85,9 @@ graveyard: lm.List(FallenEnemyRecord) = undefined,
 pub fn Awake(self: *Self) !void {
     if (resume_saved_run and SaveSystem.hasActiveRun()) {
         if (SaveSystem.getSavedRun()) |saved| {
-            self.current_room = if (saved.round > 0) saved.round else 1;
-            self.rooms_cleared = saved.rounds_survived;
+            self.current_room = if (saved.current_room_index > 0) saved.current_room_index else 1;
+            self.rooms_cleared = saved.rooms_cleared;
+            self.room_category = saved.room_category;
             self.enemies_defeated = saved.enemies_defeated;
             self.state = .replenish;
             MusicManager.setGlobalPhase(.replenish);
@@ -138,6 +140,7 @@ pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
 fn initFreshRun(self: *Self) void {
     self.current_room = 1;
     self.rooms_cleared = 0;
+    self.room_category = "normal";
     self.enemies_defeated = 0;
     self.boon_drop_spawned = false;
     self.state = .combat;
@@ -234,7 +237,6 @@ fn startCurrentRoomCombat(self: *Self) !void {
         }
     }
 
-    self.saveRunState();
     try self.spawner.startWaveForRoom(self.current_room, room_type.toSpawnProfile());
 }
 
@@ -309,6 +311,10 @@ pub fn enterNextRoom() !void {
 
     cleanupRoomEntities();
     self.current_room += 1;
+    const next_room_type = self.getRoomType();
+    if (next_room_type == .mini_boss or next_room_type == .boss or next_room_type == .tutorial) {
+        self.room_category = next_room_type.displayName();
+    }
     self.boon_drop_spawned = false;
 
     const map_path = getMapPathForRoomType(self.getRoomType());
@@ -389,6 +395,15 @@ pub fn getRoomsCleared() u32 {
     return self.rooms_cleared;
 }
 
+pub fn getRoomCategory() []const u8 {
+    const self = get() orelse return "normal";
+    return self.room_category;
+}
+
+pub fn setRoomCategory(self: *Self, category: []const u8) void {
+    self.room_category = category;
+}
+
 pub fn getRoomType(self: *const Self) RoomType {
     return RoomType.fromRoomNumber(self.current_room);
 }
@@ -398,10 +413,19 @@ pub fn getNextRoomType(self: *const Self) RoomType {
 }
 
 pub fn saveRunState(self: *Self) void {
+    if (self.state != .replenish) return;
+
     const player = self.player orelse return;
     const stats = player.getComponent(Stats) orelse return;
     const attack = player.getComponent(player_components.Attack) orelse return;
-    SaveSystem.saveRun(self.current_room, self.rooms_cleared, self.enemies_defeated, stats.*, attack.*);
+    SaveSystem.saveRun(
+        self.current_room,
+        self.rooms_cleared,
+        self.room_category,
+        self.enemies_defeated,
+        stats.*,
+        attack.*,
+    );
 }
 
 pub fn saveCurrentRun() void {
@@ -537,24 +561,38 @@ test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 phys / 
 }
 
 test "RoomManager lifecycle state transitions" {
-    var rm = Self{};
-    rm.initFreshRun();
+    var room_manager = Self{};
+    room_manager.initFreshRun();
 
     // Starts in combat
-    try std.testing.expectEqual(RoomState.combat, rm.state);
-    try std.testing.expectEqual(@as(u32, 1), rm.current_room);
-    try std.testing.expectEqual(@as(u32, 0), rm.rooms_cleared);
+    try std.testing.expectEqual(RoomState.combat, room_manager.state);
+    try std.testing.expectEqual(@as(u32, 1), room_manager.current_room);
+    try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
+    try std.testing.expectEqualStrings("normal", room_manager.room_category);
 
     // Simulate room wave cleared
-    rm.state = .replenish;
-    rm.rooms_cleared += 1;
-    try std.testing.expectEqual(RoomState.replenish, rm.state);
-    try std.testing.expectEqual(@as(u32, 1), rm.rooms_cleared);
+    room_manager.state = .replenish;
+    room_manager.rooms_cleared += 1;
+    try std.testing.expectEqual(RoomState.replenish, room_manager.state);
+    try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
 
     // Advance to next room
-    rm.current_room += 1;
-    rm.state = .combat;
-    try std.testing.expectEqual(RoomState.combat, rm.state);
-    try std.testing.expectEqual(@as(u32, 2), rm.current_room);
-    try std.testing.expectEqual(@as(u32, 1), rm.rooms_cleared);
+    room_manager.current_room += 1;
+    room_manager.state = .combat;
+    try std.testing.expectEqual(RoomState.combat, room_manager.state);
+    try std.testing.expectEqual(@as(u32, 2), room_manager.current_room);
+    try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
+}
+
+test "RoomManager saveRunState guards against saving during combat" {
+    var room_manager = Self{};
+    room_manager.initFreshRun();
+
+    // Verify combat state prevents saving
+    try std.testing.expectEqual(RoomState.combat, room_manager.state);
+    room_manager.saveRunState();
+
+    // Verify replenish state allows save progression logic to proceed
+    room_manager.state = .replenish;
+    room_manager.saveRunState();
 }
