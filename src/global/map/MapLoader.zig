@@ -45,6 +45,8 @@ var active_spawn_zones: []SpawnZoneRecord = &.{};
 var active_player_spawn: lm.Vector2 = .init(0, 0);
 var active_exit_door: lm.Vector2 = .init(128, -200);
 var active_map_top_left: lm.Vector2 = .init(0, 0);
+var active_map_width_pixels: f32 = 2200.0;
+var active_map_height_pixels: f32 = 1040.0;
 
 pub fn init() void {
     if (is_initialized) return;
@@ -76,6 +78,16 @@ pub fn getExitDoorPosition() lm.Vector2 {
 
 pub fn getMapTopLeft() lm.Vector2 {
     return active_map_top_left;
+}
+
+pub fn getMapBounds() struct { min: lm.Vector2, max: lm.Vector2 } {
+    return .{
+        .min = active_map_top_left,
+        .max = lm.Vec2(
+            active_map_top_left.x + active_map_width_pixels,
+            active_map_top_left.y + active_map_height_pixels,
+        ),
+    };
 }
 
 pub fn getRenderer() *MapRenderer {
@@ -119,6 +131,8 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     const top_left_x = -width_pixels / 2.0;
     const top_left_y = -height_pixels / 2.0;
     active_map_top_left = lm.Vec2(top_left_x, top_left_y);
+    active_map_width_pixels = width_pixels;
+    active_map_height_pixels = height_pixels;
 
     // Stamp any legacy wall segments into background_tiles if needed
     for (map_data.walls) |wall| {

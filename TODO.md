@@ -3,21 +3,6 @@
 ## Backlog
 
 
-### [28#SPW] Dynamic wave spawner overhaul and 256 enemy cap scaling
-
-  - tags: [spawner, scaling, performance, waves]
-  - priority: high
-  - workload: Normal
-  - steps:
-      - [ ] Expand active enemy entity pool capacity and tracking limits from 128 to 256 enemies per room
-      - [ ] Decouple RoundSpawner from static arena coordinates to accept arbitrary room boundaries and spawn zones
-      - [ ] Add room-type spawn profiles: Tutorial (Dummy), Normal (scaling mob waves), Mini-Boss (solo), Boss (solo + phases)
-      - [ ] Scale enemy spawn quantities, composition, and stats dynamically based on current room number
-      - [ ] Benchmark and optimize collision, movement, and tick performance under 256 active entities
-      - [ ] User confirmation that spawner handles 256 enemies without frame drops or memory leaks
-    ```md
-    Overhauls RoundSpawner.zig to double enemy capacity to 256 per room, dynamically generate room-tailored encounter waves, scale mob difficulty with room index, and maintain 60 FPS under full capacity.
-    ```
 
 ### [29#SYS] Save system reset and schema updates for room progression and tutorial persistence
 
@@ -202,6 +187,23 @@
 ## Work in Progress
 
 ## Done
+
+### [28#SPW] Dynamic wave spawner overhaul and 256 enemy cap scaling
+
+  - tags: [spawner, scaling, performance, waves]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Expand active enemy entity pool capacity and tracking limits from 128 to 256 enemies per room
+      - [x] Decouple RoundSpawner from static arena coordinates to accept arbitrary room boundaries and spawn zones
+      - [x] Add room-type spawn profiles: Tutorial (Dummy), Normal (scaling mob waves), Mini-Boss (solo), Boss (solo + phases)
+      - [x] Scale enemy spawn quantities, composition, and stats dynamically based on current room number
+      - [x] Benchmark and optimize collision, movement, and tick performance under 256 active entities
+      - [x] User confirmation that spawner handles 256 enemies without frame drops or memory leaks
+    ```md
+    Overhauls RoundSpawner.zig to double enemy capacity to 256 per room, dynamically generate room-tailored encounter waves, scale mob difficulty with room index, and maintain 60 FPS under full capacity.
+    ```
+
 
 ### [42#ARC] Overhaul wall display system with tilemap rendering and automatic collision generation
 

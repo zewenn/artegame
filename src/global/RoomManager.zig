@@ -47,6 +47,15 @@ pub const RoomType = enum {
             .boss => "Boss",
         };
     }
+
+    pub fn toSpawnProfile(self: RoomType) RoundSpawner.SpawnProfile {
+        return switch (self) {
+            .tutorial => .tutorial,
+            .normal => .normal,
+            .mini_boss => .mini_boss,
+            .boss => .boss,
+        };
+    }
 };
 
 pub const RunStats = struct {
@@ -105,6 +114,8 @@ pub fn Awake(self: *Self) !void {
     MapLoader.loadAndInstantiate(map_path) catch |err| {
         std.log.warn("Failed to load map {s}, using defaults: {any}", .{ map_path, err });
     };
+    const map_bounds = MapLoader.getMapBounds();
+    self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
     self.spawner.setSpawnZones(MapLoader.getSpawnZones());
     const player_spawn = MapLoader.getPlayerSpawnPosition();
     const exit_door_position = MapLoader.getExitDoorPosition();
@@ -213,8 +224,8 @@ fn startCurrentRoomCombat(self: *Self) !void {
     self.state = .combat;
     MusicManager.setGlobalPhase(.combat);
 
+    const room_type = self.getRoomType();
     if (self.player_objectives) |objectives| {
-        const room_type = self.getRoomType();
         switch (room_type) {
             .mini_boss => _ = try objectives.setSingleObjective("Mini-Boss Room", "Defeat the Mini-Boss!"),
             .boss => _ = try objectives.setSingleObjective("Boss Room", "Defeat the Boss!"),
@@ -224,7 +235,7 @@ fn startCurrentRoomCombat(self: *Self) !void {
     }
 
     self.saveRunState();
-    try self.spawner.startWave(self.current_room);
+    try self.spawner.startWaveForRoom(self.current_room, room_type.toSpawnProfile());
 }
 
 fn completeCurrentRoomCombat(self: *Self) !void {
@@ -304,6 +315,8 @@ pub fn enterNextRoom() !void {
     MapLoader.loadAndInstantiate(map_path) catch |err| {
         std.log.warn("Failed to load map {s}: {any}", .{ map_path, err });
     };
+    const map_bounds = MapLoader.getMapBounds();
+    self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
     self.spawner.setSpawnZones(MapLoader.getSpawnZones());
     repositionPlayer();
 
@@ -418,6 +431,11 @@ pub fn removeDefeatedEnemy(uuid: u128, death_position: lm.Vector2, enemy_type: R
             std.log.err("Failed to spawn boon drop: {any}", .{err});
         };
     }
+}
+
+pub fn registerSummonedEnemy(uuid: u128) void {
+    const self = get() orelse return;
+    self.spawner.registerSummonedEnemy(uuid) catch {};
 }
 
 pub fn popFallenEnemyForRevive() ?FallenEnemyRecord {

@@ -10,7 +10,7 @@ const PauseMenu = @import("../../global/ui/PauseMenu.zig");
 
 const Self = @This();
 
-var id_pool: [128]bool = [_]bool{false} ** 128;
+var id_pool: [256]bool = [_]bool{false} ** 256;
 
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
@@ -110,10 +110,10 @@ pub fn End(self: *Self) void {
 }
 
 fn acquireId() u32 {
-    for (&id_pool, 0..) |*in_use, i| {
+    for (&id_pool, 0..) |*in_use, pool_index| {
         if (!in_use.*) {
             in_use.* = true;
-            return @intCast(i);
+            return @intCast(pool_index);
         }
     }
     return 0;

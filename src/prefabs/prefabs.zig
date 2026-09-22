@@ -6,6 +6,9 @@ pub const enemies = struct {
     pub const Melee = @import("enemies/Melee.zig").MeleeEnemy;
     pub const Ranged = @import("enemies/Ranged.zig").RangedEnemy;
     pub const Elite = @import("enemies/Elite.zig").EliteEnemy;
+    pub const Dummy = @import("enemies/Dummy.zig").DummyEnemy;
+    pub const MiniBoss = @import("enemies/MiniBoss.zig").MiniBossEnemy;
+    pub const Boss = @import("enemies/Boss.zig").BossEnemy;
 };
 pub const items = struct {
     pub const ExperienceOrb = @import("items/ExperienceOrb.zig").ExperienceOrb;

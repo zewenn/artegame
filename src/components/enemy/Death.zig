@@ -31,6 +31,12 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
             self.enemy_type = .ranged;
         } else if (std.mem.startsWith(u8, entity.id, "elite")) {
             self.enemy_type = .elite;
+        } else if (std.mem.startsWith(u8, entity.id, "dummy")) {
+            self.enemy_type = .dummy;
+        } else if (std.mem.startsWith(u8, entity.id, "mini-boss")) {
+            self.enemy_type = .mini_boss;
+        } else if (std.mem.startsWith(u8, entity.id, "boss")) {
+            self.enemy_type = .boss;
         }
     }
 }
@@ -56,7 +62,13 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", enemy_position, listener_position, 800.0, 0.75, 0.15);
 
-    const orb_count = lm.random.intRangeAtMostBiased(u8, 1, 3);
+    const orb_count: u8 = switch (self.enemy_type) {
+        .dummy => 1,
+        .melee, .ranged => lm.random.intRangeAtMostBiased(u8, 1, 3),
+        .elite => lm.random.intRangeAtMostBiased(u8, 3, 6),
+        .mini_boss => lm.random.intRangeAtMostBiased(u8, 8, 12),
+        .boss => lm.random.intRangeAtMostBiased(u8, 25, 35),
+    };
     for (0..orb_count) |_| {
         const angle = lm.randFloat(f32, 0, std.math.pi * 2);
         const scatter_speed = lm.randFloat(f32, 100, 220);
