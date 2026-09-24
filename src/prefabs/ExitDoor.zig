@@ -2,20 +2,16 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Interactable = @import("../components/interaction/Interactable.zig");
+const Door = @import("../components/world/Door.zig");
 const RoomManager = @import("../global/RoomManager.zig");
-const AudioManager = @import("../global/audio/AudioManager.zig");
 
-fn onExitDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
-    _ = interactable;
-    _ = player;
-    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.9, 0.05);
-    RoomManager.enterNextRoom() catch |err| {
-        std.log.err("Failed to enter next room: {any}", .{err});
-    };
-}
+pub const RewardKind = Door.RewardKind;
+pub const DoorConfig = Door.DoorConfig;
 
-pub fn ExitDoor(position: lm.Vector2) !*lm.Entity {
-    return try lm.makeEntity("exit-door", .{
+pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
+    const door_index_u32 = @as(u32, @intCast(config.door_index));
+
+    return try lm.makeEntityI("exit-door", door_index_u32, .{
         lm.Transform{
             .position = .init(position.x, position.y, 0),
             .scale = .init(96, 96),
@@ -32,7 +28,15 @@ pub fn ExitDoor(position: lm.Vector2) !*lm.Entity {
             .interaction_radius = 110.0,
             .prompt_offset = .init(0, -64.0),
             .can_interact = RoomManager.isReplenish,
-            .on_interact = onExitDoorInteract,
+            .on_interact = Door.onDoorInteract,
+        },
+        Door{
+            .door_index = config.door_index,
+            .category_id = config.category_id,
+            .reward_title = config.title,
+            .reward_icon = config.icon,
+            .reward_kind = config.reward_kind,
+            .is_open = config.is_open,
         },
     });
 }

@@ -44,6 +44,7 @@ var active_arena: ?std.heap.ArenaAllocator = null;
 var active_spawn_zones: []SpawnZoneRecord = &.{};
 var active_player_spawn: lm.Vector2 = .init(0, 0);
 var active_exit_door: lm.Vector2 = .init(128, -200);
+var active_exit_doors: []lm.Vector2 = &.{};
 var active_map_top_left: lm.Vector2 = .init(0, 0);
 var active_map_width_pixels: f32 = 2200.0;
 var active_map_height_pixels: f32 = 1040.0;
@@ -73,7 +74,14 @@ pub fn getPlayerSpawnPosition() lm.Vector2 {
 }
 
 pub fn getExitDoorPosition() lm.Vector2 {
+    if (active_exit_doors.len > 0) {
+        return active_exit_doors[0];
+    }
     return active_exit_door;
+}
+
+pub fn getExitDoorPositions() []const lm.Vector2 {
+    return active_exit_doors;
 }
 
 pub fn getMapTopLeft() lm.Vector2 {
@@ -108,6 +116,7 @@ pub fn unload() void {
     }
 
     active_spawn_zones = &.{};
+    active_exit_doors = &.{};
     global_renderer.deinit();
 }
 
@@ -198,6 +207,15 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     active_player_spawn = .init(0, 0);
     active_exit_door = .init(0, top_left_y + 128);
 
+    var door_count: usize = 0;
+    for (map_data.entities) |entity_record| {
+        if (std.mem.eql(u8, entity_record.entity_type, "exit_door")) {
+            door_count += 1;
+        }
+    }
+    const converted_exit_doors = try arena_allocator.alloc(lm.Vector2, door_count);
+    var door_index: usize = 0;
+
     for (map_data.entities) |entity_record| {
         const entity_world_x = top_left_x + entity_record.position_x;
         const entity_world_y = top_left_y + entity_record.position_y;
@@ -206,8 +224,13 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
             active_player_spawn = lm.Vec2(entity_world_x, entity_world_y);
         } else if (std.mem.eql(u8, entity_record.entity_type, "exit_door")) {
             active_exit_door = lm.Vec2(entity_world_x, entity_world_y);
+            if (door_index < converted_exit_doors.len) {
+                converted_exit_doors[door_index] = lm.Vec2(entity_world_x, entity_world_y);
+                door_index += 1;
+            }
         }
     }
+    active_exit_doors = converted_exit_doors;
 
     const half_tile = @as(f32, @floatFromInt(map_data.tile_size_pixels)) * 0.5;
     const background_entity = try lm.makeEntity("map_background", .{

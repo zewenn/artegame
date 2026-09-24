@@ -3,21 +3,6 @@
 ## Backlog
 
 
-### [31#UIB] Interactive room exit doors with reward category icon overlays
-
-  - tags: [ui, doors, interaction, prefabs]
-  - priority: medium
-  - workload: Normal
-  - steps:
-      - [ ] Create Door prefab entity with physical collider, interaction prompt, and open/closed visuals
-      - [ ] Render overhead reward icon badges on doors indicating upcoming room reward (Boon category, Mini-Boss, Boss)
-      - [ ] Implement door spawner generating 1 to 3 doors during replenish phase based on room rules
-      - [ ] Randomize door rewards after each round completion to prevent static progression routes
-      - [ ] Connect door interaction to RoomManager to trigger room transition and load selected room
-      - [ ] User confirmation that doors spawn with correct reward icons and transition rooms on interaction
-    ```md
-    Implements interactive exit doors appearing during the replenish phase. Displays reward category icons overhead and lets the player choose which room path to venture into next.
-    ```
 
 ### [32#UIS] Dedicated top-of-screen boss health bar HUD component
 
@@ -155,6 +140,22 @@
 
 
 ## Done
+
+### [31#UIB] Interactive room exit doors with reward category icon overlays
+
+  - tags: [ui, doors, interaction, prefabs]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create Door prefab entity with physical collider, interaction prompt, and open/closed visuals
+      - [x] Render overhead reward icon badges on doors indicating upcoming room reward (Boon category, Mini-Boss, Boss)
+      - [x] Implement door spawner generating 1 to 3 doors during replenish phase based on room rules
+      - [x] Randomize door rewards after each round completion to prevent static progression routes
+      - [x] Connect door interaction to RoomManager to trigger room transition and load selected room
+      - [x] User confirmation that doors spawn with correct reward icons and transition rooms on interaction
+    ```md
+    Implements interactive exit doors appearing during the replenish phase. Displays reward category icons overhead and lets the player choose which room path to venture into next.
+    ```
 
 ### [30#ARC] Boon category data structures and categorized reward pools
 

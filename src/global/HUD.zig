@@ -124,7 +124,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             break :menus;
         }
 
-        if (!PauseMenu.isShowing()) {
+        if (!PauseMenu.isShowing() and !BoonMenu.isShowing() and !GameOverMenu.isShowing()) {
             if (Interactable.getFocused()) |focused| {
                 const camera = scene.getCameraById("main");
                 InteractionPrompt.draw(camera, focused);

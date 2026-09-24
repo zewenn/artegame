@@ -10,6 +10,7 @@ var registry: ?lm.List(*Self) = null;
 var focused_item: ?*Self = null;
 var last_update_time: f32 = -1.0;
 
+entity: ?*lm.Entity = null,
 transform: ?*lm.Transform = null,
 interaction_radius: f32 = 96.0,
 action_text: []const u8 = "Interact",
@@ -20,6 +21,7 @@ can_interact: ?CanInteractFn = null,
 on_interact: ?OnInteractFn = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
+    self.entity = entity;
     self.transform = try entity.pullComponent(lm.Transform);
     self.register();
 }

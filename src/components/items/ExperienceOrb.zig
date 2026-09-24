@@ -2,6 +2,7 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
+const AudioManager = @import("../../global/audio/AudioManager.zig");
 
 const Self = @This();
 
@@ -111,10 +112,7 @@ pub fn collect(self: *Self, entity: *lm.Entity) !void {
         stats.current.experience +%= self.experience_value;
     }
 
-    lm.audio.playAdvanced("audio/sfx/pickup.mp3", .{
-        .volume = 0.65,
-        .pitch = lm.randFloat(f32, 0.95, 1.15),
-    }) catch {};
+    AudioManager.playSfxPitched("audio/sfx/pickup.mp3", 0.18, 0.10);
 
     lm.removeEntity(.{ .uuid = entity.uuid });
 }

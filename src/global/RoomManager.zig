@@ -15,6 +15,7 @@ const SaveSystem = @import("save/SaveSystem.zig");
 const spells = @import("../components/Weapons/spells.zig");
 const Hands = @import("../components/Weapons/Hands.zig");
 const MapLoader = @import("map/MapLoader.zig");
+const DoorSpawner = @import("spawner/DoorSpawner.zig");
 
 const Self = @This();
 
@@ -121,12 +122,14 @@ pub fn Awake(self: *Self) !void {
     self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
     self.spawner.setSpawnZones(MapLoader.getSpawnZones());
     const player_spawn = MapLoader.getPlayerSpawnPosition();
-    const exit_door_position = MapLoader.getExitDoorPosition();
 
     try lm.summoning.entities(&.{
         try prefabs.Player(player_spawn),
-        try prefabs.ExitDoor(exit_door_position),
     });
+
+    if (self.state == .replenish) {
+        self.spawnDoorsForReplenish();
+    }
 }
 
 pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
@@ -206,6 +209,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             if (self.player_objectives) |objectives| {
                 _ = try objectives.setSingleObjective("Replenish", replenish_objective_text);
             }
+            self.spawnDoorsForReplenish();
         }
     }
 
@@ -222,6 +226,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
 pub fn End(self: *Self) !void {
     MusicManager.stopGlobal();
+    DoorSpawner.cleanupDoors();
     self.spawner.deinit();
     BoonPool.reset();
     MapLoader.unload();
@@ -271,7 +276,18 @@ fn completeCurrentRoomCombat(self: *Self) !void {
         _ = try objectives.setSingleObjective("Replenish", replenish_objective_text);
     }
 
+    self.spawnDoorsForReplenish();
     self.saveRunState();
+}
+
+fn spawnDoorsForReplenish(self: *Self) void {
+    const player_entity = self.player;
+    const stats_value = if (player_entity) |entity| (if (entity.getComponent(Stats)) |stats| stats.* else null) else null;
+    const attack_value = if (player_entity) |entity| (if (entity.getComponent(player_components.Attack)) |attack| attack.* else null) else null;
+
+    DoorSpawner.spawnReplenishDoors(self.current_room, stats_value, attack_value) catch |err| {
+        std.log.err("Failed to spawn replenish doors: {any}", .{err});
+    };
 }
 
 pub fn spawnBoonDrop(self: *Self, position: lm.Vector2) !void {
@@ -317,6 +333,7 @@ pub fn enterNextRoom() !void {
     const self = get() orelse return;
     if (self.state != .replenish) return;
 
+    DoorSpawner.cleanupDoors();
     cleanupRoomEntities();
     self.current_room += 1;
     const next_room_type = self.getRoomType();
@@ -342,7 +359,7 @@ fn isCleanupTarget(entity: *lm.Entity) bool {
     if (std.mem.eql(u8, entity.id, "background")) return false;
     if (std.mem.eql(u8, entity.id, "map_background")) return false;
     if (std.mem.startsWith(u8, entity.id, "wall_")) return false;
-    if (std.mem.startsWith(u8, entity.id, "exit-door")) return false;
+    if (std.mem.startsWith(u8, entity.id, "exit-door")) return true;
 
     return std.mem.startsWith(u8, entity.id, "projectile") or
         std.mem.startsWith(u8, entity.id, "experience-orb") or

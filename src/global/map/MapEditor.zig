@@ -59,6 +59,7 @@ pub const EditorTool = enum {
     spawn_zone_erase,
     player_spawn,
     exit_door,
+    exit_door_erase,
     eraser,
 };
 
@@ -76,7 +77,7 @@ background_tiles: []u8 = &.{},
 walls: lm.List(WallSegment) = undefined,
 spawn_zones: lm.List(SpawnZoneRecord) = undefined,
 player_spawn_position: lm.Vector2 = .init(1024, 768),
-exit_door_position: lm.Vector2 = .init(1024, 160),
+exit_door_positions: lm.List(lm.Vector2) = undefined,
 
 current_category: EditorCategory = .terrain,
 current_tool: EditorTool = .brush_1x1,
@@ -104,6 +105,7 @@ pub fn Awake(self: *Self) !void {
 
     self.walls = lm.List(WallSegment).init(lm.allocators.generic());
     self.spawn_zones = lm.List(SpawnZoneRecord).init(lm.allocators.generic());
+    self.exit_door_positions = lm.List(lm.Vector2).init(lm.allocators.generic());
 
     const initial_name = "custom_map";
     @memcpy(self.map_name_buffer[0..initial_name.len], initial_name);
@@ -162,6 +164,7 @@ pub fn End(self: *Self) void {
     self.renderer.deinit();
     self.walls.deinit();
     self.spawn_zones.deinit();
+    self.exit_door_positions.deinit();
     if (self.allocator) |alloc| {
         alloc.free(self.background_tiles);
     }
@@ -194,15 +197,16 @@ pub fn resetMapGrid(self: *Self, new_width_tiles: u32, new_height_tiles: u32) !v
 
     self.walls.clearRetainingCapacity();
     self.spawn_zones.clearRetainingCapacity();
+    self.exit_door_positions.clearRetainingCapacity();
 
     self.player_spawn_position = lm.Vec2(
         @as(f32, @floatFromInt(self.width_tiles * 64)) / 2.0,
         @as(f32, @floatFromInt(self.height_tiles * 64)) / 2.0,
     );
-    self.exit_door_position = lm.Vec2(
+    self.exit_door_positions.append(lm.Vec2(
         @as(f32, @floatFromInt(self.width_tiles * 64)) / 2.0,
         160.0,
-    );
+    )) catch {};
 
     self.generatePerimeterWalls();
     self.is_dirty = true;
@@ -271,6 +275,19 @@ pub fn removeSpawnZoneAt(self: *Self, relative_position: lm.Vector2) bool {
     self.is_dirty = true;
     self.status_message = "Spawn zone removed";
     return true;
+}
+
+pub fn findExitDoorIndexAtPosition(self: *Self, relative_position: lm.Vector2) ?usize {
+    const threshold_squared: f32 = (self.tile_size_pixels * 0.5) * (self.tile_size_pixels * 0.5);
+    for (self.exit_door_positions.items(), 0..) |position, door_index| {
+        const delta_x = position.x - relative_position.x;
+        const delta_y = position.y - relative_position.y;
+        const distance_squared = delta_x * delta_x + delta_y * delta_y;
+        if (distance_squared <= threshold_squared) {
+            return door_index;
+        }
+    }
+    return null;
 }
 
 pub fn removeSpawnZoneAtTile(self: *Self, column_index: u32, row_index: u32) bool {
@@ -436,10 +453,31 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
             self.status_message = "Player spawn positioned";
         },
         .exit_door => {
-            const snapped_x = (@as(f32, @floatFromInt(column_index)) + 0.5) * self.tile_size_pixels;
-            const snapped_y = (@as(f32, @floatFromInt(row_index)) + 0.5) * self.tile_size_pixels;
-            self.exit_door_position = lm.Vec2(snapped_x, snapped_y);
-            self.status_message = "Exit door positioned";
+            if (lm.mouse.getButtonDown(.left)) {
+                const snapped_x = (@as(f32, @floatFromInt(column_index)) + 0.5) * self.tile_size_pixels;
+                const snapped_y = (@as(f32, @floatFromInt(row_index)) + 0.5) * self.tile_size_pixels;
+                const target_position = lm.Vec2(snapped_x, snapped_y);
+                if (self.findExitDoorIndexAtPosition(target_position)) |existing_index| {
+                    _ = self.exit_door_positions.swapRemove(existing_index);
+                    self.status_message = "Exit door removed";
+                } else {
+                    self.exit_door_positions.append(target_position) catch {
+                        self.status_message = "Failed to add exit door";
+                        return;
+                    };
+                    self.status_message = "Exit door placed";
+                }
+            }
+        },
+        .exit_door_erase => {
+            if (lm.mouse.getButtonDown(.left)) {
+                const snapped_x = (@as(f32, @floatFromInt(column_index)) + 0.5) * self.tile_size_pixels;
+                const snapped_y = (@as(f32, @floatFromInt(row_index)) + 0.5) * self.tile_size_pixels;
+                if (self.findExitDoorIndexAtPosition(lm.Vec2(snapped_x, snapped_y))) |existing_index| {
+                    _ = self.exit_door_positions.swapRemove(existing_index);
+                    self.status_message = "Exit door erased";
+                }
+            }
         },
     }
 }
@@ -623,10 +661,16 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
     rl.drawCircleV(lm.Vec2(player_world_x, player_world_y), 24.0, rl.Color.gold);
     rl.drawCircleLinesV(lm.Vec2(player_world_x, player_world_y), 26.0, rl.Color.white);
 
-    const door_world_x = top_left.x + self.exit_door_position.x;
-    const door_world_y = top_left.y + self.exit_door_position.y;
-    rl.drawRectangleV(lm.Vec2(door_world_x - 32, door_world_y - 32), lm.Vec2(64, 64), rl.Color.sky_blue);
-    rl.drawRectangleLinesEx(lm.Rect(door_world_x - 32, door_world_y - 32, 64, 64), 2.0, rl.Color.white);
+    for (self.exit_door_positions.items()) |door_position| {
+        const door_world_x = top_left.x + door_position.x;
+        const door_world_y = top_left.y + door_position.y;
+        rl.drawRectangleV(lm.Vec2(door_world_x - 32, door_world_y - 32), lm.Vec2(64, 64), rl.Color.sky_blue);
+        rl.drawRectangleLinesEx(lm.Rect(door_world_x - 32, door_world_y - 32, 64, 64), 2.0, rl.Color.white);
+    }
+
+    if (self.current_tool == .exit_door_erase) {
+        self.drawExitDoorRemovalHighlight(top_left);
+    }
 }
 
 fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
@@ -908,7 +952,8 @@ fn drawEntitiesCategory(self: *Self) void {
         .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
     })({
         self.drawToolButton(.player_spawn, "Set Player Spawn Position");
-        self.drawToolButton(.exit_door, "Set Exit Door Position");
+        self.drawToolButton(.exit_door, "Place/Toggle Exit Door");
+        self.drawToolButton(.exit_door_erase, "Remove Exit Door");
     });
 }
 
@@ -1129,11 +1174,13 @@ pub fn confirmSaveMap(self: *Self) void {
         .position_y = self.player_spawn_position.y,
     }) catch return;
 
-    entities_list.append(EntityRecord{
-        .entity_type = "exit_door",
-        .position_x = self.exit_door_position.x,
-        .position_y = self.exit_door_position.y,
-    }) catch return;
+    for (self.exit_door_positions.items()) |door_position| {
+        entities_list.append(EntityRecord{
+            .entity_type = "exit_door",
+            .position_x = door_position.x,
+            .position_y = door_position.y,
+        }) catch return;
+    }
 
     const map_name = self.map_name_buffer[0..self.map_name_length];
     const map_data = MapData{
@@ -1416,11 +1463,12 @@ fn loadMapFromPath(self: *Self, path: []const u8) void {
         self.spawn_zones.append(zone) catch break;
     }
 
+    self.exit_door_positions.clearRetainingCapacity();
     for (loaded_data.entities) |entity_record| {
         if (std.mem.eql(u8, entity_record.entity_type, "player_spawn")) {
             self.player_spawn_position = lm.Vec2(entity_record.position_x, entity_record.position_y);
         } else if (std.mem.eql(u8, entity_record.entity_type, "exit_door")) {
-            self.exit_door_position = lm.Vec2(entity_record.position_x, entity_record.position_y);
+            self.exit_door_positions.append(lm.Vec2(entity_record.position_x, entity_record.position_y)) catch break;
         }
     }
 
@@ -1442,6 +1490,25 @@ fn drawSpawnZoneRemovalHighlight(self: *Self, top_left: lm.Vector2) void {
     );
     rl.drawRectangleLinesEx(
         lm.Rect(zone_x, zone_y, zone.width_pixels, zone.height_pixels),
+        3.0,
+        rl.Color.red,
+    );
+}
+
+fn drawExitDoorRemovalHighlight(self: *Self, top_left: lm.Vector2) void {
+    const relative_position = self.getRelativeMousePosition() orelse return;
+    const door_index = self.findExitDoorIndexAtPosition(relative_position) orelse return;
+    const door_position = self.exit_door_positions.items()[door_index];
+
+    const door_world_x = top_left.x + door_position.x;
+    const door_world_y = top_left.y + door_position.y;
+
+    rl.drawRectangleRec(
+        lm.Rect(door_world_x - 32, door_world_y - 32, 64, 64),
+        rl.Color{ .r = 255, .g = 40, .b = 40, .a = 120 },
+    );
+    rl.drawRectangleLinesEx(
+        lm.Rect(door_world_x - 32, door_world_y - 32, 64, 64),
         3.0,
         rl.Color.red,
     );
