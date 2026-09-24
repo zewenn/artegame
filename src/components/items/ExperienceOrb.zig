@@ -6,21 +6,20 @@ const AudioManager = @import("../../global/audio/AudioManager.zig");
 
 const Self = @This();
 
+var last_pickup_audio_seconds: f64 = -1.0;
+const min_audio_interval_seconds: f64 = 0.045;
+
 experience_value: usize = 1,
 
 velocity: lm.Vector2 = .init(0, 0),
-deceleration: f32 = 4.0,
+deceleration_rate: f32 = 4.0,
 
-magnet_radius: f32 = 220.0,
-pickup_radius: f32 = 28.0,
+pickup_radius_pixels: f32 = 40.0,
+max_speed_pixels_per_second: f32 = 950.0,
+acceleration_pixels_per_second_squared: f32 = 2400.0,
+current_speed_pixels_per_second: f32 = 120.0,
 
-max_speed: f32 = 650.0,
-acceleration: f32 = 1400.0,
-current_speed: f32 = 0.0,
-
-is_magnetized: bool = false,
-spawn_delay: f32 = 0.1,
-bob_timer: f32 = 0.0,
+spawn_delay_seconds: f32 = 0.08,
 collected: bool = false,
 
 transform: ?*lm.Transform = null,
@@ -48,55 +47,53 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         self.acquirePlayer();
     }
 
-    const dt = lm.time.deltaTime();
+    const delta_seconds = lm.time.deltaTime();
 
     if (self.velocity.x != 0 or self.velocity.y != 0) {
-        transform.position = transform.position.add(lm.vec2ToVec3(
-            self.velocity.multiply(lm.time.deltaTimeVector2()),
-        ));
+        transform.position.x += self.velocity.x * delta_seconds;
+        transform.position.y += self.velocity.y * delta_seconds;
 
-        const decay = @max(0.0, 1.0 - self.deceleration * dt);
-        self.velocity = self.velocity.multiply(.init(decay, decay));
-        if (std.math.hypot(self.velocity.x, self.velocity.y) < 5.0) {
+        const decay = @max(0.0, 1.0 - self.deceleration_rate * delta_seconds);
+        self.velocity.x *= decay;
+        self.velocity.y *= decay;
+        if (self.velocity.x * self.velocity.x + self.velocity.y * self.velocity.y < 25.0) {
             self.velocity = .init(0, 0);
         }
     }
 
-    if (self.spawn_delay > 0) {
-        self.spawn_delay -= dt;
+    if (self.spawn_delay_seconds > 0) {
+        self.spawn_delay_seconds -= delta_seconds;
         return;
     }
 
     const player_transform = self.player_transform orelse return;
-    const player_pos = lm.vec3ToVec2(player_transform.position);
-    const orb_pos = lm.vec3ToVec2(transform.position);
+    const player_position = lm.vec3ToVec2(player_transform.position);
+    const orb_position = lm.vec3ToVec2(transform.position);
 
-    const distance = std.math.hypot(
-        player_pos.x - orb_pos.x,
-        player_pos.y - orb_pos.y,
-    );
+    const delta_x = player_position.x - orb_position.x;
+    const delta_y = player_position.y - orb_position.y;
+    const distance_squared = delta_x * delta_x + delta_y * delta_y;
+    const pickup_radius_squared = self.pickup_radius_pixels * self.pickup_radius_pixels;
 
-    if (self.is_magnetized or distance <= self.magnet_radius) {
-        self.is_magnetized = true;
-
-        if (distance > 0.001) {
-            const direction = player_pos.subtract(orb_pos).normalize();
-            self.current_speed = @min(self.max_speed, self.current_speed + self.acceleration * dt);
-
-            transform.position = transform.position.add(lm.vec2ToVec3(
-                direction
-                    .multiply(lm.time.deltaTimeVector2())
-                    .multiply(.init(self.current_speed, self.current_speed)),
-            ));
-        }
-    } else {
-        self.bob_timer += dt * 3.0;
-        const bob_offset = std.math.sin(self.bob_timer) * 0.25;
-        transform.position.y += bob_offset;
+    if (distance_squared <= pickup_radius_squared) {
+        try self.collect(entity);
+        return;
     }
 
-    if (distance <= self.pickup_radius) {
-        try self.collect(entity);
+    const distance = @sqrt(distance_squared);
+    if (distance > 0.001) {
+        const inverse_distance = 1.0 / distance;
+        const direction_x = delta_x * inverse_distance;
+        const direction_y = delta_y * inverse_distance;
+
+        self.current_speed_pixels_per_second = @min(
+            self.max_speed_pixels_per_second,
+            self.current_speed_pixels_per_second + self.acceleration_pixels_per_second_squared * delta_seconds,
+        );
+
+        const step_distance = self.current_speed_pixels_per_second * delta_seconds;
+        transform.position.x += direction_x * step_distance;
+        transform.position.y += direction_y * step_distance;
     }
 }
 
@@ -112,7 +109,11 @@ pub fn collect(self: *Self, entity: *lm.Entity) !void {
         stats.current.experience +%= self.experience_value;
     }
 
-    AudioManager.playSfxPitched("audio/sfx/pickup.mp3", 0.18, 0.10);
+    const current_time_seconds = lm.time.appTime();
+    if (current_time_seconds - last_pickup_audio_seconds >= min_audio_interval_seconds) {
+        last_pickup_audio_seconds = current_time_seconds;
+        AudioManager.playSfxPitched("audio/sfx/pickup.mp3", 0.18, 0.10);
+    }
 
     lm.removeEntity(.{ .uuid = entity.uuid });
 }

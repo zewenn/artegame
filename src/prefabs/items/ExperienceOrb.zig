@@ -15,11 +15,6 @@ pub fn ExperienceOrb(position: lm.Vector2, experience_value: usize, initial_velo
             .scale = .init(24, 24),
         },
         lm.Renderer.sprite("ui/icons/sleep_icon.png"),
-        lm.RectangleCollider.initConfig(.{
-            .type = .trigger,
-            .transform = .{ .scale = .init(24, 24) },
-            .onCollision = ExperienceOrbComponent.onCollision,
-        }),
         ExperienceOrbComponent{
             .experience_value = experience_value,
             .velocity = initial_velocity,

@@ -141,6 +141,22 @@
 
 ## Done
 
+### [43#ARC] Instant auto-pickup and homing for experience orbs on enemy defeat
+
+  - tags: [performance, experience, orbs, combat]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [x] Enable immediate homing / magnetization on experience orb spawn
+      - [x] Tune homing acceleration and max velocity so orbs reliably catch dashing players
+      - [x] Add sound throttle to prevent audio clipping during mass orb pickups
+      - [x] Optimize orb collider / update loop to minimize frame time
+      - [x] User confirmation that experience orbs fly directly to player and eliminate performance drop
+    ```md
+    Implements immediate homing magnetization for experience orbs upon enemy death, eliminating ground orb accumulation and removing round-end pickup delays.
+    ```
+
+
 ### [31#UIB] Interactive room exit doors with reward category icon overlays
 
   - tags: [ui, doors, interaction, prefabs]
