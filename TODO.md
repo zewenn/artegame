@@ -4,21 +4,6 @@
 
 
 
-### [32#UIS] Dedicated top-of-screen boss health bar HUD component
-
-  - tags: [ui, hud, boss-bar, encounters]
-  - priority: medium
-  - workload: Normal
-  - steps:
-      - [ ] Design top-of-screen boss health bar HUD layout in HUD.zig with boss name and stylized health bar
-      - [ ] Implement entity binding API to link boss bar to active Mini-Boss or Boss entity Stats component
-      - [ ] Hide default overhead health bar on entities currently bound to the top boss bar
-      - [ ] Add smooth health bar animation, damage lag gauge, and defeat fade-out transition
-      - [ ] User confirmation that top-of-screen boss health bar renders cleanly during boss fights
-    ```md
-    UI component for mini-boss and boss encounters. Replaces floating overhead health bars with a prominent screen-top boss health bar displaying boss name and current health percentage.
-    ```
-
 ### [33#ENE] New normal enemy archetypes: Shaman, Magician, Lifeliner, Angler, and Tank
 
   - tags: [enemies, ai, combat, archetypes]
@@ -140,6 +125,23 @@
 
 
 ## Done
+
+### [32#UIS] Dedicated top-of-screen boss health bar HUD component
+
+  - tags: [ui, hud, boss-bar, encounters]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Retain lightweight 64x8 overhead enemy health bar in OverheadUI.zig (overlay removed for performance)
+      - [x] Design top-of-screen boss health bar HUD layout in HUD.zig with boss name and stylized health bar
+      - [x] Implement entity binding API to link boss bar to active Mini-Boss or Boss entity Stats component
+      - [x] Hide default overhead health bar on entities currently bound to the top boss bar
+      - [x] Add smooth health bar animation, damage lag gauge, and defeat fade-out transition
+      - [x] User confirmation that top-of-screen boss health bar renders cleanly during boss fights
+    ```md
+    UI component for mini-boss and boss encounters. Replaces floating overhead health bars with a prominent screen-top boss health bar displaying boss name and current health percentage.
+    ```
+
 
 ### [43#ARC] Instant auto-pickup and homing for experience orbs on enemy defeat
 

@@ -211,6 +211,6 @@ pub fn BossEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Animation{},
         BossPhaseController{},
         Enemy.Death{ .enemy_type = .boss },
-        Enemy.OverheadUI{},
+        Enemy.OverheadUI{ .show_health_bar = false },
     });
 }

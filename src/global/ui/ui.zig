@@ -7,3 +7,4 @@ pub const PauseMenu = @import("PauseMenu.zig");
 pub const OptionsMenu = @import("OptionsMenu.zig");
 pub const GameOverMenu = @import("GameOverMenu.zig");
 pub const PromptBadge = @import("PromptBadge.zig");
+pub const BossBar = @import("BossBar.zig");

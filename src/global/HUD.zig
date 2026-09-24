@@ -18,6 +18,7 @@ pub const BoonMenu = ui.BoonMenu;
 pub const InteractionPrompt = ui.InteractionPrompt;
 pub const PauseMenu = ui.PauseMenu;
 pub const GameOverMenu = ui.GameOverMenu;
+pub const BossBar = ui.BossBar;
 
 pub const MENU_BUTTON_BASE_H: f32 = 48.0;
 pub const MENU_BUTTON_BASE_W: f32 = MENU_BUTTON_BASE_H * 6.0;
@@ -95,11 +96,18 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     ui_scale = calculateUiScale(window_size);
 
+    const delta_seconds = lm.time.deltaTime();
+    BossBar.update(delta_seconds);
+
     round_indicator: {
         const progress = RoomManager.getWaveProgress() orelse break :round_indicator;
         if (progress.round == 0) break :round_indicator;
 
         drawRoundIndicator(progress, self.alloc);
+    }
+
+    if (!PauseMenu.isShowing() and !GameOverMenu.isShowing() and !BoonMenu.isShowing()) {
+        BossBar.draw(self.alloc, ui_scale, scale);
     }
 
     player_stats: {
@@ -143,6 +151,7 @@ pub fn End(self: *Self) void {
     if (self.arena) |*arena| arena.deinit();
     self.arena = null;
     self.alloc = null;
+    BossBar.unbind();
     BoonMenu.hide();
     PauseMenu.hide();
     GameOverMenu.hide();

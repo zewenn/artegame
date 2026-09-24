@@ -1,5 +1,5 @@
 ---
-name: code-style
+name: aesthetic
 description: 'Enforce clean code style and software design principles based on CodeAesthetic: anti-nesting (Never-Nester, max 3 indentation levels), explicit naming without abbreviations, quantities with explicit units, domain-specific organization over utils, minimal coupling over premature abstraction, and self-documenting code. Use when writing, reviewing, or refactoring code.'
 metadata:
   tags: "Code Style, Architecture, Clean Code, Anti-Nesting, Naming, Refactoring"

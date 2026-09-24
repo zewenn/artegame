@@ -102,6 +102,6 @@ pub fn MiniBossEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&mini_boss_abilities, mini_boss_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .mini_boss },
-        Enemy.OverheadUI{},
+        Enemy.OverheadUI{ .show_health_bar = false },
     });
 }

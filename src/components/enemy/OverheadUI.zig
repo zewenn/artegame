@@ -17,6 +17,8 @@ transform: ?*lm.Transform = null,
 camera: ?*lm.Camera = null,
 ui_id: u32 = 0,
 
+show_health_bar: bool = true,
+
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.ui_id = acquireId();
     self.stats = try entity.pullComponent(Stats);
@@ -40,14 +42,17 @@ pub fn Update(self: *Self) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
 
-    const screen_pos = camera.worldToScreenPos(lm.vec3ToVec2(transform.position))
+    const has_effects = if (stats.effects) |effects| effects.items().len > 0 else false;
+    if (!self.show_health_bar and !has_effects) return;
+
+    const screen_position = camera.worldToScreenPos(lm.vec3ToVec2(transform.position))
         .subtract(.init(0, 48));
 
     ui.new(.{
         .id = .IDI("enemy-status-", self.ui_id),
         .floating = .{
             .attach_to = .to_root,
-            .offset = .{ .x = screen_pos.x, .y = screen_pos.y },
+            .offset = .{ .x = screen_position.x, .y = screen_position.y },
             .attach_points = .{
                 .element = .center_bottom,
                 .parent = .left_top,
@@ -59,49 +64,59 @@ pub fn Update(self: *Self) !void {
             .child_gap = 8,
         },
     })({
-        ui.new(.{
-            .id = .IDI("enemy-status-badges-", self.ui_id),
-            .layout = .{
-                .sizing = .{ .h = .fit, .w = .fit },
-                .direction = .left_to_right,
-                .child_alignment = .{ .x = .center },
-                .child_gap = 2,
-            },
-        })(badges: {
-            const effects = stats.effects orelse break :badges;
+        renderStatusBadges(self.ui_id, stats);
+        if (self.show_health_bar) {
+            renderHealthBar(self.ui_id, stats);
+        }
+    });
+}
 
-            for (effects.items(), 0..) |effect, badge_index| {
-                const visual = EffectVisualRegistry.resolve(effect) orelse continue;
-                const icon_path = visual.icon orelse continue;
+fn renderStatusBadges(ui_id: u32, stats: *Stats) void {
+    const effects = stats.effects orelse return;
+    if (effects.items().len == 0) return;
 
-                ui.new(.{
-                    .id = .IDI("status-badge-", (self.ui_id * 16) + @as(u32, @intCast(badge_index))),
-                    .image = ui.image(icon_path, .init(14, 14)) catch .{ .image_data = null },
-                    .layout = .{
-                        .sizing = .{ .w = .fixed(14), .h = .fixed(14) },
-                    },
-                })({});
-            }
-        });
+    ui.new(.{
+        .id = .IDI("enemy-status-badges-", ui_id),
+        .layout = .{
+            .sizing = .{ .h = .fit, .w = .fit },
+            .direction = .left_to_right,
+            .child_alignment = .{ .x = .center },
+            .child_gap = 2,
+        },
+    })({
+        for (effects.items(), 0..) |effect, badge_index| {
+            const visual = EffectVisualRegistry.resolve(effect) orelse continue;
+            const icon_path = visual.icon orelse continue;
 
-        ui.new(.{
-            .id = .IDI("enemy-healthbar-", self.ui_id),
-            .background_color = ui.color(20, 20, 20, 255),
-            .layout = .{
-                .sizing = .{ .h = .fixed(8), .w = .fixed(64) },
-            },
-        })({
             ui.new(.{
-                .id = .IDI("enemy-healthbar-inner-", self.ui_id),
-                .background_color = ui.color(255, 20, 20, 255),
+                .id = .IDI("status-badge-", (ui_id * 16) + @as(u32, @intCast(badge_index))),
+                .image = ui.image(icon_path, .init(14, 14)) catch .{ .image_data = null },
                 .layout = .{
-                    .sizing = .{
-                        .h = .percent(1),
-                        .w = .percent(stats.current.health / stats.max.health),
-                    },
+                    .sizing = .{ .w = .fixed(14), .h = .fixed(14) },
                 },
             })({});
-        });
+        }
+    });
+}
+
+fn renderHealthBar(ui_id: u32, stats: *Stats) void {
+    ui.new(.{
+        .id = .IDI("enemy-healthbar-", ui_id),
+        .background_color = ui.color(20, 20, 20, 255),
+        .layout = .{
+            .sizing = .{ .h = .fixed(8), .w = .fixed(64) },
+        },
+    })({
+        ui.new(.{
+            .id = .IDI("enemy-healthbar-inner-", ui_id),
+            .background_color = ui.color(255, 20, 20, 255),
+            .layout = .{
+                .sizing = .{
+                    .h = .percent(1),
+                    .w = .percent(stats.current.health / stats.max.health),
+                },
+            },
+        })({});
     });
 }
 
@@ -140,3 +155,12 @@ test "OverheadUI shouldRender suppresses when GameOverMenu or PauseMenu is showi
     PauseMenu.hide();
     try std.testing.expect(shouldRender());
 }
+
+test "OverheadUI show_health_bar defaults to true and can be toggled" {
+    var overhead_ui = Self{};
+    try std.testing.expect(overhead_ui.show_health_bar);
+
+    overhead_ui.show_health_bar = false;
+    try std.testing.expect(!overhead_ui.show_health_bar);
+}
+

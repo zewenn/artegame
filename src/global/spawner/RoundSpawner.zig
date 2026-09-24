@@ -4,6 +4,7 @@ const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../audio/SpatialAudio.zig");
 const MapTypes = @import("../map/MapTypes.zig");
 const Stats = @import("../../components/Stats.zig");
+const BossBar = @import("../ui/BossBar.zig");
 
 pub const EnemyType = enum {
     dummy,
@@ -350,6 +351,7 @@ pub fn deinit(self: *Self) void {
     self.spawn_cursor = 0;
     self.active_enemies.deinit();
     self.is_active = false;
+    BossBar.unbind();
 }
 
 pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
@@ -362,6 +364,10 @@ pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
 
     try populateQueue(&self.spawn_queue, config);
     self.active_enemies.clearRetainingCapacity();
+
+    if (profile != .mini_boss and profile != .boss) {
+        BossBar.unbind();
+    }
 
     switch (profile) {
         .tutorial => {
@@ -397,6 +403,7 @@ pub fn removeDefeatedEnemy(self: *Self, uuid: u128) void {
         if (self.active_enemies.items()[index] == uuid) {
             _ = self.active_enemies.swapRemove(index);
             self.killed_enemies += 1;
+            BossBar.onBossDefeated(uuid);
             return;
         }
     }
@@ -410,7 +417,7 @@ pub fn registerSummonedEnemy(self: *Self, uuid: u128) !void {
 
 pub fn applyDynamicStatScaling(enemy: *lm.Entity, enemy_type: EnemyType, round: u32) void {
     if (enemy_type == .dummy) return;
-    const stats = enemy.getComponent(Stats) orelse return;
+    const stats = enemy.getComponent(Stats) orelse (enemy.getComponentUnsafe(Stats).result orelse return);
 
     if (round <= 1) return;
     const round_offset: f32 = @floatFromInt(round - 1);
@@ -472,6 +479,12 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
         };
 
         applyDynamicStatScaling(enemy, enemy_type, self.round);
+
+        if (enemy_type == .mini_boss) {
+            BossBar.bind(enemy, "Corrupted Guardian", .mini_boss);
+        } else if (enemy_type == .boss) {
+            BossBar.bind(enemy, "Abyssal Behemoth", .boss);
+        }
 
         try self.active_enemies.append(enemy.uuid);
         try lm.summoning.entity(enemy);
