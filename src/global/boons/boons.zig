@@ -8,6 +8,7 @@ const spells = @import("../../components/Weapons/spells.zig");
 const Boon = @import("Boon.zig");
 
 pub const BoonPool = @import("BoonPool.zig");
+pub const BoonCategory = @import("BoonCategory.zig");
 
 fn hasSpellSlot0(_: Stats, attack: Attack) bool {
     return attack.equipped_spells[0] != null;
@@ -26,83 +27,704 @@ fn hasGoliathWeapon(_: Stats, attack: Attack) bool {
 }
 
 fn canOfferAshwaganda1(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[1]) |s| {
-        if (std.mem.eql(u8, s.id, "Root") and s.level >= 2) return false;
-    }
+    const equipped_spell = attack.equipped_spells[1] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Root") and equipped_spell.level >= 2) return false;
     return true;
 }
 
 fn canOfferAshwaganda2(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[1]) |s| {
-        if (std.mem.eql(u8, s.id, "Root") and s.level >= 2) return false;
-    }
+    const equipped_spell = attack.equipped_spells[1] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Root") and equipped_spell.level >= 2) return false;
     return true;
 }
 
 fn canOfferAshwaganda3(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[1]) |s| {
-        if (std.mem.eql(u8, s.id, "Root") and s.level >= 4) return false;
-    }
+    const equipped_spell = attack.equipped_spells[1] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Root") and equipped_spell.level >= 4) return false;
     return true;
 }
 
 fn canOfferVitaminMix1(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 5) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Heal") and equipped_spell.level >= 5) return false;
     return true;
 }
 
 fn canOfferVitaminMix2(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 10) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Heal") and equipped_spell.level >= 10) return false;
     return true;
 }
 
 fn canOfferVitaminMix3(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Heal") and s.level >= 25) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Heal") and equipped_spell.level >= 25) return false;
     return true;
 }
 
 fn canOfferCreatine1(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 1) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Goliath") and equipped_spell.level >= 1) return false;
     return true;
 }
 
 fn canOfferCreatine2(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 2) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Goliath") and equipped_spell.level >= 2) return false;
     return true;
 }
 
 fn canOfferCreatine3(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[0]) |s| {
-        if (std.mem.eql(u8, s.id, "Goliath") and s.level >= 5) return false;
-    }
+    const equipped_spell = attack.equipped_spells[0] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Goliath") and equipped_spell.level >= 5) return false;
     return true;
 }
 
 fn canOfferPreWorkout1(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[1]) |s| {
-        if (std.mem.eql(u8, s.id, "Haste") and s.level >= 6) return false;
-    }
+    const equipped_spell = attack.equipped_spells[1] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Haste") and equipped_spell.level >= 6) return false;
     return true;
 }
 
 fn canOfferPreWorkout2(_: Stats, attack: Attack) bool {
-    if (attack.equipped_spells[1]) |s| {
-        if (std.mem.eql(u8, s.id, "Haste") and s.level >= 9) return false;
-    }
+    const equipped_spell = attack.equipped_spells[1] orelse return true;
+    if (std.mem.eql(u8, equipped_spell.id, "Haste") and equipped_spell.level >= 9) return false;
     return true;
 }
 
-pub const all_boons: []const Boon = &.{
+pub const plates_width_speed_boons: []const Boon = &.{
+    .{
+        .id = "goliath_wide_light_rare",
+        .name = "Wide Weight Plate: Light Sweep",
+        .description = "+25% light attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.size.x *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_wide_heavy_rare",
+        .name = "Wide Weight Plate: Heavy Sweep",
+        .description = "+15% heavy attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.size.x *= 1.15;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_wide_dash_rare",
+        .name = "Wide Weight Plate: Dash Sweep",
+        .description = "+10% dash attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.dash_attack.projectile_options.size.x *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_wide_heavy_epic",
+        .name = "Wide Weight Plate: Colossus Slam",
+        .description = "+35% heavy attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.size.x *= 1.35;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_wide_dash_epic",
+        .name = "Wide Weight Plate: Colossus Dash",
+        .description = "+25% dash attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.dash_attack.projectile_options.size.x *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_wide_light_legendary",
+        .name = "Wide Weight Plate: Titan Sweep",
+        .description = "+50% light attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .legendary,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.size.x *= 1.5;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_speed_light_normal",
+        .name = "Aerodynamic Plate: Fast Spin",
+        .description = "+20% light attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.speed *= 1.20;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_speed_heavy_normal",
+        .name = "Aerodynamic Plate: Swift Slam",
+        .description = "+20% heavy attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.speed *= 1.20;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_speed_dash_rare",
+        .name = "Aerodynamic Plate: Ram Velocity",
+        .description = "+25% dash attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.dash_attack.projectile_options.speed *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_speed_all_epic",
+        .name = "Vortex Weight Plate: Hyper Velocity",
+        .description = "+35% all plate attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.speed *= 1.35;
+                    weapon.heavy_attack.projectile_options.speed *= 1.35;
+                    weapon.dash_attack.projectile_options.speed *= 1.35;
+                }
+            }
+        }.cb,
+    },
+};
+
+pub const plates_damage_boons: []const Boon = &.{
+    .{
+        .id = "goliath_pr_light",
+        .name = "New PR: Iron Grip (Weight Plate)",
+        .description = "+10% light attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_pr_heavy",
+        .name = "New PR: Heavy Slam (Weight Plate)",
+        .description = "+10% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_pr_dash",
+        .name = "New PR: Momentum (Weight Plate)",
+        .description = "+10% dash attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.dash_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_damage_light_rare",
+        .name = "Heavyweight Plate: Crushing Grip",
+        .description = "+25% light attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_damage_heavy_rare",
+        .name = "Heavyweight Plate: Brutal Slam",
+        .description = "+25% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_damage_dash_rare",
+        .name = "Heavyweight Plate: Ramming Force",
+        .description = "+25% dash attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.dash_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_damage_heavy_epic",
+        .name = "Iron Fortress: Cataclysmic Slam",
+        .description = "+50% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.50;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "goliath_damage_colossus_legendary",
+        .name = "Colossus of Iron: Maximum Overload",
+        .description = "+75% all plate attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .legendary,
+        .boon_type = .weapon,
+        .condition = hasGoliathWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Goliath")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.75;
+                    weapon.heavy_attack.projectile_options.damage *= 1.75;
+                    weapon.dash_attack.projectile_options.damage *= 1.75;
+                }
+            }
+        }.cb,
+    },
+};
+
+pub const gloves_width_speed_boons: []const Boon = &.{
+    .{
+        .id = "fists_wide_light_rare",
+        .name = "Wide Boxing Glove: Broad Jab",
+        .description = "+25% light attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.size.x *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_wide_heavy_rare",
+        .name = "Wide Boxing Glove: Broad Hook",
+        .description = "+15% heavy attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.size.x *= 1.15;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_wide_dash_rare",
+        .name = "Wide Boxing Glove: Broad Cross",
+        .description = "+10% dash attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.dash_attack.projectile_options.size.x *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_wide_heavy_epic",
+        .name = "Wide Boxing Glove: Giant Hook",
+        .description = "+35% heavy attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.size.x *= 1.35;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_wide_dash_epic",
+        .name = "Wide Boxing Glove: Giant Cross",
+        .description = "+25% dash attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.dash_attack.projectile_options.size.x *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_wide_light_legendary",
+        .name = "Wide Boxing Glove: Titan Jab",
+        .description = "+50% light attack width",
+        .icon = "items/blueberry.png",
+        .rarity = .legendary,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.size.x *= 1.5;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_speed_jab_normal",
+        .name = "Speed Bag Training: Rapid Jab",
+        .description = "+20% light attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.speed *= 1.20;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_speed_hook_normal",
+        .name = "Speed Bag Training: Whiplash Hook",
+        .description = "+20% heavy attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.speed *= 1.20;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_speed_cross_rare",
+        .name = "Lightning Step: Flash Cross",
+        .description = "+25% dash attack projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.dash_attack.projectile_options.speed *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_speed_all_epic",
+        .name = "Mach Punch: Flurry Velocity",
+        .description = "+35% all boxing glove projectile speed",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.speed *= 1.35;
+                    weapon.heavy_attack.projectile_options.speed *= 1.35;
+                    weapon.dash_attack.projectile_options.speed *= 1.35;
+                }
+            }
+        }.cb,
+    },
+};
+
+pub const gloves_damage_boons: []const Boon = &.{
+    .{
+        .id = "fists_upg_light",
+        .name = "Boxing Glove: Jab Upgrade",
+        .description = "+10% light attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_upg_heavy",
+        .name = "Boxing Glove: Haymaker Upgrade",
+        .description = "+10% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_upg_dash",
+        .name = "Boxing Glove: Cross Upgrade",
+        .description = "+10% dash attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .normal,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.dash_attack.projectile_options.damage *= 1.1;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_damage_light_rare",
+        .name = "Reinforced Leather: Lead Jab",
+        .description = "+25% light attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_damage_heavy_rare",
+        .name = "Reinforced Leather: Sledgehammer Hook",
+        .description = "+25% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_damage_dash_rare",
+        .name = "Reinforced Leather: Bullet Cross",
+        .description = "+25% dash attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .rare,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.dash_attack.projectile_options.damage *= 1.25;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_damage_heavy_epic",
+        .name = "Knockout King: Thunderous Haymaker",
+        .description = "+50% heavy attack damage",
+        .icon = "items/blueberry.png",
+        .rarity = .epic,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.heavy_attack.projectile_options.damage *= 1.50;
+                }
+            }
+        }.cb,
+    },
+    .{
+        .id = "fists_damage_champion_legendary",
+        .name = "Undisputed Champion: Golden Gloves",
+        .description = "+75% all boxing glove damage",
+        .icon = "items/blueberry.png",
+        .rarity = .legendary,
+        .boon_type = .weapon,
+        .condition = hasFistsWeapon,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.getWeaponById("Fists")) |weapon| {
+                    weapon.light_attack.projectile_options.damage *= 1.75;
+                    weapon.heavy_attack.projectile_options.damage *= 1.75;
+                    weapon.dash_attack.projectile_options.damage *= 1.75;
+                }
+            }
+        }.cb,
+    },
+};
+
+pub const new_supplements_boons: []const Boon = &.{
     .{
         .id = "ashwaganda_1",
         .name = "Ashwaganda",
@@ -113,14 +735,16 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferAshwaganda1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.root;
-                    s.level = if (att.equipped_spells[1]) |curr|
-                        if (std.mem.eql(u8, curr.id, "Root")) @max(curr.level + 1, 2) else 1
-                    else
-                        1;
-                    att.equipped_spells[1] = s;
+                const attack_component = attack orelse return;
+                var spell_instance = spells.root;
+                var root_level: u32 = 1;
+                if (attack_component.equipped_spells[1]) |current_spell| {
+                    if (std.mem.eql(u8, current_spell.id, "Root")) {
+                        root_level = @max(current_spell.level + 1, 2);
+                    }
                 }
+                spell_instance.level = root_level;
+                attack_component.equipped_spells[1] = spell_instance;
             }
         }.cb,
     },
@@ -134,11 +758,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferVitaminMix1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.heal;
-                    s.level = 5;
-                    att.equipped_spells[0] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.heal;
+                spell_instance.level = 5;
+                attack_component.equipped_spells[0] = spell_instance;
             }
         }.cb,
     },
@@ -152,43 +775,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferCreatine1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.goliath;
-                    s.level = 1;
-                    att.equipped_spells[0] = s;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "left_spell_upg_1",
-        .name = "Left Spell Upgrade",
-        .description = "+1 level",
-        .icon = "items/banana.png",
-        .rarity = .normal,
-        .boon_type = .spell,
-        .condition = hasSpellSlot0,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[0]) |*s| s.level += 1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "right_spell_upg_1",
-        .name = "Right Spell Upgrade",
-        .description = "+1 level",
-        .icon = "items/banana.png",
-        .rarity = .normal,
-        .boon_type = .spell,
-        .condition = hasSpellSlot1,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[1]) |*s| s.level += 1;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.goliath;
+                spell_instance.level = 1;
+                attack_component.equipped_spells[0] = spell_instance;
             }
         }.cb,
     },
@@ -202,11 +792,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferPreWorkout1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.haste;
-                    s.level = 6;
-                    att.equipped_spells[1] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.haste;
+                spell_instance.level = 6;
+                attack_component.equipped_spells[1] = spell_instance;
             }
         }.cb,
     },
@@ -220,11 +809,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferAshwaganda2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.root;
-                    s.level = 2;
-                    att.equipped_spells[1] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.root;
+                spell_instance.level = 2;
+                attack_component.equipped_spells[1] = spell_instance;
             }
         }.cb,
     },
@@ -238,11 +826,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferVitaminMix2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.heal;
-                    s.level = 10;
-                    att.equipped_spells[0] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.heal;
+                spell_instance.level = 10;
+                attack_component.equipped_spells[0] = spell_instance;
             }
         }.cb,
     },
@@ -256,75 +843,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferCreatine2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.goliath;
-                    s.level = 2;
-                    att.equipped_spells[0] = s;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "left_spell_upg_2",
-        .name = "Left Spell Upgrade (+2)",
-        .description = "+2 levels",
-        .icon = "items/banana.png",
-        .rarity = .rare,
-        .boon_type = .spell,
-        .condition = hasSpellSlot0,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[0]) |*s| s.level += 2;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "right_spell_upg_2",
-        .name = "Right Spell Upgrade (+2)",
-        .description = "+2 levels",
-        .icon = "items/banana.png",
-        .rarity = .rare,
-        .boon_type = .spell,
-        .condition = hasSpellSlot1,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[1]) |*s| s.level += 2;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "left_spell_upg_3",
-        .name = "Left Spell Upgrade (+3)",
-        .description = "+3 levels",
-        .icon = "items/banana.png",
-        .rarity = .epic,
-        .boon_type = .spell,
-        .condition = hasSpellSlot0,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[0]) |*s| s.level += 3;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "right_spell_upg_3",
-        .name = "Right Spell Upgrade (+3)",
-        .description = "+3 levels",
-        .icon = "items/banana.png",
-        .rarity = .epic,
-        .boon_type = .spell,
-        .condition = hasSpellSlot1,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[1]) |*s| s.level += 3;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.goliath;
+                spell_instance.level = 2;
+                attack_component.equipped_spells[0] = spell_instance;
             }
         }.cb,
     },
@@ -338,11 +860,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferPreWorkout2,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.haste;
-                    s.level = 9;
-                    att.equipped_spells[1] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.haste;
+                spell_instance.level = 9;
+                attack_component.equipped_spells[1] = spell_instance;
             }
         }.cb,
     },
@@ -356,11 +877,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferAshwaganda3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.root;
-                    s.level = 4;
-                    att.equipped_spells[1] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.root;
+                spell_instance.level = 4;
+                attack_component.equipped_spells[1] = spell_instance;
             }
         }.cb,
     },
@@ -374,43 +894,10 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferCreatine3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.goliath;
-                    s.level = 5;
-                    att.equipped_spells[0] = s;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "left_spell_upg_5",
-        .name = "Left Spell Upgrade (+5)",
-        .description = "+5 levels",
-        .icon = "items/banana.png",
-        .rarity = .legendary,
-        .boon_type = .spell,
-        .condition = hasSpellSlot0,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[0]) |*s| s.level += 5;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "right_spell_upg_5",
-        .name = "Right Spell Upgrade (+5)",
-        .description = "+5 levels",
-        .icon = "items/banana.png",
-        .rarity = .legendary,
-        .boon_type = .spell,
-        .condition = hasSpellSlot1,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[1]) |*s| s.level += 5;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.goliath;
+                spell_instance.level = 5;
+                attack_component.equipped_spells[0] = spell_instance;
             }
         }.cb,
     },
@@ -424,11 +911,133 @@ pub const all_boons: []const Boon = &.{
         .condition = canOfferVitaminMix3,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    var s = spells.heal;
-                    s.level = 25;
-                    att.equipped_spells[0] = s;
-                }
+                const attack_component = attack orelse return;
+                var spell_instance = spells.heal;
+                spell_instance.level = 25;
+                attack_component.equipped_spells[0] = spell_instance;
+            }
+        }.cb,
+    },
+};
+
+pub const supplement_upgrades_boons: []const Boon = &.{
+    .{
+        .id = "left_spell_upg_1",
+        .name = "Left Spell Upgrade",
+        .description = "+1 level",
+        .icon = "items/banana.png",
+        .rarity = .normal,
+        .boon_type = .spell,
+        .condition = hasSpellSlot0,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[0]) |*spell_slot| spell_slot.level += 1;
+            }
+        }.cb,
+    },
+    .{
+        .id = "right_spell_upg_1",
+        .name = "Right Spell Upgrade",
+        .description = "+1 level",
+        .icon = "items/banana.png",
+        .rarity = .normal,
+        .boon_type = .spell,
+        .condition = hasSpellSlot1,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[1]) |*spell_slot| spell_slot.level += 1;
+            }
+        }.cb,
+    },
+    .{
+        .id = "left_spell_upg_2",
+        .name = "Left Spell Upgrade (+2)",
+        .description = "+2 levels",
+        .icon = "items/banana.png",
+        .rarity = .rare,
+        .boon_type = .spell,
+        .condition = hasSpellSlot0,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[0]) |*spell_slot| spell_slot.level += 2;
+            }
+        }.cb,
+    },
+    .{
+        .id = "right_spell_upg_2",
+        .name = "Right Spell Upgrade (+2)",
+        .description = "+2 levels",
+        .icon = "items/banana.png",
+        .rarity = .rare,
+        .boon_type = .spell,
+        .condition = hasSpellSlot1,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[1]) |*spell_slot| spell_slot.level += 2;
+            }
+        }.cb,
+    },
+    .{
+        .id = "left_spell_upg_3",
+        .name = "Left Spell Upgrade (+3)",
+        .description = "+3 levels",
+        .icon = "items/banana.png",
+        .rarity = .epic,
+        .boon_type = .spell,
+        .condition = hasSpellSlot0,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[0]) |*spell_slot| spell_slot.level += 3;
+            }
+        }.cb,
+    },
+    .{
+        .id = "right_spell_upg_3",
+        .name = "Right Spell Upgrade (+3)",
+        .description = "+3 levels",
+        .icon = "items/banana.png",
+        .rarity = .epic,
+        .boon_type = .spell,
+        .condition = hasSpellSlot1,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[1]) |*spell_slot| spell_slot.level += 3;
+            }
+        }.cb,
+    },
+    .{
+        .id = "left_spell_upg_5",
+        .name = "Left Spell Upgrade (+5)",
+        .description = "+5 levels",
+        .icon = "items/banana.png",
+        .rarity = .legendary,
+        .boon_type = .spell,
+        .condition = hasSpellSlot0,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[0]) |*spell_slot| spell_slot.level += 5;
+            }
+        }.cb,
+    },
+    .{
+        .id = "right_spell_upg_5",
+        .name = "Right Spell Upgrade (+5)",
+        .description = "+5 levels",
+        .icon = "items/banana.png",
+        .rarity = .legendary,
+        .boon_type = .spell,
+        .condition = hasSpellSlot1,
+        .callback = struct {
+            pub fn cb(_: *Stats, attack: ?*Attack) void {
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[1]) |*spell_slot| spell_slot.level += 5;
             }
         }.cb,
     },
@@ -442,9 +1051,8 @@ pub const all_boons: []const Boon = &.{
         .condition = hasSpellSlot0,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[0]) |*s| s.level += 7;
-                }
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[0]) |*spell_slot| spell_slot.level += 7;
             }
         }.cb,
     },
@@ -458,13 +1066,14 @@ pub const all_boons: []const Boon = &.{
         .condition = hasSpellSlot1,
         .callback = struct {
             pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.equipped_spells[1]) |*s| s.level += 7;
-                }
+                const attack_component = attack orelse return;
+                if (attack_component.equipped_spells[1]) |*spell_slot| spell_slot.level += 7;
             }
         }.cb,
     },
+};
 
+pub const vitality_boons: []const Boon = &.{
     .{
         .id = "underpass_gyros",
         .name = "Underpass Gyros",
@@ -504,6 +1113,20 @@ pub const all_boons: []const Boon = &.{
             pub fn cb(stats: *Stats, _: ?*Attack) void {
                 stats.max.health += 25;
                 stats.current.health += 25;
+            }
+        }.cb,
+    },
+    .{
+        .id = "energy_gel_normal",
+        .name = "Energy Gel",
+        .description = "+25 max stamina",
+        .icon = "items/strawberry.png",
+        .rarity = .normal,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.max.stamina += 25;
+                stats.current.stamina += 25;
             }
         }.cb,
     },
@@ -564,6 +1187,50 @@ pub const all_boons: []const Boon = &.{
         }.cb,
     },
     .{
+        .id = "caffeine_powder_rare",
+        .name = "Pure Caffeine Powder",
+        .description = "+50 max stamina\n+0.2 attack speed",
+        .icon = "items/strawberry.png",
+        .rarity = .rare,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.max.stamina += 50;
+                stats.current.stamina += 50;
+                stats.current.attack_speed += 0.2;
+                stats.max.attack_speed += 0.2;
+            }
+        }.cb,
+    },
+    .{
+        .id = "focus_supplement_rare",
+        .name = "Focus Formula",
+        .description = "+10% critical hit chance",
+        .icon = "items/strawberry.png",
+        .rarity = .rare,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.current.crit_chance += 0.10;
+                stats.max.crit_chance += 0.10;
+            }
+        }.cb,
+    },
+    .{
+        .id = "electrolytes_rare",
+        .name = "Electrolyte Surge",
+        .description = "+50% critical damage multiplier",
+        .icon = "items/strawberry.png",
+        .rarity = .rare,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.current.crit_damage_multiplier += 0.50;
+                stats.max.crit_damage_multiplier += 0.50;
+            }
+        }.cb,
+    },
+    .{
         .id = "trenbolone_acetate",
         .name = "Trenbolone Acetate",
         .description = "+100 max health.",
@@ -574,6 +1241,34 @@ pub const all_boons: []const Boon = &.{
             pub fn cb(stats: *Stats, _: ?*Attack) void {
                 stats.max.health += 100;
                 stats.current.health += 100;
+            }
+        }.cb,
+    },
+    .{
+        .id = "nootropic_blend_epic",
+        .name = "Nootropic Mind Matrix",
+        .description = "+20% critical hit chance",
+        .icon = "items/strawberry.png",
+        .rarity = .epic,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.current.crit_chance += 0.20;
+                stats.max.crit_chance += 0.20;
+            }
+        }.cb,
+    },
+    .{
+        .id = "adrenochrome_epic",
+        .name = "Adrenaline Infusion",
+        .description = "+100% critical damage multiplier",
+        .icon = "items/strawberry.png",
+        .rarity = .epic,
+        .boon_type = .stat,
+        .callback = struct {
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.current.crit_damage_multiplier += 1.00;
+                stats.max.crit_damage_multiplier += 1.00;
             }
         }.cb,
     },
@@ -612,305 +1307,38 @@ pub const all_boons: []const Boon = &.{
             }
         }.cb,
     },
-
     .{
-        .id = "goliath_pr_light",
-        .name = "New PR: Iron Grip (Weight Plate)",
-        .description = "+10% light attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.light_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_pr_heavy",
-        .name = "New PR: Heavy Slam (Weight Plate)",
-        .description = "+10% heavy attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.heavy_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_pr_dash",
-        .name = "New PR: Momentum (Weight Plate)",
-        .description = "+10% dash attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.dash_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_upg_light",
-        .name = "Boxing Glove: Jab Upgrade",
-        .description = "+10% light attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.light_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_upg_heavy",
-        .name = "Boxing Glove: Haymaker Upgrade",
-        .description = "+10% heavy attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.heavy_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_upg_dash",
-        .name = "Boxing Glove: Cross Upgrade",
-        .description = "+10% dash attack damage",
-        .icon = "items/blueberry.png",
-        .rarity = .normal,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.dash_attack.projectile_options.damage *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_light_rare",
-        .name = "Wide Weight Plate: Light Sweep",
-        .description = "+25% light attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.light_attack.projectile_options.size.x *= 1.25;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_light_rare",
-        .name = "Wide Boxing Glove: Broad Jab",
-        .description = "+25% light attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.light_attack.projectile_options.size.x *= 1.25;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_heavy_rare",
-        .name = "Wide Weight Plate: Heavy Sweep",
-        .description = "+15% heavy attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.heavy_attack.projectile_options.size.x *= 1.15;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_heavy_rare",
-        .name = "Wide Boxing Glove: Broad Hook",
-        .description = "+15% heavy attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.heavy_attack.projectile_options.size.x *= 1.15;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_dash_rare",
-        .name = "Wide Weight Plate: Dash Sweep",
-        .description = "+10% dash attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.dash_attack.projectile_options.size.x *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_dash_rare",
-        .name = "Wide Boxing Glove: Broad Cross",
-        .description = "+10% dash attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .rare,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.dash_attack.projectile_options.size.x *= 1.1;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_heavy_epic",
-        .name = "Wide Weight Plate: Colossus Slam",
-        .description = "+35% heavy attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .epic,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.heavy_attack.projectile_options.size.x *= 1.35;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_heavy_epic",
-        .name = "Wide Boxing Glove: Giant Hook",
-        .description = "+35% heavy attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .epic,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.heavy_attack.projectile_options.size.x *= 1.35;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_dash_epic",
-        .name = "Wide Weight Plate: Colossus Dash",
-        .description = "+25% dash attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .epic,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.dash_attack.projectile_options.size.x *= 1.25;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_dash_epic",
-        .name = "Wide Boxing Glove: Giant Cross",
-        .description = "+25% dash attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .epic,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.dash_attack.projectile_options.size.x *= 1.25;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "goliath_wide_light_legendary",
-        .name = "Wide Weight Plate: Titan Sweep",
-        .description = "+50% light attack width",
-        .icon = "items/blueberry.png",
+        .id = "apex_focus_legendary",
+        .name = "Apex Flow State",
+        .description = "+30% critical hit chance",
+        .icon = "items/strawberry.png",
         .rarity = .legendary,
-        .boon_type = .weapon,
-        .condition = hasGoliathWeapon,
+        .boon_type = .stat,
         .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Goliath")) |w| w.light_attack.projectile_options.size.x *= 1.5;
-                }
-            }
-        }.cb,
-    },
-    .{
-        .id = "fists_wide_light_legendary",
-        .name = "Wide Boxing Glove: Titan Jab",
-        .description = "+50% light attack width",
-        .icon = "items/blueberry.png",
-        .rarity = .legendary,
-        .boon_type = .weapon,
-        .condition = hasFistsWeapon,
-        .callback = struct {
-            pub fn cb(_: *Stats, attack: ?*Attack) void {
-                if (attack) |att| {
-                    if (att.getWeaponById("Fists")) |w| w.light_attack.projectile_options.size.x *= 1.5;
-                }
+            pub fn cb(stats: *Stats, _: ?*Attack) void {
+                stats.current.crit_chance += 0.30;
+                stats.max.crit_chance += 0.30;
             }
         }.cb,
     },
 };
 
+pub const all_boons: []const Boon = plates_width_speed_boons ++
+    plates_damage_boons ++
+    gloves_width_speed_boons ++
+    gloves_damage_boons ++
+    new_supplements_boons ++
+    supplement_upgrades_boons ++
+    vitality_boons;
+
 test "all boons have unique IDs and non-empty metadata" {
-    for (all_boons, 0..) |b1, i| {
-        try std.testing.expect(b1.id.len > 0);
-        try std.testing.expect(b1.name.len > 0);
-        for (all_boons[i + 1 ..]) |b2| {
-            try std.testing.expect(!std.mem.eql(u8, b1.id, b2.id));
-            try std.testing.expect(!std.mem.eql(u8, b1.name, b2.name));
-            try std.testing.expect(!b1.eql(b2));
+    for (all_boons, 0..) |boon_first, outer_index| {
+        try std.testing.expect(boon_first.id.len > 0);
+        try std.testing.expect(boon_first.name.len > 0);
+        for (all_boons[outer_index + 1 ..]) |boon_second| {
+            try std.testing.expect(!std.mem.eql(u8, boon_first.id, boon_second.id));
+            try std.testing.expect(!std.mem.eql(u8, boon_first.name, boon_second.name));
+            try std.testing.expect(!boon_first.eql(boon_second));
         }
     }
 }

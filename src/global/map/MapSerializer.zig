@@ -6,7 +6,6 @@ const WallSegment = MapTypes.WallSegment;
 const SpawnZoneRecord = MapTypes.SpawnZoneRecord;
 const EntityRecord = MapTypes.EntityRecord;
 
-/// Serializes MapData to an allocated JSON string.
 pub fn serializeToJson(allocator: std.mem.Allocator, map_data: MapData) ![]const u8 {
     return try std.fmt.allocPrint(
         allocator,
@@ -15,7 +14,6 @@ pub fn serializeToJson(allocator: std.mem.Allocator, map_data: MapData) ![]const
     );
 }
 
-/// Deserializes a JSON string into MapData using the provided arena or allocator.
 pub fn deserializeFromJson(allocator: std.mem.Allocator, json_content: []const u8) !MapData {
     const parsed = try std.json.parseFromSlice(
         MapData,
@@ -29,7 +27,6 @@ pub fn deserializeFromJson(allocator: std.mem.Allocator, json_content: []const u
     return parsed.value;
 }
 
-/// Resolves an asset-relative map file path (e.g. "maps/arena_normal.json").
 pub fn resolveMapPathAlloc(allocator: std.mem.Allocator, relative_map_path: []const u8) ![]const u8 {
     const resolved_path = lm.assets.files.getFilePath(relative_map_path) catch {
         return try allocator.dupe(u8, relative_map_path);
@@ -37,7 +34,6 @@ pub fn resolveMapPathAlloc(allocator: std.mem.Allocator, relative_map_path: []co
     return resolved_path;
 }
 
-/// Saves MapData to an asset file.
 pub fn saveToFile(allocator: std.mem.Allocator, relative_map_path: []const u8, map_data: MapData) !void {
     const io = lm.io.singleThreaded();
     const full_path = try resolveMapPathAlloc(allocator, relative_map_path);
@@ -60,7 +56,6 @@ pub fn saveToFile(allocator: std.mem.Allocator, relative_map_path: []const u8, m
     try writer.flush();
 }
 
-/// Loads MapData from an asset file into an allocated MapData structure.
 pub fn loadFromFile(allocator: std.mem.Allocator, relative_map_path: []const u8) !MapData {
     const file_data = lm.assets.files.getData(relative_map_path) catch |err| blk: {
         if (std.mem.eql(u8, relative_map_path, "maps/arena_normal.json")) {

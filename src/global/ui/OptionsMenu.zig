@@ -37,8 +37,6 @@ pub fn reset() void {
     just_opened = true;
 }
 
-/// Renders the shared Options & Settings panel.
-/// Returns `true` if the player activated the BACK action (via button click, Enter, Esc, or Gamepad B).
 pub fn draw(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) bool {
     const should_exit = if (just_opened) should_exit: {
         just_opened = false;
@@ -108,10 +106,6 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) b
 
     return false;
 }
-
-// --------------------------------------------------------------------------------------------------
-// Tabs & Content
-// --------------------------------------------------------------------------------------------------
 
 fn drawOptionsTabs(ui_scale: f32) void {
     const tab_h = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
@@ -697,10 +691,6 @@ fn drawBackButton(ui_scale: f32) bool {
     return clicked;
 }
 
-// --------------------------------------------------------------------------------------------------
-// Input & State Handling
-// --------------------------------------------------------------------------------------------------
-
 fn handleInput() bool {
     DevicePrompts.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
@@ -868,10 +858,6 @@ pub fn toggleFullscreenMode() void {
     lm.window.fullscreen.toggle();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.05);
 }
-
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
 
 test "OptionsMenu tab cycling and back index resolution" {
     reset();

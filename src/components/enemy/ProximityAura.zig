@@ -128,7 +128,7 @@ fn updateProximitySlow(self: *Self, player_stats: *Stats, distance_pixels: f32) 
             player_stats.addEffect(.{
                 .id = "proximity_aura_slow",
                 .effect_type = .slow,
-                .duration = 0.0, // Continuous until removed
+                .duration = 0.0,
                 .value = config.slow_strength,
                 .on_enable = struct {
                     pub fn onEnable(s: *Stats) void {

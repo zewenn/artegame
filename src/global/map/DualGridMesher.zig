@@ -14,12 +14,6 @@ pub const SheetCoordinate = struct {
     }
 };
 
-/// Converts prime-factor dual-grid score to (column, row) coordinate on 4x4 tilesheet.
-/// Conforms to tilemap_mapping.md:
-/// Row 0: sw (5), nese (21), nwswse (70), swse (35)
-/// Row 1: nwse (14), neswse (105), nwneswse (210), nwnesw (30)
-/// Row 2: ne (3), nwne (6), nwnese (42), nwsw (10)
-/// Row 3: empty, se (7), nesw (15), nw (2)
 pub fn scoreToSheetCoordinate(score: usize) ?SheetCoordinate {
     return switch (score) {
         5 => SheetCoordinate{ .column_index = 0, .row_index = 0 },
@@ -45,8 +39,6 @@ pub fn scoreToSheetCoordinate(score: usize) ?SheetCoordinate {
     };
 }
 
-/// Evaluates dual-grid corner scoring for each terrain layer at a given quad intersection.
-/// Returns array of scores per terrain type.
 pub fn calculateQuadScores(
     north_west: u8,
     north_east: u8,
@@ -81,7 +73,6 @@ pub fn calculateQuadScores(
     }
 
     if (lowest_terrain_index < out_scores.len) {
-        // Base terrain forms solid base under overlay transitions
         out_scores[lowest_terrain_index] = 2 * 3 * 5 * 7;
     }
 }
@@ -108,10 +99,10 @@ test "DualGridMesher calculateQuadScores solid base" {
 
 test "DualGridMesher calculateQuadScores transition" {
     var scores: [2]usize = undefined;
-    // 3 corners stone (0), south-east carpet (1)
+
     calculateQuadScores(0, 0, 0, 1, &scores);
-    // Stone is lowest so it becomes solid base (210)
+
     try std.testing.expectEqual(@as(usize, 210), scores[0]);
-    // Carpet is SE corner only (prime 7)
+
     try std.testing.expectEqual(@as(usize, 7), scores[1]);
 }

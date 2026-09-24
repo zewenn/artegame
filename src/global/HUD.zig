@@ -37,8 +37,6 @@ pub fn getUtilityButtonSprite(is_active: bool) []const u8 {
     return if (is_active) UTILITY_BUTTON_HOVER_SPRITE else UTILITY_BUTTON_SPRITE;
 }
 
-/// Calculates crisp integer scaling factor relative to 1280x720 base resolution.
-/// Ensures pixel art UI sprites scale cleanly by integer multipliers (1x, 2x, 3x, etc.).
 pub fn calculateUiScale(win_size: lm.Vector2) f32 {
     const scale_x = win_size.x / 1280.0;
     const scale_y = win_size.y / 720.0;
@@ -76,7 +74,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player_attack = player.getComponent(Attack);
     }
 
-    // Defeat detection: trigger Game Over when player health <= 0
     if (self.player_stats) |stats| {
         if (stats.current.health <= 0 and !GameOverMenu.isShowing()) {
             BoonMenu.hide();
@@ -86,7 +83,6 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    // Suppress all in-game HUD rendering when Game Over is active
     if (GameOverMenu.isShowing()) {
         GameOverMenu.draw(self.alloc);
         return;
@@ -224,34 +220,25 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
 }
 
 test "HUD.calculateUiScale integer scaling" {
-    // 720p base resolution -> 1.0x
     try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
 
-    // 1080p (1.5x ratio) -> 1.0x floor
     try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
 
-    // 1440p (2.0x ratio) -> 2.0x
     try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
 
-    // 4K (3.0x ratio) -> 3.0x
     try std.testing.expectEqual(@as(f32, 3.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
 
-    // Ultrawide 1080p (2560x1080) -> limited by vertical scale (1080/720 = 1.5 -> 1.0x)
     try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
 
-    // Ultrawide 1440p (3440x1440) -> limited by vertical scale (1440/720 = 2.0 -> 2.0x)
     try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
 
-    // Small sub-720p window (e.g. 800x600) -> clamped to 1.0x minimum
     try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 800, .y = 600 }));
 }
 
 test "UI button base aspect ratios" {
-    // Menu item ratio: exactly 6:1 with 48px base height
     try std.testing.expectEqual(@as(f32, 48.0), MENU_BUTTON_BASE_H);
     try std.testing.expectEqual(@as(f32, 6.0), MENU_BUTTON_BASE_W / MENU_BUTTON_BASE_H);
 
-    // Utility button ratio: exactly 4:1 with dynamic base height
     try std.testing.expectEqual(@as(f32, 24.0), UTILITY_BUTTON_BASE_H);
     try std.testing.expectEqual(@as(f32, 4.0), UTILITY_BUTTON_BASE_W / UTILITY_BUTTON_BASE_H);
 }
@@ -262,4 +249,3 @@ test "UI button sprites idle and hover variants" {
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button1.png", getUtilityButtonSprite(false));
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button2.png", getUtilityButtonSprite(true));
 }
-

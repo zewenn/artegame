@@ -6,6 +6,7 @@ const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("../boons/Boon.zig");
 const BoonPool = @import("../boons/BoonPool.zig");
+const BoonCategory = @import("../boons/BoonCategory.zig");
 const HUD = @import("../HUD.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
@@ -32,28 +33,28 @@ pub fn findNextAvailableIndex(current: usize, direction: i32, slot_array: []cons
     if (num_cards == 0) return 0;
 
     if (direction > 0) {
-        var i = current + 1;
-        while (i < num_cards) : (i += 1) {
-            if (!slot_array[i].is_purchased) return i;
+        var search_index = current + 1;
+        while (search_index < num_cards) : (search_index += 1) {
+            if (!slot_array[search_index].is_purchased) return search_index;
         }
-        var j: usize = 0;
-        while (j <= current and j < num_cards) : (j += 1) {
-            if (!slot_array[j].is_purchased) return j;
+        var wrap_index: usize = 0;
+        while (wrap_index <= current and wrap_index < num_cards) : (wrap_index += 1) {
+            if (!slot_array[wrap_index].is_purchased) return wrap_index;
         }
         return close_index;
     } else {
         if (current > 0) {
-            var i = current - 1;
+            var search_index = current - 1;
             while (true) {
-                if (!slot_array[i].is_purchased) return i;
-                if (i == 0) break;
-                i -= 1;
+                if (!slot_array[search_index].is_purchased) return search_index;
+                if (search_index == 0) break;
+                search_index -= 1;
             }
         }
-        var j = num_cards;
-        while (j > current) {
-            j -= 1;
-            if (!slot_array[j].is_purchased) return j;
+        var wrap_index = num_cards;
+        while (wrap_index > current) {
+            wrap_index -= 1;
+            if (!slot_array[wrap_index].is_purchased) return wrap_index;
         }
         return close_index;
     }
@@ -76,8 +77,8 @@ pub fn isShowing() bool {
     return slots != null;
 }
 
-fn selectBoon(slot_index: usize, stats_opt: ?*Stats, attack_opt: ?*Attack) void {
-    const stats = stats_opt orelse return;
+fn selectBoon(slot_index: usize, maybe_stats: ?*Stats, maybe_attack: ?*Attack) void {
+    const stats = maybe_stats orelse return;
     const current_slots = slots orelse return;
     if (slot_index >= current_slots.len) return;
     const slot = current_slots[slot_index];
@@ -94,11 +95,11 @@ fn selectBoon(slot_index: usize, stats_opt: ?*Stats, attack_opt: ?*Attack) void 
     stats.current.experience -= cost;
     AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
 
-    boon.applyTo(stats, attack_opt);
+    boon.applyTo(stats, maybe_attack);
     BoonPool.consumeBoon(boon);
     RoomManager.saveCurrentRun();
 
-    if (attack_opt) |attack| {
+    if (maybe_attack) |attack| {
         slots = BoonPool.getSlots(stats.*, attack.*);
         if (slots) |updated| {
             selected_index = findNextAvailableIndex(slot_index, 1, updated);
@@ -121,40 +122,34 @@ fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
 }
 
 fn rarityBgColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
-    if (is_hovered) {
-        return switch (rarity) {
-            .normal => ui.color(42, 46, 56, 245),
-            .rare => ui.color(28, 44, 68, 245),
-            .epic => ui.color(44, 28, 68, 245),
-            .legendary => ui.color(60, 48, 24, 245),
-            .mythic => ui.color(60, 24, 34, 245),
-            .cosmic => ui.color(24, 54, 58, 245),
-        };
-    } else {
-        return ui.color(28, 30, 38, 230);
-    }
+    if (!is_hovered) return ui.color(28, 30, 38, 230);
+    return switch (rarity) {
+        .normal => ui.color(42, 46, 56, 245),
+        .rare => ui.color(28, 44, 68, 245),
+        .epic => ui.color(44, 28, 68, 245),
+        .legendary => ui.color(60, 48, 24, 245),
+        .mythic => ui.color(60, 24, 34, 245),
+        .cosmic => ui.color(24, 54, 58, 245),
+    };
 }
 
 fn rarityBorderColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
-    if (is_hovered) {
-        return rarityColor(rarity);
-    } else {
-        return ui.color(55, 60, 75, 180);
-    }
+    if (!is_hovered) return ui.color(55, 60, 75, 180);
+    return rarityColor(rarity);
 }
 
 fn boonCard(
     boon: Boon,
     index: u32,
-    card_w: f32,
+    card_width: f32,
     stats: ?*Stats,
     attack: ?*Attack,
-    alloc: ?std.mem.Allocator,
+    allocator: ?std.mem.Allocator,
 ) void {
     const ui_scale = HUD.ui_scale;
     const card_padding = lm.tou16(@round(16 * ui_scale));
     const card_content_gap = lm.tou16(@round(6 * ui_scale));
-    const img_size = @round(128 * ui_scale);
+    const image_size = @round(128 * ui_scale);
     const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
     const is_focused = (selected_index == index);
 
@@ -163,7 +158,7 @@ fn boonCard(
         .layout = .{
             .sizing = .{
                 .h = .percent(1),
-                .w = .fixed(card_w),
+                .w = .fixed(card_width),
             },
             .direction = .top_to_bottom,
             .padding = .all(card_padding),
@@ -198,13 +193,13 @@ fn boonCard(
             .id = .IDI("boon-image-", index),
             .image = ui.image(
                 boon.icon,
-                .init(img_size, img_size),
+                .init(image_size, image_size),
             ) catch .{ .image_data = null },
             .aspect_ratio = .{ .aspect_ratio = 1 },
             .layout = .{
                 .sizing = .{
-                    .w = .fixed(img_size),
-                    .h = .fixed(img_size),
+                    .w = .fixed(image_size),
+                    .h = .fixed(image_size),
                 },
             },
         })({});
@@ -238,9 +233,9 @@ fn boonCard(
             },
         })({});
 
-        const cost_box_pad_x = lm.tou16(@round(12 * ui_scale));
-        const cost_box_pad_y = lm.tou16(@round(5 * ui_scale));
-        const cost_img_size = @round(18 * ui_scale);
+        const cost_box_padding_x = lm.tou16(@round(12 * ui_scale));
+        const cost_box_padding_y = lm.tou16(@round(5 * ui_scale));
+        const cost_image_size = @round(18 * ui_scale);
 
         ui.new(.{
             .id = .IDI("boon-cost-box-", index),
@@ -251,25 +246,28 @@ fn boonCard(
                 .width = .outside(1),
             },
             .layout = .{
-                .padding = .axes(cost_box_pad_y, cost_box_pad_x),
+                .padding = .axes(cost_box_padding_y, cost_box_padding_x),
                 .child_gap = lm.tou16(@round(6 * ui_scale)),
                 .child_alignment = .{ .y = .center },
                 .direction = .left_to_right,
             },
         })({
-            const price_text = if (alloc) |a| std.fmt.allocPrint(a, "{d}", .{boon.cost()}) catch "0" else "0";
+            const price_text = if (allocator) |active_allocator|
+                std.fmt.allocPrint(active_allocator, "{d}", .{boon.cost()}) catch "0"
+            else
+                "0";
 
             ui.new(.{
                 .id = .IDI("experience-img-", index),
                 .layout = .{
                     .sizing = .{
-                        .h = .fixed(cost_img_size),
-                        .w = .fixed(cost_img_size),
+                        .h = .fixed(cost_image_size),
+                        .w = .fixed(cost_image_size),
                     },
                 },
                 .image = ui.image(
                     "ui/icons/sleep_icon.png",
-                    .init(cost_img_size, cost_img_size),
+                    .init(cost_image_size, cost_image_size),
                 ) catch .{ .image_data = null },
             })({});
             ui.text(price_text, .{
@@ -285,12 +283,12 @@ fn boonCard(
 fn dummyBoonCard(
     boon: Boon,
     index: u32,
-    card_w: f32,
+    card_width: f32,
 ) void {
     const ui_scale = HUD.ui_scale;
     const card_padding = lm.tou16(@round(16 * ui_scale));
     const card_content_gap = lm.tou16(@round(6 * ui_scale));
-    const img_size = @round(128 * ui_scale);
+    const image_size = @round(128 * ui_scale);
     const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
 
     lm.deps.clay.UI()(.{
@@ -298,7 +296,7 @@ fn dummyBoonCard(
         .layout = .{
             .sizing = .{
                 .h = .percent(1),
-                .w = .fixed(card_w),
+                .w = .fixed(card_width),
             },
             .direction = .top_to_bottom,
             .padding = .all(card_padding),
@@ -326,13 +324,13 @@ fn dummyBoonCard(
             .id = .IDI("boon-dummy-image-", index),
             .image = ui.image(
                 boon.icon,
-                .init(img_size, img_size),
+                .init(image_size, image_size),
             ) catch .{ .image_data = null },
             .aspect_ratio = .{ .aspect_ratio = 1 },
             .layout = .{
                 .sizing = .{
-                    .w = .fixed(img_size),
-                    .h = .fixed(img_size),
+                    .w = .fixed(image_size),
+                    .h = .fixed(image_size),
                 },
             },
         })({});
@@ -366,8 +364,8 @@ fn dummyBoonCard(
             },
         })({});
 
-        const badge_pad_x = lm.tou16(@round(14 * ui_scale));
-        const badge_pad_y = lm.tou16(@round(6 * ui_scale));
+        const badge_padding_x = lm.tou16(@round(14 * ui_scale));
+        const badge_padding_y = lm.tou16(@round(6 * ui_scale));
 
         ui.new(.{
             .id = .IDI("boon-dummy-badge-", index),
@@ -378,7 +376,7 @@ fn dummyBoonCard(
                 .width = .outside(1),
             },
             .layout = .{
-                .padding = .axes(badge_pad_y, badge_pad_x),
+                .padding = .axes(badge_padding_y, badge_padding_x),
                 .child_alignment = .{ .x = .center, .y = .center },
             },
         })({
@@ -392,11 +390,31 @@ fn dummyBoonCard(
     });
 }
 
+fn updateStickAxis(
+    axis_value: f32,
+    stick_moved: *bool,
+    positive_action: *bool,
+    negative_action: *bool,
+) void {
+    if (@abs(axis_value) < 0.2) {
+        stick_moved.* = false;
+        return;
+    }
+    if (@abs(axis_value) <= 0.5 or stick_moved.*) return;
+
+    if (axis_value > 0) {
+        positive_action.* = true;
+    } else {
+        negative_action.* = true;
+    }
+    stick_moved.* = true;
+}
+
 pub fn draw(
     slot_array: []const BoonSlot,
     stats: ?*Stats,
     attack: ?*Attack,
-    alloc: ?std.mem.Allocator,
+    allocator: ?std.mem.Allocator,
 ) void {
     if (slots == null) return;
     DevicePrompts.update();
@@ -428,23 +446,8 @@ pub fn draw(
         nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);
         nav_down = nav_down or lm.gamepad.getButtonDown(0, .left_face_down);
 
-        if (@abs(stick.x) > 0.5) {
-            if (!stick_moved_x) {
-                if (stick.x > 0) nav_right = true else nav_left = true;
-                stick_moved_x = true;
-            }
-        } else if (@abs(stick.x) < 0.2) {
-            stick_moved_x = false;
-        }
-
-        if (@abs(stick.y) > 0.5) {
-            if (!stick_moved_y) {
-                if (stick.y > 0) nav_down = true else nav_up = true;
-                stick_moved_y = true;
-            }
-        } else if (@abs(stick.y) < 0.2) {
-            stick_moved_y = false;
-        }
+        updateStickAxis(stick.x, &stick_moved_x, &nav_right, &nav_left);
+        updateStickAxis(stick.y, &stick_moved_y, &nav_down, &nav_up);
 
         select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
     }
@@ -478,17 +481,17 @@ pub fn draw(
     const window_size = HUD.window_size;
     const ui_scale = HUD.ui_scale;
 
-    const container_w = @min(window_size.x - 32, @max(740 * ui_scale, window_size.x * 0.78));
-    const container_h = @min(window_size.y - 32, @max(440 * ui_scale, window_size.y * 0.76));
+    const container_width = @min(window_size.x - 32, @max(740 * ui_scale, window_size.x * 0.78));
+    const container_height = @min(window_size.y - 32, @max(440 * ui_scale, window_size.y * 0.76));
 
     const container_padding = lm.tou16(@round(18 * ui_scale));
     const container_gap = lm.tou16(@round(14 * ui_scale));
     const card_gap = lm.tou16(@round(14 * ui_scale));
 
-    const num_cards_f: f32 = @floatFromInt(slot_array.len);
-    const inner_w = container_w - @as(f32, @floatFromInt(container_padding * 2));
-    const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards_f - 1);
-    const card_w = if (num_cards_f > 0) (inner_w - total_card_gaps) / num_cards_f else 0;
+    const num_cards_float: f32 = @floatFromInt(slot_array.len);
+    const inner_width = container_width - @as(f32, @floatFromInt(container_padding * 2));
+    const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards_float - 1);
+    const card_width = if (num_cards_float > 0) (inner_width - total_card_gaps) / num_cards_float else 0;
 
     ui.new(.{
         .id = .ID("boon-menu-container"),
@@ -501,8 +504,8 @@ pub fn draw(
         },
         .layout = .{
             .sizing = .{
-                .h = .fixed(container_h),
-                .w = .fixed(container_w),
+                .h = .fixed(container_height),
+                .w = .fixed(container_width),
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
@@ -524,13 +527,18 @@ pub fn draw(
                 .child_gap = lm.tou16(@round(4 * ui_scale)),
             },
         })({
-            ui.text("CHOOSE A BOON", .{
+            const room_category = RoomManager.getRoomCategory();
+            const maybe_category = BoonCategory.getCategoryById(room_category);
+            const header_title = if (maybe_category) |category| category.name else "CHOOSE A BOON";
+            const header_subtitle = if (maybe_category) |category| category.description else "Select an upgrade to enhance your abilities";
+
+            ui.text(header_title, .{
                 .color = ui.color(255, 215, 100, 255),
                 .letter_spacing = lm.tou16(@round(3 * ui_scale)),
                 .font_size = lm.tou16(@round(22 * ui_scale)),
                 .alignment = .center,
             });
-            ui.text("Select an upgrade to enhance your abilities", .{
+            ui.text(header_subtitle, .{
                 .color = ui.color(150, 155, 170, 255),
                 .letter_spacing = lm.tou16(@round(1 * ui_scale)),
                 .font_size = lm.tou16(@round(12 * ui_scale)),
@@ -551,9 +559,9 @@ pub fn draw(
         })({
             for (slot_array, 0..) |slot, index| {
                 if (slot.is_purchased) {
-                    dummyBoonCard(slot.boon, lm.tou32(index), card_w);
+                    dummyBoonCard(slot.boon, lm.tou32(index), card_width);
                 } else {
-                    boonCard(slot.boon, lm.tou32(index), card_w, stats, attack, alloc);
+                    boonCard(slot.boon, lm.tou32(index), card_width, stats, attack, allocator);
                 }
             }
         });
@@ -611,10 +619,6 @@ pub fn draw(
     });
 }
 
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
-
 test "BoonMenu findFirstAvailableIndex returns first unpurchased card or close index" {
     const dummy_boon = Boon{
         .id = "test_boon",
@@ -624,8 +628,8 @@ test "BoonMenu findFirstAvailableIndex returns first unpurchased card or close i
         .rarity = .normal,
         .boon_type = .stat,
         .callback = struct {
-            fn cb(_: *Stats, _: ?*Attack) void {}
-        }.cb,
+            fn callback(_: *Stats, _: ?*Attack) void {}
+        }.callback,
     };
 
     var test_slots = [_]BoonSlot{
@@ -649,8 +653,8 @@ test "BoonMenu findNextAvailableIndex skips purchased dummy cards" {
         .rarity = .normal,
         .boon_type = .stat,
         .callback = struct {
-            fn cb(_: *Stats, _: ?*Attack) void {}
-        }.cb,
+            fn callback(_: *Stats, _: ?*Attack) void {}
+        }.callback,
     };
 
     const test_slots = [_]BoonSlot{
@@ -659,13 +663,8 @@ test "BoonMenu findNextAvailableIndex skips purchased dummy cards" {
         .{ .boon = dummy_boon, .is_purchased = false },
     };
 
-    // Navigating right from 0 skips 1 and lands on 2
     try std.testing.expectEqual(@as(usize, 2), findNextAvailableIndex(0, 1, &test_slots));
-
-    // Navigating left from 2 skips 1 and lands on 0
     try std.testing.expectEqual(@as(usize, 0), findNextAvailableIndex(2, -1, &test_slots));
-
-    // Navigating right from 2 wraps to 0
     try std.testing.expectEqual(@as(usize, 0), findNextAvailableIndex(2, 1, &test_slots));
 }
 
@@ -678,8 +677,8 @@ test "BoonMenu show and hide lifecycle" {
         .rarity = .normal,
         .boon_type = .stat,
         .callback = struct {
-            fn cb(_: *Stats, _: ?*Attack) void {}
-        }.cb,
+            fn callback(_: *Stats, _: ?*Attack) void {}
+        }.callback,
     };
 
     const test_slots = [_]BoonSlot{

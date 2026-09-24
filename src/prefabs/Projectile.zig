@@ -388,13 +388,11 @@ test "Projectile healing mode restores HP up to max" {
 test "Projectile wall collision: solid destroys, low passes through" {
     var projectile_options = Options{};
 
-    // 1. Collide with low wall: projectile is not destroyed and passes through
     const low_wall = Wall{ .wall_type = .low };
     const low_result = processWallCollision(&projectile_options, low_wall);
     try std.testing.expectEqual(false, low_result);
     try std.testing.expectEqual(false, projectile_options.inactive);
 
-    // 2. Collide with solid wall: projectile is marked inactive and destroyed
     const solid_wall = Wall{ .wall_type = .solid };
     const solid_result = processWallCollision(&projectile_options, solid_wall);
     try std.testing.expectEqual(true, solid_result);

@@ -35,7 +35,6 @@ pub fn deinit(self: *Self) void {
     self.is_baked = false;
 }
 
-/// Allocates or reallocates the RenderTexture to match map dimensions.
 pub fn configureDimensions(self: *Self, width_tiles: u32, height_tiles: u32, tile_size_pixels: f32) !void {
     const target_width_pixels = @as(f32, @floatFromInt(width_tiles)) * tile_size_pixels;
     const target_height_pixels = @as(f32, @floatFromInt(height_tiles)) * tile_size_pixels;
@@ -70,8 +69,6 @@ pub fn configureDimensions(self: *Self, width_tiles: u32, height_tiles: u32, til
     self.is_baked = false;
 }
 
-/// Bakes all background tiles, dual-grid transitions, and decorative side sprites into the RenderTexture.
-/// Upscales 16x16 tiles by 4x to 64x64 destination pixels.
 pub fn bake(self: *Self, background_tiles: []const u8) !void {
     const target_texture = &(self.render_texture orelse return error.RenderTextureNotConfigured);
 
@@ -216,12 +213,10 @@ fn isWallBlockBottom(
     return next_terrain != current_terrain;
 }
 
-/// Returns the baked upright Texture suitable for Loom display.add.
 pub fn getTexture(self: *Self) ?rl.Texture {
     return self.baked_texture;
 }
 
-/// Directly draws the pre-baked RenderTexture to the screen at the given world coordinates.
 pub fn drawDirect(self: *Self, world_position: lm.Vector2) void {
     const active_texture = &(self.render_texture orelse return);
     if (!self.is_baked) return;

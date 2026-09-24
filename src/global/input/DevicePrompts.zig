@@ -187,10 +187,6 @@ fn gamepadPrompt(label: []const u8, background_color: UiColor, border_color: UiC
     };
 }
 
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
-
 test "DevicePrompts default device is keyboard_mouse" {
     reset();
     try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
@@ -272,7 +268,6 @@ test "DevicePrompts getActionPrompt resolves correct labels and button types" {
     const gamepad_navigate = getActionPrompt(.menu_navigate);
     try std.testing.expectEqualStrings("D-PAD / L-STICK", gamepad_navigate.label);
 
-    // Verify Xbox button colors (A: green, B: red, X: blue, Y: yellow)
     try std.testing.expectEqual(@as(f32, 35), gamepad_interact.badge_background_color[0]);
     try std.testing.expectEqual(@as(f32, 145), gamepad_interact.badge_background_color[1]);
 

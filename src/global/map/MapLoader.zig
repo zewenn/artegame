@@ -94,7 +94,6 @@ pub fn getRenderer() *MapRenderer {
     return &global_renderer;
 }
 
-/// Unloads active map entities, colliders, and textures.
 pub fn unload() void {
     if (is_initialized) {
         for (wall_entities.items()) |entity| {
@@ -112,7 +111,6 @@ pub fn unload() void {
     global_renderer.deinit();
 }
 
-/// Loads and instantiates a map layout into the active scene.
 pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     init();
     unload();
@@ -127,14 +125,12 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     const width_pixels = @as(f32, @floatFromInt(map_data.width_tiles)) * @as(f32, @floatFromInt(map_data.tile_size_pixels));
     const height_pixels = @as(f32, @floatFromInt(map_data.height_tiles)) * @as(f32, @floatFromInt(map_data.tile_size_pixels));
 
-    // Center map around origin (0, 0)
     const top_left_x = -width_pixels / 2.0;
     const top_left_y = -height_pixels / 2.0;
     active_map_top_left = lm.Vec2(top_left_x, top_left_y);
     active_map_width_pixels = width_pixels;
     active_map_height_pixels = height_pixels;
 
-    // Stamp any legacy wall segments into background_tiles if needed
     for (map_data.walls) |wall| {
         const wall_value: u8 = switch (wall.wall_type) {
             .solid => @intFromEnum(MapTypes.TerrainType.wall_top),
@@ -154,7 +150,6 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
         }
     }
 
-    // Bake background into single RenderTexture (including dual-grid wall tops and side sprites)
     try global_renderer.configureDimensions(
         map_data.width_tiles,
         map_data.height_tiles,
@@ -162,7 +157,6 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     );
     try global_renderer.bake(map_data.background_tiles);
 
-    // Generate 2D greedy meshed colliders for walls directly from background_tiles
     const tile_size = @as(f32, @floatFromInt(map_data.tile_size_pixels));
     const wall_colliders = try WallMesher.meshGridFromTiles(
         arena_allocator,
@@ -190,7 +184,6 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
         try lm.summoning.entity(wall_entity);
     }
 
-    // Process spawn zones (offset to world coordinates)
     const converted_spawn_zones = try arena_allocator.alloc(SpawnZoneRecord, map_data.spawn_zones.len);
     for (map_data.spawn_zones, 0..) |zone, zone_index| {
         converted_spawn_zones[zone_index] = SpawnZoneRecord{
@@ -202,7 +195,6 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     }
     active_spawn_zones = converted_spawn_zones;
 
-    // Process entity markers
     active_player_spawn = .init(0, 0);
     active_exit_door = .init(0, top_left_y + 128);
 

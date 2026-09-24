@@ -18,7 +18,6 @@ pub const Screen = enum {
     options,
 };
 
-// Global Behaviour fields
 arena: ?std.heap.ArenaAllocator = null,
 alloc: ?std.mem.Allocator = null,
 
@@ -94,10 +93,6 @@ pub fn End(self: *Self) void {
     self.arena = null;
     self.alloc = null;
 }
-
-// --------------------------------------------------------------------------------------------------
-// Main Screen Rendering
-// --------------------------------------------------------------------------------------------------
 
 fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
     _ = window_size;
@@ -418,10 +413,6 @@ fn drawMenuButton(
     });
 }
 
-// --------------------------------------------------------------------------------------------------
-// Input & Actions
-// --------------------------------------------------------------------------------------------------
-
 fn handleInput(self: *Self) void {
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
@@ -531,10 +522,6 @@ fn activateAction(self: *Self, index: usize) void {
         }
     }
 }
-
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
 
 test "MainMenu navigation index wrapping" {
     var menu = Self{};

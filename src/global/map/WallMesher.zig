@@ -100,7 +100,6 @@ fn markRectangleVisited(
     }
 }
 
-/// Greedily merges contiguous 2D rectangular blocks of identical wall tiles into bounding box WallSegments.
 pub fn generateSegmentsFromTiles(
     allocator: std.mem.Allocator,
     background_tiles: []const u8,
@@ -171,7 +170,6 @@ pub fn generateSegmentsFromTiles(
     return try allocator.dupe(WallSegment, segments.items());
 }
 
-/// Greedily merges contiguous 2D rectangular blocks of identical wall tiles into WallColliders.
 pub fn meshGridFromTiles(
     allocator: std.mem.Allocator,
     background_tiles: []const u8,
@@ -187,7 +185,6 @@ pub fn meshGridFromTiles(
 
 pub const wall_collider_vertical_offset_pixels: f32 = 0;
 
-/// Merges horizontal contiguous wall cells on a 2D grid into unified 1D colliders.
 pub fn meshGridHorizontally(
     allocator: std.mem.Allocator,
     wall_grid: []const bool,
@@ -230,7 +227,6 @@ pub fn meshGridHorizontally(
     return try allocator.dupe(WallCollider, colliders.items());
 }
 
-/// Converts explicit wall line segments into unified 1D colliders.
 pub fn meshSegments(
     allocator: std.mem.Allocator,
     segments: []const WallSegment,
@@ -310,11 +306,6 @@ test "WallMesher generateSegmentsFromTiles 2D block merge" {
     const width: u32 = 4;
     const height: u32 = 4;
 
-    // 4x4 grid:
-    // row 0: 0, 0, 0, 0 (stone)
-    // row 1: 0, 2, 2, 0 (solid 2x2 block)
-    // row 2: 0, 2, 2, 0
-    // row 3: 3, 3, 0, 0 (low 2x1 block)
     const tiles = [_]u8{
         0, 0, 0, 0,
         0, 2, 2, 0,
@@ -327,14 +318,12 @@ test "WallMesher generateSegmentsFromTiles 2D block merge" {
 
     try std.testing.expectEqual(@as(usize, 2), segments.len);
 
-    // First block: 2x2 solid wall
     try std.testing.expectEqual(@as(u32, 1), segments[0].start_x_tiles);
     try std.testing.expectEqual(@as(u32, 1), segments[0].start_y_tiles);
     try std.testing.expectEqual(@as(u32, 2), segments[0].end_x_tiles);
     try std.testing.expectEqual(@as(u32, 2), segments[0].end_y_tiles);
     try std.testing.expectEqual(WallType.solid, segments[0].wall_type);
 
-    // Second block: 2x1 low wall
     try std.testing.expectEqual(@as(u32, 0), segments[1].start_x_tiles);
     try std.testing.expectEqual(@as(u32, 3), segments[1].start_y_tiles);
     try std.testing.expectEqual(@as(u32, 1), segments[1].end_x_tiles);

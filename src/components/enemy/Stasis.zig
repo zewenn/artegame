@@ -88,11 +88,9 @@ test "Stasis component timed lifecycle" {
     try std.testing.expect(stats.isInvulnerable());
     try std.testing.expect(!stats.canMove());
 
-    // Simulate elapsed time below duration
     stasis.elapsed_seconds = 9.9;
     try std.testing.expect(stasis.is_active);
 
-    // Simulate duration completion
     stasis.exitStasis();
 
     try std.testing.expect(!stasis.is_active);

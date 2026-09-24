@@ -172,7 +172,6 @@ test "ReactiveAura apply_effect_on_hit with root and stun" {
 
     try std.testing.expect(attacker_stats.isRooted());
 
-    // Switch reactive effect to stun
     aura.apply_effect_on_hit = .{
         .effect_type = .stun,
         .duration_seconds = 2.0,
@@ -199,11 +198,10 @@ test "ReactiveAura damage reflection" {
 
     var aura = Self{
         .is_active = true,
-        .reflect_damage_percent = 0.50, // 50% damage reflection
+        .reflect_damage_percent = 0.50,
     };
 
     aura.onHitByAttacker(&defender_entity, &attacker_entity, 40.0);
 
-    // 100 - (40 * 0.50) = 80
     try std.testing.expectEqual(@as(f32, 80.0), attacker_stats.current.health);
 }

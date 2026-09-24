@@ -82,19 +82,20 @@ player_objectives: ?*player_components.Objectives = null,
 spawner: RoundSpawner = undefined,
 graveyard: lm.List(FallenEnemyRecord) = undefined,
 
+fn resumeRunIfSaved(self: *Self) bool {
+    if (!resume_saved_run or !SaveSystem.hasActiveRun()) return false;
+    const saved = SaveSystem.getSavedRun() orelse return false;
+    self.current_room = if (saved.current_room_index > 0) saved.current_room_index else 1;
+    self.rooms_cleared = saved.rooms_cleared;
+    self.room_category = saved.room_category;
+    self.enemies_defeated = saved.enemies_defeated;
+    self.state = .replenish;
+    MusicManager.setGlobalPhase(.replenish);
+    return true;
+}
+
 pub fn Awake(self: *Self) !void {
-    if (resume_saved_run and SaveSystem.hasActiveRun()) {
-        if (SaveSystem.getSavedRun()) |saved| {
-            self.current_room = if (saved.current_room_index > 0) saved.current_room_index else 1;
-            self.rooms_cleared = saved.rooms_cleared;
-            self.room_category = saved.room_category;
-            self.enemies_defeated = saved.enemies_defeated;
-            self.state = .replenish;
-            MusicManager.setGlobalPhase(.replenish);
-        } else {
-            self.initFreshRun();
-        }
-    } else {
+    if (!self.resumeRunIfSaved()) {
         self.initFreshRun();
     }
 
@@ -147,6 +148,45 @@ fn initFreshRun(self: *Self) void {
     MusicManager.setGlobalPhase(.combat);
 }
 
+fn applySavedRunToPlayer(player: *lm.Entity) void {
+    if (!resume_saved_run or !SaveSystem.hasActiveRun()) return;
+    resume_saved_run = false;
+
+    const saved = SaveSystem.getSavedRun() orelse return;
+    if (player.getComponent(Stats)) |stats| {
+        saved.player_stats.applyToStats(stats);
+    }
+
+    const attack = player.getComponent(player_components.Attack) orelse return;
+    attack.equipped_weapons = saved.equipped_weapons;
+    attack.current_weapon_number = saved.current_weapon_number;
+
+    for (0..2, saved.equipped_spells) |spell_index, maybe_spell| {
+        const spell = maybe_spell orelse {
+            attack.equipped_spells[spell_index] = null;
+            continue;
+        };
+        const base_spell = spells.getById(spell.id) orelse {
+            attack.equipped_spells[spell_index] = null;
+            continue;
+        };
+
+        var equipped_spell = base_spell;
+        equipped_spell.level = spell.level;
+        attack.equipped_spells[spell_index] = equipped_spell;
+    }
+
+    const hands = player.getComponent(Hands) orelse return;
+    const weapon = attack.currentWeapon() orelse return;
+    hands.setWeapon(weapon.*);
+}
+
+fn getPlayerPosition(self: *const Self) lm.Vector2 {
+    const player = self.player orelse return lm.Vec2(0, 0);
+    const transform = player.getComponent(lm.Transform) orelse return lm.Vec2(0, 0);
+    return lm.vec3ToVec2(transform.position);
+}
+
 pub fn Update(self: *Self, scene: *lm.Scene) !void {
     if (self.player == null or self.player_objectives == null) {
         const player = scene.getEntityById("player") orelse {
@@ -158,38 +198,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         self.player = player;
         self.player_objectives = player.getComponent(player_components.Objectives);
 
-        load_saved_run: {
-            if (!resume_saved_run or !SaveSystem.hasActiveRun()) break :load_saved_run;
-            resume_saved_run = false;
-
-            const saved = SaveSystem.getSavedRun() orelse break :load_saved_run;
-            if (player.getComponent(Stats)) |stats| saved.player_stats.applyToStats(stats);
-
-            const attack = player.getComponent(player_components.Attack) orelse break :load_saved_run;
-            attack.equipped_weapons = saved.equipped_weapons;
-            attack.current_weapon_number = saved.current_weapon_number;
-
-            for (0..2, saved.equipped_spells) |spell_index, maybe_spell| {
-                const spell = maybe_spell orelse {
-                    attack.equipped_spells[spell_index] = null;
-                    continue;
-                };
-                const base_spell = spells.getById(spell.id) orelse {
-                    attack.equipped_spells[spell_index] = null;
-                    continue;
-                };
-
-                var equipped_spell = base_spell;
-                equipped_spell.level = spell.level;
-                attack.equipped_spells[spell_index] = equipped_spell;
-            }
-
-            if (player.getComponent(Hands)) |hands| {
-                if (attack.currentWeapon()) |weapon| {
-                    hands.setWeapon(weapon.*);
-                }
-            }
-        }
+        applySavedRunToPlayer(player);
 
         if (self.state == .combat and !self.spawner.is_active) {
             try self.startCurrentRoomCombat();
@@ -200,14 +209,9 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         }
     }
 
-    const player_position: lm.Vector2 = player_position: {
-        const player = self.player orelse break :player_position lm.Vec2(0, 0);
-        const transform = player.getComponent(lm.Transform) orelse break :player_position lm.Vec2(0, 0);
-        break :player_position lm.vec3ToVec2(transform.position);
-    };
-
     if (lm.time.paused()) return;
 
+    const player_position = self.getPlayerPosition();
     const delta_seconds = lm.time.deltaTime();
     try self.spawner.update(delta_seconds, scene, player_position);
 
@@ -240,6 +244,12 @@ fn startCurrentRoomCombat(self: *Self) !void {
     try self.spawner.startWaveForRoom(self.current_room, room_type.toSpawnProfile());
 }
 
+fn getPlayerFallbackPosition(self: *Self) lm.Vector2 {
+    const player = self.player orelse return .init(0, 0);
+    const transform = player.getComponent(lm.Transform) orelse return .init(0, 0);
+    return lm.vec3ToVec2(transform.position).add(.init(48, 0));
+}
+
 fn completeCurrentRoomCombat(self: *Self) !void {
     self.state = .replenish;
     self.rooms_cleared += 1;
@@ -251,14 +261,8 @@ fn completeCurrentRoomCombat(self: *Self) !void {
 
     if (!self.boon_drop_spawned) {
         self.boon_drop_spawned = true;
-        const fallback_pos: lm.Vector2 = if (self.player) |player_entity| pos: {
-            if (player_entity.getComponent(lm.Transform)) |transform| {
-                break :pos lm.vec3ToVec2(transform.position).add(.init(48, 0));
-            }
-            break :pos .init(0, 0);
-        } else .init(0, 0);
-
-        self.spawnBoonDrop(fallback_pos) catch |err| {
+        const fallback_position = self.getPlayerFallbackPosition();
+        self.spawnBoonDrop(fallback_position) catch |err| {
             std.log.err("Failed to spawn fallback boon drop: {any}", .{err});
         };
     }
@@ -284,13 +288,11 @@ fn grantRoomRewards(self: *Self) void {
     const room_type = self.getRoomType();
     switch (room_type) {
         .mini_boss => {
-            // Restore player HP to maximum and permanently add +10% max HP
             stats.max.health *= 1.10;
             stats.current.health = stats.max.health;
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 1.0, 0.05);
         },
         .boss => {
-            // Restore player HP to maximum and permanently add +15% max HP, +15 physical dmg, +10 magic dmg
             stats.max.health *= 1.15;
             stats.current.health = stats.max.health;
             stats.current.physical_damage += 15.0;
@@ -300,9 +302,15 @@ fn grantRoomRewards(self: *Self) void {
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
         },
         .normal, .tutorial => {
-            BoonPool.reroll(stats.*, attack.*);
+            BoonPool.rerollCategory(stats.*, attack.*, self.room_category);
         },
     }
+}
+
+pub fn enterNextRoomWithCategory(category: []const u8) !void {
+    const self = get() orelse return;
+    self.room_category = category;
+    try enterNextRoom();
 }
 
 pub fn enterNextRoom() !void {
@@ -329,23 +337,26 @@ pub fn enterNextRoom() !void {
     try self.startCurrentRoomCombat();
 }
 
+fn isCleanupTarget(entity: *lm.Entity) bool {
+    if (std.mem.eql(u8, entity.id, "player")) return false;
+    if (std.mem.eql(u8, entity.id, "background")) return false;
+    if (std.mem.eql(u8, entity.id, "map_background")) return false;
+    if (std.mem.startsWith(u8, entity.id, "wall_")) return false;
+    if (std.mem.startsWith(u8, entity.id, "exit-door")) return false;
+
+    return std.mem.startsWith(u8, entity.id, "projectile") or
+        std.mem.startsWith(u8, entity.id, "experience-orb") or
+        std.mem.startsWith(u8, entity.id, "boon-drop") or
+        std.mem.endsWith(u8, entity.id, "-enemy") or
+        entity.getComponent(ExperienceOrbComponent) != null or
+        entity.getComponent(ProjectileMovement) != null or
+        (entity.getComponent(Stats) != null and entity.getComponent(Stats).?.team == .enemy);
+}
+
 pub fn cleanupRoomEntities() void {
     const scene = lm.activeScene() orelse return;
     for (scene.entities.items()) |entity| {
-        if (std.mem.eql(u8, entity.id, "player")) continue;
-        if (std.mem.eql(u8, entity.id, "background")) continue;
-        if (std.mem.eql(u8, entity.id, "map_background")) continue;
-        if (std.mem.startsWith(u8, entity.id, "wall_")) continue;
-        if (std.mem.startsWith(u8, entity.id, "exit-door")) continue;
-
-        if (std.mem.startsWith(u8, entity.id, "projectile") or
-            std.mem.startsWith(u8, entity.id, "experience-orb") or
-            std.mem.startsWith(u8, entity.id, "boon-drop") or
-            std.mem.endsWith(u8, entity.id, "-enemy") or
-            entity.getComponent(ExperienceOrbComponent) != null or
-            entity.getComponent(ProjectileMovement) != null or
-            (entity.getComponent(Stats) != null and entity.getComponent(Stats).?.team == .enemy))
-        {
+        if (isCleanupTarget(entity)) {
             lm.removeEntity(.{ .ptr = entity });
         }
     }
@@ -482,10 +493,6 @@ pub fn getRunStats() RunStats {
     };
 }
 
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
-
 test "RoomType determination from room number" {
     try std.testing.expectEqual(RoomType.tutorial, RoomType.fromRoomNumber(0));
     try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(1));
@@ -522,7 +529,6 @@ test "Mini-boss reward boosts max HP by 10 percent and restores current health" 
         .current = .{ .health = 25.0 },
     };
 
-    // Simulate Mini-Boss reward logic
     stats.max.health *= 1.10;
     stats.current.health = stats.max.health;
 
@@ -530,7 +536,7 @@ test "Mini-boss reward boosts max HP by 10 percent and restores current health" 
     try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.current.health, 0.001);
 }
 
-test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 phys / +10 magic dmg" {
+test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 physical / +10 magic damage" {
     var stats = Stats{
         .max = .{ .health = 100.0 },
         .current = .{
@@ -544,7 +550,6 @@ test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 phys / 
         },
     };
 
-    // Simulate Boss reward logic
     stats.max.health *= 1.15;
     stats.current.health = stats.max.health;
     stats.current.physical_damage += 15.0;
@@ -564,19 +569,16 @@ test "RoomManager lifecycle state transitions" {
     var room_manager = Self{};
     room_manager.initFreshRun();
 
-    // Starts in combat
     try std.testing.expectEqual(RoomState.combat, room_manager.state);
     try std.testing.expectEqual(@as(u32, 1), room_manager.current_room);
     try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
     try std.testing.expectEqualStrings("normal", room_manager.room_category);
 
-    // Simulate room wave cleared
     room_manager.state = .replenish;
     room_manager.rooms_cleared += 1;
     try std.testing.expectEqual(RoomState.replenish, room_manager.state);
     try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
 
-    // Advance to next room
     room_manager.current_room += 1;
     room_manager.state = .combat;
     try std.testing.expectEqual(RoomState.combat, room_manager.state);
@@ -588,11 +590,9 @@ test "RoomManager saveRunState guards against saving during combat" {
     var room_manager = Self{};
     room_manager.initFreshRun();
 
-    // Verify combat state prevents saving
     try std.testing.expectEqual(RoomState.combat, room_manager.state);
     room_manager.saveRunState();
 
-    // Verify replenish state allows save progression logic to proceed
     room_manager.state = .replenish;
     room_manager.saveRunState();
 }

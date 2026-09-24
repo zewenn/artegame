@@ -382,22 +382,18 @@ test "Ability absolute_world cardinal angle calculation" {
 
     const base_rad = std.math.degreesToRadians(angler_profile.base_angle);
 
-    // 0 deg -> (1, 0)
     const angle_0 = base_rad + std.math.degreesToRadians(angler_profile.spread_angles[0]);
     try std.testing.expectApproxEqAbs(@as(f32, 1), std.math.cos(angle_0), 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, 0), std.math.sin(angle_0), 0.001);
 
-    // 90 deg -> (0, 1)
     const angle_90 = base_rad + std.math.degreesToRadians(angler_profile.spread_angles[1]);
     try std.testing.expectApproxEqAbs(@as(f32, 0), std.math.cos(angle_90), 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, 1), std.math.sin(angle_90), 0.001);
 
-    // -90 deg -> (0, -1)
     const angle_neg90 = base_rad + std.math.degreesToRadians(angler_profile.spread_angles[2]);
     try std.testing.expectApproxEqAbs(@as(f32, 0), std.math.cos(angle_neg90), 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, -1), std.math.sin(angle_neg90), 0.001);
 
-    // 180 deg -> (-1, 0)
     const angle_180 = base_rad + std.math.degreesToRadians(angler_profile.spread_angles[3]);
     try std.testing.expectApproxEqAbs(@as(f32, -1), std.math.cos(angle_180), 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, 0), std.math.sin(angle_180), 0.001);
@@ -415,4 +411,3 @@ test "Ability ProjectileProfile multi-wave and channeled options defaults" {
     try std.testing.expectEqual(@as(f32, 0.05), profile.channel_fire_interval);
     try std.testing.expectEqual(@as(f32, 72.0), profile.channel_rotation_speed);
 }
-

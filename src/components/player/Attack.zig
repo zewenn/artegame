@@ -146,8 +146,6 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     {
         self.cooldown = 1.8 / stats.current.attack_speed;
 
-        // stats.applyRoot(0.12);
-
         stats.addEffect(.{
             .id = "root",
             .effect_type = .root,

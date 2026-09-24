@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [30#ARC] Boon category data structures and categorized reward pools
-
-  - tags: [architecture, boons, progression, rng]
-  - priority: high
-  - workload: Normal
-  - steps:
-      - [ ] Define BoonCategory struct with name, icon identifier, and boon collection slice
-      - [ ] Categorize all existing and planned boons into thematic category pools
-      - [ ] Update BoonPool.zig to support category-scoped boon rolling and candidate filtering
-      - [ ] Implement category selection logic to assign random BoonCategory items to room exit doors
-      - [ ] Enforce category restriction in BoonMenu so offered 3-card choices draw only from room category
-      - [ ] User confirmation that boon rewards accurately filter to the room's designated category
-    ```md
-    Implements BoonCategory data structures and pool filtering. Allows room doors to offer category-specific rewards (e.g. Plate Upgrades), giving players deterministic control over build progression while retaining the 3-card selection UI.
-    ```
 
 ### [31#UIB] Interactive room exit doors with reward category icon overlays
 
@@ -168,7 +153,24 @@
 
 ## Work in Progress
 
+
 ## Done
+
+### [30#ARC] Boon category data structures and categorized reward pools
+
+  - tags: [architecture, boons, progression, rng]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Define BoonCategory struct with name, icon identifier, and boon collection slice
+      - [x] Categorize all existing and planned boons into thematic category pools
+      - [x] Update BoonPool.zig to support category-scoped boon rolling and candidate filtering
+      - [x] Implement category selection logic to assign random BoonCategory items to room exit doors
+      - [x] Enforce category restriction in BoonMenu so offered 3-card choices draw only from room category
+      - [x] User confirmation that boon rewards accurately filter to the room's designated category
+    ```md
+    Implements BoonCategory data structures and pool filtering. Allows room doors to offer category-specific rewards (e.g. Plate Upgrades), giving players deterministic control over build progression while retaining the 3-card selection UI.
+    ```
 
 ### [29#SYS] Save system reset and schema updates for room progression and tutorial persistence
 

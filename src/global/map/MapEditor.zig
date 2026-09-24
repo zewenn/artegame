@@ -62,7 +62,6 @@ pub const EditorTool = enum {
     eraser,
 };
 
-// Global Behaviour fields
 arena: ?std.heap.ArenaAllocator = null,
 allocator: ?std.mem.Allocator = null,
 
@@ -179,10 +178,6 @@ pub fn drawCanvasCustom() anyerror!void {
     self.renderer.drawDirect(top_left_position);
     self.drawCanvasOverlays(top_left_position);
 }
-
-// --------------------------------------------------------------------------------------------------
-// Map Grid & Geometry Management
-// --------------------------------------------------------------------------------------------------
 
 pub fn resetMapGrid(self: *Self, new_width_tiles: u32, new_height_tiles: u32) !void {
     const alloc = self.allocator orelse return;
@@ -313,10 +308,6 @@ fn getHoveredTile(self: *Self) ?struct { column_index: u32, row_index: u32 } {
     };
 }
 
-// --------------------------------------------------------------------------------------------------
-// Camera & Interaction
-// --------------------------------------------------------------------------------------------------
-
 fn handleCameraControls(self: *Self) void {
     if (self.show_save_popup) return;
     const active_camera = self.camera orelse return;
@@ -328,14 +319,12 @@ fn handleCameraControls(self: *Self) void {
 
     const delta_time = lm.time.deltaTime();
 
-    // Mouse wheel zoom (exponential scaling)
     const wheel_move = rl.getMouseWheelMove();
     if (wheel_move != 0.0) {
         const zoom_factor = std.math.pow(f32, 1.15, wheel_move);
         active_camera.zoom = std.math.clamp(active_camera.zoom * zoom_factor, 0.15, 4.0);
     }
 
-    // Keyboard zoom controls: Equal/Plus, Minus, Keypad Plus/Minus, Brackets, PageUp/Down
     const is_zoom_in = lm.keyboard.getKey(.equal) or
         lm.keyboard.getKey(.kp_add) or
         lm.keyboard.getKey(.right_bracket) or
@@ -355,7 +344,6 @@ fn handleCameraControls(self: *Self) void {
         active_camera.zoom = std.math.clamp(active_camera.zoom / zoom_divisor, 0.15, 4.0);
     }
 
-    // Keyboard WASD and Arrow key camera panning
     const pan_speed: f32 = 800.0 / active_camera.zoom;
     if (lm.keyboard.getKey(.w) or lm.keyboard.getKey(.up)) {
         active_camera.target.y -= pan_speed * delta_time;
@@ -370,14 +358,12 @@ fn handleCameraControls(self: *Self) void {
         active_camera.target.x += pan_speed * delta_time;
     }
 
-    // Reset camera focus with R, F, or 0
     if (lm.keyboard.getKeyDown(.r) or lm.keyboard.getKeyDown(.f) or lm.keyboard.getKeyDown(.zero)) {
         active_camera.target = .init(0, 0);
         active_camera.zoom = 0.65;
         self.status_message = "Camera reset to center";
     }
 
-    // Pan via middle mouse or right mouse drag
     const is_pan_pressed = lm.mouse.getButtonDown(.right) or lm.mouse.getButtonDown(.middle);
     const is_pan_held = lm.mouse.getButton(.right) or lm.mouse.getButton(.middle);
 
@@ -396,7 +382,6 @@ fn handleCameraControls(self: *Self) void {
         self.pan_drag_start = null;
     }
 
-    // Keep internal raylib Camera2D state synchronized
     active_camera.camera.offset = active_camera.offset;
     active_camera.camera.target = active_camera.target;
     active_camera.camera.zoom = active_camera.zoom;
@@ -460,7 +445,6 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
 }
 
 fn commitToolAction(self: *Self, column_index: u32, row_index: u32) void {
-
     if (self.box_fill_start) |start| {
         const min_column = @min(start.column_index, column_index);
         const max_column = @max(start.column_index, column_index);
@@ -567,12 +551,7 @@ fn placeSpawnZone(self: *Self, column_index: u32, row_index: u32) void {
     self.status_message = "Spawn zone (192x192) placed";
 }
 
-// --------------------------------------------------------------------------------------------------
-// Canvas Overlays & Visual Helpers
-// --------------------------------------------------------------------------------------------------
-
 fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
-    // 1. Grid lines overlay
     var col_index: u32 = 0;
     while (col_index <= self.width_tiles) : (col_index += 1) {
         const x_coord = top_left.x + @as(f32, @floatFromInt(col_index)) * self.tile_size_pixels;
@@ -595,7 +574,6 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         );
     }
 
-    // 2. Wall segments overlay
     for (self.walls.items()) |wall| {
         const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
         const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
@@ -624,7 +602,6 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         self.drawSpawnZoneRemovalHighlight(top_left);
     }
 
-    // 3. Spawn zones overlay (192x192 areas)
     for (self.spawn_zones.items(), 0..) |zone, zone_index| {
         _ = zone_index;
         const zone_x = top_left.x + zone.center_x_pixels - (zone.width_pixels / 2.0);
@@ -641,7 +618,6 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         );
     }
 
-    // 4. Player spawn and Exit door markers
     const player_world_x = top_left.x + self.player_spawn_position.x;
     const player_world_y = top_left.y + self.player_spawn_position.y;
     rl.drawCircleV(lm.Vec2(player_world_x, player_world_y), 24.0, rl.Color.gold);
@@ -652,10 +628,6 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
     rl.drawRectangleV(lm.Vec2(door_world_x - 32, door_world_y - 32), lm.Vec2(64, 64), rl.Color.sky_blue);
     rl.drawRectangleLinesEx(lm.Rect(door_world_x - 32, door_world_y - 32, 64, 64), 2.0, rl.Color.white);
 }
-
-// --------------------------------------------------------------------------------------------------
-// Clay Side-Menu UI
-// --------------------------------------------------------------------------------------------------
 
 fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
     ui.new(.{
@@ -673,7 +645,6 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
         .background_color = ui.color(16, 18, 26, 245),
         .border = .{ .color = ui.color(60, 68, 88, 200), .width = .outside(1) },
     })({
-        // Title banner
         ui.new(.{
             .id = .ID("editor-header"),
             .layout = .{ .sizing = .{ .w = .grow }, .child_alignment = .{ .x = .center } },
@@ -685,10 +656,8 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
             });
         });
 
-        // Category Tab Switcher
         self.drawCategoryTabs();
 
-        // Selected Category Content
         switch (self.current_category) {
             .terrain => self.drawTerrainCategory(),
             .spawners => self.drawSpawnersCategory(),
@@ -696,10 +665,8 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
             .file_management => self.drawFileCategory(),
         }
 
-        // Zoom controls
         self.drawZoomControls();
 
-        // Status bar footer
         self.drawStatusBar();
     });
 
@@ -1491,12 +1458,11 @@ test "MapEditor generatePerimeterWalls and clearPerimeterWalls" {
 
     editor.generatePerimeterWalls();
 
-    // Top and bottom row should be wall_top (2)
     try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[0]);
     try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[3]);
     try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[12]);
     try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[15]);
-    // Center tiles should still be stone (0)
+
     try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[5]);
 
     editor.clearPerimeterWalls();
@@ -1524,18 +1490,15 @@ test "MapEditor removeSpawnZoneAt targeted deletion" {
 
     try std.testing.expectEqual(@as(usize, 2), editor.spawn_zones.len());
 
-    // 1. Removing at non-overlapping point returns false
     const removed_empty = editor.removeSpawnZoneAt(lm.Vec2(50.0, 50.0));
     try std.testing.expectEqual(false, removed_empty);
     try std.testing.expectEqual(@as(usize, 2), editor.spawn_zones.len());
 
-    // 2. Removing within first zone bounds (e.g. 320, 280, inside 300 +- 96) succeeds
     const removed_first = editor.removeSpawnZoneAt(lm.Vec2(320.0, 280.0));
     try std.testing.expectEqual(true, removed_first);
     try std.testing.expectEqual(@as(usize, 1), editor.spawn_zones.len());
     try std.testing.expectEqual(@as(f32, 800.0), editor.spawn_zones.items()[0].center_x_pixels);
 
-    // 3. Removing second zone via removeSpawnZoneAtTile succeeds
     const removed_second = editor.removeSpawnZoneAtTile(12, 9);
     try std.testing.expectEqual(true, removed_second);
     try std.testing.expectEqual(@as(usize, 0), editor.spawn_zones.len());
@@ -1567,4 +1530,3 @@ test "MapEditor ArenaCategory directory and display mappings" {
     try std.testing.expectEqualStrings("Mini-Boss", ArenaCategory.mini_boss.displayName());
     try std.testing.expectEqualStrings("Boss", ArenaCategory.boss.displayName());
 }
-

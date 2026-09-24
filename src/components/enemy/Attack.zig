@@ -558,7 +558,6 @@ test "Enemy Attack dynamic channeled barrage rotation angle progression (Bishop 
 
     try std.testing.expect(attack.isActing());
 
-    // Simulate 1.0 second elapsed: 72 deg/s * 1.0s = 72 degrees
     const delta_time_1_seconds: f32 = 1.0;
     attack.channel_timer_seconds -= delta_time_1_seconds;
     attack.channel_current_angle += attack.channel_rotation_speed * delta_time_1_seconds;
@@ -566,7 +565,6 @@ test "Enemy Attack dynamic channeled barrage rotation angle progression (Bishop 
     try std.testing.expectApproxEqAbs(@as(f32, 4.0), attack.channel_timer_seconds, 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, 72.0), attack.channel_current_angle, 0.001);
 
-    // Simulate another 1.5 seconds: 72 + 1.5 * 72 = 180 degrees
     const delta_time_2_seconds: f32 = 1.5;
     attack.channel_timer_seconds -= delta_time_2_seconds;
     attack.channel_current_angle += attack.channel_rotation_speed * delta_time_2_seconds;
@@ -597,13 +595,12 @@ test "Enemy Attack multi-wave volley staggered firing" {
 
     attack.active_ability_index = 0;
     attack.action_state = .firing_waves;
-    attack.waves_remaining = 2; // wave 0 already fired
+    attack.waves_remaining = 2;
     attack.current_wave_index = 1;
     attack.wave_interval_timer_seconds = 0.2;
 
     try std.testing.expect(attack.isActing());
 
-    // Advance interval to trigger wave 1
     attack.wave_interval_timer_seconds -= 0.2;
     try std.testing.expect(attack.wave_interval_timer_seconds <= 0);
 
@@ -614,7 +611,6 @@ test "Enemy Attack multi-wave volley staggered firing" {
     try std.testing.expectEqual(@as(u32, 1), attack.waves_remaining);
     try std.testing.expectEqual(@as(u32, 2), attack.current_wave_index);
 
-    // Advance interval to trigger wave 2 (last wave)
     attack.wave_interval_timer_seconds -= 0.2;
     attack.waves_remaining -= 1;
     attack.current_wave_index += 1;
@@ -649,7 +645,6 @@ test "Enemy Attack cancelCurrentAction cleanly halts channeling and sets cooldow
 
     try std.testing.expect(attack.isActing());
 
-    // Call cancelCurrentAction (e.g. from queenBondOfLifeEarlyCancel callback)
     attack.cancelCurrentAction();
 
     try std.testing.expect(!attack.isActing());
@@ -658,7 +653,5 @@ test "Enemy Attack cancelCurrentAction cleanly halts channeling and sets cooldow
     try std.testing.expectEqual(@as(f32, 0), attack.channel_current_angle);
     try std.testing.expect(attack.active_ability_index == null);
 
-    // Cooldown applied to cancelled ability
     try std.testing.expectEqual(@as(f32, 8.0), attack.abilities.?.items()[0].cooldown_remaining);
 }
-

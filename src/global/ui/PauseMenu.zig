@@ -104,10 +104,6 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
     }
 }
 
-// --------------------------------------------------------------------------------------------------
-// Root Pause Screen
-// --------------------------------------------------------------------------------------------------
-
 fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) void {
     const card_w = @min(window_size.x - 32, @round(380 * ui_scale));
     const button_w = @round(HUD.MENU_BUTTON_BASE_W * ui_scale);
@@ -263,10 +259,6 @@ fn drawPauseButton(
     });
 }
 
-// --------------------------------------------------------------------------------------------------
-// Input & Actions
-// --------------------------------------------------------------------------------------------------
-
 fn handleRootInput() void {
     DevicePrompts.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
@@ -332,10 +324,6 @@ fn activateRootAction(index: usize) void {
         else => {},
     }
 }
-
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
 
 test "PauseMenu show, hide, and toggle lifecycle" {
     is_showing = false;

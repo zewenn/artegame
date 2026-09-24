@@ -124,7 +124,6 @@ pub fn executeEnemyRevive(
 
     const safe_position = record.death_position;
 
-    // Instantiate revived enemy prefab
     const enemy_entity = switch (record.enemy_type) {
         .ranged => try prefabs.enemies.Ranged(safe_position),
         .elite => try prefabs.enemies.Elite(safe_position),
@@ -133,7 +132,6 @@ pub fn executeEnemyRevive(
 
     const stats = enemy_entity.getComponent(Stats) orelse return false;
 
-    // Revived enemy starts with 33% HP, scaling with rooms completed
     const room_scale = 1.0 + @as(f32, @floatFromInt(if (current_room > 1) current_room - 1 else 0)) * 0.05;
     const revive_health_fraction = @min(1.0, 0.33 * room_scale);
     stats.current.health = stats.max.health * revive_health_fraction;
@@ -157,19 +155,19 @@ test "SupportMechanics lowest health ally query filters correctly" {
         .health = 100.0,
     });
     defer stats_1.deinit();
-    stats_1.current.health = 50.0; // 50%
+    stats_1.current.health = 50.0;
 
     var stats_2 = Stats.init(.enemy, .{
         .health = 100.0,
     });
     defer stats_2.deinit();
-    stats_2.current.health = 8.0; // 8% (< 10% threshold)
+    stats_2.current.health = 8.0;
 
     var stats_3 = Stats.init(.enemy, .{
         .health = 100.0,
     });
     defer stats_3.deinit();
-    stats_3.current.health = 80.0; // 80%
+    stats_3.current.health = 80.0;
 
     try std.testing.expect(stats_2.current.health / stats_2.max.health < 0.10);
     try std.testing.expect(stats_1.current.health / stats_1.max.health >= 0.10);
@@ -193,7 +191,6 @@ test "SupportMechanics speed boost lifecycle" {
     try std.testing.expect(stats_ptr.hasEffect(.{ .id = "shaman_speed_boost" }));
     try std.testing.expectEqual(@as(f32, 300.0), stats_ptr.current.movement_speed);
 
-    // Expire effect
     stats_ptr.tickEffects(5.0);
     try std.testing.expect(!stats_ptr.hasEffect(.{ .id = "shaman_speed_boost" }));
     try std.testing.expectEqual(@as(f32, 200.0), stats_ptr.current.movement_speed);

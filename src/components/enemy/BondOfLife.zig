@@ -88,21 +88,17 @@ pub fn popOnHit(
         }
     }
 
-    // Calculate true damage (% of target max HP, bypassing Armour & MR)
     const true_damage = target_stats.max.health * self.effectiveness_fraction;
     target_stats.current.health = @max(0.0, target_stats.current.health - true_damage);
 
-    // Heals caster for full damage dealt
     if (maybe_caster_stats) |caster_stats| {
         caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + true_damage);
     }
 
-    // Apply optional stun (e.g. sniper pop stuns for 2.0s)
     if (stun_target_duration_seconds) |stun_duration| {
         target_stats.applyStun(stun_duration);
     }
 
-    // Cancel remainder of caster's attack stream
     if (maybe_caster_entity) |caster_entity| {
         if (caster_entity.getComponent(Attack)) |attack| {
             attack.cancelCurrentAction();
@@ -135,7 +131,6 @@ pub fn expireOnMiss(self: *Self) bool {
     else
         20.0;
 
-    // Damage rebounds to caster
     if (self.caster_uuid) |caster_uuid| {
         if (lm.getEntity(.{ .uuid = caster_uuid })) |caster_entity| {
             if (caster_entity.getComponent(Stats)) |caster_stats| {
@@ -167,7 +162,7 @@ test "BondOfLife application, pop true damage, and caster healing" {
 
     var target_stats = Stats.init(.player, .{
         .health = 200.0,
-        .armour = 500.0, // heavy armour - true damage must ignore
+        .armour = 500.0,
         .magic_resist = 500.0,
     });
     defer target_stats.deinit();
@@ -176,7 +171,7 @@ test "BondOfLife application, pop true damage, and caster healing" {
         .health = 500.0,
     });
     defer caster_stats.deinit();
-    caster_stats.current.health = 300.0; // injured caster
+    caster_stats.current.health = 300.0;
 
     var target_entity = lm.Entity.init(std.testing.allocator, "player");
     defer target_entity.deinit();
@@ -191,17 +186,13 @@ test "BondOfLife application, pop true damage, and caster healing" {
     const target_ptr = target_entity.getComponent(Stats).?;
     const caster_ptr = caster_entity.getComponent(Stats).?;
 
-    // Apply Bond of Life at 10% effectiveness
     const applied = bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0);
     try std.testing.expect(applied);
     try std.testing.expect(bond.isActive());
     try std.testing.expect(target_ptr.isBondOfLifeActive());
 
-    // Cannot apply again while active
     try std.testing.expect(!bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0));
 
-    // Simulate pop on hit
-    // 10% of 200 max HP = 20 true damage
     const true_damage = target_ptr.max.health * bond.effectiveness_fraction;
     target_ptr.current.health -= true_damage;
     caster_ptr.current.health = @min(caster_ptr.max.health, caster_ptr.current.health + true_damage);
@@ -243,13 +234,11 @@ test "BondOfLife expiration and rebound damage to caster" {
 
     _ = bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0);
 
-    // Simulate miss / expiration
     const true_damage = target_ptr.max.health * bond.effectiveness_fraction;
     caster_ptr.current.health -= true_damage;
     target_ptr.removeEffect(.{ .effect_type = .bond_of_life });
     bond.state = .expired;
 
-    // Target HP untouched (200.0), caster takes rebound (500 - 20 = 480.0)
     try std.testing.expectEqual(@as(f32, 200.0), target_ptr.current.health);
     try std.testing.expectEqual(@as(f32, 480.0), caster_ptr.current.health);
     try std.testing.expect(!target_ptr.isBondOfLifeActive());

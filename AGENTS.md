@@ -1,8 +1,5 @@
 # Agent Guidelines
 
-> [!IMPORTANT]
-> ALWAYS ANSWER ACCORDING TO THE [i-have-adhd](./.agents/rules/i_have_adhd.md) RULE.
-
 ## Build Verification Rule
 - **Always run `zig build` when a task or code modification is finished.**
 - Verify that compilation succeeds with exit code 0 before concluding your response or reporting back to the user.

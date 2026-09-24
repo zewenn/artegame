@@ -506,10 +506,6 @@ pub fn getProgress(self: *const Self) WaveProgress {
     };
 }
 
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
-
 test "calculateBudget scaling across rounds" {
     try std.testing.expectEqual(@as(u32, 8), calculateBudget(1));
     try std.testing.expectEqual(@as(u32, 15), calculateBudget(2));
@@ -696,4 +692,3 @@ test "RoundSpawner normal wave caps total enemies at 256" {
     try std.testing.expect(high_round_config.total_enemies <= MAX_CONCURRENT_ENEMIES);
     try std.testing.expectEqual(@as(u32, 256), high_round_config.total_enemies);
 }
-

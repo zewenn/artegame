@@ -174,7 +174,6 @@ pub fn Update(self: *Self) !void {
     const right_hand_animator: *lm.Animator = try lm.ensureComponent(self.right_hand_animator);
     const left_hand_animator: *lm.Animator = try lm.ensureComponent(self.left_hand_animator);
 
-    // Guard: wait until child hand entities are awakened by the scene controller
     if (right_hand_animator.display == null or left_hand_animator.display == null) return;
 
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
@@ -252,4 +251,3 @@ pub fn play(self: *Self, weapon: Weapon) !void {
     right_hand_renderer.img_path = weapon.sprite_right;
     left_hand_renderer.img_path = weapon.sprite_left;
 }
-

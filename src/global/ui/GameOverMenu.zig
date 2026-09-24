@@ -57,7 +57,6 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
         handleInput();
     }
 
-    // Full-screen darkened backdrop overlay over frozen scene
     ui.new(.{
         .id = .ID("gameover-backdrop"),
         .floating = .{
@@ -110,7 +109,6 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) v
             .width = .outside(2),
         },
     })({
-        // Header
         ui.new(.{
             .id = .ID("gameover-header"),
             .layout = .{
@@ -133,10 +131,8 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) v
             });
         });
 
-        // Run Statistics Summary Box
         drawStatsBox(card_w - @as(f32, @floatFromInt(card_padding * 2)), ui_scale, alloc);
 
-        // Action Buttons (Restart & Main Menu)
         drawActionButtons(card_w - @as(f32, @floatFromInt(card_padding * 2)), ui_scale);
     });
 }
@@ -328,7 +324,7 @@ fn handleInput() void {
         if (stick.y > 0.5) nav_down = true;
     }
 
-    const max_index: usize = 1; // 0: Restart, 1: Main Menu
+    const max_index: usize = 1;
     if (nav_up) {
         if (selected_index == 0) selected_index = max_index else selected_index -= 1;
     }
@@ -343,7 +339,6 @@ fn handleInput() void {
 fn activateAction(index: usize) void {
     switch (index) {
         0 => {
-            // RESTART
             SaveSystem.clearRun();
             hide();
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
@@ -352,7 +347,6 @@ fn activateAction(index: usize) void {
             };
         },
         1 => {
-            // MAIN MENU
             hide();
             AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
             lm.loadScene("main_menu") catch |err| {
@@ -362,10 +356,6 @@ fn activateAction(index: usize) void {
         else => {},
     }
 }
-
-// --------------------------------------------------------------------------------------------------
-// Unit Tests
-// --------------------------------------------------------------------------------------------------
 
 test "GameOverMenu show and hide lifecycle" {
     is_showing = false;
@@ -399,15 +389,12 @@ test "GameOverMenu navigation index wrapping" {
 
     const max_index: usize = 1;
 
-    // Navigate down to Main Menu
     selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
     try std.testing.expectEqual(@as(usize, 1), selected_index);
 
-    // Navigate down wraps to Restart
     selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
     try std.testing.expectEqual(@as(usize, 0), selected_index);
 
-    // Navigate up wraps to Main Menu
     selected_index = if (selected_index == 0) max_index else selected_index - 1;
     try std.testing.expectEqual(@as(usize, 1), selected_index);
 }
