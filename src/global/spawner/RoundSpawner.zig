@@ -11,6 +11,11 @@ pub const EnemyType = enum {
     melee,
     ranged,
     elite,
+    shaman,
+    magician,
+    lifeliner,
+    angler,
+    tank,
     mini_boss,
     boss,
 
@@ -19,6 +24,11 @@ pub const EnemyType = enum {
             .dummy => 0,
             .melee => 1,
             .ranged => 2,
+            .angler => 2,
+            .shaman => 3,
+            .magician => 3,
+            .lifeliner => 4,
+            .tank => 4,
             .elite => 5,
             .mini_boss => 20,
             .boss => 100,
@@ -42,6 +52,11 @@ pub const WaveConfig = struct {
     melee_count: u32 = 0,
     ranged_count: u32 = 0,
     elite_count: u32 = 0,
+    shaman_count: u32 = 0,
+    magician_count: u32 = 0,
+    lifeliner_count: u32 = 0,
+    angler_count: u32 = 0,
+    tank_count: u32 = 0,
     mini_boss_count: u32 = 0,
     boss_count: u32 = 0,
 };
@@ -122,6 +137,66 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
                 }
             }
 
+            var tank_count: u32 = 0;
+            if (round >= 3 and remaining_budget >= EnemyType.tank.cost()) {
+                tank_count = @min(1 + (round - 3) / 3, 6);
+                const tank_cost = tank_count * EnemyType.tank.cost();
+                if (remaining_budget > tank_cost) {
+                    remaining_budget -= tank_cost;
+                } else {
+                    tank_count = remaining_budget / EnemyType.tank.cost();
+                    remaining_budget -= tank_count * EnemyType.tank.cost();
+                }
+            }
+
+            var shaman_count: u32 = 0;
+            if (round >= 3 and remaining_budget >= EnemyType.shaman.cost()) {
+                shaman_count = @min(1 + (round - 3) / 4, 4);
+                const shaman_cost = shaman_count * EnemyType.shaman.cost();
+                if (remaining_budget > shaman_cost) {
+                    remaining_budget -= shaman_cost;
+                } else {
+                    shaman_count = remaining_budget / EnemyType.shaman.cost();
+                    remaining_budget -= shaman_count * EnemyType.shaman.cost();
+                }
+            }
+
+            var magician_count: u32 = 0;
+            if (round >= 4 and remaining_budget >= EnemyType.magician.cost()) {
+                magician_count = @min(1 + (round - 4) / 4, 4);
+                const magician_cost = magician_count * EnemyType.magician.cost();
+                if (remaining_budget > magician_cost) {
+                    remaining_budget -= magician_cost;
+                } else {
+                    magician_count = remaining_budget / EnemyType.magician.cost();
+                    remaining_budget -= magician_count * EnemyType.magician.cost();
+                }
+            }
+
+            var lifeliner_count: u32 = 0;
+            if (round >= 4 and remaining_budget >= EnemyType.lifeliner.cost()) {
+                lifeliner_count = @min(1 + (round - 4) / 5, 3);
+                const lifeliner_cost = lifeliner_count * EnemyType.lifeliner.cost();
+                if (remaining_budget > lifeliner_cost) {
+                    remaining_budget -= lifeliner_cost;
+                } else {
+                    lifeliner_count = remaining_budget / EnemyType.lifeliner.cost();
+                    remaining_budget -= lifeliner_count * EnemyType.lifeliner.cost();
+                }
+            }
+
+            var angler_count: u32 = 0;
+            if (round >= 2 and remaining_budget >= EnemyType.angler.cost()) {
+                angler_count = @min(1 + (round - 2) / 2, 8);
+                const angler_cost = angler_count * EnemyType.angler.cost();
+                if (remaining_budget > angler_cost) {
+                    remaining_budget -= angler_cost;
+                } else {
+                    angler_count = remaining_budget / EnemyType.angler.cost();
+                    remaining_budget -= angler_count * EnemyType.angler.cost();
+                }
+            }
+
             var ranged_count: u32 = 0;
             if (round >= 2 and remaining_budget > 0) {
                 const ranged_budget = (remaining_budget * 35) / 100;
@@ -130,7 +205,7 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
             }
 
             var melee_count = remaining_budget;
-            var total_enemies = elite_count + ranged_count + melee_count;
+            var total_enemies = elite_count + tank_count + shaman_count + magician_count + lifeliner_count + angler_count + ranged_count + melee_count;
 
             if (total_enemies > MAX_CONCURRENT_ENEMIES) {
                 const excess = total_enemies - @as(u32, @intCast(MAX_CONCURRENT_ENEMIES));
@@ -139,7 +214,7 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
                 } else {
                     melee_count = 0;
                 }
-                total_enemies = elite_count + ranged_count + melee_count;
+                total_enemies = elite_count + tank_count + shaman_count + magician_count + lifeliner_count + angler_count + ranged_count + melee_count;
             }
 
             return WaveConfig{
@@ -150,6 +225,11 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
                 .melee_count = melee_count,
                 .ranged_count = ranged_count,
                 .elite_count = elite_count,
+                .shaman_count = shaman_count,
+                .magician_count = magician_count,
+                .lifeliner_count = lifeliner_count,
+                .angler_count = angler_count,
+                .tank_count = tank_count,
             };
         },
     }
@@ -185,6 +265,11 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
 
     var melee_left = config.melee_count;
     var ranged_left = config.ranged_count;
+    var angler_left = config.angler_count;
+    var tank_left = config.tank_count;
+    var shaman_left = config.shaman_count;
+    var magician_left = config.magician_count;
+    var lifeliner_left = config.lifeliner_count;
     var elite_left = config.elite_count;
 
     const vanguard = @min(melee_left, 3);
@@ -193,7 +278,7 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
         melee_left -= 1;
     }
 
-    while (melee_left > 0 or ranged_left > 0 or elite_left > 0) {
+    while (melee_left > 0 or ranged_left > 0 or angler_left > 0 or tank_left > 0 or shaman_left > 0 or magician_left > 0 or lifeliner_left > 0 or elite_left > 0) {
         const melee_batch = @min(melee_left, 2);
         for (0..melee_batch) |_| {
             try list.append(.melee);
@@ -203,6 +288,31 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
         if (ranged_left > 0) {
             try list.append(.ranged);
             ranged_left -= 1;
+        }
+
+        if (angler_left > 0) {
+            try list.append(.angler);
+            angler_left -= 1;
+        }
+
+        if (tank_left > 0) {
+            try list.append(.tank);
+            tank_left -= 1;
+        }
+
+        if (shaman_left > 0) {
+            try list.append(.shaman);
+            shaman_left -= 1;
+        }
+
+        if (magician_left > 0) {
+            try list.append(.magician);
+            magician_left -= 1;
+        }
+
+        if (lifeliner_left > 0) {
+            try list.append(.lifeliner);
+            lifeliner_left -= 1;
         }
 
         if (elite_left > 0 and (melee_left <= config.melee_count / 2 or (melee_left == 0 and ranged_left == 0))) {
@@ -474,6 +584,11 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
             .melee => try prefabs.enemies.Melee(spawn_position),
             .ranged => try prefabs.enemies.Ranged(spawn_position),
             .elite => try prefabs.enemies.Elite(spawn_position),
+            .shaman => try prefabs.enemies.Shaman(spawn_position),
+            .magician => try prefabs.enemies.Magician(spawn_position),
+            .lifeliner => try prefabs.enemies.Lifeliner(spawn_position),
+            .angler => try prefabs.enemies.Angler(spawn_position),
+            .tank => try prefabs.enemies.Tank(spawn_position),
             .mini_boss => try prefabs.enemies.MiniBoss(spawn_position),
             .boss => try prefabs.enemies.Boss(spawn_position),
         };
@@ -564,12 +679,22 @@ test "populateQueue matches config enemy counts" {
     var melee_found: u32 = 0;
     var ranged_found: u32 = 0;
     var elite_found: u32 = 0;
+    var angler_found: u32 = 0;
+    var tank_found: u32 = 0;
+    var shaman_found: u32 = 0;
+    var magician_found: u32 = 0;
+    var lifeliner_found: u32 = 0;
 
     for (queue.items()) |enemy_type| {
         switch (enemy_type) {
             .melee => melee_found += 1,
             .ranged => ranged_found += 1,
             .elite => elite_found += 1,
+            .angler => angler_found += 1,
+            .tank => tank_found += 1,
+            .shaman => shaman_found += 1,
+            .magician => magician_found += 1,
+            .lifeliner => lifeliner_found += 1,
             else => {},
         }
     }
@@ -577,6 +702,11 @@ test "populateQueue matches config enemy counts" {
     try std.testing.expectEqual(config.melee_count, melee_found);
     try std.testing.expectEqual(config.ranged_count, ranged_found);
     try std.testing.expectEqual(config.elite_count, elite_found);
+    try std.testing.expectEqual(config.angler_count, angler_found);
+    try std.testing.expectEqual(config.tank_count, tank_found);
+    try std.testing.expectEqual(config.shaman_count, shaman_found);
+    try std.testing.expectEqual(config.magician_count, magician_found);
+    try std.testing.expectEqual(config.lifeliner_count, lifeliner_found);
 }
 
 test "pickSpawnPosition stays in bounds and away from player" {

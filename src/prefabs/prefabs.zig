@@ -9,6 +9,11 @@ pub const enemies = struct {
     pub const Dummy = @import("enemies/Dummy.zig").DummyEnemy;
     pub const MiniBoss = @import("enemies/MiniBoss.zig").MiniBossEnemy;
     pub const Boss = @import("enemies/Boss.zig").BossEnemy;
+    pub const Shaman = @import("enemies/Shaman.zig").ShamanEnemy;
+    pub const Magician = @import("enemies/Magician.zig").MagicianEnemy;
+    pub const Lifeliner = @import("enemies/Lifeliner.zig").LifelinerEnemy;
+    pub const Angler = @import("enemies/Angler.zig").AnglerEnemy;
+    pub const Tank = @import("enemies/Tank.zig").TankEnemy;
 };
 pub const items = struct {
     pub const ExperienceOrb = @import("items/ExperienceOrb.zig").ExperienceOrb;

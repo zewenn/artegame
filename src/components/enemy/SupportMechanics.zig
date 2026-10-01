@@ -120,14 +120,19 @@ pub fn executeEnemyRevive(
     room_manager: *RoomManager,
     current_room: u32,
 ) !bool {
-    const record = room_manager.popFallenEnemyForRevive() orelse return false;
+    const record = RoomManager.popFallenEnemyForRevive() orelse return false;
 
     const safe_position = record.death_position;
 
     const enemy_entity = switch (record.enemy_type) {
         .ranged => try prefabs.enemies.Ranged(safe_position),
         .elite => try prefabs.enemies.Elite(safe_position),
-        .melee => try prefabs.enemies.Melee(safe_position),
+        .shaman => try prefabs.enemies.Shaman(safe_position),
+        .magician => try prefabs.enemies.Magician(safe_position),
+        .lifeliner => try prefabs.enemies.Lifeliner(safe_position),
+        .angler => try prefabs.enemies.Angler(safe_position),
+        .tank => try prefabs.enemies.Tank(safe_position),
+        else => try prefabs.enemies.Melee(safe_position),
     };
 
     const stats = enemy_entity.getComponent(Stats) orelse return false;

@@ -15,6 +15,7 @@ pub const ExecutionType = enum {
     projectile,
     spell,
     mobility,
+    custom,
 };
 
 pub const AimMode = enum {
@@ -84,6 +85,14 @@ pub const MobilityProfile = struct {
     sfx_path: ?[]const u8 = null,
 };
 
+pub const CustomActionFn = *const fn (
+    enemy_entity: *lm.Entity,
+    enemy_transform: *lm.Transform,
+    enemy_stats: *Stats,
+    player_transform: *lm.Transform,
+    player_stats: ?*Stats,
+) anyerror!void;
+
 const Self = @This();
 pub const Ability = Self;
 
@@ -98,6 +107,7 @@ conditions: AbilityCondition = .{},
 projectile_profile: ?ProjectileProfile = null,
 spell_profile: ?SpellProfile = null,
 mobility_profile: ?MobilityProfile = null,
+custom_action: ?CustomActionFn = null,
 
 windup_animation: ?[]const u8 = null,
 release_animation: ?[]const u8 = null,
@@ -244,6 +254,17 @@ pub fn execute(
         },
         .mobility => {
             self.executeMobility(enemy_entity, start_position, player_position);
+        },
+        .custom => {
+            if (self.custom_action) |action_function| {
+                try action_function(
+                    enemy_entity,
+                    enemy_transform,
+                    enemy_stats,
+                    player_transform,
+                    player_stats,
+                );
+            }
         },
     }
 }

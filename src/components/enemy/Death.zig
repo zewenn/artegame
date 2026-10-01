@@ -31,6 +31,16 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
             self.enemy_type = .ranged;
         } else if (std.mem.startsWith(u8, entity.id, "elite")) {
             self.enemy_type = .elite;
+        } else if (std.mem.startsWith(u8, entity.id, "shaman")) {
+            self.enemy_type = .shaman;
+        } else if (std.mem.startsWith(u8, entity.id, "magician")) {
+            self.enemy_type = .magician;
+        } else if (std.mem.startsWith(u8, entity.id, "lifeliner")) {
+            self.enemy_type = .lifeliner;
+        } else if (std.mem.startsWith(u8, entity.id, "angler")) {
+            self.enemy_type = .angler;
+        } else if (std.mem.startsWith(u8, entity.id, "tank")) {
+            self.enemy_type = .tank;
         } else if (std.mem.startsWith(u8, entity.id, "dummy")) {
             self.enemy_type = .dummy;
         } else if (std.mem.startsWith(u8, entity.id, "mini-boss")) {
@@ -64,7 +74,8 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 
     const orb_count: u8 = switch (self.enemy_type) {
         .dummy => 1,
-        .melee, .ranged => lm.random.intRangeAtMostBiased(u8, 1, 3),
+        .melee, .ranged, .angler => lm.random.intRangeAtMostBiased(u8, 1, 3),
+        .shaman, .magician, .lifeliner, .tank => lm.random.intRangeAtMostBiased(u8, 2, 4),
         .elite => lm.random.intRangeAtMostBiased(u8, 3, 6),
         .mini_boss => lm.random.intRangeAtMostBiased(u8, 8, 12),
         .boss => lm.random.intRangeAtMostBiased(u8, 25, 35),

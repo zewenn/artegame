@@ -182,20 +182,6 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         return;
     }
 
-    var damage_dealt: f32 = 0;
-
-    if (options.on_hit_callback) |callback| {
-        callback(.{
-            .projectile = self,
-            .target = other,
-            .caster_uuid = options.caster_uuid,
-            .damage_dealt = damage_dealt,
-            .is_crit = options.is_crit,
-            .is_healing = options.is_healing,
-            .options = options,
-        });
-    }
-
     if (options.is_healing) healing: {
         const heal_value = if (options.heal_amount > 0) options.heal_amount else options.damage;
         other_stats.current.health = @min(other_stats.max.health, other_stats.current.health + heal_value);
@@ -214,12 +200,24 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
         return;
     }
 
-    damage_dealt = options.shooter_stats.calculateDamage(
+    const damage_dealt = options.shooter_stats.calculateDamage(
         other_stats.*,
         options.damage_type,
         options.is_crit,
     ) * options.damage;
     other_stats.current.health -= damage_dealt;
+
+    if (options.on_hit_callback) |callback| {
+        callback(.{
+            .projectile = self,
+            .target = other,
+            .caster_uuid = options.caster_uuid,
+            .damage_dealt = damage_dealt,
+            .is_crit = options.is_crit,
+            .is_healing = options.is_healing,
+            .options = options,
+        });
+    }
 
     if (other.getComponent(ReactiveAura)) |reactive_aura| {
         reactive_aura.onHitByAttacker(other, player, damage_dealt);

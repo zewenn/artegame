@@ -94,4 +94,9 @@ test {
     _ = @import("global/map/WallMesher.zig");
     _ = @import("global/map/MapSerializer.zig");
     _ = @import("prefabs/Projectile.zig");
+    _ = @import("prefabs/enemies/Shaman.zig");
+    _ = @import("prefabs/enemies/Magician.zig");
+    _ = @import("prefabs/enemies/Lifeliner.zig");
+    _ = @import("prefabs/enemies/Angler.zig");
+    _ = @import("prefabs/enemies/Tank.zig");
 }

@@ -4,22 +4,6 @@
 
 
 
-### [33#ENE] New normal enemy archetypes: Shaman, Magician, Lifeliner, Angler, and Tank
-
-  - tags: [enemies, ai, combat, archetypes]
-  - priority: medium
-  - workload: Hard
-  - steps:
-      - [ ] Implement Shaman prefab & AI: pass-through heal burst, ally speed buff, grieving projectile, stasis backup call, on-death HP drain/buff
-      - [ ] Implement Magician prefab & AI: blink teleport, pull projectile, proximity slow aura, close-range stun burst
-      - [ ] Implement Lifeliner prefab & AI: low-HP ally rescue teleport and fallen enemy resurrection
-      - [ ] Implement Angler prefab & AI: 4-way rapid cardinal fire (0°, 90°, -90°, 180°) with scaling attack speed
-      - [ ] Implement Tank prefab & AI: reactive root-on-hit aura, stacking slow shots, knockback projectile, 8-way stun burst
-      - [ ] User confirmation that all 5 normal enemy archetypes display intended behaviors and abilities
-    ```md
-    Implements 5 new standard enemy archetypes specified in v4.0.0: Shaman (support/summoner), Magician (mobility/pull), Lifeliner (medic/reviver), Angler (rapid cardinal suppression), and Tank (crowd control/reactive defense).
-    ```
-
 ### [34#ENE] Mini-boss encounters: Knight and Bishop with scaled clear rewards
 
   - tags: [enemies, mini-boss, encounters, ai]
@@ -125,6 +109,22 @@
 
 
 ## Done
+
+### [33#ENE] New normal enemy archetypes: Shaman, Magician, Lifeliner, Angler, and Tank
+
+  - tags: [enemies, ai, combat, archetypes]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [x] Implement Shaman prefab & AI: pass-through heal burst, ally speed buff, grieving projectile, stasis backup call, on-death HP drain/buff
+      - [x] Implement Magician prefab & AI: blink teleport, pull projectile, proximity slow aura, close-range stun burst
+      - [x] Implement Lifeliner prefab & AI: low-HP ally rescue teleport and fallen enemy resurrection
+      - [x] Implement Angler prefab & AI: 4-way rapid cardinal fire (0°, 90°, -90°, 180°) with scaling attack speed
+      - [x] Implement Tank prefab & AI: reactive root-on-hit aura, stacking slow shots, knockback projectile, 8-way stun burst
+      - [x] User confirmation that all 5 normal enemy archetypes display intended behaviors and abilities
+    ```md
+    Implements 5 new standard enemy archetypes specified in v4.0.0: Shaman (support/summoner), Magician (mobility/pull), Lifeliner (medic/reviver), Angler (rapid cardinal suppression), and Tank (crowd control/reactive defense).
+    ```
 
 ### [32#UIS] Dedicated top-of-screen boss health bar HUD component
 
