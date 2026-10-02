@@ -198,10 +198,10 @@ pub fn TankEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&tank_animations),
 
         Stats.init(.enemy, .{
-            .health = 650,
+            .health = 350,
             .attack_speed = 0.8,
-            .armour = 45,
-            .magic_resist = 30,
+            .armour = 25,
+            .magic_resist = 10,
             .movement_speed = 95,
             .aggro_range = 850,
         }),
@@ -219,6 +219,7 @@ pub fn TankEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&tank_abilities, tank_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .tank },
+        Enemy.OverheadUI{},
     });
 }
 
@@ -233,8 +234,8 @@ test "Tank enemy creation and component configuration" {
     try std.testing.expect(tank.getComponent(Enemy.Attack) != null);
 
     const stats = tank.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 650.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 45.0), stats.base.armour);
+    try std.testing.expectEqual(@as(f32, 350.0), stats.max.health);
+    try std.testing.expectEqual(@as(f32, 25.0), stats.base.armour);
     try std.testing.expectEqual(@as(f32, 95.0), stats.current.movement_speed);
 }
 

@@ -108,7 +108,41 @@
 ## Work in Progress
 
 
+
 ## Done
+
+### [44#SPW] Cap concurrent enemies to 64, throttle spawn rate to 5-6 every 5s, and apply post-cap round stat buffs
+
+  - tags: [spawner, balancing, enemies, stats]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Reduce MAX_CONCURRENT_ENEMIES to 64 and clamp wave configuration totals
+      - [x] Throttle normal wave spawn cadence to 5-6 enemies per batch every 5 seconds
+      - [x] Implement post-cap stat scaling buffs (bonus armour, magic_resist, health, damage) in following rounds
+      - [x] Update unit tests in RoundSpawner.zig to validate new cap, spawn cadence, and post-cap stat scaling
+      - [x] Verify compilation and test suite with zig build and zig build test
+      - [x] User confirmation that enemy cap, spawn pacing, and stat scaling balancing work as expected
+    ```md
+    Reduces the enemy count cap from 256 to 64 to restore playability and prevent screen swarming. Slows enemy wave spawning to 5-6 enemies every 5 seconds. When the 64-enemy wave cap is reached, scales up enemy difficulty across subsequent rounds through bonus armour, magic resist, health, and damage buffs.
+    ```
+
+### [45#FIX] Fix level completion blocked by duplicate Shaman backup enemy registration
+
+  - tags: [enemies, shaman, spawner, fix, progression]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [x] Remove duplicate active enemy append in Shaman backup call
+      - [x] Route Lifeliner revive registration through registerSummonedEnemy
+      - [x] Make RoundSpawner.registerSummonedEnemy idempotent against duplicate UUIDs
+      - [x] Ensure RoundSpawner.removeDefeatedEnemy purges all duplicate UUID instances cleanly
+      - [x] Add unit tests verifying duplicate prevention and wave completion
+      - [x] Verify build with zig build and test suite with zig build test
+      - [x] User confirmation that levels can be completed normally when Shamans call backup
+    ```md
+    Fixes a critical bug preventing room/level completion when a Shaman casts its backup summon ability. Shaman.shamanCallBackup was manually appending summoned elite UUIDs to active_enemies while simultaneously invoking RoomManager.registerSummonedEnemy, resulting in duplicate UUID entries. When defeated, removeDefeatedEnemy only removed one instance, leaving phantom entities in active_enemies and permanently blocking isWaveFinished().
+    ```
 
 ### [33#ENE] New normal enemy archetypes: Shaman, Magician, Lifeliner, Angler, and Tank
 

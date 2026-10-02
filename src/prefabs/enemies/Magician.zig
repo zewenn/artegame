@@ -172,7 +172,7 @@ pub fn MagicianEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&magician_animations),
 
         Stats.init(.enemy, .{
-            .health = 260,
+            .health = 80,
             .attack_speed = 1.0,
             .armour = 15,
             .movement_speed = 140,
@@ -191,6 +191,7 @@ pub fn MagicianEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&magician_abilities, magician_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .magician },
+        Enemy.OverheadUI{},
     });
 }
 
@@ -205,7 +206,7 @@ test "Magician enemy creation and component configuration" {
     try std.testing.expect(magician.getComponent(Enemy.Attack) != null);
 
     const stats = magician.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 260.0), stats.max.health);
+    try std.testing.expectEqual(@as(f32, 80.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 140.0), stats.current.movement_speed);
 }
 

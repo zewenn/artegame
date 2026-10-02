@@ -108,9 +108,9 @@ pub fn AnglerEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&angler_animations),
 
         Stats.init(.enemy, .{
-            .health = 220,
-            .attack_speed = 10.0,
-            .armour = 20,
+            .health = 60,
+            .attack_speed = 8.0,
+            .armour = 5,
             .movement_speed = 110,
             .aggro_range = 900,
         }),
@@ -121,6 +121,7 @@ pub fn AnglerEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&angler_abilities, angler_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .angler },
+        Enemy.OverheadUI{},
     });
 }
 
@@ -134,8 +135,8 @@ test "Angler enemy creation and component configuration" {
     try std.testing.expect(angler.getComponent(Enemy.Attack) != null);
 
     const stats = angler.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 220.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 10.0), stats.current.attack_speed);
+    try std.testing.expectEqual(@as(f32, 60.0), stats.max.health);
+    try std.testing.expectEqual(@as(f32, 8.0), stats.current.attack_speed);
 }
 
 test "Angler rapid cardinal fire profile and animations" {

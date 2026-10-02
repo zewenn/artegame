@@ -59,6 +59,8 @@ pub const WaveConfig = struct {
     tank_count: u32 = 0,
     mini_boss_count: u32 = 0,
     boss_count: u32 = 0,
+    is_cap_reached: bool = false,
+    post_cap_round_offset: u32 = 0,
 };
 
 pub const WaveProgress = struct {
@@ -92,6 +94,129 @@ pub fn calculateBudget(round: u32) u32 {
     return calculateBudgetForProfile(round, .normal);
 }
 
+pub const EnemyComposition = struct {
+    melee_count: u32,
+    ranged_count: u32,
+    elite_count: u32,
+    shaman_count: u32,
+    magician_count: u32,
+    lifeliner_count: u32,
+    angler_count: u32,
+    tank_count: u32,
+
+    pub fn total(self: EnemyComposition) u32 {
+        return self.melee_count + self.ranged_count + self.elite_count + self.shaman_count + self.magician_count + self.lifeliner_count + self.angler_count + self.tank_count;
+    }
+};
+
+pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
+    const total_budget = calculateBudgetForProfile(round, .normal);
+    var remaining_budget = total_budget;
+
+    var elite_count: u32 = 0;
+    if (round >= 3) {
+        elite_count = @min(1 + (round - 3) / 2, 16);
+        const elite_cost = elite_count * EnemyType.elite.cost();
+        if (remaining_budget > elite_cost) {
+            remaining_budget -= elite_cost;
+        } else {
+            elite_count = remaining_budget / EnemyType.elite.cost();
+            remaining_budget -= elite_count * EnemyType.elite.cost();
+        }
+    }
+
+    var tank_count: u32 = 0;
+    if (round >= 3 and remaining_budget >= EnemyType.tank.cost()) {
+        tank_count = @min(1 + (round - 3) / 3, 6);
+        const tank_cost = tank_count * EnemyType.tank.cost();
+        if (remaining_budget > tank_cost) {
+            remaining_budget -= tank_cost;
+        } else {
+            tank_count = remaining_budget / EnemyType.tank.cost();
+            remaining_budget -= tank_count * EnemyType.tank.cost();
+        }
+    }
+
+    var shaman_count: u32 = 0;
+    if (round >= 3 and remaining_budget >= EnemyType.shaman.cost()) {
+        shaman_count = @min(1 + (round - 3) / 4, 4);
+        const shaman_cost = shaman_count * EnemyType.shaman.cost();
+        if (remaining_budget > shaman_cost) {
+            remaining_budget -= shaman_cost;
+        } else {
+            shaman_count = remaining_budget / EnemyType.shaman.cost();
+            remaining_budget -= shaman_count * EnemyType.shaman.cost();
+        }
+    }
+
+    var magician_count: u32 = 0;
+    if (round >= 4 and remaining_budget >= EnemyType.magician.cost()) {
+        magician_count = @min(1 + (round - 4) / 4, 4);
+        const magician_cost = magician_count * EnemyType.magician.cost();
+        if (remaining_budget > magician_cost) {
+            remaining_budget -= magician_cost;
+        } else {
+            magician_count = remaining_budget / EnemyType.magician.cost();
+            remaining_budget -= magician_count * EnemyType.magician.cost();
+        }
+    }
+
+    var lifeliner_count: u32 = 0;
+    if (round >= 4 and remaining_budget >= EnemyType.lifeliner.cost()) {
+        lifeliner_count = @min(1 + (round - 4) / 5, 3);
+        const lifeliner_cost = lifeliner_count * EnemyType.lifeliner.cost();
+        if (remaining_budget > lifeliner_cost) {
+            remaining_budget -= lifeliner_cost;
+        } else {
+            lifeliner_count = remaining_budget / EnemyType.lifeliner.cost();
+            remaining_budget -= lifeliner_count * EnemyType.lifeliner.cost();
+        }
+    }
+
+    var angler_count: u32 = 0;
+    if (round >= 2 and remaining_budget >= EnemyType.angler.cost()) {
+        angler_count = @min(1 + (round - 2) / 2, 8);
+        const angler_cost = angler_count * EnemyType.angler.cost();
+        if (remaining_budget > angler_cost) {
+            remaining_budget -= angler_cost;
+        } else {
+            angler_count = remaining_budget / EnemyType.angler.cost();
+            remaining_budget -= angler_count * EnemyType.angler.cost();
+        }
+    }
+
+    var ranged_count: u32 = 0;
+    if (round >= 2 and remaining_budget > 0) {
+        const ranged_budget = (remaining_budget * 35) / 100;
+        ranged_count = ranged_budget / EnemyType.ranged.cost();
+        remaining_budget -= ranged_count * EnemyType.ranged.cost();
+    }
+
+    const melee_count = remaining_budget;
+
+    return EnemyComposition{
+        .melee_count = melee_count,
+        .ranged_count = ranged_count,
+        .elite_count = elite_count,
+        .shaman_count = shaman_count,
+        .magician_count = magician_count,
+        .lifeliner_count = lifeliner_count,
+        .angler_count = angler_count,
+        .tank_count = tank_count,
+    };
+}
+
+pub fn getFirstCapRound() u32 {
+    var check_round: u32 = 1;
+    while (check_round < 100) : (check_round += 1) {
+        const composition = calculateNormalEnemyComposition(check_round);
+        if (composition.total() >= MAX_CONCURRENT_ENEMIES) {
+            return check_round;
+        }
+    }
+    return 10;
+}
+
 pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfig {
     switch (profile) {
         .tutorial => {
@@ -123,113 +248,59 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
         },
         .normal => {
             const total_budget = calculateBudgetForProfile(round, .normal);
-            var remaining_budget = total_budget;
+            var composition = calculateNormalEnemyComposition(round);
+            const unconstrained_enemies = composition.total();
 
-            var elite_count: u32 = 0;
-            if (round >= 3) {
-                elite_count = @min(1 + (round - 3) / 2, 16);
-                const elite_cost = elite_count * EnemyType.elite.cost();
-                if (remaining_budget > elite_cost) {
-                    remaining_budget -= elite_cost;
+            const is_cap_reached = unconstrained_enemies >= MAX_CONCURRENT_ENEMIES;
+            const first_cap_round = getFirstCapRound();
+            const post_cap_round_offset: u32 = if (round > first_cap_round) round - first_cap_round else 0;
+
+            if (unconstrained_enemies > MAX_CONCURRENT_ENEMIES) {
+                var excess = unconstrained_enemies - @as(u32, @intCast(MAX_CONCURRENT_ENEMIES));
+                if (composition.melee_count >= excess) {
+                    composition.melee_count -= excess;
+                    excess = 0;
                 } else {
-                    elite_count = remaining_budget / EnemyType.elite.cost();
-                    remaining_budget -= elite_count * EnemyType.elite.cost();
+                    excess -= composition.melee_count;
+                    composition.melee_count = 0;
                 }
-            }
 
-            var tank_count: u32 = 0;
-            if (round >= 3 and remaining_budget >= EnemyType.tank.cost()) {
-                tank_count = @min(1 + (round - 3) / 3, 6);
-                const tank_cost = tank_count * EnemyType.tank.cost();
-                if (remaining_budget > tank_cost) {
-                    remaining_budget -= tank_cost;
-                } else {
-                    tank_count = remaining_budget / EnemyType.tank.cost();
-                    remaining_budget -= tank_count * EnemyType.tank.cost();
+                if (excess > 0) {
+                    if (composition.ranged_count >= excess) {
+                        composition.ranged_count -= excess;
+                        excess = 0;
+                    } else {
+                        excess -= composition.ranged_count;
+                        composition.ranged_count = 0;
+                    }
                 }
-            }
 
-            var shaman_count: u32 = 0;
-            if (round >= 3 and remaining_budget >= EnemyType.shaman.cost()) {
-                shaman_count = @min(1 + (round - 3) / 4, 4);
-                const shaman_cost = shaman_count * EnemyType.shaman.cost();
-                if (remaining_budget > shaman_cost) {
-                    remaining_budget -= shaman_cost;
-                } else {
-                    shaman_count = remaining_budget / EnemyType.shaman.cost();
-                    remaining_budget -= shaman_count * EnemyType.shaman.cost();
+                if (excess > 0) {
+                    if (composition.angler_count >= excess) {
+                        composition.angler_count -= excess;
+                        excess = 0;
+                    } else {
+                        excess -= composition.angler_count;
+                        composition.angler_count = 0;
+                    }
                 }
-            }
-
-            var magician_count: u32 = 0;
-            if (round >= 4 and remaining_budget >= EnemyType.magician.cost()) {
-                magician_count = @min(1 + (round - 4) / 4, 4);
-                const magician_cost = magician_count * EnemyType.magician.cost();
-                if (remaining_budget > magician_cost) {
-                    remaining_budget -= magician_cost;
-                } else {
-                    magician_count = remaining_budget / EnemyType.magician.cost();
-                    remaining_budget -= magician_count * EnemyType.magician.cost();
-                }
-            }
-
-            var lifeliner_count: u32 = 0;
-            if (round >= 4 and remaining_budget >= EnemyType.lifeliner.cost()) {
-                lifeliner_count = @min(1 + (round - 4) / 5, 3);
-                const lifeliner_cost = lifeliner_count * EnemyType.lifeliner.cost();
-                if (remaining_budget > lifeliner_cost) {
-                    remaining_budget -= lifeliner_cost;
-                } else {
-                    lifeliner_count = remaining_budget / EnemyType.lifeliner.cost();
-                    remaining_budget -= lifeliner_count * EnemyType.lifeliner.cost();
-                }
-            }
-
-            var angler_count: u32 = 0;
-            if (round >= 2 and remaining_budget >= EnemyType.angler.cost()) {
-                angler_count = @min(1 + (round - 2) / 2, 8);
-                const angler_cost = angler_count * EnemyType.angler.cost();
-                if (remaining_budget > angler_cost) {
-                    remaining_budget -= angler_cost;
-                } else {
-                    angler_count = remaining_budget / EnemyType.angler.cost();
-                    remaining_budget -= angler_count * EnemyType.angler.cost();
-                }
-            }
-
-            var ranged_count: u32 = 0;
-            if (round >= 2 and remaining_budget > 0) {
-                const ranged_budget = (remaining_budget * 35) / 100;
-                ranged_count = ranged_budget / EnemyType.ranged.cost();
-                remaining_budget -= ranged_count * EnemyType.ranged.cost();
-            }
-
-            var melee_count = remaining_budget;
-            var total_enemies = elite_count + tank_count + shaman_count + magician_count + lifeliner_count + angler_count + ranged_count + melee_count;
-
-            if (total_enemies > MAX_CONCURRENT_ENEMIES) {
-                const excess = total_enemies - @as(u32, @intCast(MAX_CONCURRENT_ENEMIES));
-                if (melee_count >= excess) {
-                    melee_count -= excess;
-                } else {
-                    melee_count = 0;
-                }
-                total_enemies = elite_count + tank_count + shaman_count + magician_count + lifeliner_count + angler_count + ranged_count + melee_count;
             }
 
             return WaveConfig{
                 .round = round,
                 .profile = .normal,
                 .budget = total_budget,
-                .total_enemies = total_enemies,
-                .melee_count = melee_count,
-                .ranged_count = ranged_count,
-                .elite_count = elite_count,
-                .shaman_count = shaman_count,
-                .magician_count = magician_count,
-                .lifeliner_count = lifeliner_count,
-                .angler_count = angler_count,
-                .tank_count = tank_count,
+                .total_enemies = composition.total(),
+                .melee_count = composition.melee_count,
+                .ranged_count = composition.ranged_count,
+                .elite_count = composition.elite_count,
+                .shaman_count = composition.shaman_count,
+                .magician_count = composition.magician_count,
+                .lifeliner_count = composition.lifeliner_count,
+                .angler_count = composition.angler_count,
+                .tank_count = composition.tank_count,
+                .is_cap_reached = is_cap_reached,
+                .post_cap_round_offset = post_cap_round_offset,
             };
         },
     }
@@ -395,7 +466,7 @@ pub fn pickSpawnPosition(player_position: lm.Vector2) lm.Vector2 {
 
 const Self = @This();
 
-pub const MAX_CONCURRENT_ENEMIES: usize = 256;
+pub const MAX_CONCURRENT_ENEMIES: usize = 64;
 
 spawn_queue: lm.List(EnemyType),
 spawn_cursor: usize = 0,
@@ -409,8 +480,8 @@ total_wave_enemies: u32 = 0,
 killed_enemies: u32 = 0,
 
 spawn_timer_seconds: f32 = 0,
-spawn_interval_seconds: f32 = 0.65,
-max_active_enemies: u32 = 12,
+spawn_interval_seconds: f32 = 5.0,
+max_active_enemies: u32 = 64,
 
 is_active: bool = false,
 
@@ -467,10 +538,11 @@ pub fn deinit(self: *Self) void {
 pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
     self.round = round;
     self.profile = profile;
-    const config = generateWaveConfigForProfile(round, profile);
-    self.total_wave_enemies = config.total_enemies;
     self.killed_enemies = 0;
     self.spawn_cursor = 0;
+
+    const config = generateWaveConfigForProfile(round, profile);
+    self.total_wave_enemies = config.total_enemies;
 
     try populateQueue(&self.spawn_queue, config);
     self.active_enemies.clearRetainingCapacity();
@@ -493,8 +565,8 @@ pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
             self.spawn_interval_seconds = 0.1;
         },
         .normal => {
-            self.max_active_enemies = @min(@max(12, 10 + round * 6), @as(u32, @intCast(MAX_CONCURRENT_ENEMIES)));
-            self.spawn_interval_seconds = @max(0.18, 0.65 - @as(f32, @floatFromInt(round)) * 0.02);
+            self.max_active_enemies = @as(u32, @intCast(MAX_CONCURRENT_ENEMIES));
+            self.spawn_interval_seconds = 5.0;
         },
     }
 
@@ -508,28 +580,33 @@ pub fn startWave(self: *Self, round: u32) !void {
 
 pub fn removeDefeatedEnemy(self: *Self, uuid: u128) void {
     if (!self.is_active) return;
-    const len = self.active_enemies.len();
-    for (0..len) |index| {
-        if (self.active_enemies.items()[index] == uuid) {
-            _ = self.active_enemies.swapRemove(index);
-            self.killed_enemies += 1;
-            BossBar.onBossDefeated(uuid);
-            return;
-        }
+
+    for (self.active_enemies.items(), 0..) |enemy_uuid, index| {
+        if (uuid != enemy_uuid) continue;
+
+        _ = self.active_enemies.swapRemove(index);
+        self.killed_enemies += 1;
+        BossBar.onBossDefeated(uuid);
+
+        break;
     }
 }
 
 pub fn registerSummonedEnemy(self: *Self, uuid: u128) !void {
     if (!self.is_active) return;
+
+    for (self.active_enemies.items()) |active_uuid| {
+        if (active_uuid == uuid) return;
+    }
+
     self.total_wave_enemies += 1;
     try self.active_enemies.append(uuid);
 }
 
-pub fn applyDynamicStatScaling(enemy: *lm.Entity, enemy_type: EnemyType, round: u32) void {
+pub fn applyDynamicStatScalingToStats(stats: *Stats, enemy_type: EnemyType, round: u32) void {
     if (enemy_type == .dummy) return;
-    const stats = enemy.getComponent(Stats) orelse (enemy.getComponentUnsafe(Stats).result orelse return);
-
     if (round <= 1) return;
+
     const round_offset: f32 = @floatFromInt(round - 1);
 
     const health_multiplier: f32 = 1.0 + round_offset * 0.08;
@@ -547,6 +624,39 @@ pub fn applyDynamicStatScaling(enemy: *lm.Entity, enemy_type: EnemyType, round: 
 
     stats.current.movement_speed *= speed_multiplier;
     stats.base.movement_speed *= speed_multiplier;
+
+    const first_cap_round = getFirstCapRound();
+    if (round > first_cap_round) {
+        const post_cap_round_offset: u32 = round - first_cap_round;
+        const post_cap_offset_float: f32 = @floatFromInt(post_cap_round_offset);
+
+        const bonus_health_multiplier: f32 = 1.0 + post_cap_offset_float * 0.10;
+        stats.max.health *= bonus_health_multiplier;
+        stats.current.health = stats.max.health;
+        stats.base.health = stats.max.health;
+
+        const bonus_damage_multiplier: f32 = 1.0 + post_cap_offset_float * 0.05;
+        stats.current.physical_damage *= bonus_damage_multiplier;
+        stats.base.physical_damage *= bonus_damage_multiplier;
+        stats.current.magic_damage *= bonus_damage_multiplier;
+        stats.base.magic_damage *= bonus_damage_multiplier;
+
+        const bonus_armour: f32 = post_cap_offset_float * 2.5;
+        stats.current.armour += bonus_armour;
+        stats.base.armour += bonus_armour;
+        stats.max.armour += bonus_armour;
+
+        const bonus_magic_resist: f32 = post_cap_offset_float * 2.5;
+        stats.current.magic_resist += bonus_magic_resist;
+        stats.base.magic_resist += bonus_magic_resist;
+        stats.max.magic_resist += bonus_magic_resist;
+    }
+}
+
+pub fn applyDynamicStatScaling(enemy: *lm.Entity, enemy_type: EnemyType, round: u32) void {
+    if (enemy_type == .dummy) return;
+    const stats = enemy.getComponent(Stats) orelse (enemy.getComponentUnsafe(Stats).result orelse return);
+    applyDynamicStatScalingToStats(stats, enemy_type, round);
 }
 
 pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_position: lm.Vector2) !void {
@@ -559,19 +669,24 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
 
     self.spawn_timer_seconds -= delta_seconds;
 
-    if (self.active_enemies.len() < 3) {
-        self.spawn_timer_seconds -= delta_seconds * 0.5;
-    }
-
     if (self.spawn_timer_seconds > 0) return;
 
-    var spawn_batch_limit: usize = 1;
-    if (self.active_enemies.len() < self.max_active_enemies / 3 and self.max_active_enemies > 16) {
-        const headroom = self.max_active_enemies - @as(u32, @intCast(self.active_enemies.len()));
-        spawn_batch_limit = @min(4, @min(headroom, @as(u32, @intCast(self.spawn_queue.len() - self.spawn_cursor))));
-    }
+    const remaining_in_queue = self.spawn_queue.len() - self.spawn_cursor;
+    const active_count = self.active_enemies.len();
+    const active_capacity = if (active_count < self.max_active_enemies)
+        self.max_active_enemies - @as(u32, @intCast(active_count))
+    else
+        0;
 
-    for (0..spawn_batch_limit) |_| {
+    const target_batch_size: usize = if (self.profile == .normal)
+        lm.random.intRangeAtMost(usize, 5, 6)
+    else
+        1;
+
+    const spawn_batch_count = @min(target_batch_size, @min(@as(usize, active_capacity), remaining_in_queue));
+    if (spawn_batch_count == 0) return;
+
+    for (0..spawn_batch_count) |_| {
         if (self.spawn_cursor >= self.spawn_queue.len()) break;
         if (self.active_enemies.len() >= self.max_active_enemies or self.active_enemies.len() >= MAX_CONCURRENT_ENEMIES) break;
 
@@ -607,7 +722,7 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
         SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", spawn_position, player_position, 800.0, 0.35, 0.15);
     }
 
-    self.spawn_timer_seconds = self.spawn_interval_seconds + lm.randFloat(f32, -0.05, 0.05);
+    self.spawn_timer_seconds = self.spawn_interval_seconds;
 }
 
 pub fn isWaveFinished(self: *const Self) bool {
@@ -722,13 +837,13 @@ test "pickSpawnPosition stays in bounds and away from player" {
     }
 }
 
-test "RoundSpawner enforces MAX_CONCURRENT_ENEMIES <= 256" {
+test "RoundSpawner enforces MAX_CONCURRENT_ENEMIES <= 64" {
     var spawner = Self.init(std.testing.allocator);
     defer spawner.deinit();
 
     try spawner.startWave(100);
     try std.testing.expect(spawner.max_active_enemies <= MAX_CONCURRENT_ENEMIES);
-    try std.testing.expect(MAX_CONCURRENT_ENEMIES <= 256);
+    try std.testing.expectEqual(@as(usize, 64), MAX_CONCURRENT_ENEMIES);
 }
 
 test "RoundSpawner room profiles" {
@@ -824,14 +939,84 @@ test "RoundSpawner registerSummonedEnemy dynamically tracks reinforcement adds" 
     try std.testing.expectEqual(@as(usize, 2), spawner.active_enemies.len());
     try std.testing.expect(!spawner.isWaveFinished());
 
+    // Verify duplicate registration is idempotent
+    try spawner.registerSummonedEnemy(99901);
+    try std.testing.expectEqual(@as(u32, 3), spawner.total_wave_enemies);
+    try std.testing.expectEqual(@as(usize, 2), spawner.active_enemies.len());
+
     spawner.removeDefeatedEnemy(99901);
     spawner.removeDefeatedEnemy(99902);
     try std.testing.expectEqual(@as(usize, 0), spawner.active_enemies.len());
     try std.testing.expectEqual(@as(u32, 2), spawner.killed_enemies);
 }
 
-test "RoundSpawner normal wave caps total enemies at 256" {
+
+test "RoundSpawner normal wave caps total enemies at 64" {
     const high_round_config = generateWaveConfigForProfile(50, .normal);
     try std.testing.expect(high_round_config.total_enemies <= MAX_CONCURRENT_ENEMIES);
-    try std.testing.expectEqual(@as(u32, 256), high_round_config.total_enemies);
+    try std.testing.expectEqual(@as(u32, 64), high_round_config.total_enemies);
+    try std.testing.expect(high_round_config.is_cap_reached);
+    try std.testing.expect(high_round_config.post_cap_round_offset > 0);
+}
+
+test "RoundSpawner identifies first cap round and calculates post cap offsets" {
+    const first_cap_round = getFirstCapRound();
+    try std.testing.expect(first_cap_round > 1);
+
+    const before_cap_config = generateWaveConfigForProfile(first_cap_round - 1, .normal);
+    try std.testing.expect(!before_cap_config.is_cap_reached);
+    try std.testing.expectEqual(@as(u32, 0), before_cap_config.post_cap_round_offset);
+
+    const at_cap_config = generateWaveConfigForProfile(first_cap_round, .normal);
+    try std.testing.expect(at_cap_config.is_cap_reached);
+    try std.testing.expectEqual(@as(u32, 0), at_cap_config.post_cap_round_offset);
+
+    const after_cap_config = generateWaveConfigForProfile(first_cap_round + 3, .normal);
+    try std.testing.expect(after_cap_config.is_cap_reached);
+    try std.testing.expectEqual(@as(u32, 3), after_cap_config.post_cap_round_offset);
+}
+
+test "RoundSpawner normal profile uses 5 second spawn interval and 64 max active enemies" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    try spawner.startWave(5);
+    try std.testing.expectEqual(@as(f32, 5.0), spawner.spawn_interval_seconds);
+    try std.testing.expectEqual(@as(u32, 64), spawner.max_active_enemies);
+}
+
+test "applyDynamicStatScalingToStats grants bonus armour, magic resist, health, and damage in post-cap rounds" {
+    const first_cap_round = getFirstCapRound();
+    var base_stats = Stats.init(.enemy, .{
+        .health = 100,
+        .physical_damage = 20,
+        .magic_damage = 10,
+        .armour = 10,
+        .magic_resist = 5,
+    });
+    defer base_stats.deinit();
+
+    // Round at cap (standard scaling only, no post-cap bonus yet)
+    applyDynamicStatScalingToStats(&base_stats, .melee, first_cap_round);
+    try std.testing.expectEqual(@as(f32, 10.0), base_stats.current.armour);
+    try std.testing.expectEqual(@as(f32, 5.0), base_stats.current.magic_resist);
+
+    // Post-cap round (+5 rounds beyond cap)
+    var post_cap_stats = Stats.init(.enemy, .{
+        .health = 100,
+        .physical_damage = 20,
+        .magic_damage = 10,
+        .armour = 10,
+        .magic_resist = 5,
+    });
+    defer post_cap_stats.deinit();
+
+    applyDynamicStatScalingToStats(&post_cap_stats, .melee, first_cap_round + 5);
+    // Expected bonus armour: 5 * 2.5 = 12.5 -> total 22.5
+    try std.testing.expectEqual(@as(f32, 22.5), post_cap_stats.current.armour);
+    // Expected bonus magic resist: 5 * 2.5 = 12.5 -> total 17.5
+    try std.testing.expectEqual(@as(f32, 17.5), post_cap_stats.current.magic_resist);
+    // Health and damage should be higher than standard scaling
+    try std.testing.expect(post_cap_stats.current.health > base_stats.current.health);
+    try std.testing.expect(post_cap_stats.current.physical_damage > base_stats.current.physical_damage);
 }

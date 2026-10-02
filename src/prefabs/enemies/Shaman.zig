@@ -86,7 +86,6 @@ pub fn shamanCallBackup(
         stasis.enterStasis(10.0);
     }
 
-    const room_manager = RoomManager.get() orelse return;
     const origin_position = lm.vec3ToVec2(enemy_transform.position);
     const listener_position = lm.vec3ToVec2(player_transform.position);
 
@@ -101,7 +100,6 @@ pub fn shamanCallBackup(
         const spawn_position = origin_position.add(offset);
         const elite_entity = try prefabs.enemies.Elite(spawn_position);
         try lm.summoning.entity(elite_entity);
-        try room_manager.spawner.active_enemies.append(elite_entity.uuid);
         RoomManager.registerSummonedEnemy(elite_entity.uuid);
     }
 
@@ -224,9 +222,9 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&shaman_animations),
 
         Stats.init(.enemy, .{
-            .health = 240,
+            .health = 140,
             .attack_speed = 0.8,
-            .armour = 20,
+            .armour = 10,
             .movement_speed = 125,
             .aggro_range = 850,
         }),
@@ -246,6 +244,7 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&shaman_abilities, shaman_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .shaman },
+        Enemy.OverheadUI{},
     });
 }
 
@@ -261,7 +260,7 @@ test "Shaman enemy creation and component configuration" {
     try std.testing.expect(shaman.getComponent(Enemy.Attack) != null);
 
     const stats = shaman.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 240.0), stats.max.health);
+    try std.testing.expectEqual(@as(f32, 140.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 125.0), stats.current.movement_speed);
 }
 

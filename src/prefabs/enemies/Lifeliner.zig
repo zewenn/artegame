@@ -156,7 +156,7 @@ pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&lifeliner_animations),
 
         Stats.init(.enemy, .{
-            .health = 200,
+            .health = 110,
             .attack_speed = 2.0,
             .armour = 15,
             .movement_speed = 190,
@@ -169,6 +169,7 @@ pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Attack.init(&lifeliner_abilities, lifeliner_fallback),
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .lifeliner },
+        Enemy.OverheadUI{},
     });
 }
 
@@ -182,7 +183,7 @@ test "Lifeliner enemy creation and component configuration" {
     try std.testing.expect(lifeliner.getComponent(Enemy.Attack) != null);
 
     const stats = lifeliner.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 200.0), stats.max.health);
+    try std.testing.expectEqual(@as(f32, 110.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 190.0), stats.current.movement_speed);
     try std.testing.expectEqual(@as(f32, 2.0), stats.current.attack_speed);
 }

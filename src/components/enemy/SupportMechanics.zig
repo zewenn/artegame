@@ -5,6 +5,7 @@ const Stats = @import("../Stats.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
+const MapLoader = @import("../../global/map/MapLoader.zig");
 
 pub fn findLowestHealthAlly(
     caster_uuid: u128,
@@ -88,6 +89,19 @@ pub fn applySpeedBoost(
     });
 }
 
+pub fn calculateClampedRescuePosition(target_position: lm.Vector2, margin_pixels: f32) lm.Vector2 {
+    const map_bounds = MapLoader.getMapBounds();
+    const min_x = @min(map_bounds.min.x, map_bounds.max.x) + margin_pixels;
+    const max_x = @max(map_bounds.min.x, map_bounds.max.x) - margin_pixels;
+    const min_y = @min(map_bounds.min.y, map_bounds.max.y) + margin_pixels;
+    const max_y = @max(map_bounds.min.y, map_bounds.max.y) - margin_pixels;
+
+    return lm.Vec2(
+        std.math.clamp(target_position.x, min_x, max_x),
+        std.math.clamp(target_position.y, min_y, max_y),
+    );
+}
+
 pub fn executeLifelinerRescue(
     lifeliner_entity: *lm.Entity,
     ally_entity: *lm.Entity,
@@ -105,15 +119,19 @@ pub fn executeLifelinerRescue(
     else
         lm.Vec2(1.0, 0.0);
 
-    const safe_position = player_position.add(safe_direction.multiply(.init(minimum_distance_from_player, minimum_distance_from_player)));
+    const raw_safe_position = player_position.add(safe_direction.multiply(.init(minimum_distance_from_player, minimum_distance_from_player)));
 
-    ally_transform.position.x = safe_position.x;
-    ally_transform.position.y = safe_position.y;
+    const margin_pixels: f32 = 80.0;
+    const lifeliner_offset_x: f32 = 40.0;
+    const clamped_ally_position = calculateClampedRescuePosition(raw_safe_position, margin_pixels + lifeliner_offset_x);
 
-    lifeliner_transform.position.x = safe_position.x + 40.0;
-    lifeliner_transform.position.y = safe_position.y;
+    ally_transform.position.x = clamped_ally_position.x;
+    ally_transform.position.y = clamped_ally_position.y;
 
-    SpatialAudio.playSpatialPitched("audio/sfx/pickup.mp3", safe_position, player_position, 800.0, 0.7, 0.1);
+    lifeliner_transform.position.x = clamped_ally_position.x + lifeliner_offset_x;
+    lifeliner_transform.position.y = clamped_ally_position.y;
+
+    SpatialAudio.playSpatialPitched("audio/sfx/pickup.mp3", clamped_ally_position, player_position, 800.0, 0.7, 0.1);
 }
 
 pub fn executeEnemyRevive(
@@ -142,7 +160,7 @@ pub fn executeEnemyRevive(
     stats.current.health = stats.max.health * revive_health_fraction;
 
     try lm.summoning.entity(enemy_entity);
-    try room_manager.spawner.active_enemies.append(enemy_entity.uuid);
+    try room_manager.spawner.registerSummonedEnemy(enemy_entity.uuid);
 
     const player = lm.getEntity(.{ .id = "player" });
     const listener_position = if (player) |p|
@@ -199,4 +217,23 @@ test "SupportMechanics speed boost lifecycle" {
     stats_ptr.tickEffects(5.0);
     try std.testing.expect(!stats_ptr.hasEffect(.{ .id = "shaman_speed_boost" }));
     try std.testing.expectEqual(@as(f32, 200.0), stats_ptr.current.movement_speed);
+}
+
+test "calculateClampedRescuePosition clamps coordinates within map bounds and margins" {
+    const map_bounds = MapLoader.getMapBounds();
+    const margin_pixels: f32 = 80.0;
+    const min_x = @min(map_bounds.min.x, map_bounds.max.x) + margin_pixels;
+    const max_x = @max(map_bounds.min.x, map_bounds.max.x) - margin_pixels;
+    const min_y = @min(map_bounds.min.y, map_bounds.max.y) + margin_pixels;
+    const max_y = @max(map_bounds.min.y, map_bounds.max.y) - margin_pixels;
+
+    const far_out = lm.Vec2(9999.0, 9999.0);
+    const clamped_high = calculateClampedRescuePosition(far_out, margin_pixels);
+    try std.testing.expectEqual(max_x, clamped_high.x);
+    try std.testing.expectEqual(max_y, clamped_high.y);
+
+    const far_negative = lm.Vec2(-9999.0, -9999.0);
+    const clamped_low = calculateClampedRescuePosition(far_negative, margin_pixels);
+    try std.testing.expectEqual(min_x, clamped_low.x);
+    try std.testing.expectEqual(min_y, clamped_low.y);
 }
