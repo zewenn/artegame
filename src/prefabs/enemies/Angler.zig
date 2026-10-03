@@ -110,6 +110,7 @@ pub fn AnglerEnemy(position: lm.Vector2) !*lm.Entity {
         Stats.init(.enemy, .{
             .health = 60,
             .attack_speed = 8.0,
+            .physical_damage = 8,
             .armour = 5,
             .movement_speed = 110,
             .aggro_range = 900,

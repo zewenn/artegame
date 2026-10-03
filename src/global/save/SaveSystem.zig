@@ -191,6 +191,11 @@ pub fn getRoomCategory() ?[]const u8 {
     return current_save.current_run.room_category;
 }
 
+pub fn getCurrentMapPath() ?[]const u8 {
+    if (!hasActiveRun()) return null;
+    return current_save.current_run.current_map_path;
+}
+
 pub fn recordRunEnd(stats: RoomManager.RunStats) void {
     current_save.scores.total_runs_played += 1;
     current_save.scores.total_enemies_killed += stats.enemies_defeated;
@@ -215,6 +220,7 @@ pub fn saveRun(
     rooms_cleared: u32,
     room_category: []const u8,
     enemies_defeated: u32,
+    current_map_path: []const u8,
     stats: Stats,
     attack: Attack,
 ) void {
@@ -223,6 +229,7 @@ pub fn saveRun(
     current_save.current_run.rooms_cleared = rooms_cleared;
     current_save.current_run.room_category = room_category;
     current_save.current_run.enemies_defeated = enemies_defeated;
+    current_save.current_run.current_map_path = current_map_path;
     current_save.current_run.player_stats = SavedPlayerStats.fromStats(stats);
 
     current_save.current_run.equipped_weapons = attack.equipped_weapons;
@@ -327,13 +334,14 @@ test "SaveSystem saveRun and clearRun lifecycle" {
         },
     };
 
-    saveRun(4, 3, "normal", 27, stats, attack);
+    saveRun(4, 3, "normal", 27, "maps/normal/arena_normal.json", stats, attack);
 
     try testing.expect(hasActiveRun());
     const saved = getSavedRun().?;
     try testing.expectEqual(@as(u32, 4), saved.current_room_index);
     try testing.expectEqual(@as(u32, 3), saved.rooms_cleared);
     try testing.expectEqualStrings("normal", saved.room_category);
+    try testing.expectEqualStrings("maps/normal/arena_normal.json", saved.current_map_path);
     try testing.expectEqual(@as(u32, 27), saved.enemies_defeated);
     try testing.expectEqual(@as(f32, 75), saved.player_stats.health);
     try testing.expectEqual(@as(usize, 500), saved.player_stats.experience);
@@ -343,6 +351,7 @@ test "SaveSystem saveRun and clearRun lifecycle" {
     try testing.expectEqual(@as(?u32, 4), getCurrentRoomIndex());
     try testing.expectEqual(@as(?u32, 3), getRoomsCleared());
     try testing.expectEqualStrings("normal", getRoomCategory().?);
+    try testing.expectEqualStrings("maps/normal/arena_normal.json", getCurrentMapPath().?);
 
     clearRun();
     try testing.expect(!hasActiveRun());
@@ -372,7 +381,7 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
         },
     };
 
-    saveRun(2, 1, "plate_upgrades", 12, stats, attack);
+    saveRun(2, 1, "plate_upgrades", 12, "maps/normal/arena_normal.json", stats, attack);
     try testing.expect(hasActiveRun());
 
     load();
@@ -383,7 +392,7 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
     resumed_attack.equipped_weapons = saved.equipped_weapons;
 
     resumed_attack.equipped_weapons[0].?.dash_attack.projectile_options.damage *= 1.25;
-    saveRun(saved.current_room_index, saved.rooms_cleared, saved.room_category, saved.enemies_defeated, stats, resumed_attack);
+    saveRun(saved.current_room_index, saved.rooms_cleared, saved.room_category, saved.enemies_defeated, saved.current_map_path, stats, resumed_attack);
 
     const reloaded = getSavedRun().?;
     try testing.expectEqualStrings("DashFists", reloaded.equipped_weapons[0].?.id);

@@ -6,35 +6,7 @@ const MapTypes = @import("../map/MapTypes.zig");
 const Stats = @import("../../components/Stats.zig");
 const BossBar = @import("../ui/BossBar.zig");
 
-pub const EnemyType = enum {
-    dummy,
-    melee,
-    ranged,
-    elite,
-    shaman,
-    magician,
-    lifeliner,
-    angler,
-    tank,
-    mini_boss,
-    boss,
-
-    pub fn cost(self: EnemyType) u32 {
-        return switch (self) {
-            .dummy => 0,
-            .melee => 1,
-            .ranged => 2,
-            .angler => 2,
-            .shaman => 3,
-            .magician => 3,
-            .lifeliner => 4,
-            .tank => 4,
-            .elite => 5,
-            .mini_boss => 20,
-            .boss => 100,
-        };
-    }
-};
+pub const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
 
 pub const SpawnProfile = enum {
     tutorial,
@@ -497,26 +469,79 @@ pub fn setMapBounds(self: *Self, min: lm.Vector2, max: lm.Vector2) void {
     self.spawn_area.max_y = max.y - margin_pixels;
 }
 
-pub fn pickSpawnPositionFromZonesOrConfig(self: *Self, player_position: lm.Vector2) lm.Vector2 {
-    if (self.spawn_zones.len > 0) {
-        var attempt: usize = 0;
-        while (attempt < 10) : (attempt += 1) {
-            const random_zone_index = lm.random.intRangeLessThan(usize, 0, self.spawn_zones.len);
-            const selected_zone = self.spawn_zones[random_zone_index];
-            const half_width = selected_zone.width_pixels / 2.0;
-            const half_height = selected_zone.height_pixels / 2.0;
+fn pickSpawnPositionFromMatchingOrAnyZone(
+    zones: []const MapTypes.SpawnZoneRecord,
+    target_enemy_type: ?EnemyType,
+    player_position: lm.Vector2,
+) ?lm.Vector2 {
+    var match_count: usize = 0;
+    for (zones) |zone| {
+        const is_match = if (target_enemy_type) |enemy_type|
+            (zone.enemy_type != null and zone.enemy_type.? == enemy_type)
+        else
+            (zone.enemy_type == null);
 
-            const spawn_x = selected_zone.center_x_pixels + lm.randFloat(f32, -half_width, half_width);
-            const spawn_y = selected_zone.center_y_pixels + lm.randFloat(f32, -half_height, half_height);
-            const spawn_position = lm.Vec2(spawn_x, spawn_y);
-
-            const distance_to_player = std.math.hypot(spawn_x - player_position.x, spawn_y - player_position.y);
-            if (distance_to_player >= 200.0 or attempt >= 8) {
-                return spawn_position;
-            }
+        if (is_match) {
+            match_count += 1;
         }
     }
+
+    if (match_count == 0) return null;
+
+    var attempt_count: usize = 0;
+    while (attempt_count < 10) : (attempt_count += 1) {
+        const selected_match_index = lm.random.intRangeLessThan(usize, 0, match_count);
+        var current_match_index: usize = 0;
+        var selected_zone: ?MapTypes.SpawnZoneRecord = null;
+
+        for (zones) |zone| {
+            const is_match = if (target_enemy_type) |enemy_type|
+                (zone.enemy_type != null and zone.enemy_type.? == enemy_type)
+            else
+                (zone.enemy_type == null);
+
+            if (!is_match) continue;
+
+            if (current_match_index == selected_match_index) {
+                selected_zone = zone;
+                break;
+            }
+            current_match_index += 1;
+        }
+
+        const zone = selected_zone orelse continue;
+        const half_width_pixels = zone.width_pixels / 2.0;
+        const half_height_pixels = zone.height_pixels / 2.0;
+
+        const spawn_x = zone.center_x_pixels + lm.randFloat(f32, -half_width_pixels, half_width_pixels);
+        const spawn_y = zone.center_y_pixels + lm.randFloat(f32, -half_height_pixels, half_height_pixels);
+        const spawn_position = lm.Vec2(spawn_x, spawn_y);
+
+        const distance_to_player_pixels = std.math.hypot(spawn_x - player_position.x, spawn_y - player_position.y);
+        if (distance_to_player_pixels >= 200.0 or attempt_count >= 8) {
+            return spawn_position;
+        }
+    }
+
+    return null;
+}
+
+pub fn pickSpawnPositionForEnemy(self: *Self, player_position: lm.Vector2, enemy_type: EnemyType) lm.Vector2 {
+    if (self.spawn_zones.len > 0) {
+        if (pickSpawnPositionFromMatchingOrAnyZone(self.spawn_zones, enemy_type, player_position)) |spawn_position| {
+            return spawn_position;
+        }
+
+        if (pickSpawnPositionFromMatchingOrAnyZone(self.spawn_zones, null, player_position)) |spawn_position| {
+            return spawn_position;
+        }
+    }
+
     return pickSpawnPositionWithConfig(player_position, self.spawn_area);
+}
+
+pub fn pickSpawnPositionFromZonesOrConfig(self: *Self, player_position: lm.Vector2) lm.Vector2 {
+    return self.pickSpawnPositionForEnemy(player_position, .melee);
 }
 
 pub fn init(allocator: std.mem.Allocator) Self {
@@ -692,7 +717,7 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
 
         const enemy_type = self.spawn_queue.items()[self.spawn_cursor];
         self.spawn_cursor += 1;
-        const spawn_position = self.pickSpawnPositionFromZonesOrConfig(player_position);
+        const spawn_position = self.pickSpawnPositionForEnemy(player_position, enemy_type);
 
         const enemy = switch (enemy_type) {
             .dummy => try prefabs.enemies.Dummy(spawn_position),
@@ -1019,4 +1044,51 @@ test "applyDynamicStatScalingToStats grants bonus armour, magic resist, health, 
     // Health and damage should be higher than standard scaling
     try std.testing.expect(post_cap_stats.current.health > base_stats.current.health);
     try std.testing.expect(post_cap_stats.current.physical_damage > base_stats.current.physical_damage);
+}
+
+test "pickSpawnPositionForEnemy routes to dedicated zone and falls back to all zone" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    const zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 500.0,
+            .center_y_pixels = 500.0,
+            .width_pixels = 20.0,
+            .height_pixels = 20.0,
+            .enemy_type = .ranged,
+        },
+        .{
+            .center_x_pixels = -500.0,
+            .center_y_pixels = -500.0,
+            .width_pixels = 20.0,
+            .height_pixels = 20.0,
+            .enemy_type = .melee,
+        },
+        .{
+            .center_x_pixels = 0.0,
+            .center_y_pixels = 500.0,
+            .width_pixels = 20.0,
+            .height_pixels = 20.0,
+            .enemy_type = null, // "All" zone
+        },
+    };
+    spawner.setSpawnZones(&zones);
+
+    const player_position = lm.Vec2(0, 0);
+
+    // Ranged enemy should pick the ranged zone near (500, 500)
+    const ranged_spawn = spawner.pickSpawnPositionForEnemy(player_position, .ranged);
+    try std.testing.expect(ranged_spawn.x >= 480.0 and ranged_spawn.x <= 520.0);
+    try std.testing.expect(ranged_spawn.y >= 480.0 and ranged_spawn.y <= 520.0);
+
+    // Melee enemy should pick the melee zone near (-500, -500)
+    const melee_spawn = spawner.pickSpawnPositionForEnemy(player_position, .melee);
+    try std.testing.expect(melee_spawn.x >= -520.0 and melee_spawn.x <= -480.0);
+    try std.testing.expect(melee_spawn.y >= -520.0 and melee_spawn.y <= -480.0);
+
+    // Tank enemy has no dedicated zone, should fall back to the "All" zone near (0, 500)
+    const tank_spawn = spawner.pickSpawnPositionForEnemy(player_position, .tank);
+    try std.testing.expect(tank_spawn.x >= -20.0 and tank_spawn.x <= 20.0);
+    try std.testing.expect(tank_spawn.y >= 480.0 and tank_spawn.y <= 520.0);
 }

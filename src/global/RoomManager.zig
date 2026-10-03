@@ -16,6 +16,7 @@ const spells = @import("../components/Weapons/spells.zig");
 const Hands = @import("../components/Weapons/Hands.zig");
 const MapLoader = @import("map/MapLoader.zig");
 const DoorSpawner = @import("spawner/DoorSpawner.zig");
+const MapRegistry = @import("map/MapRegistry.zig");
 
 const Self = @This();
 
@@ -49,6 +50,15 @@ pub const RoomType = enum {
         };
     }
 
+    pub fn directoryCategory(self: RoomType) []const u8 {
+        return switch (self) {
+            .tutorial => "tutorial",
+            .normal => "normal",
+            .mini_boss => "mini_boss",
+            .boss => "boss",
+        };
+    }
+
     pub fn toSpawnProfile(self: RoomType) RoundSpawner.SpawnProfile {
         return switch (self) {
             .tutorial => .tutorial,
@@ -75,6 +85,7 @@ state: RoomState = .combat,
 current_room: u32 = 1,
 rooms_cleared: u32 = 0,
 room_category: []const u8 = "normal",
+current_map_path: []const u8 = "maps/normal/arena_normal.json",
 enemies_defeated: u32 = 0,
 boon_drop_spawned: bool = false,
 
@@ -89,6 +100,9 @@ fn resumeRunIfSaved(self: *Self) bool {
     self.current_room = if (saved.current_room_index > 0) saved.current_room_index else 1;
     self.rooms_cleared = saved.rooms_cleared;
     self.room_category = saved.room_category;
+    if (saved.current_map_path.len > 0) {
+        self.current_map_path = saved.current_map_path;
+    }
     self.enemies_defeated = saved.enemies_defeated;
     self.state = .replenish;
     MusicManager.setGlobalPhase(.replenish);
@@ -96,8 +110,16 @@ fn resumeRunIfSaved(self: *Self) bool {
 }
 
 pub fn Awake(self: *Self) !void {
-    if (!self.resumeRunIfSaved()) {
+    const is_resumed = self.resumeRunIfSaved();
+    if (!is_resumed) {
         self.initFreshRun();
+        const category = self.getRoomType().directoryCategory();
+        const random_map = MapRegistry.pickRandomMap(
+            lm.allocators.arena(),
+            category,
+            "",
+        ) catch MapRegistry.getDefaultMapPath(category);
+        self.current_map_path = random_map;
     }
 
     BoonPool.reset();
@@ -114,9 +136,8 @@ pub fn Awake(self: *Self) !void {
         },
     };
 
-    const map_path = getMapPathForRoomType(self.getRoomType());
-    MapLoader.loadAndInstantiate(map_path) catch |err| {
-        std.log.warn("Failed to load map {s}, using defaults: {any}", .{ map_path, err });
+    MapLoader.loadAndInstantiate(self.current_map_path) catch |err| {
+        std.log.warn("Failed to load map {s}, using defaults: {any}", .{ self.current_map_path, err });
     };
     const map_bounds = MapLoader.getMapBounds();
     self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
@@ -133,18 +154,14 @@ pub fn Awake(self: *Self) !void {
 }
 
 pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
-    return switch (room_type) {
-        .tutorial => "maps/tutorial.json",
-        .boss => "maps/boss/arena_boss.json",
-        .mini_boss => "maps/mini_boss/arena_normal.json",
-        .normal => "maps/normal/arena_normal.json",
-    };
+    return MapRegistry.getDefaultMapPath(room_type.directoryCategory());
 }
 
 fn initFreshRun(self: *Self) void {
     self.current_room = 1;
     self.rooms_cleared = 0;
     self.room_category = "normal";
+    self.current_map_path = "maps/normal/arena_normal.json";
     self.enemies_defeated = 0;
     self.boon_drop_spawned = false;
     self.state = .combat;
@@ -342,9 +359,16 @@ pub fn enterNextRoom() !void {
     }
     self.boon_drop_spawned = false;
 
-    const map_path = getMapPathForRoomType(self.getRoomType());
-    MapLoader.loadAndInstantiate(map_path) catch |err| {
-        std.log.warn("Failed to load map {s}: {any}", .{ map_path, err });
+    const next_category = self.getRoomType().directoryCategory();
+    const next_map_path = MapRegistry.pickRandomMap(
+        lm.allocators.arena(),
+        next_category,
+        self.current_map_path,
+    ) catch MapRegistry.getDefaultMapPath(next_category);
+    self.current_map_path = next_map_path;
+
+    MapLoader.loadAndInstantiate(self.current_map_path) catch |err| {
+        std.log.warn("Failed to load map {s}: {any}", .{ self.current_map_path, err });
     };
     const map_bounds = MapLoader.getMapBounds();
     self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
@@ -451,6 +475,7 @@ pub fn saveRunState(self: *Self) void {
         self.rooms_cleared,
         self.room_category,
         self.enemies_defeated,
+        self.current_map_path,
         stats.*,
         attack.*,
     );

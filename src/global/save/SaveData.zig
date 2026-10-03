@@ -94,6 +94,7 @@ pub const CurrentRunData = struct {
     current_room_index: u32 = 1,
     rooms_cleared: u32 = 0,
     room_category: []const u8 = "normal",
+    current_map_path: []const u8 = "",
     enemies_defeated: u32 = 0,
     player_stats: SavedPlayerStats = .{},
     equipped_weapons: [2]?Weapon = [_]?Weapon{ null, null },

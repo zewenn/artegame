@@ -87,12 +87,20 @@ test "MapSerializer roundtrip JSON" {
     walls[0] = .{ .start_x_tiles = 0, .start_y_tiles = 0, .end_x_tiles = 1, .end_y_tiles = 0, .wall_type = .solid };
     walls[1] = .{ .start_x_tiles = 0, .start_y_tiles = 1, .end_x_tiles = 1, .end_y_tiles = 1, .wall_type = .low };
 
-    const spawn_zones = try arena_allocator.alloc(SpawnZoneRecord, 1);
+    const spawn_zones = try arena_allocator.alloc(SpawnZoneRecord, 2);
     spawn_zones[0] = .{
         .center_x_pixels = 64.0,
         .center_y_pixels = 64.0,
         .width_pixels = 192.0,
         .height_pixels = 192.0,
+        .enemy_type = null,
+    };
+    spawn_zones[1] = .{
+        .center_x_pixels = 256.0,
+        .center_y_pixels = 256.0,
+        .width_pixels = 192.0,
+        .height_pixels = 192.0,
+        .enemy_type = .ranged,
     };
 
     const entities = try arena_allocator.alloc(EntityRecord, 1);
@@ -126,6 +134,8 @@ test "MapSerializer roundtrip JSON" {
     try std.testing.expectEqual(MapTypes.WallType.solid, parsed_map.walls[0].wall_type);
     try std.testing.expectEqual(MapTypes.WallType.low, parsed_map.walls[1].wall_type);
     try std.testing.expectEqual(original_map.spawn_zones.len, parsed_map.spawn_zones.len);
+    try std.testing.expectEqual(original_map.spawn_zones[0].enemy_type, parsed_map.spawn_zones[0].enemy_type);
+    try std.testing.expectEqual(original_map.spawn_zones[1].enemy_type, parsed_map.spawn_zones[1].enemy_type);
     try std.testing.expectEqual(original_map.entities.len, parsed_map.entities.len);
 }
 

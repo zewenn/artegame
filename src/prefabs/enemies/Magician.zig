@@ -51,7 +51,7 @@ pub const magician_animations = [_]lm.Animation{
     }),
 };
 
-pub fn magicianBlink(
+fn magicianBlink(
     enemy_entity: *lm.Entity,
     enemy_transform: *lm.Transform,
     enemy_stats: *Stats,
@@ -100,7 +100,7 @@ pub const magician_abilities = [_]Ability{
             .lifetime = 1.6,
             .size = .init(48, 48),
             .pull_speed = 800.0,
-            .pull_duration = 2.0,
+            .pull_duration = 0.5,
             .sfx_path = "audio/sfx/punch.mp3",
         },
         .windup_animation = "windup-cast",
@@ -218,7 +218,7 @@ test "Magician ability profiles and animations" {
 
     const pull_ability = magician_abilities[1];
     try std.testing.expectEqual(@as(f32, 800.0), pull_ability.projectile_profile.?.pull_speed.?);
-    try std.testing.expectEqual(@as(f32, 2.0), pull_ability.projectile_profile.?.pull_duration);
+    try std.testing.expectEqual(@as(f32, 0.5), pull_ability.projectile_profile.?.pull_duration);
 
     const stun_burst = magician_abilities[2];
     try std.testing.expectEqual(@as(f32, 400.0), stun_burst.max_range);

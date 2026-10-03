@@ -1,5 +1,6 @@
 const std = @import("std");
 const lm = @import("loom");
+const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
 
 pub const TerrainType = enum(u8) {
     stone = 0,
@@ -81,6 +82,7 @@ pub const SpawnZoneRecord = struct {
     center_y_pixels: f32,
     width_pixels: f32 = 192.0,
     height_pixels: f32 = 192.0,
+    enemy_type: ?EnemyType = null,
 
     pub fn contains(self: SpawnZoneRecord, target_position: lm.Vector2) bool {
         const half_width = self.width_pixels / 2.0;

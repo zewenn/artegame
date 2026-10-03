@@ -200,6 +200,7 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
             .center_y_pixels = top_left_y + zone.center_y_pixels,
             .width_pixels = zone.width_pixels,
             .height_pixels = zone.height_pixels,
+            .enemy_type = zone.enemy_type,
         };
     }
     active_spawn_zones = converted_spawn_zones;

@@ -112,9 +112,9 @@ pub fn EliteEnemy(position: lm.Vector2) !*lm.Entity {
         lm.Animator.init(&Enemy.Animation.melee_animations),
 
         Stats.init(.enemy, .{
-            .health = 260,
+            .health = 120,
             .attack_speed = 0.9,
-            .armour = 45,
+            .armour = 15,
             .movement_speed = 125,
             .aggro_range = 950,
         }),

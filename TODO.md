@@ -107,9 +107,24 @@
 
 ## Work in Progress
 
-
-
 ## Done
+
+### [46#ARC] Typed enemy spawn zones and randomized room map loading with save persistence
+
+  - tags: [map, map-editor, spawner, save, rng]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Define EnemyType in EnemyType.zig and integrate enemy_type into SpawnZoneRecord
+      - [x] Update RoundSpawner to route enemy spawning to matching zones with fallbacks
+      - [x] Implement archetype selection, color-coding, and canvas labels in MapEditor
+      - [x] Create MapRegistry for directory map scanning and non-consecutive random picking
+      - [x] Persist active room current_map_path in SaveData and SaveSystem
+      - [x] Verify test suite and clean build with zig build test and zig build
+      - [x] User confirmation that typed spawn zones and randomized map loading work as expected
+    ```md
+    Implements typed enemy spawn zones allowing maps to restrict spawn locations per enemy archetype (Ranged, Melee, Tank, Shaman, Magician, Lifeliner, Angler, Elite, Boss, or All) with clear editor color coding and labels. Adds dynamic map directory scanning to load random room layouts non-consecutively upon room transition and persists current_map_path in save data across restarts.
+    ```
 
 ### [44#SPW] Cap concurrent enemies to 64, throttle spawn rate to 5-6 every 5s, and apply post-cap round stat buffs
 

@@ -11,10 +11,12 @@ const WallSegment = MapTypes.WallSegment;
 const SpawnZoneRecord = MapTypes.SpawnZoneRecord;
 const EntityRecord = MapTypes.EntityRecord;
 const MapData = MapTypes.MapData;
+const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
 const MapRenderer = @import("MapRenderer.zig");
 const WallMesher = @import("WallMesher.zig");
 const MapSerializer = @import("MapSerializer.zig");
 const MapLoader = @import("MapLoader.zig");
+const MapRegistry = @import("MapRegistry.zig");
 
 const Self = @This();
 
@@ -83,6 +85,7 @@ current_category: EditorCategory = .terrain,
 current_tool: EditorTool = .brush_1x1,
 selected_terrain: TerrainType = .stone,
 selected_arena_category: ArenaCategory = .normal,
+selected_spawn_enemy_type: ?EnemyType = null,
 show_save_popup: bool = false,
 
 box_fill_start: ?struct { column_index: u32, row_index: u32 } = null,
@@ -579,14 +582,25 @@ fn placeSpawnZone(self: *Self, column_index: u32, row_index: u32) void {
     const center_x = (@as(f32, @floatFromInt(column_index)) + 0.5) * self.tile_size_pixels;
     const center_y = (@as(f32, @floatFromInt(row_index)) + 0.5) * self.tile_size_pixels;
 
+    for (self.spawn_zones.items()) |*existing_zone| {
+        if (existing_zone.contains(lm.Vec2(center_x, center_y))) {
+            existing_zone.enemy_type = self.selected_spawn_enemy_type;
+            self.status_message = "Spawn zone archetype updated";
+            self.is_dirty = true;
+            return;
+        }
+    }
+
     self.spawn_zones.append(SpawnZoneRecord{
         .center_x_pixels = center_x,
         .center_y_pixels = center_y,
         .width_pixels = 192.0,
         .height_pixels = 192.0,
+        .enemy_type = self.selected_spawn_enemy_type,
     }) catch return;
 
     self.status_message = "Spawn zone (192x192) placed";
+    self.is_dirty = true;
 }
 
 fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
@@ -645,15 +659,27 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         const zone_x = top_left.x + zone.center_x_pixels - (zone.width_pixels / 2.0);
         const zone_y = top_left.y + zone.center_y_pixels - (zone.height_pixels / 2.0);
 
+        const fill_color = EnemyType.editorFillColor(zone.enemy_type);
+        const outline_color = EnemyType.editorOutlineColor(zone.enemy_type);
+
         rl.drawRectangleRec(
             lm.Rect(zone_x, zone_y, zone.width_pixels, zone.height_pixels),
-            rl.Color{ .r = 230, .g = 40, .b = 40, .a = 60 },
+            fill_color,
         );
         rl.drawRectangleLinesEx(
             lm.Rect(zone_x, zone_y, zone.width_pixels, zone.height_pixels),
             2.0,
-            rl.Color{ .r = 255, .g = 80, .b = 80, .a = 220 },
+            outline_color,
         );
+
+        const zone_label = EnemyType.label(zone.enemy_type);
+        const font_size_pixels: i32 = 14;
+        const text_width = rl.measureText(zone_label, font_size_pixels);
+        const text_x: i32 = @intFromFloat(zone_x + (zone.width_pixels / 2.0) - (@as(f32, @floatFromInt(text_width)) / 2.0));
+        const text_y: i32 = @intFromFloat(zone_y + (zone.height_pixels / 2.0) - (@as(f32, @floatFromInt(font_size_pixels)) / 2.0));
+
+        rl.drawText(zone_label, text_x + 1, text_y + 1, font_size_pixels, rl.Color.black);
+        rl.drawText(zone_label, text_x, text_y, font_size_pixels, rl.Color.white);
     }
 
     const player_world_x = top_left.x + self.player_spawn_position.x;
@@ -919,13 +945,55 @@ fn drawToolButton(self: *Self, tool: EditorTool, label: []const u8) void {
     });
 }
 
+fn drawArchetypeButton(self: *Self, maybe_enemy_type: ?EnemyType, label_text: []const u8) void {
+    const is_selected = (self.selected_spawn_enemy_type == maybe_enemy_type);
+    const outline_color = EnemyType.editorOutlineColor(maybe_enemy_type);
+    const background_color = if (is_selected)
+        ui.color(outline_color.r, outline_color.g, outline_color.b, 220)
+    else
+        ui.color(32, 38, 52, 200);
+
+    clay.UI()(.{
+        .id = if (maybe_enemy_type) |enemy_type|
+            .IDI("spawn-archetype-", @intFromEnum(enemy_type))
+        else
+            .ID("spawn-archetype-all"),
+        .layout = .{ .padding = .axes(5, 8), .sizing = .{ .w = .grow } },
+        .background_color = background_color,
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.selected_spawn_enemy_type = maybe_enemy_type;
+            self.current_tool = .spawn_zone;
+            self.status_message = "Target archetype selected";
+        }
+        ui.text(label_text, .{
+            .color = if (is_selected) ui.color(10, 15, 20, 255) else ui.color(220, 230, 245, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+    });
+}
+
 fn drawSpawnersCategory(self: *Self) void {
     ui.new(.{
         .id = .ID("spawners-panel"),
-        .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
+        .layout = .{ .direction = .top_to_bottom, .child_gap = 6 },
     })({
         self.drawToolButton(.spawn_zone, "Place Spawn Zone (192x192)");
         self.drawToolButton(.spawn_zone_erase, "Remove Spawn Zone Tool");
+
+        ui.text("Target Archetype:", .{
+            .color = ui.color(180, 200, 225, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        self.drawArchetypeButton(null, "All (Any Enemy)");
+        inline for (std.meta.fields(EnemyType)) |field| {
+            const enemy_type: EnemyType = @field(EnemyType, field.name);
+            self.drawArchetypeButton(enemy_type, enemy_type.displayName());
+        }
 
         clay.UI()(.{
             .id = .ID("clear-spawners-btn"),
@@ -1042,6 +1110,8 @@ fn drawFileCategory(self: *Self) void {
             });
         });
 
+        self.drawCustomMapButtons();
+
         clay.UI()(.{
             .id = .ID("exit-menu-btn"),
             .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
@@ -1058,6 +1128,66 @@ fn drawFileCategory(self: *Self) void {
                 .font_size = 12,
                 .letter_spacing = 1,
             });
+        });
+    });
+}
+
+fn drawCustomMapButtons(self: *Self) void {
+    var found_any_custom_maps = false;
+    const categories = [_]ArenaCategory{ .normal, .mini_boss, .boss };
+    var global_index: usize = 0;
+
+    for (categories) |category| {
+        self.drawCategoryCustomMaps(category, &global_index, &found_any_custom_maps);
+    }
+
+    if (!found_any_custom_maps) {
+        ui.text("No custom maps saved yet", .{
+            .color = ui.color(130, 145, 170, 200),
+            .font_size = 10,
+            .letter_spacing = 1,
+        });
+    }
+}
+
+fn drawCategoryCustomMaps(
+    self: *Self,
+    category: ArenaCategory,
+    global_index: *usize,
+    found_any: *bool,
+) void {
+    const available_maps = MapRegistry.getAvailableMapsAlloc(lm.allocators.arena(), category.directoryName()) catch &.{};
+    for (available_maps) |map_path| {
+        const file_basename = std.fs.path.basename(map_path);
+        if (std.mem.eql(u8, file_basename, "arena_normal.json") or std.mem.eql(u8, file_basename, "arena_boss.json")) continue;
+
+        found_any.* = true;
+        self.drawSingleCustomMapButton(category, map_path, file_basename, global_index.*);
+        global_index.* += 1;
+    }
+}
+
+fn drawSingleCustomMapButton(
+    self: *Self,
+    category: ArenaCategory,
+    map_path: []const u8,
+    file_basename: []const u8,
+    button_index: usize,
+) void {
+    clay.UI()(.{
+        .id = .IDI("load-custom-map-btn-", @intCast(button_index)),
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+        .background_color = ui.color(45, 55, 80, 220),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.loadMapFromPath(map_path);
+        }
+        const label_text = std.fmt.allocPrint(lm.allocators.arena(), "Open [{s}] {s}", .{ category.directoryName(), file_basename }) catch "Open Map";
+        ui.text(label_text, .{
+            .color = ui.color(210, 225, 245, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
         });
     });
 }
@@ -1596,4 +1726,22 @@ test "MapEditor ArenaCategory directory and display mappings" {
     try std.testing.expectEqualStrings("Normal", ArenaCategory.normal.displayName());
     try std.testing.expectEqualStrings("Mini-Boss", ArenaCategory.mini_boss.displayName());
     try std.testing.expectEqualStrings("Boss", ArenaCategory.boss.displayName());
+}
+
+test "MapEditor placeSpawnZone sets and updates archetype" {
+    var editor = Self{};
+    editor.spawn_zones = lm.List(SpawnZoneRecord).init(std.testing.allocator);
+    defer editor.spawn_zones.deinit();
+
+    editor.selected_spawn_enemy_type = .ranged;
+    editor.placeSpawnZone(2, 2);
+
+    try std.testing.expectEqual(@as(usize, 1), editor.spawn_zones.len());
+    try std.testing.expectEqual(EnemyType.ranged, editor.spawn_zones.items()[0].enemy_type.?);
+
+    editor.selected_spawn_enemy_type = .tank;
+    editor.placeSpawnZone(2, 2);
+
+    try std.testing.expectEqual(@as(usize, 1), editor.spawn_zones.len());
+    try std.testing.expectEqual(EnemyType.tank, editor.spawn_zones.items()[0].enemy_type.?);
 }

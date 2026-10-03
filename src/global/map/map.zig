@@ -13,3 +13,4 @@ pub const MapSerializer = @import("MapSerializer.zig");
 pub const MapRenderer = @import("MapRenderer.zig");
 pub const MapLoader = @import("MapLoader.zig");
 pub const MapEditor = @import("MapEditor.zig");
+pub const MapRegistry = @import("MapRegistry.zig");
