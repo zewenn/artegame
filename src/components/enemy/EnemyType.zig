@@ -31,6 +31,24 @@ pub const EnemyType = enum {
         };
     }
 
+    pub const NormalWaveRule = struct {
+        unlock_round: u32,
+        round_divisor: u32,
+        max_count: u32,
+    };
+
+    pub fn normalWaveRule(self: EnemyType) ?NormalWaveRule {
+        return switch (self) {
+            .elite => .{ .unlock_round = 3, .round_divisor = 2, .max_count = 16 },
+            .tank => .{ .unlock_round = 3, .round_divisor = 3, .max_count = 6 },
+            .shaman => .{ .unlock_round = 3, .round_divisor = 4, .max_count = 4 },
+            .magician => .{ .unlock_round = 4, .round_divisor = 4, .max_count = 4 },
+            .lifeliner => .{ .unlock_round = 4, .round_divisor = 5, .max_count = 3 },
+            .angler => .{ .unlock_round = 2, .round_divisor = 2, .max_count = 8 },
+            else => null,
+        };
+    }
+
     pub fn displayName(self: EnemyType) []const u8 {
         return switch (self) {
             .dummy => "Dummy",

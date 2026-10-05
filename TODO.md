@@ -107,7 +107,24 @@
 
 ## Work in Progress
 
+
 ## Done
+
+### [47#SPW] Restrict enemy wave spawning to map-designated spawn zones
+
+  - tags: [spawner, map, spawn-zones, wave-generation]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Implement hasDesignatedZone query for map spawn zone collections
+      - [x] Update wave configuration generator to filter unzoned enemy types and reallocate budget
+      - [x] Update pickSpawnPositionForEnemy to reject spawning without designated zones on zoned maps
+      - [x] Add unit tests verifying unzoned enemy filtering and spawn rejection
+      - [x] Verify build with zig build and test suite with zig build test
+      - [x] User confirmation that enemy types without designated spawn zones do not spawn
+    ```md
+    Ensures that enemies only spawn in rooms where the map explicitly contains designated spawn zones for their archetype (or an untyped 'All' spawn zone). Wave generation skips unzoned enemy types so unspent budget rolls over to allowed archetypes, and pickSpawnPositionForEnemy refrains from perimeter fallback when spawn zones are present.
+    ```
 
 ### [46#ARC] Typed enemy spawn zones and randomized room map loading with save persistence
 

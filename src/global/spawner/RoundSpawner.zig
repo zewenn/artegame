@@ -67,115 +67,92 @@ pub fn calculateBudget(round: u32) u32 {
 }
 
 pub const EnemyComposition = struct {
-    melee_count: u32,
-    ranged_count: u32,
-    elite_count: u32,
-    shaman_count: u32,
-    magician_count: u32,
-    lifeliner_count: u32,
-    angler_count: u32,
-    tank_count: u32,
+    melee_count: u32 = 0,
+    ranged_count: u32 = 0,
+    elite_count: u32 = 0,
+    shaman_count: u32 = 0,
+    magician_count: u32 = 0,
+    lifeliner_count: u32 = 0,
+    angler_count: u32 = 0,
+    tank_count: u32 = 0,
 
     pub fn total(self: EnemyComposition) u32 {
         return self.melee_count + self.ranged_count + self.elite_count + self.shaman_count + self.magician_count + self.lifeliner_count + self.angler_count + self.tank_count;
     }
 };
 
+fn calculateScaledEnemyCount(
+    round: u32,
+    remaining_budget: *u32,
+    zones: []const MapTypes.SpawnZoneRecord,
+    enemy_type: EnemyType,
+    rule: EnemyType.NormalWaveRule,
+) u32 {
+    const is_unlocked = round >= rule.unlock_round;
+    const has_budget = remaining_budget.* >= enemy_type.cost();
+    const is_permitted = hasDesignatedZone(zones, enemy_type);
+
+    if (!is_unlocked or !has_budget or !is_permitted) return 0;
+
+    const round_offset = round - rule.unlock_round;
+    var count = @min(1 + round_offset / rule.round_divisor, rule.max_count);
+    const total_cost = count * enemy_type.cost();
+
+    if (remaining_budget.* > total_cost) {
+        remaining_budget.* -= total_cost;
+        return count;
+    }
+
+    count = remaining_budget.* / enemy_type.cost();
+    remaining_budget.* -= count * enemy_type.cost();
+    return count;
+}
+
+/// Checks whether a map's spawn zones include a designated zone for an enemy archetype.
+/// If no spawn zones are defined on the map (empty collection), all enemy types are considered permitted.
+/// An untyped zone (enemy_type == null) represents an "All (Any Enemy)" zone and accepts any archetype.
+pub fn hasDesignatedZone(zones: []const MapTypes.SpawnZoneRecord, enemy_type: EnemyType) bool {
+    if (zones.len == 0) return true;
+    for (zones) |zone| {
+        if (zone.enemy_type == null) return true;
+        if (zone.enemy_type.? == enemy_type) return true;
+    }
+    return false;
+}
+
 pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
+    return calculateNormalEnemyCompositionWithZones(round, &.{});
+}
+
+pub fn calculateNormalEnemyCompositionWithZones(
+    round: u32,
+    zones: []const MapTypes.SpawnZoneRecord,
+) EnemyComposition {
     const total_budget = calculateBudgetForProfile(round, .normal);
     var remaining_budget = total_budget;
+    var composition = EnemyComposition{};
 
-    var elite_count: u32 = 0;
-    if (round >= 3) {
-        elite_count = @min(1 + (round - 3) / 2, 16);
-        const elite_cost = elite_count * EnemyType.elite.cost();
-        if (remaining_budget > elite_cost) {
-            remaining_budget -= elite_cost;
-        } else {
-            elite_count = remaining_budget / EnemyType.elite.cost();
-            remaining_budget -= elite_count * EnemyType.elite.cost();
-        }
-    }
-
-    var tank_count: u32 = 0;
-    if (round >= 3 and remaining_budget >= EnemyType.tank.cost()) {
-        tank_count = @min(1 + (round - 3) / 3, 6);
-        const tank_cost = tank_count * EnemyType.tank.cost();
-        if (remaining_budget > tank_cost) {
-            remaining_budget -= tank_cost;
-        } else {
-            tank_count = remaining_budget / EnemyType.tank.cost();
-            remaining_budget -= tank_count * EnemyType.tank.cost();
-        }
-    }
-
-    var shaman_count: u32 = 0;
-    if (round >= 3 and remaining_budget >= EnemyType.shaman.cost()) {
-        shaman_count = @min(1 + (round - 3) / 4, 4);
-        const shaman_cost = shaman_count * EnemyType.shaman.cost();
-        if (remaining_budget > shaman_cost) {
-            remaining_budget -= shaman_cost;
-        } else {
-            shaman_count = remaining_budget / EnemyType.shaman.cost();
-            remaining_budget -= shaman_count * EnemyType.shaman.cost();
-        }
-    }
-
-    var magician_count: u32 = 0;
-    if (round >= 4 and remaining_budget >= EnemyType.magician.cost()) {
-        magician_count = @min(1 + (round - 4) / 4, 4);
-        const magician_cost = magician_count * EnemyType.magician.cost();
-        if (remaining_budget > magician_cost) {
-            remaining_budget -= magician_cost;
-        } else {
-            magician_count = remaining_budget / EnemyType.magician.cost();
-            remaining_budget -= magician_count * EnemyType.magician.cost();
-        }
-    }
-
-    var lifeliner_count: u32 = 0;
-    if (round >= 4 and remaining_budget >= EnemyType.lifeliner.cost()) {
-        lifeliner_count = @min(1 + (round - 4) / 5, 3);
-        const lifeliner_cost = lifeliner_count * EnemyType.lifeliner.cost();
-        if (remaining_budget > lifeliner_cost) {
-            remaining_budget -= lifeliner_cost;
-        } else {
-            lifeliner_count = remaining_budget / EnemyType.lifeliner.cost();
-            remaining_budget -= lifeliner_count * EnemyType.lifeliner.cost();
-        }
-    }
-
-    var angler_count: u32 = 0;
-    if (round >= 2 and remaining_budget >= EnemyType.angler.cost()) {
-        angler_count = @min(1 + (round - 2) / 2, 8);
-        const angler_cost = angler_count * EnemyType.angler.cost();
-        if (remaining_budget > angler_cost) {
-            remaining_budget -= angler_cost;
-        } else {
-            angler_count = remaining_budget / EnemyType.angler.cost();
-            remaining_budget -= angler_count * EnemyType.angler.cost();
+    inline for (std.meta.fields(EnemyType)) |field| {
+        const enemy_type: EnemyType = @field(EnemyType, field.name);
+        const maybe_rule = comptime enemy_type.normalWaveRule();
+        if (maybe_rule) |rule| {
+            const count = calculateScaledEnemyCount(round, &remaining_budget, zones, enemy_type, rule);
+            @field(composition, field.name ++ "_count") = count;
         }
     }
 
     var ranged_count: u32 = 0;
-    if (round >= 2 and remaining_budget > 0) {
-        const ranged_budget = (remaining_budget * 35) / 100;
+    if (round >= 2 and remaining_budget > 0 and hasDesignatedZone(zones, .ranged)) {
+        const can_spawn_melee = hasDesignatedZone(zones, .melee);
+        const ranged_budget = if (can_spawn_melee) (remaining_budget * 35) / 100 else remaining_budget;
         ranged_count = ranged_budget / EnemyType.ranged.cost();
         remaining_budget -= ranged_count * EnemyType.ranged.cost();
     }
+    composition.ranged_count = ranged_count;
 
-    const melee_count = remaining_budget;
+    composition.melee_count = if (hasDesignatedZone(zones, .melee)) remaining_budget else 0;
 
-    return EnemyComposition{
-        .melee_count = melee_count,
-        .ranged_count = ranged_count,
-        .elite_count = elite_count,
-        .shaman_count = shaman_count,
-        .magician_count = magician_count,
-        .lifeliner_count = lifeliner_count,
-        .angler_count = angler_count,
-        .tank_count = tank_count,
-    };
+    return composition;
 }
 
 pub fn getFirstCapRound() u32 {
@@ -190,6 +167,14 @@ pub fn getFirstCapRound() u32 {
 }
 
 pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfig {
+    return generateWaveConfigForProfileAndZones(round, profile, &.{});
+}
+
+pub fn generateWaveConfigForProfileAndZones(
+    round: u32,
+    profile: SpawnProfile,
+    zones: []const MapTypes.SpawnZoneRecord,
+) WaveConfig {
     switch (profile) {
         .tutorial => {
             return WaveConfig{
@@ -220,7 +205,7 @@ pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfi
         },
         .normal => {
             const total_budget = calculateBudgetForProfile(round, .normal);
-            var composition = calculateNormalEnemyComposition(round);
+            var composition = calculateNormalEnemyCompositionWithZones(round, zones);
             const unconstrained_enemies = composition.total();
 
             const is_cap_reached = unconstrained_enemies >= MAX_CONCURRENT_ENEMIES;
@@ -526,7 +511,7 @@ fn pickSpawnPositionFromMatchingOrAnyZone(
     return null;
 }
 
-pub fn pickSpawnPositionForEnemy(self: *Self, player_position: lm.Vector2, enemy_type: EnemyType) lm.Vector2 {
+pub fn pickSpawnPositionForEnemy(self: *Self, player_position: lm.Vector2, enemy_type: EnemyType) ?lm.Vector2 {
     if (self.spawn_zones.len > 0) {
         if (pickSpawnPositionFromMatchingOrAnyZone(self.spawn_zones, enemy_type, player_position)) |spawn_position| {
             return spawn_position;
@@ -535,13 +520,18 @@ pub fn pickSpawnPositionForEnemy(self: *Self, player_position: lm.Vector2, enemy
         if (pickSpawnPositionFromMatchingOrAnyZone(self.spawn_zones, null, player_position)) |spawn_position| {
             return spawn_position;
         }
+
+        return null;
     }
 
     return pickSpawnPositionWithConfig(player_position, self.spawn_area);
 }
 
 pub fn pickSpawnPositionFromZonesOrConfig(self: *Self, player_position: lm.Vector2) lm.Vector2 {
-    return self.pickSpawnPositionForEnemy(player_position, .melee);
+    if (self.pickSpawnPositionForEnemy(player_position, .melee)) |spawn_position| {
+        return spawn_position;
+    }
+    return pickSpawnPositionWithConfig(player_position, self.spawn_area);
 }
 
 pub fn init(allocator: std.mem.Allocator) Self {
@@ -566,7 +556,7 @@ pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
     self.killed_enemies = 0;
     self.spawn_cursor = 0;
 
-    const config = generateWaveConfigForProfile(round, profile);
+    const config = generateWaveConfigForProfileAndZones(round, profile, self.spawn_zones);
     self.total_wave_enemies = config.total_enemies;
 
     try populateQueue(&self.spawn_queue, config);
@@ -717,7 +707,10 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
 
         const enemy_type = self.spawn_queue.items()[self.spawn_cursor];
         self.spawn_cursor += 1;
-        const spawn_position = self.pickSpawnPositionForEnemy(player_position, enemy_type);
+        const spawn_position = self.pickSpawnPositionForEnemy(player_position, enemy_type) orelse {
+            if (self.total_wave_enemies > 0) self.total_wave_enemies -= 1;
+            continue;
+        };
 
         const enemy = switch (enemy_type) {
             .dummy => try prefabs.enemies.Dummy(spawn_position),
@@ -1078,17 +1071,82 @@ test "pickSpawnPositionForEnemy routes to dedicated zone and falls back to all z
     const player_position = lm.Vec2(0, 0);
 
     // Ranged enemy should pick the ranged zone near (500, 500)
-    const ranged_spawn = spawner.pickSpawnPositionForEnemy(player_position, .ranged);
+    const ranged_spawn = spawner.pickSpawnPositionForEnemy(player_position, .ranged).?;
     try std.testing.expect(ranged_spawn.x >= 480.0 and ranged_spawn.x <= 520.0);
     try std.testing.expect(ranged_spawn.y >= 480.0 and ranged_spawn.y <= 520.0);
 
     // Melee enemy should pick the melee zone near (-500, -500)
-    const melee_spawn = spawner.pickSpawnPositionForEnemy(player_position, .melee);
+    const melee_spawn = spawner.pickSpawnPositionForEnemy(player_position, .melee).?;
     try std.testing.expect(melee_spawn.x >= -520.0 and melee_spawn.x <= -480.0);
     try std.testing.expect(melee_spawn.y >= -520.0 and melee_spawn.y <= -480.0);
 
     // Tank enemy has no dedicated zone, should fall back to the "All" zone near (0, 500)
-    const tank_spawn = spawner.pickSpawnPositionForEnemy(player_position, .tank);
+    const tank_spawn = spawner.pickSpawnPositionForEnemy(player_position, .tank).?;
     try std.testing.expect(tank_spawn.x >= -20.0 and tank_spawn.x <= 20.0);
     try std.testing.expect(tank_spawn.y >= 480.0 and tank_spawn.y <= 520.0);
+}
+
+test "generateWaveConfigForProfileAndZones omits enemy types without designated spawn zones" {
+    const zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 100.0,
+            .center_y_pixels = 100.0,
+            .width_pixels = 64.0,
+            .height_pixels = 64.0,
+            .enemy_type = .tank,
+        },
+        .{
+            .center_x_pixels = 200.0,
+            .center_y_pixels = 200.0,
+            .width_pixels = 64.0,
+            .height_pixels = 64.0,
+            .enemy_type = .ranged,
+        },
+    };
+
+    // Round 4 normally unlocks elite, tank, shaman, magician, lifeliner, angler, ranged, melee
+    const config = generateWaveConfigForProfileAndZones(4, .normal, &zones);
+    try std.testing.expect(config.tank_count > 0);
+    try std.testing.expect(config.ranged_count > 0);
+    try std.testing.expectEqual(@as(u32, 0), config.angler_count);
+    try std.testing.expectEqual(@as(u32, 0), config.melee_count);
+    try std.testing.expectEqual(@as(u32, 0), config.shaman_count);
+    try std.testing.expectEqual(@as(u32, 0), config.magician_count);
+    try std.testing.expectEqual(@as(u32, 0), config.lifeliner_count);
+    try std.testing.expectEqual(@as(u32, 0), config.elite_count);
+    try std.testing.expectEqual(config.tank_count + config.ranged_count, config.total_enemies);
+}
+
+test "pickSpawnPositionForEnemy returns null when map has zones but none for enemy type and no all zone" {
+    var spawner = Self.init(std.testing.allocator);
+    defer spawner.deinit();
+
+    const zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 300.0,
+            .center_y_pixels = 300.0,
+            .width_pixels = 50.0,
+            .height_pixels = 50.0,
+            .enemy_type = .tank,
+        },
+        .{
+            .center_x_pixels = -300.0,
+            .center_y_pixels = -300.0,
+            .width_pixels = 50.0,
+            .height_pixels = 50.0,
+            .enemy_type = .melee,
+        },
+    };
+    spawner.setSpawnZones(&zones);
+
+    const player_position = lm.Vec2(0, 0);
+
+    // Tank and Melee have designated zones and should return valid positions
+    try std.testing.expect(spawner.pickSpawnPositionForEnemy(player_position, .tank) != null);
+    try std.testing.expect(spawner.pickSpawnPositionForEnemy(player_position, .melee) != null);
+
+    // Angler and Ranged do not have designated zones and map has no 'All' zone -> must return null
+    try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .angler));
+    try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .ranged));
+    try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .elite));
 }
