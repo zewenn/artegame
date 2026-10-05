@@ -113,6 +113,7 @@ pub fn EliteEnemy(position: lm.Vector2) !*lm.Entity {
 
         Stats.init(.enemy, .{
             .health = 120,
+            .magic_damage = 20,
             .attack_speed = 0.9,
             .armour = 15,
             .movement_speed = 125,

@@ -1,6 +1,7 @@
 const std = @import("std");
 const lm = @import("loom");
 const ui = lm.ui;
+const ControlScheme = @import("ControlScheme.zig");
 
 pub const UiColor = [4]f32;
 
@@ -139,8 +140,8 @@ pub fn getDeviceActionPrompt(device: InputDevice, action: PromptAction) ActionPr
             .spell_0 => keyboardPrompt("Q"),
             .spell_1 => keyboardPrompt("E"),
             .dash => keyboardPrompt("SPACE"),
-            .attack_primary => keyboardPrompt("LMB"),
-            .attack_secondary => keyboardPrompt("RMB"),
+            .attack_primary => if (ControlScheme.getControlScheme() == .keyboard_only) keyboardPrompt("ARROWS") else keyboardPrompt("LMB"),
+            .attack_secondary => if (ControlScheme.getControlScheme() == .keyboard_only) keyboardPrompt("SHIFT+ARROWS") else keyboardPrompt("RMB"),
             .switch_weapon => keyboardPrompt("TAB"),
             .pause => keyboardPrompt("ESC"),
             .menu_select => keyboardPrompt("ENTER"),
@@ -289,4 +290,22 @@ test "DevicePrompts reset clears direct device changes" {
     reset();
     try std.testing.expect(!isGamepad());
     try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
+}
+
+test "DevicePrompts respects ControlScheme in keyboard_mouse mode" {
+    reset();
+    ControlScheme.reset();
+    defer {
+        reset();
+        ControlScheme.reset();
+    }
+
+    setDeviceForTest(.keyboard_mouse);
+    ControlScheme.setControlSchemeForTest(.keyboard_and_mouse);
+    try std.testing.expectEqualStrings("LMB", getActionPrompt(.attack_primary).label);
+    try std.testing.expectEqualStrings("RMB", getActionPrompt(.attack_secondary).label);
+
+    ControlScheme.setControlSchemeForTest(.keyboard_only);
+    try std.testing.expectEqualStrings("ARROWS", getActionPrompt(.attack_primary).label);
+    try std.testing.expectEqualStrings("SHIFT+ARROWS", getActionPrompt(.attack_secondary).label);
 }

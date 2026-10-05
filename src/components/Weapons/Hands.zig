@@ -3,6 +3,7 @@ const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
 const Weapon = @import("Weapon.zig");
+const ControlScheme = @import("../../global/input/ControlScheme.zig");
 
 const Self = @This();
 
@@ -137,7 +138,7 @@ right_hand_renderer: ?*lm.Renderer = null,
 camera: ?*lm.Camera = null,
 
 last_input: enum { gamepad, mouse } = .mouse,
-last_mouse: lm.Vector2 = .init(0, 0),
+last_mouse: lm.Vector2 = .init(1, 0),
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
@@ -189,18 +190,50 @@ pub fn Update(self: *Self) !void {
 
     const mouse_position = camera.screenToWorldPos(lm.mouse.getPosition());
 
-    const angle_vec = get_angle_vetor: {
-        const mouse = mouse_position.subtract(lm.vec3ToVec2(transform.position)).normalize();
-        defer self.last_mouse = mouse;
+    const angle_vector = get_angle_vector: {
+        if (lm.gamepad.isAvailable(0)) {
+            const gamepad = lm.gamepad.getStickVector(0, .right, 0.1);
+            if (gamepad.length() > 0) {
+                const normalized = gamepad.normalize();
+                self.last_mouse = normalized;
+                break :get_angle_vector normalized;
+            }
+        }
 
-        if (!lm.gamepad.isAvailable(0)) break :get_angle_vetor mouse;
+        if (ControlScheme.getControlScheme() == .keyboard_only) {
+            const arrow_vector = ControlScheme.getArrowVector();
+            if (arrow_vector.length() > 0) {
+                const normalized = arrow_vector.normalize();
+                self.last_mouse = normalized;
+                break :get_angle_vector normalized;
+            }
+            if (self.last_mouse.length() > 0) {
+                break :get_angle_vector self.last_mouse;
+            }
+            break :get_angle_vector lm.Vec2(1, 0);
+        }
 
-        const gamepad = lm.gamepad.getStickVector(0, .right, 0.1);
-        if (gamepad.length() == 0) break :get_angle_vetor mouse;
+        const arrow_vector = ControlScheme.getArrowVector();
+        if (arrow_vector.length() > 0 and ControlScheme.isAnyArrowKeyPressed()) {
+            const normalized = arrow_vector.normalize();
+            self.last_mouse = normalized;
+            break :get_angle_vector normalized;
+        }
 
-        break :get_angle_vetor gamepad.normalize();
+        const mouse_diff = mouse_position.subtract(lm.vec3ToVec2(transform.position));
+        if (mouse_diff.length() > 0) {
+            const normalized = mouse_diff.normalize();
+            self.last_mouse = normalized;
+            break :get_angle_vector normalized;
+        }
+
+        if (self.last_mouse.length() > 0) {
+            break :get_angle_vector self.last_mouse;
+        }
+
+        break :get_angle_vector lm.Vec2(1, 0);
     };
-    const angle = std.math.atan2(angle_vec.y, angle_vec.x);
+    const angle = std.math.atan2(angle_vector.y, angle_vector.x);
 
     const right_vector = lm.Vec2(32, 16)
         .add(if (right_hand_animator.playing.len() > 0) lm.vec3ToVec2(right_hand_transform.position) else .init(0, 0))

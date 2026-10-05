@@ -15,6 +15,7 @@ const weapons = @import("../Weapons/weapons.zig");
 
 const Hands = @import("../Weapons/Hands.zig");
 const AudioManager = @import("../../global/audio/AudioManager.zig");
+const ControlScheme = @import("../../global/input/ControlScheme.zig");
 
 const Self = @This();
 
@@ -28,6 +29,7 @@ camera: ?*lm.Camera = null,
 
 current_weapon_number: u1 = 0,
 hands: ?*Hands = null,
+last_aim_direction: lm.Vector2 = .init(1, 0),
 
 equipped_spells: [2]?Spell = [_]?Spell{
     spells.heal,
@@ -91,77 +93,143 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         if (spell.cast(entity)) AudioManager.playSfxPitched("audio/sfx/click.wav", 0.7, 0.15);
     }
 
-    const player_pos = lm.vec3ToVec2(transform.position);
+    const player_position = lm.vec3ToVec2(transform.position);
+    const control_scheme = ControlScheme.getControlScheme();
+    const arrow_vector = ControlScheme.getArrowVector();
+    const is_arrow_pressed = ControlScheme.isAnyArrowKeyPressed();
+    const is_arrow_held = ControlScheme.isAnyArrowKeyHeld();
+    const is_shift_modifier = ControlScheme.isShiftModifierActive();
 
-    const aim_dir = get_aim_dir: {
+    const aim_direction = resolve_aim: {
         if (lm.gamepad.isAvailable(0)) {
-            const gamepad = lm.gamepad.getStickVector(0, .right, 0.1);
-            if (gamepad.length() > 0) break :get_aim_dir gamepad.normalize();
+            const gamepad_stick = lm.gamepad.getStickVector(0, .right, 0.1);
+            if (gamepad_stick.length() > 0) {
+                const normalized = gamepad_stick.normalize();
+                self.last_aim_direction = normalized;
+                break :resolve_aim normalized;
+            }
         }
 
-        const mouse = camera.screenToWorldPos(lm.mouse.getPosition());
-        const diff = mouse.subtract(player_pos);
-        if (diff.length() > 0) break :get_aim_dir diff.normalize();
-
-        break :get_aim_dir lm.Vec2(1, 0);
+        const mouse_world_position = camera.screenToWorldPos(lm.mouse.getPosition());
+        const mouse_difference = mouse_world_position.subtract(player_position);
+        const resolved = resolveAimDirection(control_scheme, arrow_vector, mouse_difference, self.last_aim_direction);
+        self.last_aim_direction = resolved;
+        break :resolve_aim resolved;
     };
 
-    const spawn_pos = player_pos.add(aim_dir.multiply(.init(32, 32)));
-    const target_pos = spawn_pos.add(aim_dir);
+    const spawn_position = player_position.add(aim_direction.multiply(.init(32, 32)));
+    const target_position = spawn_position.add(aim_direction);
 
-    if ((lm.mouse.getButtonDown(.left) or lm.gamepad.getButtonDown(0, .right_trigger_2)) and
-        self.cooldown == 0 and
-        !stats.isStunned())
-    attack_block: {
-        self.cooldown = 1 / stats.current.attack_speed;
+    const should_attack_via_arrows = arrow_vector.length() > 0 and (is_arrow_pressed or is_arrow_held);
+    const should_attack_via_mouse_light = (control_scheme == .keyboard_and_mouse) and lm.mouse.getButtonDown(.left);
+    const should_attack_via_mouse_heavy = (control_scheme == .keyboard_and_mouse) and lm.mouse.getButtonDown(.right);
+    const should_attack_via_gamepad_light = lm.gamepad.getButtonDown(0, .right_trigger_2);
+    const should_attack_via_gamepad_heavy = lm.gamepad.getButtonDown(0, .left_trigger_2);
 
-        stats.addEffect(.{
-            .id = "root",
-            .effect_type = .root,
-            .duration = 0.075,
-            .visual = .{},
-        });
+    const is_heavy_requested = (should_attack_via_arrows and is_shift_modifier) or
+        should_attack_via_mouse_heavy or
+        should_attack_via_gamepad_heavy;
 
-        try hands.play(weapon.*);
-        AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.7, 0.1);
+    const is_light_requested = (should_attack_via_arrows and !is_shift_modifier) or
+        should_attack_via_mouse_light or
+        should_attack_via_gamepad_light;
 
-        if (dashing.isDashing()) {
-            try weapon.dashAttack(
-                spawn_pos,
-                target_pos,
-                stats.*,
-            );
-
-            break :attack_block;
+    if (self.cooldown == 0 and !stats.isStunned()) {
+        if (is_heavy_requested) {
+            try self.executeHeavyAttack(weapon, hands, stats, spawn_position, target_position);
+        } else if (is_light_requested) {
+            try self.executeLightAttack(weapon, hands, stats, dashing, spawn_position, target_position);
         }
-
-        try weapon.lightAttack(
-            spawn_pos,
-            target_pos,
-            stats.*,
-        );
-    } else if ((lm.mouse.getButtonDown(.right) or lm.gamepad.getButtonDown(0, .left_trigger_2)) and
-        self.cooldown == 0 and
-        !stats.isStunned())
-    {
-        self.cooldown = 1.8 / stats.current.attack_speed;
-
-        stats.addEffect(.{
-            .id = "root",
-            .effect_type = .root,
-            .duration = 0.12,
-            .visual = .{},
-        });
-
-        try hands.play(weapon.*);
-        AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.95, 0.15);
-
-        try weapon.heavyAttack(
-            spawn_pos,
-            target_pos,
-            stats.*,
-        );
     }
+}
+
+fn executeLightAttack(
+    self: *Self,
+    weapon: *Weapon,
+    hands: *Hands,
+    stats: *Stats,
+    dashing: *Dashing,
+    spawn_position: lm.Vector2,
+    target_position: lm.Vector2,
+) !void {
+    self.cooldown = 1.0 / stats.current.attack_speed;
+
+    stats.addEffect(.{
+        .id = "root",
+        .effect_type = .root,
+        .duration = 0.075,
+        .visual = .{},
+    });
+
+    try hands.play(weapon.*);
+    AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.7, 0.1);
+
+    if (dashing.isDashing()) {
+        try weapon.dashAttack(
+            spawn_position,
+            target_position,
+            stats.*,
+        );
+        return;
+    }
+
+    try weapon.lightAttack(
+        spawn_position,
+        target_position,
+        stats.*,
+    );
+}
+
+fn executeHeavyAttack(
+    self: *Self,
+    weapon: *Weapon,
+    hands: *Hands,
+    stats: *Stats,
+    spawn_position: lm.Vector2,
+    target_position: lm.Vector2,
+) !void {
+    self.cooldown = 1.8 / stats.current.attack_speed;
+
+    stats.addEffect(.{
+        .id = "root",
+        .effect_type = .root,
+        .duration = 0.12,
+        .visual = .{},
+    });
+
+    try hands.play(weapon.*);
+    AudioManager.playSfxPitched("audio/sfx/punch.mp3", 0.95, 0.15);
+
+    try weapon.heavyAttack(
+        spawn_position,
+        target_position,
+        stats.*,
+    );
+}
+
+/// Resolves the 2D aim direction according to the active control scheme and input inputs.
+pub fn resolveAimDirection(
+    scheme: ControlScheme.ControlScheme,
+    arrow_vector: lm.Vector2,
+    mouse_difference: lm.Vector2,
+    fallback_direction: lm.Vector2,
+) lm.Vector2 {
+    if (scheme == .keyboard_only) {
+        if (arrow_vector.length() > 0) {
+            return arrow_vector.normalize();
+        }
+        return fallback_direction;
+    }
+
+    if (arrow_vector.length() > 0) {
+        return arrow_vector.normalize();
+    }
+
+    if (mouse_difference.length() > 0) {
+        return mouse_difference.normalize();
+    }
+
+    return fallback_direction;
 }
 
 pub fn equipSpell(self: *Self, spell: Spell) void {
@@ -211,4 +279,40 @@ test "Attack.getWeaponById and hasWeaponId" {
     try std.testing.expectEqualStrings("Goliath", goliath_weapon.?.id);
 
     try std.testing.expect(attack.getWeaponById("NonExistent") == null);
+}
+
+test "Attack.resolveAimDirection in keyboard_only mode uses arrow keys and ignores mouse" {
+    const fallback = lm.Vec2(1, 0);
+    const mouse_diff = lm.Vec2(100, 200);
+
+    // Aiming straight up via arrow keys
+    const up_direction = resolveAimDirection(.keyboard_only, .init(0, -1), mouse_diff, fallback);
+    try std.testing.expectApproxEqAbs(@as(f32, 0), up_direction.x, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, -1), up_direction.y, 0.001);
+
+    // Aiming diagonal up-right via arrow keys
+    const up_right_direction = resolveAimDirection(.keyboard_only, .init(1, -1), mouse_diff, fallback);
+    const expected_diagonal: f32 = std.math.sqrt(@as(f32, 0.5));
+    try std.testing.expectApproxEqAbs(expected_diagonal, up_right_direction.x, 0.001);
+    try std.testing.expectApproxEqAbs(-expected_diagonal, up_right_direction.y, 0.001);
+
+    // When no arrow keys pressed, retains fallback direction and ignores mouse
+    const fallback_direction = resolveAimDirection(.keyboard_only, .init(0, 0), mouse_diff, fallback);
+    try std.testing.expectApproxEqAbs(@as(f32, 1), fallback_direction.x, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 0), fallback_direction.y, 0.001);
+}
+
+test "Attack.resolveAimDirection in keyboard_and_mouse mode prioritizes arrows then mouse" {
+    const fallback = lm.Vec2(0, 1);
+    const mouse_diff = lm.Vec2(100, 0);
+
+    // If mouse diff is present and no arrows, uses mouse
+    const mouse_aim = resolveAimDirection(.keyboard_and_mouse, .init(0, 0), mouse_diff, fallback);
+    try std.testing.expectApproxEqAbs(@as(f32, 1), mouse_aim.x, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 0), mouse_aim.y, 0.001);
+
+    // If arrow keys pressed, uses arrow keys
+    const arrow_aim = resolveAimDirection(.keyboard_and_mouse, .init(-1, 0), mouse_diff, fallback);
+    try std.testing.expectApproxEqAbs(@as(f32, -1), arrow_aim.x, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 0), arrow_aim.y, 0.001);
 }

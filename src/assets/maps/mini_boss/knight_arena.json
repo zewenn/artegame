@@ -1,0 +1,244 @@
+{
+  "version": 1,
+  "name": "knight_arena",
+  "width_tiles": 32,
+  "height_tiles": 24,
+  "tile_size_pixels": 64,
+  "background_tiles": "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0002\u0001\u0001\u0001\u0001\u0001\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0002\u0001\u0001\u0001\u0001\u0001\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0001\u0001\u0001\u0001\u0001\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0001\u0001\u0001\u0001\u0001\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0001\u0001\u0001\u0001\u0001\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0001\u0001\u0001\u0001\u0001\u0003\u0003\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002",
+  "walls": [
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 0,
+      "end_x_tiles": 31,
+      "end_y_tiles": 0,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 1,
+      "end_x_tiles": 6,
+      "end_y_tiles": 2,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 12,
+      "start_y_tiles": 1,
+      "end_x_tiles": 12,
+      "end_y_tiles": 2,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 18,
+      "start_y_tiles": 1,
+      "end_x_tiles": 18,
+      "end_y_tiles": 2,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 25,
+      "start_y_tiles": 1,
+      "end_x_tiles": 31,
+      "end_y_tiles": 2,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 3,
+      "end_x_tiles": 5,
+      "end_y_tiles": 4,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 26,
+      "start_y_tiles": 3,
+      "end_x_tiles": 31,
+      "end_y_tiles": 4,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 5,
+      "end_x_tiles": 4,
+      "end_y_tiles": 5,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 27,
+      "start_y_tiles": 5,
+      "end_x_tiles": 31,
+      "end_y_tiles": 5,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 6,
+      "end_x_tiles": 2,
+      "end_y_tiles": 6,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 12,
+      "start_y_tiles": 6,
+      "end_x_tiles": 12,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 18,
+      "start_y_tiles": 6,
+      "end_x_tiles": 18,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 29,
+      "start_y_tiles": 6,
+      "end_x_tiles": 31,
+      "end_y_tiles": 6,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 7,
+      "end_x_tiles": 0,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 31,
+      "start_y_tiles": 7,
+      "end_x_tiles": 31,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 10,
+      "start_y_tiles": 9,
+      "end_x_tiles": 11,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 19,
+      "start_y_tiles": 9,
+      "end_x_tiles": 20,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 1,
+      "start_y_tiles": 17,
+      "end_x_tiles": 2,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 29,
+      "start_y_tiles": 17,
+      "end_x_tiles": 30,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 3,
+      "start_y_tiles": 18,
+      "end_x_tiles": 4,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 27,
+      "start_y_tiles": 18,
+      "end_x_tiles": 28,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 5,
+      "start_y_tiles": 19,
+      "end_x_tiles": 5,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 26,
+      "start_y_tiles": 19,
+      "end_x_tiles": 26,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 6,
+      "start_y_tiles": 21,
+      "end_x_tiles": 6,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 25,
+      "start_y_tiles": 21,
+      "end_x_tiles": 25,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 7,
+      "start_y_tiles": 23,
+      "end_x_tiles": 24,
+      "end_y_tiles": 23,
+      "wall_type": "solid"
+    }
+  ],
+  "spawn_zones": [
+    {
+      "center_x_pixels": 992,
+      "center_y_pixels": 800,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "knight"
+    },
+    {
+      "center_x_pixels": 416,
+      "center_y_pixels": 800,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    },
+    {
+      "center_x_pixels": 1568,
+      "center_y_pixels": 800,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    },
+    {
+      "center_x_pixels": 992,
+      "center_y_pixels": 1120,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    }
+  ],
+  "entities": [
+    {
+      "entity_type": "player_spawn",
+      "position_x": 992,
+      "position_y": 160
+    },
+    {
+      "entity_type": "exit_door",
+      "position_x": 992,
+      "position_y": 1440
+    },
+    {
+      "entity_type": "exit_door",
+      "position_x": 96,
+      "position_y": 800
+    },
+    {
+      "entity_type": "exit_door",
+      "position_x": 1952,
+      "position_y": 800
+    }
+  ]
+}

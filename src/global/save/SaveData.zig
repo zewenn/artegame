@@ -2,12 +2,14 @@ const std = @import("std");
 const lm = @import("loom");
 const Weapon = @import("../../components/Weapons/Weapon.zig");
 const Stats = @import("../../components/Stats.zig");
+const ControlScheme = @import("../input/ControlScheme.zig").ControlScheme;
 
 pub const SettingsData = struct {
     master_volume: f32 = 1.0,
     music_volume: f32 = 0.7,
     sfx_volume: f32 = 0.8,
     mute: bool = false,
+    control_scheme: ControlScheme = .keyboard_and_mouse,
 };
 
 pub const AllTimeScores = struct {

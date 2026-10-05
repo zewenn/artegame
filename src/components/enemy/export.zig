@@ -11,3 +11,4 @@ pub const ProximityAura = @import("ProximityAura.zig");
 pub const SupportMechanics = @import("SupportMechanics.zig");
 pub const BondOfLife = @import("BondOfLife.zig");
 pub const EnemyType = @import("EnemyType.zig").EnemyType;
+pub const KnightMechanics = @import("KnightMechanics.zig");

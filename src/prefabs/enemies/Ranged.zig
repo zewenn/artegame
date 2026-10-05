@@ -126,6 +126,7 @@ pub fn RangedEnemy(position: lm.Vector2) !*lm.Entity {
 
         Stats.init(.enemy, .{
             .health = 75,
+            .magic_damage = 15,
             .attack_speed = 0.7,
             .armour = 15,
             .movement_speed = 115,

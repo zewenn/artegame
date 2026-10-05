@@ -29,6 +29,8 @@ pub const WaveConfig = struct {
     lifeliner_count: u32 = 0,
     angler_count: u32 = 0,
     tank_count: u32 = 0,
+    knight_count: u32 = 0,
+    bishop_count: u32 = 0,
     mini_boss_count: u32 = 0,
     boss_count: u32 = 0,
     is_cap_reached: bool = false,
@@ -116,8 +118,46 @@ pub fn hasDesignatedZone(zones: []const MapTypes.SpawnZoneRecord, enemy_type: En
     for (zones) |zone| {
         if (zone.enemy_type == null) return true;
         if (zone.enemy_type.? == enemy_type) return true;
+        if ((enemy_type == .knight or enemy_type == .bishop) and zone.enemy_type.? == .mini_boss) return true;
     }
     return false;
+}
+
+pub fn determineMiniBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord, round: u32) EnemyType {
+    if (zones.len == 0) {
+        return if ((round / 5) % 2 == 1) .knight else .bishop;
+    }
+
+    var has_specific_knight_zone = false;
+    var has_specific_bishop_zone = false;
+
+    for (zones) |zone| {
+        const zone_enemy_type = zone.enemy_type orelse continue;
+        if (zone_enemy_type == .knight) {
+            has_specific_knight_zone = true;
+        } else if (zone_enemy_type == .bishop) {
+            has_specific_bishop_zone = true;
+        }
+    }
+
+    if (has_specific_knight_zone and !has_specific_bishop_zone) {
+        return .knight;
+    }
+    if (has_specific_bishop_zone and !has_specific_knight_zone) {
+        return .bishop;
+    }
+
+    const allows_knight = hasDesignatedZone(zones, .knight);
+    const allows_bishop = hasDesignatedZone(zones, .bishop);
+
+    if (allows_knight and !allows_bishop) {
+        return .knight;
+    }
+    if (allows_bishop and !allows_knight) {
+        return .bishop;
+    }
+
+    return if ((round / 5) % 2 == 1) .knight else .bishop;
 }
 
 pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
@@ -186,13 +226,21 @@ pub fn generateWaveConfigForProfileAndZones(
             };
         },
         .mini_boss => {
-            return WaveConfig{
+            const mini_boss_type = determineMiniBossTypeForZones(zones, round);
+            var config = WaveConfig{
                 .round = round,
                 .profile = .mini_boss,
                 .budget = 20,
                 .total_enemies = 1,
-                .mini_boss_count = 1,
             };
+            if (mini_boss_type == .knight) {
+                config.knight_count = 1;
+            } else if (mini_boss_type == .bishop) {
+                config.bishop_count = 1;
+            } else {
+                config.mini_boss_count = 1;
+            }
+            return config;
         },
         .boss => {
             return WaveConfig{
@@ -273,6 +321,20 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     if (config.dummy_count > 0) {
         for (0..config.dummy_count) |_| {
             try list.append(.dummy);
+        }
+        return;
+    }
+
+    if (config.knight_count > 0) {
+        for (0..config.knight_count) |_| {
+            try list.append(.knight);
+        }
+        return;
+    }
+
+    if (config.bishop_count > 0) {
+        for (0..config.bishop_count) |_| {
+            try list.append(.bishop);
         }
         return;
     }
@@ -454,6 +516,16 @@ pub fn setMapBounds(self: *Self, min: lm.Vector2, max: lm.Vector2) void {
     self.spawn_area.max_y = max.y - margin_pixels;
 }
 
+fn zoneMatchesEnemyType(zone_enemy_type: ?EnemyType, target_enemy_type: ?EnemyType) bool {
+    const target = target_enemy_type orelse return zone_enemy_type == null;
+    const zone_type = zone_enemy_type orelse return false;
+
+    if (zone_type == target) return true;
+    if ((target == .knight or target == .bishop) and zone_type == .mini_boss) return true;
+
+    return false;
+}
+
 fn pickSpawnPositionFromMatchingOrAnyZone(
     zones: []const MapTypes.SpawnZoneRecord,
     target_enemy_type: ?EnemyType,
@@ -461,12 +533,7 @@ fn pickSpawnPositionFromMatchingOrAnyZone(
 ) ?lm.Vector2 {
     var match_count: usize = 0;
     for (zones) |zone| {
-        const is_match = if (target_enemy_type) |enemy_type|
-            (zone.enemy_type != null and zone.enemy_type.? == enemy_type)
-        else
-            (zone.enemy_type == null);
-
-        if (is_match) {
+        if (zoneMatchesEnemyType(zone.enemy_type, target_enemy_type)) {
             match_count += 1;
         }
     }
@@ -480,12 +547,7 @@ fn pickSpawnPositionFromMatchingOrAnyZone(
         var selected_zone: ?MapTypes.SpawnZoneRecord = null;
 
         for (zones) |zone| {
-            const is_match = if (target_enemy_type) |enemy_type|
-                (zone.enemy_type != null and zone.enemy_type.? == enemy_type)
-            else
-                (zone.enemy_type == null);
-
-            if (!is_match) continue;
+            if (!zoneMatchesEnemyType(zone.enemy_type, target_enemy_type)) continue;
 
             if (current_match_index == selected_match_index) {
                 selected_zone = zone;
@@ -722,14 +784,20 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
             .lifeliner => try prefabs.enemies.Lifeliner(spawn_position),
             .angler => try prefabs.enemies.Angler(spawn_position),
             .tank => try prefabs.enemies.Tank(spawn_position),
+            .knight => try prefabs.enemies.Knight(spawn_position),
+            .bishop => try prefabs.enemies.Bishop(spawn_position),
             .mini_boss => try prefabs.enemies.MiniBoss(spawn_position),
             .boss => try prefabs.enemies.Boss(spawn_position),
         };
 
         applyDynamicStatScaling(enemy, enemy_type, self.round);
 
-        if (enemy_type == .mini_boss) {
-            BossBar.bind(enemy, "Corrupted Guardian", .mini_boss);
+        if (enemy_type == .knight) {
+            BossBar.bind(enemy, "The Knight", .mini_boss);
+        } else if (enemy_type == .bishop) {
+            BossBar.bind(enemy, "The Bishop", .mini_boss);
+        } else if (enemy_type == .mini_boss) {
+            BossBar.bind(enemy, "Mini-Boss", .mini_boss);
         } else if (enemy_type == .boss) {
             BossBar.bind(enemy, "Abyssal Behemoth", .boss);
         }
@@ -874,11 +942,87 @@ test "RoundSpawner room profiles" {
 
     try spawner.startWaveForRoom(5, .mini_boss);
     try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    try std.testing.expectEqual(EnemyType.mini_boss, spawner.spawn_queue.items()[0]);
+    try std.testing.expectEqual(EnemyType.knight, spawner.spawn_queue.items()[0]);
+
+    try spawner.startWaveForRoom(10, .mini_boss);
+    try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
+    try std.testing.expectEqual(EnemyType.bishop, spawner.spawn_queue.items()[0]);
 
     try spawner.startWaveForRoom(15, .boss);
     try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
     try std.testing.expectEqual(EnemyType.boss, spawner.spawn_queue.items()[0]);
+}
+
+test "determineMiniBossTypeForZones respects room-specific spawn zones" {
+    const knight_only_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .knight,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&knight_only_zones, 10));
+
+    const bishop_only_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .bishop,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&bishop_only_zones, 5));
+
+    const mini_boss_generic_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .mini_boss,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&mini_boss_generic_zones, 5));
+    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&mini_boss_generic_zones, 10));
+
+    const knight_with_generic_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .knight,
+        },
+        .{
+            .center_x_pixels = 200,
+            .center_y_pixels = 200,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = null,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&knight_with_generic_zones, 10));
+
+    const bishop_with_generic_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .bishop,
+        },
+        .{
+            .center_x_pixels = 200,
+            .center_y_pixels = 200,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = null,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&bishop_with_generic_zones, 5));
 }
 
 test "RoundSpawner onEnemyDefeated updates active and killed count in O(1)" {

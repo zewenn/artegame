@@ -157,6 +157,7 @@ pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
 
         Stats.init(.enemy, .{
             .health = 110,
+            .magic_damage = 15,
             .attack_speed = 2.0,
             .armour = 15,
             .movement_speed = 190,

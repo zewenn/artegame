@@ -89,6 +89,8 @@ test {
     _ = @import("components/enemy/OverheadUI.zig");
     _ = @import("global/spawner/RoundSpawner.zig");
     _ = @import("global/input/DevicePrompts.zig");
+    _ = @import("global/input/ControlScheme.zig");
+    _ = @import("components/player/Attack.zig");
     _ = @import("global/ui/PromptBadge.zig");
     _ = @import("global/map/DualGridMesher.zig");
     _ = @import("global/map/WallMesher.zig");

@@ -223,6 +223,7 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
 
         Stats.init(.enemy, .{
             .health = 140,
+            .magic_damage = 15,
             .attack_speed = 0.8,
             .armour = 10,
             .movement_speed = 125,

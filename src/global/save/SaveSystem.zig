@@ -6,6 +6,7 @@ const RoomManager = @import("../RoomManager.zig");
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const Weapon = @import("../../components/Weapons/Weapon.zig");
+const ControlScheme = @import("../input/ControlScheme.zig");
 const SaveData = @import("SaveData.zig");
 
 pub const SaveFile = SaveData.SaveFile;
@@ -156,6 +157,7 @@ pub fn applySettings() void {
     AudioManager.setMusicVolume(current_save.settings.music_volume);
     AudioManager.setSfxVolume(current_save.settings.sfx_volume);
     AudioManager.setMute(current_save.settings.mute);
+    ControlScheme.setControlScheme(current_save.settings.control_scheme);
 }
 
 pub fn updateSettings(master: f32, music: f32, sfx: f32, mute: bool) void {
@@ -164,6 +166,12 @@ pub fn updateSettings(master: f32, music: f32, sfx: f32, mute: bool) void {
     current_save.settings.sfx_volume = sfx;
     current_save.settings.mute = mute;
     applySettings();
+    save();
+}
+
+pub fn updateControlScheme(scheme: ControlScheme.ControlScheme) void {
+    current_save.settings.control_scheme = scheme;
+    ControlScheme.setControlScheme(scheme);
     save();
 }
 
@@ -301,6 +309,14 @@ test "SaveSystem updateSettings modifies and retains settings" {
     try testing.expectEqual(@as(f32, 0.45), s.music_volume);
     try testing.expectEqual(@as(f32, 0.85), s.sfx_volume);
     try testing.expect(s.mute);
+
+    updateControlScheme(.keyboard_only);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, getSettings().control_scheme);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, ControlScheme.getControlScheme());
+
+    updateControlScheme(.keyboard_and_mouse);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, getSettings().control_scheme);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, ControlScheme.getControlScheme());
 }
 
 test "SaveSystem tutorial completed query and persistence" {

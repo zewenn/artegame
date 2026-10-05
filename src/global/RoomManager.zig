@@ -281,7 +281,7 @@ fn completeCurrentRoomCombat(self: *Self) !void {
 
     self.grantRoomRewards();
 
-    if (!self.boon_drop_spawned) {
+    if (!self.boon_drop_spawned and (self.getRoomType() == .normal or self.getRoomType() == .tutorial)) {
         self.boon_drop_spawned = true;
         const fallback_position = self.getPlayerFallbackPosition();
         self.spawnBoonDrop(fallback_position) catch |err| {
@@ -322,11 +322,13 @@ fn grantRoomRewards(self: *Self) void {
     switch (room_type) {
         .mini_boss => {
             stats.max.health *= 1.10;
+            stats.base.health *= 1.10;
             stats.current.health = stats.max.health;
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 1.0, 0.05);
         },
         .boss => {
             stats.max.health *= 1.15;
+            stats.base.health *= 1.15;
             stats.current.health = stats.max.health;
             stats.current.physical_damage += 15.0;
             stats.current.magic_damage += 10.0;
@@ -502,7 +504,7 @@ pub fn removeDefeatedEnemy(uuid: u128, death_position: lm.Vector2, enemy_type: R
 
     self.spawner.removeDefeatedEnemy(uuid);
 
-    if (self.spawner.isWaveFinished() and !self.boon_drop_spawned) {
+    if (self.spawner.isWaveFinished() and !self.boon_drop_spawned and (self.getRoomType() == .normal or self.getRoomType() == .tutorial)) {
         self.boon_drop_spawned = true;
         self.spawnBoonDrop(death_position) catch |err| {
             std.log.err("Failed to spawn boon drop: {any}", .{err});
@@ -568,13 +570,16 @@ test "RoomType display names" {
 test "Mini-boss reward boosts max HP by 10 percent and restores current health" {
     var stats = Stats{
         .max = .{ .health = 100.0 },
+        .base = .{ .health = 100.0 },
         .current = .{ .health = 25.0 },
     };
 
     stats.max.health *= 1.10;
+    stats.base.health *= 1.10;
     stats.current.health = stats.max.health;
 
     try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.max.health, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.base.health, 0.001);
     try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.current.health, 0.001);
 }
 

@@ -6,6 +6,7 @@ const clay = lm.deps.clay;
 const AudioManager = @import("../audio/AudioManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const ControlScheme = @import("../input/ControlScheme.zig");
 const HUD = @import("../HUD.zig");
 
 pub const OptionsTab = enum {
@@ -536,13 +537,19 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
     const content_w = panel_w - @round(48 * ui_scale);
     const header_font_size = lm.tou16(@max(11, @round(12 * ui_scale)));
     const row_font_size = lm.tou16(@max(10, @round(12 * ui_scale)));
+    const active_scheme = ControlScheme.getControlScheme();
+    const is_keyboard_only = (active_scheme == .keyboard_only);
+    const is_selected = (selected_index == 0);
+    const scheme_btn_w = @round(160 * ui_scale);
+    const scheme_btn_h = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
+    const row_h = @round(36 * ui_scale);
 
     const Bind = struct { action: []const u8, kbm: []const u8, pad: []const u8 };
     const bindings = [_]Bind{
         .{ .action = "Move", .kbm = "W, A, S, D", .pad = "Left Stick" },
-        .{ .action = "Aim / Look", .kbm = "Mouse Cursor", .pad = "Right Stick" },
-        .{ .action = "Light Attack", .kbm = "Left Mouse Button", .pad = "Right Trigger (RT)" },
-        .{ .action = "Heavy Attack", .kbm = "Right Mouse Button", .pad = "Left Trigger (LT)" },
+        .{ .action = "Aim / Look", .kbm = if (is_keyboard_only) "Arrow Keys (8-Way)" else "Mouse Cursor", .pad = "Right Stick" },
+        .{ .action = "Light Attack", .kbm = if (is_keyboard_only) "Arrow Keys" else "Left Mouse Button", .pad = "Right Trigger (RT)" },
+        .{ .action = "Heavy Attack", .kbm = if (is_keyboard_only) "Shift + Arrow Keys" else "Right Mouse Button", .pad = "Left Trigger (LT)" },
         .{ .action = "Dash", .kbm = "Spacebar", .pad = "A Button (South)" },
         .{ .action = "Cast Spell 1", .kbm = "Q Key", .pad = "Left Bumper (LB)" },
         .{ .action = "Cast Spell 2", .kbm = "E Key", .pad = "Right Bumper (RB)" },
@@ -558,12 +565,77 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
             .child_gap = lm.tou16(@round(3 * ui_scale)),
         },
     })({
+        clay.UI()(.{
+            .id = .ID("opt-scheme-row"),
+            .layout = .{
+                .sizing = .{
+                    .w = .fixed(content_w),
+                    .h = .fixed(row_h),
+                },
+                .direction = .left_to_right,
+                .child_alignment = .{ .y = .center },
+                .padding = .axes(
+                    lm.tou16(@round(4 * ui_scale)),
+                    lm.tou16(@round(16 * ui_scale)),
+                ),
+            },
+            .background_color = if (clay.hovered() or is_selected)
+                ui.color(28, 33, 46, 220)
+            else
+                ui.color(20, 23, 31, 160),
+            .corner_radius = .all(6 * ui_scale),
+            .border = .{
+                .color = if (clay.hovered() or is_selected)
+                    ui.color(240, 200, 100, 200)
+                else
+                    ui.color(40, 46, 60, 120),
+                .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
+            },
+        })({
+            if (clay.hovered()) {
+                selected_index = 0;
+                if (lm.mouse.getButtonDown(.left)) {
+                    toggleControlScheme();
+                }
+            }
+
+            ui.new(.{
+                .id = .ID("opt-scheme-lbl-wrap"),
+                .layout = .{ .sizing = .{ .w = .fixed(@round(220 * ui_scale)) } },
+            })({
+                ui.text("Control Scheme", .{
+                    .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
+                    .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+                    .letter_spacing = 1,
+                });
+            });
+
+            ui.new(.{
+                .id = .ID("opt-scheme-badge-btn"),
+                .layout = .{
+                    .sizing = .{
+                        .w = .fixed(scheme_btn_w),
+                        .h = .fixed(scheme_btn_h),
+                    },
+                    .child_alignment = .{ .x = .center, .y = .center },
+                },
+                .image = ui.image(HUD.getUtilityButtonSprite(clay.hovered() or is_selected), .init(scheme_btn_w, scheme_btn_h)) catch .{ .image_data = null },
+            })({
+                ui.text(active_scheme.displayName(), .{
+                    .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(255, 255, 255, 255),
+                    .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
+                    .letter_spacing = 1,
+                    .alignment = .center,
+                });
+            });
+        });
+
         const is_gamepad = DevicePrompts.isGamepad();
 
         ui.new(.{
             .id = .ID("opt-ctrl-header"),
             .layout = .{
-                .sizing = .{ .w = .fixed(content_w), .h = .fixed(@round(24 * ui_scale)) },
+                .sizing = .{ .w = .fixed(content_w), .h = .fixed(@round(22 * ui_scale)) },
                 .direction = .left_to_right,
                 .child_alignment = .{ .y = .center },
                 .padding = .axes(0, lm.tou16(@round(8 * ui_scale))),
@@ -586,7 +658,12 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
                 .id = .ID("opt-tbl-h2"),
                 .layout = .{ .sizing = .{ .w = .fixed(@round(190 * ui_scale)) } },
             })({
-                ui.text(if (!is_gamepad) "KEYBOARD & MOUSE (ACTIVE)" else "KEYBOARD & MOUSE", .{
+                const kbm_header = if (!is_gamepad)
+                    (if (is_keyboard_only) "KEYBOARD ONLY (ACTIVE)" else "KEYBOARD & MOUSE (ACTIVE)")
+                else
+                    active_scheme.displayName();
+
+                ui.text(kbm_header, .{
                     .color = if (!is_gamepad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200),
                     .font_size = header_font_size,
                     .letter_spacing = 1,
@@ -610,7 +687,7 @@ fn drawControlsTab(panel_w: f32, ui_scale: f32) void {
             ui.new(.{
                 .id = .IDI("opt-crow-", @intCast(binding_index)),
                 .layout = .{
-                    .sizing = .{ .w = .fixed(content_w), .h = .fixed(@round(22 * ui_scale)) },
+                    .sizing = .{ .w = .fixed(content_w), .h = .fixed(@round(20 * ui_scale)) },
                     .direction = .left_to_right,
                     .child_alignment = .{ .y = .center },
                     .padding = .axes(0, lm.tou16(@round(8 * ui_scale))),
@@ -795,8 +872,12 @@ fn handleInput() bool {
             }
         },
         .controls => {
-            if (select_pressed and selected_index == back_index) {
-                return true;
+            if (nav_left or nav_right or select_pressed) {
+                if (selected_index == 0) {
+                    toggleControlScheme();
+                } else if (selected_index == back_index) {
+                    return true;
+                }
             }
         },
     }
@@ -824,7 +905,7 @@ pub fn getBackIndex() usize {
     return switch (options_tab) {
         .audio => 4,
         .display => 1,
-        .controls => 0,
+        .controls => 1,
     };
 }
 
@@ -859,6 +940,16 @@ pub fn toggleFullscreenMode() void {
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.05);
 }
 
+pub fn toggleControlScheme() void {
+    const next_scheme: ControlScheme.ControlScheme = switch (ControlScheme.getControlScheme()) {
+        .keyboard_and_mouse => .keyboard_only,
+        .keyboard_only => .keyboard_and_mouse,
+    };
+    ControlScheme.setControlScheme(next_scheme);
+    SaveSystem.updateControlScheme(next_scheme);
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.05);
+}
+
 test "OptionsMenu tab cycling and back index resolution" {
     reset();
     try std.testing.expectEqual(OptionsTab.audio, options_tab);
@@ -870,13 +961,21 @@ test "OptionsMenu tab cycling and back index resolution" {
 
     cycleTab(1);
     try std.testing.expectEqual(OptionsTab.controls, options_tab);
-    try std.testing.expectEqual(@as(usize, 0), getBackIndex());
+    try std.testing.expectEqual(@as(usize, 1), getBackIndex());
 
     cycleTab(1);
     try std.testing.expectEqual(OptionsTab.audio, options_tab);
 
     cycleTab(-1);
     try std.testing.expectEqual(OptionsTab.controls, options_tab);
+}
+
+test "OptionsMenu toggleControlScheme cycles scheme and updates SaveSystem" {
+    ControlScheme.setControlScheme(.keyboard_and_mouse);
+    toggleControlScheme();
+    try std.testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, ControlScheme.getControlScheme());
+    toggleControlScheme();
+    try std.testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, ControlScheme.getControlScheme());
 }
 
 test "OptionsMenu volume clamping bounds" {

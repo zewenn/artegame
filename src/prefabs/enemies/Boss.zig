@@ -197,6 +197,7 @@ pub fn BossEnemy(position: lm.Vector2) !*lm.Entity {
 
         Stats.init(.enemy, .{
             .health = 2500,
+            .magic_damage = 30,
             .attack_speed = 1.1,
             .armour = 75,
             .magic_resist = 40,

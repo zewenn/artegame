@@ -12,6 +12,8 @@ pub const EnemyType = enum {
     lifeliner,
     angler,
     tank,
+    knight,
+    bishop,
     mini_boss,
     boss,
 
@@ -26,6 +28,8 @@ pub const EnemyType = enum {
             .lifeliner => 4,
             .tank => 4,
             .elite => 5,
+            .knight => 20,
+            .bishop => 20,
             .mini_boss => 20,
             .boss => 100,
         };
@@ -60,6 +64,8 @@ pub const EnemyType = enum {
             .lifeliner => "Lifeliner",
             .angler => "Angler",
             .tank => "Tank",
+            .knight => "Knight",
+            .bishop => "Bishop",
             .mini_boss => "Mini-Boss",
             .boss => "Boss",
         };
@@ -77,6 +83,8 @@ pub const EnemyType = enum {
             .lifeliner => "LIFELINER",
             .angler => "ANGLER",
             .tank => "TANK",
+            .knight => "KNIGHT",
+            .bishop => "BISHOP",
             .mini_boss => "MINI-BOSS",
             .boss => "BOSS",
         };
@@ -94,6 +102,8 @@ pub const EnemyType = enum {
             .lifeliner => rl.Color{ .r = 235, .g = 90, .b = 150, .a = 60 },
             .angler => rl.Color{ .r = 30, .g = 210, .b = 210, .a = 60 },
             .tank => rl.Color{ .r = 130, .g = 140, .b = 160, .a = 60 },
+            .knight => rl.Color{ .r = 215, .g = 165, .b = 35, .a = 60 },
+            .bishop => rl.Color{ .r = 155, .g = 70, .b = 220, .a = 60 },
             .mini_boss => rl.Color{ .r = 245, .g = 170, .b = 30, .a = 60 },
             .boss => rl.Color{ .r = 180, .g = 20, .b = 50, .a = 60 },
         };
@@ -111,6 +121,8 @@ pub const EnemyType = enum {
             .lifeliner => rl.Color{ .r = 255, .g = 130, .b = 180, .a = 220 },
             .angler => rl.Color{ .r = 70, .g = 240, .b = 240, .a = 220 },
             .tank => rl.Color{ .r = 170, .g = 180, .b = 200, .a = 220 },
+            .knight => rl.Color{ .r = 245, .g = 195, .b = 60, .a = 220 },
+            .bishop => rl.Color{ .r = 195, .g = 105, .b = 250, .a = 220 },
             .mini_boss => rl.Color{ .r = 255, .g = 200, .b = 70, .a = 220 },
             .boss => rl.Color{ .r = 230, .g = 50, .b = 80, .a = 220 },
         };
@@ -121,6 +133,10 @@ test "EnemyType labels and costs" {
     try std.testing.expectEqualStrings("ALL", EnemyType.label(null));
     try std.testing.expectEqualStrings("RANGED", EnemyType.label(.ranged));
     try std.testing.expectEqualStrings("MELEE", EnemyType.label(.melee));
+    try std.testing.expectEqualStrings("KNIGHT", EnemyType.label(.knight));
+    try std.testing.expectEqualStrings("BISHOP", EnemyType.label(.bishop));
     try std.testing.expectEqual(@as(u32, 2), EnemyType.ranged.cost());
     try std.testing.expectEqual(@as(u32, 1), EnemyType.melee.cost());
+    try std.testing.expectEqual(@as(u32, 20), EnemyType.knight.cost());
+    try std.testing.expectEqual(@as(u32, 20), EnemyType.bishop.cost());
 }

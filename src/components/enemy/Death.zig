@@ -43,6 +43,10 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
             self.enemy_type = .tank;
         } else if (std.mem.startsWith(u8, entity.id, "dummy")) {
             self.enemy_type = .dummy;
+        } else if (std.mem.startsWith(u8, entity.id, "knight")) {
+            self.enemy_type = .knight;
+        } else if (std.mem.startsWith(u8, entity.id, "bishop")) {
+            self.enemy_type = .bishop;
         } else if (std.mem.startsWith(u8, entity.id, "mini-boss")) {
             self.enemy_type = .mini_boss;
         } else if (std.mem.startsWith(u8, entity.id, "boss")) {
@@ -77,7 +81,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
         .melee, .ranged, .angler => lm.random.intRangeAtMostBiased(u8, 1, 3),
         .shaman, .magician, .lifeliner, .tank => lm.random.intRangeAtMostBiased(u8, 2, 4),
         .elite => lm.random.intRangeAtMostBiased(u8, 3, 6),
-        .mini_boss => lm.random.intRangeAtMostBiased(u8, 8, 12),
+        .knight, .bishop, .mini_boss => lm.random.intRangeAtMostBiased(u8, 8, 12),
         .boss => lm.random.intRangeAtMostBiased(u8, 25, 35),
     };
     for (0..orb_count) |_| {

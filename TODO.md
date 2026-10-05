@@ -2,23 +2,6 @@
 
 ## Backlog
 
-
-
-### [34#ENE] Mini-boss encounters: Knight and Bishop with scaled clear rewards
-
-  - tags: [enemies, mini-boss, encounters, ai]
-  - priority: medium
-  - workload: Hard
-  - steps:
-      - [ ] Implement Knight prefab & AI: close-range brawler, parabolic distance Armor/MR scaling, distance drain aura, beheading strike, Weaken vulnerability, low-HP heal channel
-      - [ ] Implement Bishop prefab & AI: sweeping 360° rotating cross barrages (Knockback, Slow, Root, Stun variants) with 5s duration and 750 projectile speed
-      - [ ] Trigger mini-boss room encounter automatically every 5th room after clearing 4 regular rooms
-      - [ ] Grant mini-boss clear rewards on defeat: full HP restore and permanent +10% max HP increase
-      - [ ] User confirmation that mini-boss encounters function correctly with distinct phases and rewards
-    ```md
-    Implements the two v4.0.0 mini-boss encounters appearing every 5 rooms. Defeating a mini-boss restores HP to max and permanently boosts max HP by 10%.
-    ```
-
 ### [35#ENE] End-game boss encounters: The King and The Queen
 
   - tags: [enemies, bosses, encounters, ai]
@@ -108,7 +91,41 @@
 ## Work in Progress
 
 
+
+
 ## Done
+
+### [48#INP] Keyboard-only control scheme with arrow key aiming and shooting
+
+  - tags: [input, controls, keyboard, aiming, shooting]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Add ControlScheme enum and persistence in SaveData and SaveSystem
+      - [x] Add interactive Control Scheme selection in OptionsMenu Controls tab
+      - [x] Implement 8-directional arrow key aiming and projectile summoning in Attack component
+      - [x] Support Shift key modifier for heavy attacks in keyboard-only mode
+      - [x] Update hands weapon orientation and device prompt labels for keyboard-only mode
+      - [x] Add comprehensive automated tests for ControlScheme and keyboard aiming
+      - [x] User confirmation that keyboard-only mode works as expected
+    ```md
+    Implements a keyboard-only control scheme enabling 8-directional aiming and projectile summoning via the arrow keys, with Shift modifier for heavy attacks, settings persistence, and Options menu integration.
+    ```
+
+### [34#ENE] Mini-boss encounters: Knight and Bishop with scaled clear rewards
+
+  - tags: [enemies, mini-boss, encounters, ai]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [x] Implement Knight prefab & AI: close-range brawler, parabolic distance Armor/MR scaling, distance drain aura, beheading strike, Weaken vulnerability, low-HP heal channel
+      - [x] Implement Bishop prefab & AI: sweeping 360° rotating cross barrages (Knockback, Slow, Root, Stun variants) with 5s duration and 750 projectile speed
+      - [x] Trigger mini-boss room encounter automatically every 5th room after clearing 4 regular rooms
+      - [x] Grant mini-boss clear rewards on defeat: full HP restore and permanent +10% max HP increase
+      - [x] User confirmation that mini-boss encounters function correctly with distinct phases and rewards
+    ```md
+    Implements the two v4.0.0 mini-boss encounters appearing every 5 rooms. Defeating a mini-boss restores HP to max and permanently boosts max HP by 10%.
+    ```
 
 ### [47#SPW] Restrict enemy wave spawning to map-designated spawn zones
 
