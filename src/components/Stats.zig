@@ -55,6 +55,10 @@ current: StatValues = .{},
 
 effects: ?lm.List(Effect) = null,
 
+/// Unstoppable entities ignore roots and stuns. Scripted mechanics can still
+/// impose them through `addSelfImposedEffect` / `applySelfImposedStun`.
+is_unstoppable: bool = false,
+
 pub fn Awake(self: *Self) void {
     if (self.effects == null) {
         self.effects = lm.List(Effect).init(lm.allocators.scene());
@@ -81,6 +85,13 @@ pub fn init(team: Teams, stats: StatValues) Self {
         .max = stats,
         .effects = lm.List(Effect).init(lm.allocators.scene()),
     };
+}
+
+/// Same as `init`, but the resulting stats ignore roots and stuns (used by Mini-Bosses and Bosses).
+pub fn initUnstoppable(team: Teams, stats: StatValues) Self {
+    var unstoppable_stats = init(team, stats);
+    unstoppable_stats.is_unstoppable = true;
+    return unstoppable_stats;
 }
 
 pub fn deinit(self: *Self) void {
@@ -150,7 +161,20 @@ pub fn canMove(self: Self) bool {
     return !self.isStunned() and !self.isRooted() and !self.isSleeping() and !self.isStasis();
 }
 
+pub fn isImmuneTo(self: Self, effect_type: EffectType) bool {
+    if (!self.is_unstoppable) return false;
+    return effect_type == .stun or effect_type == .root;
+}
+
+/// Adds an effect unless the entity is immune to its type (see `is_unstoppable`).
 pub fn addEffect(self: *Self, effect: Effect) void {
+    if (self.isImmuneTo(effect.effect_type)) return;
+    self.addSelfImposedEffect(effect);
+}
+
+/// Adds an effect while bypassing immunities. Reserved for an entity's own scripted
+/// mechanics (e.g. channels or vulnerability windows), never for hostile sources.
+pub fn addSelfImposedEffect(self: *Self, effect: Effect) void {
     var new_effect = effect;
     if (new_effect.time_remaining <= 0) {
         new_effect.time_remaining = new_effect.duration;
@@ -249,6 +273,15 @@ pub fn applyRoot(self: *Self, duration_seconds: f32) void {
 
 pub fn applyStun(self: *Self, duration_seconds: f32) void {
     self.addEffect(.{
+        .id = "stun",
+        .effect_type = .stun,
+        .duration = duration_seconds,
+    });
+}
+
+/// Stuns the entity even if it is unstoppable. See `addSelfImposedEffect`.
+pub fn applySelfImposedStun(self: *Self, duration_seconds: f32) void {
+    self.addSelfImposedEffect(.{
         .id = "stun",
         .effect_type = .stun,
         .duration = duration_seconds,
@@ -377,6 +410,38 @@ test "Stats crowd control flags and canMove query" {
     stats.tickEffects(1.0);
     try std.testing.expect(!stats.isRooted());
     try std.testing.expect(stats.canMove());
+}
+
+test "Unstoppable stats ignore roots and stuns but accept other effects" {
+    var stats = Self.initUnstoppable(.enemy, .{
+        .movement_speed = 300,
+    });
+    defer stats.deinit();
+
+    try std.testing.expect(stats.is_unstoppable);
+
+    stats.applyStun(2.0);
+    stats.applyRoot(2.0);
+    stats.addEffect(.{ .id = "custom_root", .effect_type = .root, .duration = 2.0 });
+    try std.testing.expect(!stats.isStunned());
+    try std.testing.expect(!stats.isRooted());
+    try std.testing.expect(stats.canMove());
+
+    stats.applySlow(50, 2.0);
+    try std.testing.expect(stats.isSlowed());
+    try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
+}
+
+test "Unstoppable stats still accept self-imposed stuns" {
+    var stats = Self.initUnstoppable(.enemy, .{});
+    defer stats.deinit();
+
+    stats.applySelfImposedStun(1.0);
+    try std.testing.expect(stats.isStunned());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(!stats.isStunned());
 }
 
 test "Stats re-applying effect refreshes duration without double-stacking stats" {

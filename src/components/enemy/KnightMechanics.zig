@@ -74,7 +74,7 @@ pub fn startWeaken(self: *Self, duration_seconds: f32) void {
 
     stats.current.armour = self.weaken_prior_armour * 0.5;
     stats.current.magic_resist = self.weaken_prior_magic_resist * 0.5;
-    stats.applyStun(duration_seconds);
+    stats.applySelfImposedStun(duration_seconds);
 
     self.playWeakenFeedbackAudio();
 }
@@ -108,7 +108,7 @@ pub fn startHealChannel(self: *Self, duration_seconds: f32, round: u32) void {
     const round_scaling_bonus: f32 = @as(f32, @floatFromInt(round)) * 0.005;
     self.heal_rate_percent_per_second = base_heal_rate + round_scaling_bonus;
 
-    stats.applyStun(duration_seconds);
+    stats.applySelfImposedStun(duration_seconds);
 
     self.playHealStartFeedbackAudio();
 }
@@ -140,7 +140,7 @@ fn playHealStartFeedbackAudio(self: *Self) void {
 }
 
 test "KnightMechanics Weaken lifecycle halves defenses and restores with +15 bonus" {
-    var stats = Stats.init(.enemy, .{
+    var stats = Stats.initUnstoppable(.enemy, .{
         .health = 1000.0,
         .armour = 60.0,
         .magic_resist = 40.0,
@@ -170,7 +170,7 @@ test "KnightMechanics Weaken lifecycle halves defenses and restores with +15 bon
 }
 
 test "KnightMechanics low-HP heal channel restores health over time" {
-    var stats = Stats.init(.enemy, .{
+    var stats = Stats.initUnstoppable(.enemy, .{
         .health = 1000.0,
     });
     defer stats.deinit();

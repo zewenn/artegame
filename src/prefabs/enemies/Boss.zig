@@ -195,7 +195,7 @@ pub fn BossEnemy(position: lm.Vector2) !*lm.Entity {
         }),
         lm.Animator.init(&Enemy.Animation.melee_animations),
 
-        Stats.init(.enemy, .{
+        Stats.initUnstoppable(.enemy, .{
             .health = 2500,
             .magic_damage = 30,
             .attack_speed = 1.1,

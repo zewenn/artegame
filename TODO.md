@@ -90,10 +90,23 @@
 
 ## Work in Progress
 
-
-
-
 ## Done
+
+### [49#ENE] Unstoppable Mini-Bosses and Bosses (root & stun immunity)
+
+  - tags: [enemies, mini-boss, boss, crowd-control, stats]
+  - priority: medium
+  - workload: Easy
+  - steps:
+      - [x] Add is_unstoppable flag to Stats and reject root/stun effects in addEffect
+      - [x] Add self-imposed effect path so Knight Weaken and heal channel keep their scripted stun
+      - [x] Mark Knight, Bishop, and Boss prefabs as unstoppable
+      - [x] Add unit tests for unstoppable immunity and self-imposed stun bypass
+      - [x] Verify build with zig build
+      - [x] User confirmation that Mini-Bosses and Bosses ignore roots and stuns
+    ```md
+    Mini-Bosses (Knight, Bishop) and Bosses become Unstoppable: hostile roots and stuns are ignored. Slows and knockback still apply. The Knight's own scripted stuns (Weaken vulnerability window, low-HP heal channel) bypass the immunity via a dedicated self-imposed path.
+    ```
 
 ### [48#INP] Keyboard-only control scheme with arrow key aiming and shooting
 

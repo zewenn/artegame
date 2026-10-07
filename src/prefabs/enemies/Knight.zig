@@ -172,7 +172,7 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
         }),
         lm.Animator.init(&Enemy.Animation.melee_animations),
 
-        Stats.init(.enemy, .{
+        Stats.initUnstoppable(.enemy, .{
             .health = 1200,
             .attack_speed = 0.85,
             .armour = 60,
