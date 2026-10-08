@@ -77,6 +77,23 @@
 
 ## Done
 
+### [50#ARC] Map editor play-testing mode with automatic player stat scaling and test buttons
+
+  - tags: [map-editor, playtest, scaling, stats, ui]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Implement player test scaling profiles in RoomManager based on map category (Normal, Mini-Boss, Boss)
+      - [x] Add playtest isolation in RoomManager to prevent overwriting active campaign save data
+      - [x] Add "Play |>" button next to each map in Map Editor sidebar (presets and custom maps)
+      - [x] Add "Test Map |>" button in Map Editor top toolbar with temporary test map serialization
+      - [x] Update PauseMenu and GameOverMenu to return to Map Editor when in playtest mode
+      - [x] Add unit tests for playtest player scaling and mode isolation
+      - [x] User confirmation that map play-testing and player scaling work as expected
+    ```md
+    Adds direct play-testing capability to the Map Editor via "Play |>" buttons beside all sidebar maps and a "Test Map |>" button in the top toolbar for unsaved canvas changes. Automatically scales player health, damage, and defenses to match the map's challenge tier without altering active save files.
+    ```
+
 ### [35#ENE] End-game boss encounters: The King and The Queen
 
   - tags: [enemies, bosses, encounters, ai]
@@ -238,7 +255,6 @@
     UI component for mini-boss and boss encounters. Replaces floating overhead health bars with a prominent screen-top boss health bar displaying boss name and current health percentage.
     ```
 
-
 ### [43#ARC] Instant auto-pickup and homing for experience orbs on enemy defeat
 
   - tags: [performance, experience, orbs, combat]
@@ -253,7 +269,6 @@
     ```md
     Implements immediate homing magnetization for experience orbs upon enemy death, eliminating ground orb accumulation and removing round-end pickup delays.
     ```
-
 
 ### [31#UIB] Interactive room exit doors with reward category icon overlays
 

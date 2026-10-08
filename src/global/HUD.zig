@@ -165,8 +165,8 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
     const room_type = if (RoomManager.get()) |rm| rm.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
     const room_str = if (alloc) |a|
         switch (room_type) {
-            .mini_boss => std.fmt.allocPrint(a, "Room {d} • Mini-Boss", .{progress.round}) catch "Mini-Boss",
-            .boss => std.fmt.allocPrint(a, "Room {d} • Boss", .{progress.round}) catch "Boss",
+            .mini_boss => std.fmt.allocPrint(a, "Room {d} - Mini-Boss", .{progress.round}) catch "Mini-Boss",
+            .boss => std.fmt.allocPrint(a, "Room {d} - Boss", .{progress.round}) catch "Boss",
             .tutorial => std.fmt.allocPrint(a, "Tutorial Room", .{}) catch "Tutorial",
             .normal => std.fmt.allocPrint(a, "Room {d}", .{progress.round}) catch "Room",
         }
@@ -178,8 +178,8 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
     else
         "0 / 0";
 
-    const title_font_size = lm.tou16(@max(20, @round(24 * scale)));
-    const count_font_size = lm.tou16(@max(14, @round(16 * scale)));
+    const title_font_size = lm.tou16(@max(10, @round(24 * scale)));
+    const count_font_size = lm.tou16(@max(12, @round(16 * scale)));
     const pad_y = lm.tou16(@round(6 * ui_scale));
     const pad_x = lm.tou16(@round(16 * ui_scale));
 

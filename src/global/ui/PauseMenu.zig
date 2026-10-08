@@ -113,6 +113,9 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
     const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
 
     const status_str = status_str: {
+        if (RoomManager.isPlaytestMode()) {
+            break :status_str "Map Editor Playtest";
+        }
         const progress_opt = RoomManager.getWaveProgress();
         const state_opt = RoomManager.getState();
         if (progress_opt) |p| {
@@ -188,7 +191,7 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
         drawPauseButton(0, "RESUME", button_w, button_h, ui_scale, font_size, letter_spacing, true);
         drawPauseButton(1, "RESTART", button_w, button_h, ui_scale, font_size, letter_spacing, false);
         drawPauseButton(2, "OPTIONS", button_w, button_h, ui_scale, font_size, letter_spacing, false);
-        drawPauseButton(3, "MAIN MENU", button_w, button_h, ui_scale, font_size, letter_spacing, false);
+        drawPauseButton(3, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", button_w, button_h, ui_scale, font_size, letter_spacing, false);
 
         ui.new(.{
             .id = .ID("pause-footer-spacer"),
@@ -301,7 +304,9 @@ fn activateRootAction(index: usize) void {
             hide();
         },
         1 => {
-            SaveSystem.clearRun();
+            if (!RoomManager.isPlaytestMode()) {
+                SaveSystem.clearRun();
+            }
             hide();
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
             lm.loadScene("demo_map") catch |err| {
@@ -314,12 +319,21 @@ fn activateRootAction(index: usize) void {
             current_view = .options;
         },
         3 => {
-            RoomManager.saveCurrentRun();
-            hide();
-            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-            lm.loadScene("main_menu") catch |err| {
-                std.log.err("Failed to return to main_menu scene: {any}", .{err});
-            };
+            if (RoomManager.isPlaytestMode()) {
+                RoomManager.endPlaytest();
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("map_editor") catch |err| {
+                    std.log.err("Failed to return to map_editor scene: {any}", .{err});
+                };
+            } else {
+                RoomManager.saveCurrentRun();
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("main_menu") catch |err| {
+                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
+                };
+            }
         },
         else => {},
     }

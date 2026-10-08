@@ -154,6 +154,13 @@ pub fn onDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
 
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.9, 0.05);
 
+    if (RoomManager.isPlaytestMode()) {
+        RoomManager.enterNextRoom() catch |err| {
+            std.log.err("Failed to exit playtest room: {any}", .{err});
+        };
+        return;
+    }
+
     if (door.category_id) |category| {
         RoomManager.enterNextRoomWithCategory(category) catch |err| {
             std.log.err("Failed to enter next room with category {s}: {any}", .{ category, err });

@@ -238,7 +238,7 @@ fn drawActionButtons(btn_max_w: f32, ui_scale: f32) void {
         },
     })({
         drawButton(0, "RESTART", true, btn_w, btn_h, ui_scale);
-        drawButton(1, "MAIN MENU", false, btn_w, btn_h, ui_scale);
+        drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, btn_w, btn_h, ui_scale);
 
         ui.new(.{
             .id = .ID("gameover-footer-spacer"),
@@ -339,7 +339,9 @@ fn handleInput() void {
 fn activateAction(index: usize) void {
     switch (index) {
         0 => {
-            SaveSystem.clearRun();
+            if (!RoomManager.isPlaytestMode()) {
+                SaveSystem.clearRun();
+            }
             hide();
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
             lm.loadScene("demo_map") catch |err| {
@@ -347,11 +349,20 @@ fn activateAction(index: usize) void {
             };
         },
         1 => {
-            hide();
-            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-            lm.loadScene("main_menu") catch |err| {
-                std.log.err("Failed to return to main_menu scene: {any}", .{err});
-            };
+            if (RoomManager.isPlaytestMode()) {
+                RoomManager.endPlaytest();
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("map_editor") catch |err| {
+                    std.log.err("Failed to return to map_editor scene: {any}", .{err});
+                };
+            } else {
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("main_menu") catch |err| {
+                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
+                };
+            }
         },
         else => {},
     }

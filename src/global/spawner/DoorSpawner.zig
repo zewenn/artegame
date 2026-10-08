@@ -7,7 +7,8 @@ const BoonCategory = @import("../boons/BoonCategory.zig");
 const MapLoader = @import("../map/MapLoader.zig");
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
-const RoomType = @import("../RoomManager.zig").RoomType;
+const RoomManager = @import("../RoomManager.zig");
+const RoomType = RoomManager.RoomType;
 
 const Self = @This();
 
@@ -21,6 +22,21 @@ pub fn spawnReplenishDoors(
     const next_room_number = current_room_number + 1;
     const next_room_type = RoomType.fromRoomNumber(next_room_number);
     const editor_door_positions = MapLoader.getExitDoorPositions();
+
+    if (RoomManager.isPlaytestMode()) {
+        const door_count = @max(@as(usize, 1), editor_door_positions.len);
+        for (0..door_count) |door_index| {
+            try spawnSpecialDoor(door_index, editor_door_positions, .{
+                .door_index = door_index,
+                .category_id = "Map Editor",
+                .title = "Map Editor",
+                .icon = "ui/icons/empty_icon.png",
+                .reward_kind = .boon_category,
+                .is_open = true,
+            });
+        }
+        return;
+    }
 
     if (next_room_type == .boss) {
         try spawnSpecialDoor(0, editor_door_positions, .{

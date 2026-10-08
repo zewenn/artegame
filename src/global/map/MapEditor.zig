@@ -17,10 +17,12 @@ const WallMesher = @import("WallMesher.zig");
 const MapSerializer = @import("MapSerializer.zig");
 const MapLoader = @import("MapLoader.zig");
 const MapRegistry = @import("MapRegistry.zig");
+const RoomManager = @import("../RoomManager.zig");
 
 const Self = @This();
 
 var active_editor_instance: ?*Self = null;
+var playtest_override_arena: ?std.heap.ArenaAllocator = null;
 
 pub const EditorCategory = enum {
     terrain,
@@ -47,6 +49,14 @@ pub const ArenaCategory = enum {
             .normal => "Normal",
             .mini_boss => "Mini-Boss",
             .boss => "Boss",
+        };
+    }
+
+    pub fn toRoomType(self: ArenaCategory) RoomManager.RoomType {
+        return switch (self) {
+            .normal => .normal,
+            .mini_boss => .mini_boss,
+            .boss => .boss,
         };
     }
 };
@@ -103,6 +113,7 @@ is_dirty: bool = true,
 
 pub fn Awake(self: *Self) !void {
     active_editor_instance = self;
+    clearPlaytestOverride();
     self.arena = std.heap.ArenaAllocator.init(lm.allocators.generic());
     self.allocator = self.arena.?.allocator();
 
@@ -715,16 +726,7 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
         .background_color = ui.color(16, 18, 26, 245),
         .border = .{ .color = ui.color(60, 68, 88, 200), .width = .outside(1) },
     })({
-        ui.new(.{
-            .id = .ID("editor-header"),
-            .layout = .{ .sizing = .{ .w = .grow }, .child_alignment = .{ .x = .center } },
-        })({
-            ui.text("MAP EDITOR", .{
-                .color = ui.color(240, 200, 100, 255),
-                .font_size = 18,
-                .letter_spacing = 2,
-            });
-        });
+        self.drawHeader();
 
         self.drawCategoryTabs();
 
@@ -744,6 +746,45 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
         self.handleSavePopupInput();
         self.drawSavePopup(window_size);
     }
+}
+
+fn drawHeader(self: *Self) void {
+    ui.new(.{
+        .id = .ID("editor-header-bar"),
+        .layout = .{
+            .direction = .left_to_right,
+            .sizing = .{ .w = .grow },
+            .child_alignment = .{ .y = .center },
+            .child_gap = 8,
+        },
+    })({
+        ui.new(.{
+            .id = .ID("editor-title-wrap"),
+            .layout = .{ .sizing = .{ .w = .grow } },
+        })({
+            ui.text("MAP EDITOR", .{
+                .color = ui.color(240, 200, 100, 255),
+                .font_size = 18,
+                .letter_spacing = 2,
+            });
+        });
+
+        clay.UI()(.{
+            .id = .ID("header-test-canvas-btn"),
+            .layout = .{ .padding = .axes(4, 8) },
+            .background_color = ui.color(45, 140, 75, 230),
+            .corner_radius = .all(4),
+        })({
+            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                self.playtestCurrentCanvas();
+            }
+            ui.text("Play |>", .{
+                .color = ui.color(255, 255, 255, 255),
+                .font_size = 11,
+                .letter_spacing = 1,
+            });
+        });
+    });
 }
 
 fn drawCategoryTabs(self: *Self) void {
@@ -1030,104 +1071,186 @@ fn drawFileCategory(self: *Self) void {
         .id = .ID("file-panel"),
         .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
     })({
-        clay.UI()(.{
-            .id = .ID("save-map-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(40, 120, 60, 230),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.show_save_popup = true;
-            }
-            ui.text("Save Map...", .{
-                .color = ui.color(255, 255, 255, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
+        self.drawToolbarActionButtons();
 
-        clay.UI()(.{
-            .id = .ID("load-normal-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(35, 45, 65, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.loadMapFromPath("maps/normal/arena_normal.json");
-            }
-            ui.text("Load Normal Arena", .{
-                .color = ui.color(200, 215, 235, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
+        self.drawPresetMapRow(
+            .ID("row-normal-arena"),
+            .ID("load-normal-btn"),
+            .ID("play-normal-btn"),
+            "maps/normal/arena_normal.json",
+            "Load Normal Arena",
+            .normal,
+        );
 
-        clay.UI()(.{
-            .id = .ID("load-miniboss-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(35, 45, 65, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.loadMapFromPath("maps/mini_boss/arena_normal.json");
-            }
-            ui.text("Load Mini-Boss Arena", .{
-                .color = ui.color(200, 215, 235, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
+        self.drawPresetMapRow(
+            .ID("row-miniboss-arena"),
+            .ID("load-miniboss-btn"),
+            .ID("play-miniboss-btn"),
+            "maps/mini_boss/arena_normal.json",
+            "Load Mini-Boss Arena",
+            .mini_boss,
+        );
 
-        clay.UI()(.{
-            .id = .ID("load-boss-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(35, 45, 65, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.loadMapFromPath("maps/boss/arena_boss.json");
-            }
-            ui.text("Load Boss Arena", .{
-                .color = ui.color(200, 215, 235, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
+        self.drawPresetMapRow(
+            .ID("row-boss-arena"),
+            .ID("load-boss-btn"),
+            .ID("play-boss-btn"),
+            "maps/boss/arena_boss.json",
+            "Load Boss Arena",
+            .boss,
+        );
 
-        clay.UI()(.{
-            .id = .ID("load-tutorial-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(35, 45, 65, 220),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                self.loadMapFromPath("maps/tutorial.json");
-            }
-            ui.text("Load Tutorial Map", .{
-                .color = ui.color(200, 215, 235, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
-        });
+        self.drawPresetMapRow(
+            .ID("row-tutorial-arena"),
+            .ID("load-tutorial-btn"),
+            .ID("play-tutorial-btn"),
+            "maps/tutorial.json",
+            "Load Tutorial Map",
+            .normal,
+        );
 
         self.drawCustomMapButtons();
 
-        clay.UI()(.{
-            .id = .ID("exit-menu-btn"),
-            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
-            .background_color = ui.color(80, 35, 40, 230),
-            .corner_radius = .all(4),
-        })({
-            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
-                lm.loadScene("main_menu") catch |err| {
-                    std.log.err("Failed to return to main_menu: {any}", .{err});
-                };
-            }
-            ui.text("Exit to Main Menu", .{
-                .color = ui.color(255, 200, 200, 255),
-                .font_size = 12,
-                .letter_spacing = 1,
-            });
+        self.drawExitButton();
+    });
+}
+
+fn drawToolbarActionButtons(self: *Self) void {
+    ui.new(.{
+        .id = .ID("file-actions-row"),
+        .layout = .{
+            .direction = .left_to_right,
+            .sizing = .{ .w = .grow },
+            .child_gap = 6,
+        },
+    })({
+        self.drawTestCanvasButton();
+        self.drawSaveMapButton();
+    });
+}
+
+fn drawTestCanvasButton(self: *Self) void {
+    clay.UI()(.{
+        .id = .ID("test-canvas-btn"),
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+        .background_color = ui.color(45, 130, 75, 230),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.playtestCurrentCanvas();
+        }
+        ui.text("Test Canvas |>", .{
+            .color = ui.color(255, 255, 255, 255),
+            .font_size = 12,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawSaveMapButton(self: *Self) void {
+    clay.UI()(.{
+        .id = .ID("save-map-btn"),
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+        .background_color = ui.color(40, 100, 60, 230),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.show_save_popup = true;
+        }
+        ui.text("Save Map...", .{
+            .color = ui.color(255, 255, 255, 255),
+            .font_size = 12,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawPresetMapRow(
+    self: *Self,
+    row_id: clay.ElementId,
+    load_button_id: clay.ElementId,
+    play_button_id: clay.ElementId,
+    map_path: []const u8,
+    label_text: []const u8,
+    room_type: RoomManager.RoomType,
+) void {
+    ui.new(.{
+        .id = row_id,
+        .layout = .{
+            .direction = .left_to_right,
+            .sizing = .{ .w = .grow },
+            .child_gap = 6,
+            .child_alignment = .{ .y = .center },
+        },
+    })({
+        self.drawPresetLoadButton(load_button_id, map_path, label_text);
+        self.drawPlayButton(play_button_id, map_path, room_type);
+    });
+}
+
+fn drawPresetLoadButton(
+    self: *Self,
+    load_button_id: clay.ElementId,
+    map_path: []const u8,
+    label_text: []const u8,
+) void {
+    clay.UI()(.{
+        .id = load_button_id,
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+        .background_color = ui.color(35, 45, 65, 220),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.loadMapFromPath(map_path);
+        }
+        ui.text(label_text, .{
+            .color = ui.color(200, 215, 235, 255),
+            .font_size = 12,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawPlayButton(
+    self: *Self,
+    element_id: clay.ElementId,
+    map_path: []const u8,
+    room_type: RoomManager.RoomType,
+) void {
+    clay.UI()(.{
+        .id = element_id,
+        .layout = .{ .padding = .axes(6, 8) },
+        .background_color = ui.color(45, 130, 75, 230),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.playtestMap(map_path, room_type);
+        }
+        ui.text("Play |>", .{
+            .color = ui.color(255, 255, 255, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawExitButton(self: *Self) void {
+    _ = self;
+    clay.UI()(.{
+        .id = .ID("exit-menu-btn"),
+        .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+        .background_color = ui.color(80, 35, 40, 230),
+        .corner_radius = .all(4),
+    })({
+        if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            lm.loadScene("main_menu") catch |err| {
+                std.log.err("Failed to return to main_menu: {any}", .{err});
+            };
+        }
+        ui.text("Exit to Main Menu", .{
+            .color = ui.color(255, 200, 200, 255),
+            .font_size = 12,
+            .letter_spacing = 1,
         });
     });
 }
@@ -1159,7 +1282,7 @@ fn drawCategoryCustomMaps(
     const available_maps = MapRegistry.getAvailableMapsAlloc(lm.allocators.arena(), category.directoryName()) catch &.{};
     for (available_maps) |map_path| {
         const file_basename = std.fs.path.basename(map_path);
-        if (std.mem.eql(u8, file_basename, "arena_normal.json") or std.mem.eql(u8, file_basename, "arena_boss.json")) continue;
+        if (std.mem.eql(u8, file_basename, "arena_normal.json") or std.mem.eql(u8, file_basename, "arena_boss.json") or std.mem.eql(u8, file_basename, "playtest_temp.json")) continue;
 
         found_any.* = true;
         self.drawSingleCustomMapButton(category, map_path, file_basename, global_index.*);
@@ -1167,7 +1290,7 @@ fn drawCategoryCustomMaps(
     }
 }
 
-fn drawSingleCustomMapButton(
+fn drawCustomMapLoadButton(
     self: *Self,
     category: ArenaCategory,
     map_path: []const u8,
@@ -1189,6 +1312,31 @@ fn drawSingleCustomMapButton(
             .font_size = 11,
             .letter_spacing = 1,
         });
+    });
+}
+
+fn drawSingleCustomMapButton(
+    self: *Self,
+    category: ArenaCategory,
+    map_path: []const u8,
+    file_basename: []const u8,
+    button_index: usize,
+) void {
+    ui.new(.{
+        .id = .IDI("custom-map-row-", @intCast(button_index)),
+        .layout = .{
+            .direction = .left_to_right,
+            .sizing = .{ .w = .grow },
+            .child_gap = 6,
+            .child_alignment = .{ .y = .center },
+        },
+    })({
+        self.drawCustomMapLoadButton(category, map_path, file_basename, button_index);
+        self.drawPlayButton(
+            .IDI("play-custom-btn-", @intCast(button_index)),
+            map_path,
+            category.toRoomType(),
+        );
     });
 }
 
@@ -1341,6 +1489,92 @@ pub fn confirmSaveMap(self: *Self) void {
     self.is_dirty = false;
     self.show_save_popup = false;
     self.status_message = "Map saved successfully";
+}
+
+pub fn playtestMap(self: *Self, map_path: []const u8, room_type: RoomManager.RoomType) void {
+    _ = self;
+    MapLoader.setInMemoryMapOverride(null);
+    RoomManager.startPlaytest(map_path, room_type);
+    lm.loadScene("demo_map") catch |err| {
+        std.log.err("Failed to load demo_map scene for playtest: {any}", .{err});
+    };
+}
+
+pub fn detectCanvasRoomType(self: *const Self) RoomManager.RoomType {
+    for (self.spawn_zones.items()) |zone| {
+        const enemy_type = zone.enemy_type orelse continue;
+        switch (enemy_type) {
+            .boss, .king, .queen => return .boss,
+            .knight, .bishop, .mini_boss => return .mini_boss,
+            else => {},
+        }
+    }
+    return self.selected_arena_category.toRoomType();
+}
+
+pub fn clearPlaytestOverride() void {
+    if (playtest_override_arena) |*arena| {
+        arena.deinit();
+        playtest_override_arena = null;
+    }
+}
+
+pub fn playtestCurrentCanvas(self: *Self) void {
+    self.regenerateWallBoundingBoxes();
+
+    clearPlaytestOverride();
+    var arena = std.heap.ArenaAllocator.init(lm.allocators.generic());
+    const arena_allocator = arena.allocator();
+
+    var entities_list = lm.List(EntityRecord).init(arena_allocator);
+    entities_list.append(EntityRecord{
+        .entity_type = "player_spawn",
+        .position_x = self.player_spawn_position.x,
+        .position_y = self.player_spawn_position.y,
+    }) catch return;
+
+    for (self.exit_door_positions.items()) |door_position| {
+        entities_list.append(EntityRecord{
+            .entity_type = "exit_door",
+            .position_x = door_position.x,
+            .position_y = door_position.y,
+        }) catch return;
+    }
+
+    const map_name = if (self.map_name_length > 0)
+        self.map_name_buffer[0..self.map_name_length]
+    else
+        "playtest_canvas";
+
+    const duplicated_name = arena_allocator.dupe(u8, map_name) catch map_name;
+    const duplicated_tiles = arena_allocator.dupe(u8, self.background_tiles) catch return;
+    const duplicated_walls = arena_allocator.dupe(MapTypes.WallSegment, self.walls.items()) catch return;
+    const duplicated_spawn_zones = arena_allocator.dupe(MapTypes.SpawnZoneRecord, self.spawn_zones.items()) catch return;
+    const duplicated_entities = arena_allocator.dupe(MapTypes.EntityRecord, entities_list.items()) catch return;
+
+    const map_data = MapData{
+        .version = 1,
+        .name = duplicated_name,
+        .width_tiles = self.width_tiles,
+        .height_tiles = self.height_tiles,
+        .tile_size_pixels = 64,
+        .background_tiles = duplicated_tiles,
+        .walls = duplicated_walls,
+        .spawn_zones = duplicated_spawn_zones,
+        .entities = duplicated_entities,
+    };
+    playtest_override_arena = arena;
+
+    MapSerializer.saveToFile(arena_allocator, "maps/playtest_temp.json", map_data) catch |err| {
+        std.log.warn("Failed to write temporary playtest map file: {any}", .{err});
+    };
+
+    MapLoader.setInMemoryMapOverride(map_data);
+    const room_type = self.detectCanvasRoomType();
+    RoomManager.startPlaytest("maps/playtest_temp.json", room_type);
+    lm.loadScene("demo_map") catch |err| {
+        std.log.err("Failed to load demo_map scene for playtest: {any}", .{err});
+    };
 }
 
 fn handleSavePopupInput(self: *Self) void {
@@ -1744,4 +1978,37 @@ test "MapEditor placeSpawnZone sets and updates archetype" {
 
     try std.testing.expectEqual(@as(usize, 1), editor.spawn_zones.len());
     try std.testing.expectEqual(EnemyType.tank, editor.spawn_zones.items()[0].enemy_type.?);
+}
+
+test "MapEditor ArenaCategory toRoomType mapping" {
+    try std.testing.expectEqual(RoomManager.RoomType.normal, ArenaCategory.normal.toRoomType());
+    try std.testing.expectEqual(RoomManager.RoomType.mini_boss, ArenaCategory.mini_boss.toRoomType());
+    try std.testing.expectEqual(RoomManager.RoomType.boss, ArenaCategory.boss.toRoomType());
+}
+
+test "MapEditor detectCanvasRoomType detects boss and miniboss zones" {
+    var editor = Self{};
+    editor.spawn_zones = lm.List(SpawnZoneRecord).init(std.testing.allocator);
+    defer editor.spawn_zones.deinit();
+
+    editor.selected_arena_category = .normal;
+    try std.testing.expectEqual(RoomManager.RoomType.normal, editor.detectCanvasRoomType());
+
+    try editor.spawn_zones.append(.{
+        .center_x_pixels = 0,
+        .center_y_pixels = 0,
+        .width_pixels = 64,
+        .height_pixels = 64,
+        .enemy_type = .knight,
+    });
+    try std.testing.expectEqual(RoomManager.RoomType.mini_boss, editor.detectCanvasRoomType());
+
+    try editor.spawn_zones.append(.{
+        .center_x_pixels = 0,
+        .center_y_pixels = 0,
+        .width_pixels = 64,
+        .height_pixels = 64,
+        .enemy_type = .queen,
+    });
+    try std.testing.expectEqual(RoomManager.RoomType.boss, editor.detectCanvasRoomType());
 }

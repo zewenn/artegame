@@ -9,3 +9,4 @@ zig-pkg/
 .vscode/
 save.json
 zig-out/**/save.json
+**/playtest_temp.json

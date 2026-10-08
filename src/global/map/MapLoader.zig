@@ -48,6 +48,11 @@ var active_exit_doors: []lm.Vector2 = &.{};
 var active_map_top_left: lm.Vector2 = .init(0, 0);
 var active_map_width_pixels: f32 = 2200.0;
 var active_map_height_pixels: f32 = 1040.0;
+var in_memory_map_override: ?MapData = null;
+
+pub fn setInMemoryMapOverride(maybe_data: ?MapData) void {
+    in_memory_map_override = maybe_data;
+}
 
 pub fn init() void {
     if (is_initialized) return;
@@ -128,7 +133,20 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     errdefer arena.deinit();
     const arena_allocator = arena.allocator();
 
-    const map_data = try MapSerializer.loadFromFile(arena_allocator, relative_map_path);
+    var map_data = if (in_memory_map_override) |override_data|
+        MapData{
+            .version = override_data.version,
+            .name = try arena_allocator.dupe(u8, override_data.name),
+            .width_tiles = override_data.width_tiles,
+            .height_tiles = override_data.height_tiles,
+            .tile_size_pixels = override_data.tile_size_pixels,
+            .background_tiles = try arena_allocator.dupe(u8, override_data.background_tiles),
+            .walls = try arena_allocator.dupe(MapTypes.WallSegment, override_data.walls),
+            .spawn_zones = try arena_allocator.dupe(MapTypes.SpawnZoneRecord, override_data.spawn_zones),
+            .entities = try arena_allocator.dupe(MapTypes.EntityRecord, override_data.entities),
+        }
+    else
+        try MapSerializer.loadFromFile(arena_allocator, relative_map_path);
     active_arena = arena;
 
     const width_pixels = @as(f32, @floatFromInt(map_data.width_tiles)) * @as(f32, @floatFromInt(map_data.tile_size_pixels));
