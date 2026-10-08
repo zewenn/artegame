@@ -16,6 +16,8 @@ pub const enemies = struct {
     pub const Lifeliner = @import("enemies/Lifeliner.zig").LifelinerEnemy;
     pub const Angler = @import("enemies/Angler.zig").AnglerEnemy;
     pub const Tank = @import("enemies/Tank.zig").TankEnemy;
+    pub const King = @import("enemies/King.zig").KingEnemy;
+    pub const Queen = @import("enemies/Queen.zig").QueenEnemy;
 };
 pub const items = struct {
     pub const ExperienceOrb = @import("items/ExperienceOrb.zig").ExperienceOrb;

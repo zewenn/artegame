@@ -33,6 +33,8 @@ pub const WaveConfig = struct {
     bishop_count: u32 = 0,
     mini_boss_count: u32 = 0,
     boss_count: u32 = 0,
+    king_count: u32 = 0,
+    queen_count: u32 = 0,
     is_cap_reached: bool = false,
     post_cap_round_offset: u32 = 0,
 };
@@ -119,6 +121,7 @@ pub fn hasDesignatedZone(zones: []const MapTypes.SpawnZoneRecord, enemy_type: En
         if (zone.enemy_type == null) return true;
         if (zone.enemy_type.? == enemy_type) return true;
         if ((enemy_type == .knight or enemy_type == .bishop) and zone.enemy_type.? == .mini_boss) return true;
+        if ((enemy_type == .king or enemy_type == .queen) and zone.enemy_type.? == .boss) return true;
     }
     return false;
 }
@@ -158,6 +161,43 @@ pub fn determineMiniBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord, ro
     }
 
     return if ((round / 5) % 2 == 1) .knight else .bishop;
+}
+
+pub fn determineBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord) EnemyType {
+    if (zones.len == 0) {
+        return if (lm.random.boolean()) .king else .queen;
+    }
+
+    var has_specific_king_zone = false;
+    var has_specific_queen_zone = false;
+
+    for (zones) |zone| {
+        const zone_enemy_type = zone.enemy_type orelse continue;
+        if (zone_enemy_type == .king) {
+            has_specific_king_zone = true;
+        } else if (zone_enemy_type == .queen) {
+            has_specific_queen_zone = true;
+        }
+    }
+
+    if (has_specific_king_zone and !has_specific_queen_zone) {
+        return .king;
+    }
+    if (has_specific_queen_zone and !has_specific_king_zone) {
+        return .queen;
+    }
+
+    const allows_king = hasDesignatedZone(zones, .king);
+    const allows_queen = hasDesignatedZone(zones, .queen);
+
+    if (allows_king and !allows_queen) {
+        return .king;
+    }
+    if (allows_queen and !allows_king) {
+        return .queen;
+    }
+
+    return if (lm.random.boolean()) .king else .queen;
 }
 
 pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
@@ -243,13 +283,21 @@ pub fn generateWaveConfigForProfileAndZones(
             return config;
         },
         .boss => {
-            return WaveConfig{
+            const boss_type = determineBossTypeForZones(zones);
+            var config = WaveConfig{
                 .round = round,
                 .profile = .boss,
                 .budget = 100,
                 .total_enemies = 1,
-                .boss_count = 1,
             };
+            if (boss_type == .king) {
+                config.king_count = 1;
+            } else if (boss_type == .queen) {
+                config.queen_count = 1;
+            } else {
+                config.boss_count = 1;
+            }
+            return config;
         },
         .normal => {
             const total_budget = calculateBudgetForProfile(round, .normal);
@@ -342,6 +390,20 @@ pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     if (config.mini_boss_count > 0) {
         for (0..config.mini_boss_count) |_| {
             try list.append(.mini_boss);
+        }
+        return;
+    }
+
+    if (config.king_count > 0) {
+        for (0..config.king_count) |_| {
+            try list.append(.king);
+        }
+        return;
+    }
+
+    if (config.queen_count > 0) {
+        for (0..config.queen_count) |_| {
+            try list.append(.queen);
         }
         return;
     }
@@ -522,6 +584,7 @@ fn zoneMatchesEnemyType(zone_enemy_type: ?EnemyType, target_enemy_type: ?EnemyTy
 
     if (zone_type == target) return true;
     if ((target == .knight or target == .bishop) and zone_type == .mini_boss) return true;
+    if ((target == .king or target == .queen) and zone_type == .boss) return true;
 
     return false;
 }
@@ -638,7 +701,7 @@ pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
             self.spawn_interval_seconds = 0.1;
         },
         .boss => {
-            self.max_active_enemies = 16;
+            self.max_active_enemies = 64;
             self.spawn_interval_seconds = 0.1;
         },
         .normal => {
@@ -788,6 +851,8 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
             .bishop => try prefabs.enemies.Bishop(spawn_position),
             .mini_boss => try prefabs.enemies.MiniBoss(spawn_position),
             .boss => try prefabs.enemies.Boss(spawn_position),
+            .king => try prefabs.enemies.King(spawn_position),
+            .queen => try prefabs.enemies.Queen(spawn_position),
         };
 
         applyDynamicStatScaling(enemy, enemy_type, self.round);
@@ -798,8 +863,12 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
             BossBar.bind(enemy, "The Bishop", .mini_boss);
         } else if (enemy_type == .mini_boss) {
             BossBar.bind(enemy, "Mini-Boss", .mini_boss);
+        } else if (enemy_type == .king) {
+            BossBar.bind(enemy, "The King", .boss);
+        } else if (enemy_type == .queen) {
+            BossBar.bind(enemy, "The Queen", .boss);
         } else if (enemy_type == .boss) {
-            BossBar.bind(enemy, "Abyssal Behemoth", .boss);
+            BossBar.bind(enemy, "Boss", .boss);
         }
 
         try self.active_enemies.append(enemy.uuid);
@@ -950,7 +1019,32 @@ test "RoundSpawner room profiles" {
 
     try spawner.startWaveForRoom(15, .boss);
     try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    try std.testing.expectEqual(EnemyType.boss, spawner.spawn_queue.items()[0]);
+    const spawned_boss = spawner.spawn_queue.items()[0];
+    try std.testing.expect(spawned_boss == .king or spawned_boss == .queen);
+}
+
+test "determineBossTypeForZones respects room-specific spawn zones" {
+    const king_only_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .king,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.king, determineBossTypeForZones(&king_only_zones));
+
+    const queen_only_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .width_pixels = 100,
+            .height_pixels = 100,
+            .enemy_type = .queen,
+        },
+    };
+    try std.testing.expectEqual(EnemyType.queen, determineBossTypeForZones(&queen_only_zones));
 }
 
 test "determineMiniBossTypeForZones respects room-specific spawn zones" {

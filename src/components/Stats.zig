@@ -296,6 +296,18 @@ pub fn applyStasis(self: *Self, duration_seconds: f32) void {
     });
 }
 
+pub fn applyIndefiniteStasis(self: *Self) void {
+    self.addEffect(.{
+        .id = "stasis",
+        .effect_type = .stasis,
+        .duration = 0.0,
+    });
+}
+
+pub fn removeStasis(self: *Self) void {
+    self.removeEffect(.{ .effect_type = .stasis });
+}
+
 pub fn tickEffects(self: *Self, delta_seconds: f32) void {
     const effects = &(self.effects orelse return);
     const length = effects.len();
@@ -308,13 +320,12 @@ pub fn tickEffects(self: *Self, delta_seconds: f32) void {
         if (effect.on_tick) |tick|
             @call(.auto, tick, .{self});
 
-        if (effect.duration > 0) {
-            effect.time_remaining -= delta_seconds;
-            if (effect.time_remaining <= 0) {
-                self.removeEffectAtIndex(index);
-                continue;
-            }
-        }
+        if (effect.duration <= 0) continue;
+
+        effect.time_remaining -= delta_seconds;
+        if (effect.time_remaining > 0) continue;
+
+        self.removeEffectAtIndex(index);
     }
 }
 
@@ -519,4 +530,48 @@ test "defenseToDamageReductionPercent clamping against negative and extreme valu
     try std.testing.expect(red10 > 0.0 and red10 < 0.90);
 
     try std.testing.expectEqual(@as(f32, 0.90), defenseToDamageReductionPercent(100000.0));
+}
+
+test "Stats timed stasis lifecycle and invulnerability" {
+    var stats = Self.init(.enemy, .{});
+    defer stats.deinit();
+
+    try std.testing.expect(!stats.isStasis());
+    try std.testing.expect(!stats.isInvulnerable());
+    try std.testing.expect(stats.canMove());
+
+    stats.applyStasis(5.0);
+    try std.testing.expect(stats.isStasis());
+    try std.testing.expect(stats.isInvulnerable());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(4.0);
+    try std.testing.expect(stats.isStasis());
+    try std.testing.expect(stats.isInvulnerable());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(!stats.isStasis());
+    try std.testing.expect(!stats.isInvulnerable());
+    try std.testing.expect(stats.canMove());
+}
+
+test "Stats indefinite stasis lifecycle and explicit removal" {
+    var stats = Self.init(.enemy, .{});
+    defer stats.deinit();
+
+    stats.applyIndefiniteStasis();
+    try std.testing.expect(stats.isStasis());
+    try std.testing.expect(stats.isInvulnerable());
+    try std.testing.expect(!stats.canMove());
+
+    // Indefinite stasis does not expire from ticking time
+    stats.tickEffects(100.0);
+    try std.testing.expect(stats.isStasis());
+    try std.testing.expect(stats.isInvulnerable());
+
+    stats.removeStasis();
+    try std.testing.expect(!stats.isStasis());
+    try std.testing.expect(!stats.isInvulnerable());
+    try std.testing.expect(stats.canMove());
 }

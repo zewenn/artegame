@@ -173,7 +173,10 @@ test "MapSerializer verify all bundled map assets deserialize correctly" {
 
     const map_file_paths = [_][]const u8{
         "src/assets/maps/boss/arena_boss.json",
-        "src/assets/maps/mini_boss/arena_normal.json",
+        "src/assets/maps/boss/king_arena.json",
+        "src/assets/maps/boss/queen_arena.json",
+        "src/assets/maps/mini_boss/knight_arena.json",
+        "src/assets/maps/mini_boss/bishop_arena.json",
         "src/assets/maps/normal/arena_normal.json",
         "src/assets/maps/tutorial.json",
     };

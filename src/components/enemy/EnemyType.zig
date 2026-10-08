@@ -16,6 +16,8 @@ pub const EnemyType = enum {
     bishop,
     mini_boss,
     boss,
+    king,
+    queen,
 
     pub fn cost(self: EnemyType) u32 {
         return switch (self) {
@@ -31,7 +33,7 @@ pub const EnemyType = enum {
             .knight => 20,
             .bishop => 20,
             .mini_boss => 20,
-            .boss => 100,
+            .boss, .king, .queen => 100,
         };
     }
 
@@ -68,6 +70,8 @@ pub const EnemyType = enum {
             .bishop => "Bishop",
             .mini_boss => "Mini-Boss",
             .boss => "Boss",
+            .king => "The King",
+            .queen => "The Queen",
         };
     }
 
@@ -87,6 +91,8 @@ pub const EnemyType = enum {
             .bishop => "BISHOP",
             .mini_boss => "MINI-BOSS",
             .boss => "BOSS",
+            .king => "KING",
+            .queen => "QUEEN",
         };
     }
 
@@ -106,6 +112,8 @@ pub const EnemyType = enum {
             .bishop => rl.Color{ .r = 155, .g = 70, .b = 220, .a = 60 },
             .mini_boss => rl.Color{ .r = 245, .g = 170, .b = 30, .a = 60 },
             .boss => rl.Color{ .r = 180, .g = 20, .b = 50, .a = 60 },
+            .king => rl.Color{ .r = 240, .g = 180, .b = 30, .a = 60 },
+            .queen => rl.Color{ .r = 210, .g = 50, .b = 190, .a = 60 },
         };
     }
 
@@ -125,6 +133,8 @@ pub const EnemyType = enum {
             .bishop => rl.Color{ .r = 195, .g = 105, .b = 250, .a = 220 },
             .mini_boss => rl.Color{ .r = 255, .g = 200, .b = 70, .a = 220 },
             .boss => rl.Color{ .r = 230, .g = 50, .b = 80, .a = 220 },
+            .king => rl.Color{ .r = 255, .g = 210, .b = 50, .a = 220 },
+            .queen => rl.Color{ .r = 255, .g = 80, .b = 230, .a = 220 },
         };
     }
 };
@@ -135,8 +145,12 @@ test "EnemyType labels and costs" {
     try std.testing.expectEqualStrings("MELEE", EnemyType.label(.melee));
     try std.testing.expectEqualStrings("KNIGHT", EnemyType.label(.knight));
     try std.testing.expectEqualStrings("BISHOP", EnemyType.label(.bishop));
+    try std.testing.expectEqualStrings("KING", EnemyType.label(.king));
+    try std.testing.expectEqualStrings("QUEEN", EnemyType.label(.queen));
     try std.testing.expectEqual(@as(u32, 2), EnemyType.ranged.cost());
     try std.testing.expectEqual(@as(u32, 1), EnemyType.melee.cost());
     try std.testing.expectEqual(@as(u32, 20), EnemyType.knight.cost());
     try std.testing.expectEqual(@as(u32, 20), EnemyType.bishop.cost());
+    try std.testing.expectEqual(@as(u32, 100), EnemyType.king.cost());
+    try std.testing.expectEqual(@as(u32, 100), EnemyType.queen.cost());
 }

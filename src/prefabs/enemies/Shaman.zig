@@ -79,12 +79,10 @@ pub fn shamanCallBackup(
     player_transform: *lm.Transform,
     player_stats: ?*Stats,
 ) anyerror!void {
-    _ = enemy_stats;
+    _ = enemy_entity;
     _ = player_stats;
 
-    if (enemy_entity.getComponent(Enemy.Stasis)) |stasis| {
-        stasis.enterStasis(10.0);
-    }
+    enemy_stats.applyStasis(10.0);
 
     const origin_position = lm.vec3ToVec2(enemy_transform.position);
     const listener_position = lm.vec3ToVec2(player_transform.position);
@@ -231,7 +229,6 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
         }),
         StatusOverlays{},
         Dashing{},
-        Enemy.Stasis{},
         Enemy.ReactiveAura{
             .on_death_retaliation = .{
                 .player_max_health_damage_percent = 0.20,
@@ -256,7 +253,6 @@ test "Shaman enemy creation and component configuration" {
 
     try std.testing.expect(std.mem.startsWith(u8, shaman.id, "shaman-enemy"));
     try std.testing.expect(shaman.getComponent(Stats) != null);
-    try std.testing.expect(shaman.getComponent(Enemy.Stasis) != null);
     try std.testing.expect(shaman.getComponent(Enemy.ReactiveAura) != null);
     try std.testing.expect(shaman.getComponent(Enemy.Attack) != null);
 

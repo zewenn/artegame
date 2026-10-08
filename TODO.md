@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [35#ENE] End-game boss encounters: The King and The Queen
-
-  - tags: [enemies, bosses, encounters, ai]
-  - priority: medium
-  - workload: Extreme
-  - steps:
-      - [ ] Implement The King prefab & AI: wide melee attacks, stasis minion summoning (2 mini-bosses or 40+ normal enemies followed by Weaken), sub-50% HP root and slow spells
-      - [ ] Implement The Queen prefab & AI: Bond of Life application (10% max HP true damage / rebound on miss), radial sweep, dash attack waves, and sniper stun projectile
-      - [ ] Trigger boss room encounter automatically every 15th room after clearing 14 rooms
-      - [ ] Grant boss clear rewards on defeat: full HP restore, permanent +15% max HP, +15 physical damage, and +10 magic damage
-      - [ ] User confirmation that King and Queen boss fights operate with proper multi-phase mechanics and rewards
-    ```md
-    Implements full boss encounters for The King and The Queen appearing every 15 rooms. Features complex phase shifts, summon phases, Bond of Life mechanics, and major permanent stat upgrade rewards on clear.
-    ```
-
 ### [36#UIS] First-launch tutorial room, Training Dummy prefab, and objective sequence
 
   - tags: [tutorial, hud, objectives, onboarding]
@@ -91,6 +76,21 @@
 ## Work in Progress
 
 ## Done
+
+### [35#ENE] End-game boss encounters: The King and The Queen
+
+  - tags: [enemies, bosses, encounters, ai]
+  - priority: medium
+  - workload: Extreme
+  - steps:
+      - [x] Implement The King prefab & AI: wide melee attacks, stasis minion summoning (2 mini-bosses or 40+ normal enemies followed by Weaken), sub-50% HP root and slow spells
+      - [x] Implement The Queen prefab & AI: Bond of Life application (10% max HP true damage / rebound on miss), radial sweep, dash attack waves, and sniper stun projectile
+      - [x] Trigger boss room encounter automatically every 15th room after clearing 14 rooms
+      - [x] Grant boss clear rewards on defeat: full HP restore, permanent +15% max HP, +15 physical damage, and +10 magic damage
+      - [x] User confirmation that King and Queen boss fights operate with proper multi-phase mechanics and rewards
+    ```md
+    Implements full boss encounters for The King and The Queen appearing every 15 rooms. Features complex phase shifts, summon phases, Bond of Life mechanics, and major permanent stat upgrade rewards on clear.
+    ```
 
 ### [49#ENE] Unstoppable Mini-Bosses and Bosses (root & stun immunity)
 
