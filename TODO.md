@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [38#AST] Sprite, particle, and audio asset integration for v4.0.0 content
-
-  - tags: [assets, sprites, audio, vfx]
-  - priority: low
-  - workload: Normal
-  - steps:
-      - [ ] Source or generate pixel-art sprites for new enemies (Shaman, Magician, Lifeliner, Angler, Tank) and bosses (Knight, Bishop, King, Queen, Training Dummy)
-      - [ ] Create visual effect textures and particle animations: Bond of Life tether, stasis barrier, reactive root aura, distance drain beam, radial bullets
-      - [ ] Create door sprites (open, closed, category icon badges) and modular tilemap tilesets
-      - [ ] Integrate sound effects for new abilities (blink, bullet sweep, drain, stasis) and boss encounter BGM
-      - [ ] User confirmation that all v4.0.0 visual and audio assets load and render without glitches
-    ```md
-    Encompasses visual and audio assets required for v4.0.0: new enemy spritesheets, VFX overlays (Bond of Life, shields, beams), door/icon tiles, and audio sound effects/music tracks.
-    ```
-
 ### [19#OPS] Linux release build and packaging workflow
 
   - tags: [ci, release, linux]
@@ -28,22 +13,24 @@
       - [ ] Package standalone Linux archive (.tar.gz) or AppImage with bundled assets
       - [ ] Validate runtime execution across common Linux distributions
 
-### [39#AST] Acquire missing assets across v4.0.0 gameplay mechanics
-
-  - tags: [assets, audio, sprites, vfx]
-  - priority: low
-  - workload: Normal
-  - steps:
-      - [ ] Source or record healing sound effect (SFX) and ally heal impact chime (25#ARC Shaman)
-      - [ ] Create dedicated healing projectile sprite and heal pulse particle animation (25#ARC)
-      - [ ] Source or synthesize drag/pull sound effect for caster-directed pull force (25#ARC Magician)
-      - [ ] Create room exit door sprites (open/closed states) and reward category icon badge overlays (24#ARC / 31#UIB)
-      - [ ] User confirmation that all acquired missing assets are integrated and functioning
-    ```md
-    Centralized collector task for missing assets identified during feature implementations (e.g. door sprites from 24#ARC, healing SFX and pull audio from 25#ARC) allowing feature tickets to proceed with fallbacks while queuing asset acquisition.
-    ```
-
 ## Work in Progress
+
+### [38#AST] Sprite, particle, UI, and audio asset integration for v4.0.0 content
+
+  - tags: [assets, sprites, audio, vfx, ui]
+  - priority: low
+  - workload: Hard
+  - steps:
+      - [ ] Source or generate pixel-art sprites and directional animations for new enemies (Shaman, Magician, Lifeliner, Angler, Tank) and bosses (Knight, Bishop, King, Queen, Training Dummy)
+      - [ ] Create visual effect textures and animations: Bond of Life tether, stasis barrier, reactive root aura, distance drain beam, heal pulse, and radial projectiles
+      - [ ] Create dedicated projectile sprites: healing projectile, caster-directed pull force orb, and specialized mob shots
+      - [ ] Create room exit door sprites (open and closed states) and reward category icon badges (Boss, Mini-Boss, Vitality, Supplements, Weapons)
+      - [ ] Source or record dedicated SFX for new abilities: heal impact chime, pull force, blink, shield activation, and door interact
+      - [ ] Integrate boss encounter background music (BGM) tracks and thematic arena tilesets
+      - [ ] User confirmation that all acquired visual, audio, and UI assets load and function without glitches
+    ```md
+    Consolidated asset integration encompassing tickets 38#AST and 39#AST: character spritesheets, projectile/VFX overlays, exit door and reward badge artwork, dedicated ability sound effects, and encounter music tracks across v4.0.0 content.
+    ```
 
 ## Done
 
