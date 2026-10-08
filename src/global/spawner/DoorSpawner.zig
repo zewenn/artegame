@@ -38,6 +38,18 @@ pub fn spawnReplenishDoors(
         return;
     }
 
+    if (current_room_number == 0) {
+        try spawnSpecialDoor(0, editor_door_positions, .{
+            .door_index = 0,
+            .category_id = "normal",
+            .title = "Room 1",
+            .icon = "ui/icons/empty_icon.png",
+            .reward_kind = .boon_category,
+            .is_open = false,
+        });
+        return;
+    }
+
     if (next_room_type == .boss) {
         try spawnSpecialDoor(0, editor_door_positions, .{
             .door_index = 0,

@@ -50,11 +50,12 @@ pub fn Update(self: *Self) !void {
 
     refreshFocus(player_pos);
 
-    if (self.is_focused) {
-        const is_interact_pressed = lm.keyboard.getKeyDown(.f) or (lm.gamepad.isAvailable(0) and lm.gamepad.getButtonDown(0, .right_face_down));
-        if (is_interact_pressed) {
-            self.trigger(player);
-        }
+    if (!self.is_focused) return;
+    const is_interact_pressed = lm.keyboard.getKeyDown(.f) or
+        (lm.gamepad.isAvailable(0) and lm.gamepad.getButtonDown(0, .right_face_down));
+
+    if (is_interact_pressed) {
+        self.trigger(player);
     }
 }
 

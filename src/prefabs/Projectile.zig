@@ -6,10 +6,19 @@ const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
 const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 const ReactiveAura = @import("../components/enemy/ReactiveAura.zig");
+const TrainingDummyBehaviour = @import("../components/enemy/TrainingDummyBehaviour.zig");
 const MapTypes = @import("../global/map/MapTypes.zig");
 const Wall = MapTypes.Wall;
 
 pub const OnHitEffect = enum { slow, root, stun };
+
+pub const AttackKind = enum {
+    light,
+    heavy,
+    dash,
+    spell,
+    generic,
+};
 
 pub const HitInfo = struct {
     projectile: *lm.Entity,
@@ -25,6 +34,8 @@ pub const OnHitFn = *const fn (hit: HitInfo) void;
 
 pub const Options = struct {
     pub const MAX_HIT_TARGETS: usize = 64;
+
+    attack_kind: AttackKind = .generic,
 
     start_position: lm.Vector2 = .init(0, 0),
     target_position: lm.Vector2 = .init(1, 0),
@@ -226,6 +237,10 @@ fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
     if (other.getComponent(lm.Transform)) |other_transform| {
         const hit_position = lm.vec3ToVec2(other_transform.position);
         var listener_position = hit_position;
+
+        if (other.getComponent(TrainingDummyBehaviour)) |dummy| {
+            dummy.onHit(options.attack_kind, damage_dealt, hit_position);
+        }
 
         if (player.getComponent(lm.Transform)) |player_transform| {
             listener_position = lm.vec3ToVec2(player_transform.position);

@@ -136,7 +136,13 @@ pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.jso
     };
 }
 
-pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
+pub fn doAttack(
+    attack: Attack,
+    attack_kind: projectiles.AttackKind,
+    position: lm.Vector2,
+    target: lm.Vector2,
+    shooter_stats: Stats,
+) !void {
     const diff = target.subtract(position);
     const angle = switch (diff.length() > 0.001) {
         true => std.math.atan2(diff.y, diff.x),
@@ -147,48 +153,30 @@ pub fn doAttack(attack: Attack, position: lm.Vector2, target: lm.Vector2, shoote
         const new_angle = std.math.degreesToRadians(degree_offset) + angle;
         const target_vector = lm.Vec2(1, 0).rotate(new_angle);
 
-        const options = attack.projectile_options;
+        var options = attack.projectile_options;
+        options.attack_kind = attack_kind;
+        options.start_position = position;
+        options.target_position = target_vector.add(position);
+        options.target_team = switch (shooter_stats.team) {
+            .enemy => .player,
+            else => .enemy,
+        };
+        options.shooter_stats = shooter_stats;
 
-        try lm.summoning.entity(try Projectile(.{
-            .start_position = position,
-            .target_position = target_vector.add(position),
-
-            .target_team = switch (shooter_stats.team) {
-                .enemy => .player,
-                else => .enemy,
-            },
-
-            .shooter_stats = shooter_stats,
-
-            .speed = options.speed,
-
-            .damage = options.damage,
-            .damage_type = options.damage_type,
-            .passtrough = options.passtrough,
-            .lifetime = options.lifetime,
-            .size = options.size,
-            .override_sprite = options.override_sprite,
-
-            .onhit_effect = options.onhit_effect,
-            .onhit_duration = options.onhit_duration,
-            .onhit_strength = options.onhit_strength,
-
-            .knockback_duration = options.knockback_duration,
-            .knockback_strength = options.knockback_strength,
-        }));
+        try lm.summoning.entity(try Projectile(options));
     }
 }
 
 pub fn lightAttack(self: *Self, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
-    try doAttack(self.light_attack, position, target, shooter_stats);
+    try doAttack(self.light_attack, .light, position, target, shooter_stats);
 }
 
 pub fn heavyAttack(self: *Self, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
-    try doAttack(self.heavy_attack, position, target, shooter_stats);
+    try doAttack(self.heavy_attack, .heavy, position, target, shooter_stats);
 }
 
 pub fn dashAttack(self: *Self, position: lm.Vector2, target: lm.Vector2, shooter_stats: Stats) !void {
-    try doAttack(self.dash_attack, position, target, shooter_stats);
+    try doAttack(self.dash_attack, .dash, position, target, shooter_stats);
 }
 
 test "Weapon serialization and deserialization roundtrip" {

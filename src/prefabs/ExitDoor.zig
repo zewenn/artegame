@@ -8,6 +8,11 @@ const RoomManager = @import("../global/RoomManager.zig");
 pub const RewardKind = Door.RewardKind;
 pub const DoorConfig = Door.DoorConfig;
 
+pub fn canInteractWithDoor() bool {
+    const room_manager = RoomManager.get() orelse return false;
+    return room_manager.state == .replenish or room_manager.getRoomType() == .tutorial;
+}
+
 pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
     const door_index_u32 = @as(u32, @intCast(config.door_index));
 
@@ -27,7 +32,7 @@ pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
             .action_text = "Enter Next Room",
             .interaction_radius = 110.0,
             .prompt_offset = .init(0, -64.0),
-            .can_interact = RoomManager.isReplenish,
+            .can_interact = canInteractWithDoor,
             .on_interact = Door.onDoorInteract,
         },
         Door{

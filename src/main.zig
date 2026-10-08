@@ -49,6 +49,7 @@ pub fn main() !void {
 
             lm.globalBehaviours(.{
                 gbl.RoomManager{},
+                gbl.TutorialManager{},
                 gbl.HUD{},
                 gbl.MusicManager{},
             });

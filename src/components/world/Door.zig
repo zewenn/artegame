@@ -1,7 +1,6 @@
 const std = @import("std");
 const lm = @import("loom");
 const ui = lm.ui;
-const rl = lm.deps.rl;
 
 const Interactable = @import("../interaction/Interactable.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
@@ -48,6 +47,7 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     if (std.fmt.bufPrint(&self.action_text_buffer, "Enter: {s}", .{self.reward_title})) |formatted_text| {
         if (self.interactable) |interactable| {
             interactable.action_text = formatted_text;
+            interactable.enabled = self.is_open;
         }
     } else |_| {}
 
@@ -60,7 +60,8 @@ pub fn Start(self: *Self) void {
 }
 
 pub fn Update(self: *Self) !void {
-    if (!self.is_open or !RoomManager.isReplenish()) return;
+    const is_tutorial = if (RoomManager.get()) |rm| rm.getRoomType() == .tutorial else false;
+    if (!self.is_open or (!RoomManager.isReplenish() and !is_tutorial)) return;
     if (PauseMenu.isShowing() or GameOverMenu.isShowing() or BoonMenu.isShowing() or lm.time.paused()) return;
 
     const transform = self.transform orelse return;
@@ -136,14 +137,14 @@ pub fn setOpenState(self: *Self, open: bool) void {
 fn applyVisualState(self: *Self) void {
     const renderer = self.renderer orelse return;
     if (!self.is_open) {
-        renderer.tint = rl.Color{ .r = 70, .g = 75, .b = 90, .a = 220 };
+        renderer.tint = lm.Color{ .r = 70, .g = 75, .b = 90, .a = 220 };
         return;
     }
 
     renderer.tint = switch (self.reward_kind) {
-        .boss => rl.Color{ .r = 255, .g = 215, .b = 60, .a = 255 },
-        .mini_boss => rl.Color{ .r = 200, .g = 120, .b = 255, .a = 255 },
-        .boon_category => rl.Color{ .r = 120, .g = 210, .b = 255, .a = 255 },
+        .boss => lm.Color{ .r = 255, .g = 215, .b = 60, .a = 255 },
+        .mini_boss => lm.Color{ .r = 200, .g = 120, .b = 255, .a = 255 },
+        .boon_category => lm.Color{ .r = 120, .g = 210, .b = 255, .a = 255 },
     };
 }
 

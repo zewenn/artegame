@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [36#UIS] First-launch tutorial room, Training Dummy prefab, and objective sequence
-
-  - tags: [tutorial, hud, objectives, onboarding]
-  - priority: medium
-  - workload: Normal
-  - steps:
-      - [ ] Create TrainingDummy prefab with infinite health, hit impact audio/visual feedback, and no offensive attacks
-      - [ ] Implement sequential tutorial objective HUD tracker: WASD move, Space dash, light/heavy/dash attacks, boon interact, door interact
-      - [ ] Spawn guaranteed starter boon selection and single exit door in tutorial room
-      - [ ] Persist tutorial completion in save data upon exiting the tutorial room and bypass on future runs
-      - [ ] User confirmation that tutorial room guides player through all core actions and saves completion
-    ```md
-    Implements the first-room onboarding tutorial. Features a non-hostile Training Dummy and sequential objective prompts teaching movement, dashes, attacks, boon collection, and door transitions.
-    ```
-
 ### [37#UIM] Main menu dynamic "Tutorial" replay button
 
   - tags: [ui, main-menu, buttons, tutorial]
@@ -76,6 +61,21 @@
 ## Work in Progress
 
 ## Done
+
+### [36#UIS] First-launch tutorial room, Training Dummy prefab, and objective sequence
+
+  - tags: [tutorial, hud, objectives, onboarding]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create TrainingDummy prefab with infinite health, hit impact audio/visual feedback, and no offensive attacks
+      - [x] Implement sequential tutorial objective HUD tracker: WASD move, Space dash, light/heavy/dash attacks, door interact
+      - [x] Spawn unkillable Training Dummy and single exit door that unlocks when training sequence completes (no boons/XP drops)
+      - [x] Persist tutorial completion in save data upon exiting the tutorial room and bypass on future runs
+      - [x] User confirmation that tutorial room guides player through all core actions and saves completion
+    ```md
+    Implements the first-room onboarding tutorial. Features a non-hostile Training Dummy and sequential objective prompts teaching movement, dashes, attacks, and door transitions.
+    ```
 
 ### [50#ARC] Map editor play-testing mode with automatic player stat scaling and test buttons
 

@@ -17,6 +17,7 @@ const Hands = @import("../components/Weapons/Hands.zig");
 const MapLoader = @import("map/MapLoader.zig");
 const DoorSpawner = @import("spawner/DoorSpawner.zig");
 const MapRegistry = @import("map/MapRegistry.zig");
+const TutorialManager = @import("tutorial/TutorialManager.zig");
 
 const Self = @This();
 
@@ -194,6 +195,18 @@ pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
 }
 
 fn initFreshRun(self: *Self) void {
+    if (!SaveSystem.isTutorialCompleted()) {
+        self.current_room = 0;
+        self.rooms_cleared = 0;
+        self.room_category = "tutorial";
+        self.current_map_path = "maps/tutorial.json";
+        self.enemies_defeated = 0;
+        self.boon_drop_spawned = false;
+        self.state = .combat;
+        MusicManager.setGlobalPhase(.combat);
+        return;
+    }
+
     self.current_room = 1;
     self.rooms_cleared = 0;
     self.room_category = "normal";
@@ -298,11 +311,22 @@ fn startCurrentRoomCombat(self: *Self) !void {
     MusicManager.setGlobalPhase(.combat);
 
     const room_type = self.getRoomType();
+    if (room_type == .tutorial) {
+        self.spawnDoorsForReplenish();
+        try lm.summoning.entity(try prefabs.enemies.TrainingDummy(.init(200.0, 0.0)));
+        if (TutorialManager.get()) |tutorial_manager| {
+            tutorial_manager.reset();
+            tutorial_manager.refreshObjectives();
+            tutorial_manager.lockExitDoor();
+        }
+        return;
+    }
+
     if (self.player_objectives) |objectives| {
         switch (room_type) {
             .mini_boss => _ = try objectives.setSingleObjective("Mini-Boss Room", "Defeat the Mini-Boss!"),
             .boss => _ = try objectives.setSingleObjective("Boss Room", "Defeat the Boss!"),
-            .tutorial => _ = try objectives.setSingleObjective("Tutorial Room", "Complete your training"),
+            .tutorial => {},
             .normal => _ = try objectives.setSingleObjective("Combat Wave", "Defeat all enemies"),
         }
     }
@@ -325,7 +349,7 @@ fn completeCurrentRoomCombat(self: *Self) !void {
 
     self.grantRoomRewards();
 
-    if (!self.boon_drop_spawned and (self.getRoomType() == .normal or self.getRoomType() == .tutorial)) {
+    if (!self.boon_drop_spawned and self.getRoomType() == .normal) {
         self.boon_drop_spawned = true;
         const fallback_position = self.getPlayerFallbackPosition();
         self.spawnBoonDrop(fallback_position) catch |err| {
@@ -406,7 +430,7 @@ pub fn enterNextRoomWithCategory(category: []const u8) !void {
 
 pub fn enterNextRoom() !void {
     const self = get() orelse return;
-    if (self.state != .replenish) return;
+    if (self.state != .replenish and self.getRoomType() != .tutorial) return;
 
     if (is_playtest_mode) {
         endPlaytest();
@@ -414,6 +438,10 @@ pub fn enterNextRoom() !void {
             std.log.err("Failed to return to map_editor scene after playtest: {any}", .{err});
         };
         return;
+    }
+
+    if (self.getRoomType() == .tutorial) {
+        SaveSystem.setTutorialCompleted(true);
     }
 
     DoorSpawner.cleanupDoors();
@@ -450,6 +478,7 @@ fn isCleanupTarget(entity: *lm.Entity) bool {
     if (std.mem.eql(u8, entity.id, "map_background")) return false;
     if (std.mem.startsWith(u8, entity.id, "wall_")) return false;
     if (std.mem.startsWith(u8, entity.id, "exit-door")) return true;
+    if (std.mem.startsWith(u8, entity.id, "training-dummy")) return true;
 
     return std.mem.startsWith(u8, entity.id, "projectile") or
         std.mem.startsWith(u8, entity.id, "experience-orb") or
@@ -569,7 +598,7 @@ pub fn removeDefeatedEnemy(uuid: u128, death_position: lm.Vector2, enemy_type: R
 
     self.spawner.removeDefeatedEnemy(uuid);
 
-    if (self.spawner.isWaveFinished() and !self.boon_drop_spawned and (self.getRoomType() == .normal or self.getRoomType() == .tutorial)) {
+    if (self.spawner.isWaveFinished() and !self.boon_drop_spawned and self.getRoomType() == .normal) {
         self.boon_drop_spawned = true;
         self.spawnBoonDrop(death_position) catch |err| {
             std.log.err("Failed to spawn boon drop: {any}", .{err});
@@ -727,6 +756,9 @@ test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 physica
 }
 
 test "RoomManager lifecycle state transitions" {
+    SaveSystem.setTutorialCompleted(true);
+    defer SaveSystem.setTutorialCompleted(false);
+
     var room_manager = Self{};
     room_manager.initFreshRun();
 
@@ -745,6 +777,19 @@ test "RoomManager lifecycle state transitions" {
     try std.testing.expectEqual(RoomState.combat, room_manager.state);
     try std.testing.expectEqual(@as(u32, 2), room_manager.current_room);
     try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
+}
+
+test "RoomManager initFreshRun starts in tutorial when tutorial not completed" {
+    SaveSystem.setTutorialCompleted(false);
+
+    var room_manager = Self{};
+    room_manager.initFreshRun();
+
+    try std.testing.expectEqual(RoomState.combat, room_manager.state);
+    try std.testing.expectEqual(@as(u32, 0), room_manager.current_room);
+    try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
+    try std.testing.expectEqualStrings("tutorial", room_manager.room_category);
+    try std.testing.expectEqualStrings("maps/tutorial.json", room_manager.current_map_path);
 }
 
 test "RoomManager saveRunState guards against saving during combat" {
