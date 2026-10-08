@@ -2,21 +2,6 @@
 
 ## Backlog
 
-### [37#UIM] Main menu dynamic "Tutorial" replay button
-
-  - tags: [ui, main-menu, buttons, tutorial]
-  - priority: low
-  - workload: Easy
-  - steps:
-      - [ ] Add query to SaveSystem to check if tutorial has been completed previously
-      - [ ] Dynamically render a standardized 6:1 "Tutorial" menu button in MainMenu.zig when tutorial_completed is true
-      - [ ] Connect button click to launch standalone practice tutorial room without altering active run stats
-      - [ ] Return cleanly to Main Menu upon exiting the practice tutorial room
-      - [ ] User confirmation that Tutorial button displays and launches practice room as expected
-    ```md
-    Adds a dynamic "Tutorial" button to the Main Menu when the player has previously completed the tutorial, allowing players to replay the tutorial / practice room anytime from the menu.
-    ```
-
 ### [38#AST] Sprite, particle, and audio asset integration for v4.0.0 content
 
   - tags: [assets, sprites, audio, vfx]
@@ -61,6 +46,21 @@
 ## Work in Progress
 
 ## Done
+
+### [37#UIM] Main menu dynamic "Tutorial" replay button
+
+  - tags: [ui, main-menu, buttons, tutorial]
+  - priority: low
+  - workload: Easy
+  - steps:
+      - [x] Add query to SaveSystem to check if tutorial has been completed previously
+      - [x] Dynamically render a standardized 6:1 "Tutorial" menu button in MainMenu.zig when tutorial_completed is true
+      - [x] Connect button click to launch standalone practice tutorial room without altering active run stats
+      - [x] Return cleanly to Main Menu upon exiting the practice tutorial room
+      - [x] User confirmation that Tutorial button displays and launches practice room as expected
+    ```md
+    Adds a dynamic "Tutorial" button to the Main Menu when the player has previously completed the tutorial, allowing players to replay the tutorial / practice room anytime from the menu.
+    ```
 
 ### [36#UIS] First-launch tutorial room, Training Dummy prefab, and objective sequence
 

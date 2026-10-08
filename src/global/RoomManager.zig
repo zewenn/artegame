@@ -101,6 +101,8 @@ pub var playtest_map_path_buffer: [256]u8 = undefined;
 pub var playtest_map_path: []const u8 = "";
 pub var playtest_room_type: RoomType = .normal;
 
+pub var is_practice_tutorial_mode: bool = false;
+
 pub fn startPlaytest(map_path: []const u8, room_type: RoomType) void {
     is_playtest_mode = true;
     const path_length = @min(map_path.len, playtest_map_path_buffer.len);
@@ -117,6 +119,30 @@ pub fn endPlaytest() void {
 
 pub fn isPlaytestMode() bool {
     return is_playtest_mode;
+}
+
+pub fn startPracticeTutorial() void {
+    is_practice_tutorial_mode = true;
+    resume_saved_run = false;
+}
+
+pub fn endPracticeTutorial() void {
+    is_practice_tutorial_mode = false;
+}
+
+pub fn isPracticeTutorialMode() bool {
+    return is_practice_tutorial_mode;
+}
+
+pub fn initPracticeTutorialRun(self: *Self) void {
+    self.current_room = 0;
+    self.rooms_cleared = 0;
+    self.room_category = "tutorial";
+    self.current_map_path = "maps/tutorial.json";
+    self.enemies_defeated = 0;
+    self.boon_drop_spawned = false;
+    self.state = .combat;
+    MusicManager.setGlobalPhase(.combat);
 }
 
 fn resumeRunIfSaved(self: *Self) bool {
@@ -145,6 +171,8 @@ pub fn Awake(self: *Self) !void {
             .boss => 15,
         };
         self.room_category = playtest_room_type.directoryCategory();
+    } else if (is_practice_tutorial_mode) {
+        self.initPracticeTutorialRun();
     } else {
         const is_resumed = self.resumeRunIfSaved();
         if (!is_resumed) {
@@ -386,7 +414,7 @@ pub fn spawnBoonDrop(self: *Self, position: lm.Vector2) !void {
 }
 
 fn grantRoomRewards(self: *Self) void {
-    if (is_playtest_mode) return;
+    if (is_playtest_mode or is_practice_tutorial_mode) return;
     const player = self.player orelse return;
     const stats = player.getComponent(Stats) orelse return;
     const attack = player.getComponent(player_components.Attack) orelse return;
@@ -424,6 +452,13 @@ pub fn enterNextRoomWithCategory(category: []const u8) !void {
         };
         return;
     }
+    if (is_practice_tutorial_mode) {
+        endPracticeTutorial();
+        lm.loadScene("main_menu") catch |err| {
+            std.log.err("Failed to return to main_menu scene after tutorial practice: {any}", .{err});
+        };
+        return;
+    }
     self.room_category = category;
     try enterNextRoom();
 }
@@ -436,6 +471,14 @@ pub fn enterNextRoom() !void {
         endPlaytest();
         lm.loadScene("map_editor") catch |err| {
             std.log.err("Failed to return to map_editor scene after playtest: {any}", .{err});
+        };
+        return;
+    }
+
+    if (is_practice_tutorial_mode) {
+        endPracticeTutorial();
+        lm.loadScene("main_menu") catch |err| {
+            std.log.err("Failed to return to main_menu scene after tutorial practice: {any}", .{err});
         };
         return;
     }
@@ -560,7 +603,7 @@ pub fn getNextRoomType(self: *const Self) RoomType {
 }
 
 pub fn saveRunState(self: *Self) void {
-    if (is_playtest_mode) return;
+    if (is_playtest_mode or is_practice_tutorial_mode) return;
     if (self.state != .replenish) return;
 
     const player = self.player orelse return;
@@ -845,4 +888,24 @@ test "RoomManager startPlaytest and endPlaytest state lifecycle" {
 
     endPlaytest();
     try std.testing.expect(!isPlaytestMode());
+}
+
+test "RoomManager startPracticeTutorial and endPracticeTutorial state lifecycle" {
+    startPracticeTutorial();
+    try std.testing.expect(isPracticeTutorialMode());
+    try std.testing.expect(!resume_saved_run);
+
+    endPracticeTutorial();
+    try std.testing.expect(!isPracticeTutorialMode());
+}
+
+test "RoomManager initPracticeTutorialRun initializes tutorial room zero" {
+    var room_manager = Self{};
+    room_manager.initPracticeTutorialRun();
+
+    try std.testing.expectEqual(RoomState.combat, room_manager.state);
+    try std.testing.expectEqual(@as(u32, 0), room_manager.current_room);
+    try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
+    try std.testing.expectEqualStrings("tutorial", room_manager.room_category);
+    try std.testing.expectEqualStrings("maps/tutorial.json", room_manager.current_map_path);
 }

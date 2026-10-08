@@ -160,14 +160,20 @@ pub fn refreshObjectives(self: *Self) void {
             "Dash Attack",
             if (is_gamepad) "Dash and press RT together" else "Dash and Left Click together",
         ) catch {},
-        .exit_door => _ = objectives.setSingleObjective(
-            "Enter Arena",
-            if (is_gamepad) "Press A at the Exit Door to begin Room 1" else "Press F at the Exit Door to begin Room 1",
-        ) catch {},
-        .completed => _ = objectives.setSingleObjective(
-            "Tutorial Complete",
-            "Entering Room 1",
-        ) catch {},
+        .exit_door => {
+            const is_practice = RoomManager.isPracticeTutorialMode();
+            const title = if (is_practice) "Exit Tutorial" else "Enter Arena";
+            const description = if (is_practice)
+                (if (is_gamepad) "Press A at the Exit Door to return to Main Menu" else "Press F at the Exit Door to return to Main Menu")
+            else
+                (if (is_gamepad) "Press A at the Exit Door to begin Room 1" else "Press F at the Exit Door to begin Room 1");
+            _ = objectives.setSingleObjective(title, description) catch {};
+        },
+        .completed => {
+            const is_practice = RoomManager.isPracticeTutorialMode();
+            const description = if (is_practice) "Returning to Main Menu" else "Entering Room 1";
+            _ = objectives.setSingleObjective("Tutorial Complete", description) catch {};
+        },
     }
 }
 

@@ -18,6 +18,74 @@ pub const Screen = enum {
     options,
 };
 
+pub const MenuAction = enum {
+    continue_run,
+    new_run,
+    play,
+    tutorial,
+    options,
+    map_editor,
+    quit,
+
+    pub fn caption(self: MenuAction) []const u8 {
+        return switch (self) {
+            .continue_run => "CONTINUE",
+            .new_run => "NEW RUN",
+            .play => "PLAY",
+            .tutorial => "TUTORIAL",
+            .options => "OPTIONS",
+            .map_editor => "MAP EDITOR",
+            .quit => "QUIT",
+        };
+    }
+
+    pub fn isPrimary(self: MenuAction) bool {
+        return self == .continue_run or self == .play;
+    }
+};
+
+pub const MAX_MENU_ACTIONS: usize = 6;
+
+pub fn getAvailableActions(buffer: *[MAX_MENU_ACTIONS]MenuAction) []const MenuAction {
+    var count: usize = 0;
+    if (SaveSystem.hasActiveRun()) {
+        buffer[count] = .continue_run;
+        count += 1;
+        buffer[count] = .new_run;
+        count += 1;
+    } else {
+        buffer[count] = .play;
+        count += 1;
+    }
+
+    if (SaveSystem.isTutorialCompleted()) {
+        buffer[count] = .tutorial;
+        count += 1;
+    }
+
+    buffer[count] = .options;
+    count += 1;
+
+    if (builtin.mode == .Debug) {
+        buffer[count] = .map_editor;
+        count += 1;
+    }
+
+    buffer[count] = .quit;
+    count += 1;
+
+    return buffer[0..count];
+}
+
+pub fn findActionIndex(target_action: MenuAction) usize {
+    var action_buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
+    const actions = getAvailableActions(&action_buffer);
+    for (actions, 0..) |action, action_index| {
+        if (action == target_action) return action_index;
+    }
+    return 0;
+}
+
 arena: ?std.heap.ArenaAllocator = null,
 alloc: ?std.mem.Allocator = null,
 
@@ -75,8 +143,8 @@ pub fn Update(self: *Self) !void {
             .options => {
                 if (OptionsMenu.draw(ui_scale, window_size, self.alloc)) {
                     self.screen = .main;
-                    self.selected_index = 1;
-                    self.prev_selected_index = 1;
+                    self.selected_index = findActionIndex(.options);
+                    self.prev_selected_index = self.selected_index;
                 }
             },
         }
@@ -212,131 +280,17 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             .child_alignment = .{ .x = .center },
         },
     })({
-        if (SaveSystem.hasActiveRun()) {
+        var action_buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
+        const actions = getAvailableActions(&action_buffer);
+        for (actions, 0..) |action, action_index| {
             self.drawMenuButton(
-                0,
-                "CONTINUE",
+                action_index,
+                action,
                 button_w,
                 button_h,
-                ui_scale,
                 font_size,
                 letter_spacing,
-                true,
             );
-
-            self.drawMenuButton(
-                1,
-                "NEW RUN",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                false,
-            );
-
-            self.drawMenuButton(
-                2,
-                "OPTIONS",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                false,
-            );
-
-            if (builtin.mode == .Debug) {
-                self.drawMenuButton(
-                    3,
-                    "MAP EDITOR",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-
-                self.drawMenuButton(
-                    4,
-                    "QUIT",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-            } else {
-                self.drawMenuButton(
-                    3,
-                    "QUIT",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-            }
-        } else {
-            self.drawMenuButton(
-                0,
-                "PLAY",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                true,
-            );
-
-            self.drawMenuButton(
-                1,
-                "OPTIONS",
-                button_w,
-                button_h,
-                ui_scale,
-                font_size,
-                letter_spacing,
-                false,
-            );
-
-            if (builtin.mode == .Debug) {
-                self.drawMenuButton(
-                    2,
-                    "MAP EDITOR",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-
-                self.drawMenuButton(
-                    3,
-                    "QUIT",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-            } else {
-                self.drawMenuButton(
-                    2,
-                    "QUIT",
-                    button_w,
-                    button_h,
-                    ui_scale,
-                    font_size,
-                    letter_spacing,
-                    false,
-                );
-            }
         }
     });
 
@@ -370,17 +324,14 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
 fn drawMenuButton(
     self: *Self,
     index: usize,
-    caption: []const u8,
+    action: MenuAction,
     w: f32,
     h: f32,
-    ui_scale: f32,
     font_size: u16,
     letter_spacing: u16,
-    is_primary: bool,
 ) void {
     const is_selected = (self.selected_index == index);
 
-    _ = ui_scale;
     clay.UI()(.{
         .id = .IDI("menu-btn-", @intCast(index)),
         .layout = .{
@@ -395,14 +346,14 @@ fn drawMenuButton(
         if (clay.hovered()) {
             self.selected_index = index;
             if (lm.mouse.getButtonDown(.left)) {
-                self.activateAction(index);
+                self.activateAction(action);
             }
         }
 
-        ui.text(caption, .{
+        ui.text(action.caption(), .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(255, 255, 255, 255)
-            else if (is_primary)
+            else if (action.isPrimary())
                 ui.color(255, 235, 170, 255)
             else
                 ui.color(200, 205, 220, 255),
@@ -428,10 +379,11 @@ fn handleInput(self: *Self) void {
         if (stick.y > 0.5) nav_down = true;
     }
 
-    const max_index: usize = if (SaveSystem.hasActiveRun())
-        (if (builtin.mode == .Debug) 4 else 3)
-    else
-        (if (builtin.mode == .Debug) 3 else 2);
+    var action_buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
+    const actions = getAvailableActions(&action_buffer);
+    if (actions.len == 0) return;
+
+    const max_index: usize = actions.len - 1;
 
     if (nav_up) {
         if (self.selected_index == 0) self.selected_index = max_index else self.selected_index -= 1;
@@ -440,87 +392,109 @@ fn handleInput(self: *Self) void {
         if (self.selected_index >= max_index) self.selected_index = 0 else self.selected_index += 1;
     }
     if (select_pressed) {
-        self.activateAction(self.selected_index);
+        if (self.selected_index < actions.len) {
+            self.activateAction(actions[self.selected_index]);
+        }
     }
 }
 
-fn activateAction(self: *Self, index: usize) void {
-    if (SaveSystem.hasActiveRun()) {
-        switch (index) {
-            0 => {
-                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
-                RoomManager.resume_saved_run = true;
-                lm.loadScene("demo_map") catch |err| {
-                    std.log.err("Failed to load demo_map scene: {any}", .{err});
-                };
-            },
-            1 => {
-                SaveSystem.clearRun();
-                RoomManager.resume_saved_run = false;
-                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
-                lm.loadScene("demo_map") catch |err| {
-                    std.log.err("Failed to load demo_map scene: {any}", .{err});
-                };
-            },
-            2 => {
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                OptionsMenu.reset();
-                self.screen = .options;
-            },
-            3 => {
-                if (builtin.mode == .Debug) {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.loadScene("map_editor") catch |err| {
-                        std.log.err("Failed to load map_editor scene: {any}", .{err});
-                    };
-                } else {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.quit();
-                }
-            },
-            4 => {
-                if (builtin.mode == .Debug) {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.quit();
-                }
-            },
-            else => {},
-        }
-    } else {
-        switch (index) {
-            0 => {
-                SaveSystem.clearRun();
-                RoomManager.resume_saved_run = false;
-                AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
-                lm.loadScene("demo_map") catch |err| {
-                    std.log.err("Failed to load demo_map scene: {any}", .{err});
-                };
-            },
-            1 => {
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                OptionsMenu.reset();
-                self.screen = .options;
-            },
-            2 => {
-                if (builtin.mode == .Debug) {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.loadScene("map_editor") catch |err| {
-                        std.log.err("Failed to load map_editor scene: {any}", .{err});
-                    };
-                } else {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.quit();
-                }
-            },
-            3 => {
-                if (builtin.mode == .Debug) {
-                    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
-                    lm.quit();
-                }
-            },
-            else => {},
+fn activateAction(self: *Self, action: MenuAction) void {
+    switch (action) {
+        .continue_run => {
+            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
+            RoomManager.resume_saved_run = true;
+            lm.loadScene("demo_map") catch |err| {
+                std.log.err("Failed to load demo_map scene: {any}", .{err});
+            };
+        },
+        .new_run => {
+            SaveSystem.clearRun();
+            RoomManager.resume_saved_run = false;
+            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
+            lm.loadScene("demo_map") catch |err| {
+                std.log.err("Failed to load demo_map scene: {any}", .{err});
+            };
+        },
+        .play => {
+            SaveSystem.clearRun();
+            RoomManager.resume_saved_run = false;
+            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
+            lm.loadScene("demo_map") catch |err| {
+                std.log.err("Failed to load demo_map scene: {any}", .{err});
+            };
+        },
+        .tutorial => {
+            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
+            RoomManager.startPracticeTutorial();
+            lm.loadScene("demo_map") catch |err| {
+                std.log.err("Failed to load demo_map scene for practice tutorial: {any}", .{err});
+            };
+        },
+        .options => {
+            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+            OptionsMenu.reset();
+            self.screen = .options;
+        },
+        .map_editor => {
+            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+            lm.loadScene("map_editor") catch |err| {
+                std.log.err("Failed to load map_editor scene: {any}", .{err});
+            };
+        },
+        .quit => {
+            AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
+            lm.quit();
+        },
+    }
+}
+
+test "MainMenu MenuAction captions and primary status" {
+    try std.testing.expectEqualStrings("CONTINUE", MenuAction.continue_run.caption());
+    try std.testing.expectEqualStrings("NEW RUN", MenuAction.new_run.caption());
+    try std.testing.expectEqualStrings("PLAY", MenuAction.play.caption());
+    try std.testing.expectEqualStrings("TUTORIAL", MenuAction.tutorial.caption());
+    try std.testing.expectEqualStrings("OPTIONS", MenuAction.options.caption());
+    try std.testing.expectEqualStrings("MAP EDITOR", MenuAction.map_editor.caption());
+    try std.testing.expectEqualStrings("QUIT", MenuAction.quit.caption());
+
+    try std.testing.expect(MenuAction.continue_run.isPrimary());
+    try std.testing.expect(MenuAction.play.isPrimary());
+    try std.testing.expect(!MenuAction.tutorial.isPrimary());
+    try std.testing.expect(!MenuAction.options.isPrimary());
+}
+
+test "MainMenu getAvailableActions without active run and incomplete tutorial" {
+    SaveSystem.setTutorialCompleted(false);
+    defer SaveSystem.setTutorialCompleted(false);
+
+    var buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
+    const actions = getAvailableActions(&buffer);
+
+    try std.testing.expectEqual(MenuAction.play, actions[0]);
+    var found_tutorial: bool = false;
+    for (actions) |action| {
+        if (action == .tutorial) found_tutorial = true;
+    }
+    try std.testing.expect(!found_tutorial);
+}
+
+test "MainMenu getAvailableActions includes tutorial when completed" {
+    SaveSystem.setTutorialCompleted(true);
+    defer SaveSystem.setTutorialCompleted(false);
+
+    var buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
+    const actions = getAvailableActions(&buffer);
+
+    var found_tutorial: bool = false;
+    var tutorial_index: usize = 0;
+    for (actions, 0..) |action, action_index| {
+        if (action == .tutorial) {
+            found_tutorial = true;
+            tutorial_index = action_index;
         }
     }
+    try std.testing.expect(found_tutorial);
+    try std.testing.expectEqual(@as(usize, 1), tutorial_index);
 }
 
 test "MainMenu navigation index wrapping" {

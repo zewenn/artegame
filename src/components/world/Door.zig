@@ -155,9 +155,9 @@ pub fn onDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
 
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.9, 0.05);
 
-    if (RoomManager.isPlaytestMode()) {
+    if (RoomManager.isPlaytestMode() or RoomManager.isPracticeTutorialMode()) {
         RoomManager.enterNextRoom() catch |err| {
-            std.log.err("Failed to exit playtest room: {any}", .{err});
+            std.log.err("Failed to exit standalone room: {any}", .{err});
         };
         return;
     }

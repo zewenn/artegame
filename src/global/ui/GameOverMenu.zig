@@ -24,7 +24,9 @@ pub fn show(stats: RoomManager.RunStats) void {
     just_opened = true;
     lm.time.pause();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.4, -0.2);
-    SaveSystem.recordRunEnd(stats);
+    if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
+        SaveSystem.recordRunEnd(stats);
+    }
 }
 
 pub fn hide() void {
@@ -339,7 +341,7 @@ fn handleInput() void {
 fn activateAction(index: usize) void {
     switch (index) {
         0 => {
-            if (!RoomManager.isPlaytestMode()) {
+            if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
                 SaveSystem.clearRun();
             }
             hide();
@@ -355,6 +357,13 @@ fn activateAction(index: usize) void {
                 AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
                 lm.loadScene("map_editor") catch |err| {
                     std.log.err("Failed to return to map_editor scene: {any}", .{err});
+                };
+            } else if (RoomManager.isPracticeTutorialMode()) {
+                RoomManager.endPracticeTutorial();
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("main_menu") catch |err| {
+                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
                 };
             } else {
                 hide();

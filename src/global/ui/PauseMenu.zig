@@ -116,6 +116,9 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
         if (RoomManager.isPlaytestMode()) {
             break :status_str "Map Editor Playtest";
         }
+        if (RoomManager.isPracticeTutorialMode()) {
+            break :status_str "Practice Tutorial";
+        }
         const progress_opt = RoomManager.getWaveProgress();
         const state_opt = RoomManager.getState();
         if (progress_opt) |p| {
@@ -304,7 +307,7 @@ fn activateRootAction(index: usize) void {
             hide();
         },
         1 => {
-            if (!RoomManager.isPlaytestMode()) {
+            if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
                 SaveSystem.clearRun();
             }
             hide();
@@ -325,6 +328,13 @@ fn activateRootAction(index: usize) void {
                 AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
                 lm.loadScene("map_editor") catch |err| {
                     std.log.err("Failed to return to map_editor scene: {any}", .{err});
+                };
+            } else if (RoomManager.isPracticeTutorialMode()) {
+                RoomManager.endPracticeTutorial();
+                hide();
+                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+                lm.loadScene("main_menu") catch |err| {
+                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
                 };
             } else {
                 RoomManager.saveCurrentRun();
