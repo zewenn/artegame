@@ -18,6 +18,7 @@ const MapLoader = @import("map/MapLoader.zig");
 const DoorSpawner = @import("spawner/DoorSpawner.zig");
 const MapRegistry = @import("map/MapRegistry.zig");
 const TutorialManager = @import("tutorial/TutorialManager.zig");
+const MapTypes = @import("map/MapTypes.zig");
 
 const Self = @This();
 
@@ -121,6 +122,18 @@ pub fn isPlaytestMode() bool {
     return is_playtest_mode;
 }
 
+pub fn determinePlaytestNormalRoom(zones: []const MapTypes.SpawnZoneRecord) u32 {
+    var highest_unlock_round: u32 = 2;
+    for (zones) |zone| {
+        const enemy_type = zone.enemy_type orelse continue;
+        const rule = enemy_type.normalWaveRule() orelse continue;
+        if (rule.unlock_round > highest_unlock_round) {
+            highest_unlock_round = rule.unlock_round;
+        }
+    }
+    return highest_unlock_round;
+}
+
 pub fn startPracticeTutorial() void {
     is_practice_tutorial_mode = true;
     resume_saved_run = false;
@@ -206,7 +219,11 @@ pub fn Awake(self: *Self) !void {
     };
     const map_bounds = MapLoader.getMapBounds();
     self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
-    self.spawner.setSpawnZones(MapLoader.getSpawnZones());
+    const spawn_zones = MapLoader.getSpawnZones();
+    self.spawner.setSpawnZones(spawn_zones);
+    if (is_playtest_mode and playtest_room_type == .normal) {
+        self.current_room = determinePlaytestNormalRoom(spawn_zones);
+    }
     const player_spawn = MapLoader.getPlayerSpawnPosition();
 
     try lm.summoning.entities(&.{
@@ -908,4 +925,27 @@ test "RoomManager initPracticeTutorialRun initializes tutorial room zero" {
     try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
     try std.testing.expectEqualStrings("tutorial", room_manager.room_category);
     try std.testing.expectEqualStrings("maps/tutorial.json", room_manager.current_map_path);
+}
+
+test "RoomManager determinePlaytestNormalRoom sets room according to highest unlock round" {
+    const empty_zones = [_]MapTypes.SpawnZoneRecord{};
+    try std.testing.expectEqual(@as(u32, 2), determinePlaytestNormalRoom(&empty_zones));
+
+    const shaman_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .enemy_type = .shaman,
+        },
+    };
+    try std.testing.expectEqual(@as(u32, 3), determinePlaytestNormalRoom(&shaman_zones));
+
+    const magician_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 0,
+            .center_y_pixels = 0,
+            .enemy_type = .magician,
+        },
+    };
+    try std.testing.expectEqual(@as(u32, 4), determinePlaytestNormalRoom(&magician_zones));
 }

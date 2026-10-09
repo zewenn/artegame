@@ -83,6 +83,20 @@ pub const EnemyComposition = struct {
     pub fn total(self: EnemyComposition) u32 {
         return self.melee_count + self.ranged_count + self.elite_count + self.shaman_count + self.magician_count + self.lifeliner_count + self.angler_count + self.tank_count;
     }
+
+    pub fn addCount(self: *EnemyComposition, enemy_type: EnemyType, count: u32) void {
+        switch (enemy_type) {
+            .melee => self.melee_count += count,
+            .ranged => self.ranged_count += count,
+            .elite => self.elite_count += count,
+            .shaman => self.shaman_count += count,
+            .magician => self.magician_count += count,
+            .lifeliner => self.lifeliner_count += count,
+            .angler => self.angler_count += count,
+            .tank => self.tank_count += count,
+            else => {},
+        }
+    }
 };
 
 fn calculateScaledEnemyCount(
@@ -204,6 +218,69 @@ pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
     return calculateNormalEnemyCompositionWithZones(round, &.{});
 }
 
+const normal_archetype_types = [_]EnemyType{
+    .elite,
+    .tank,
+    .shaman,
+    .magician,
+    .lifeliner,
+    .angler,
+};
+
+fn countDesignatedNormalTypes(zones: []const MapTypes.SpawnZoneRecord) u32 {
+    var count: u32 = 0;
+    for (normal_archetype_types) |enemy_type| {
+        if (hasDesignatedZone(zones, enemy_type)) {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+fn allocateRemainingBudgetToDesignatedZones(
+    zones: []const MapTypes.SpawnZoneRecord,
+    remaining_budget: *u32,
+    composition: *EnemyComposition,
+) void {
+    if (remaining_budget.* == 0) return;
+    const designated_type_count = countDesignatedNormalTypes(zones);
+    if (designated_type_count == 0) return;
+
+    const budget_slice = remaining_budget.* / designated_type_count;
+
+    for (normal_archetype_types) |enemy_type| {
+        if (!hasDesignatedZone(zones, enemy_type)) continue;
+
+        const type_budget = if (designated_type_count > 1) budget_slice else remaining_budget.*;
+        const additional_count = type_budget / enemy_type.cost();
+        composition.addCount(enemy_type, additional_count);
+        const cost_spent = additional_count * enemy_type.cost();
+        if (remaining_budget.* >= cost_spent) {
+            remaining_budget.* -= cost_spent;
+        }
+    }
+}
+
+fn fallbackSpawnPermittedEnemies(
+    zones: []const MapTypes.SpawnZoneRecord,
+    remaining_budget: *u32,
+    composition: *EnemyComposition,
+) void {
+    for (normal_archetype_types) |enemy_type| {
+        if (!hasDesignatedZone(zones, enemy_type)) continue;
+
+        const count = @max(1, remaining_budget.* / enemy_type.cost());
+        composition.addCount(enemy_type, count);
+        const cost_spent = count * enemy_type.cost();
+        if (remaining_budget.* >= cost_spent) {
+            remaining_budget.* -= cost_spent;
+        } else {
+            remaining_budget.* = 0;
+        }
+        return;
+    }
+}
+
 pub fn calculateNormalEnemyCompositionWithZones(
     round: u32,
     zones: []const MapTypes.SpawnZoneRecord,
@@ -231,6 +308,12 @@ pub fn calculateNormalEnemyCompositionWithZones(
     composition.ranged_count = ranged_count;
 
     composition.melee_count = if (hasDesignatedZone(zones, .melee)) remaining_budget else 0;
+
+    if (composition.total() == 0 and zones.len > 0) {
+        fallbackSpawnPermittedEnemies(zones, &remaining_budget, &composition);
+    } else if (remaining_budget > 0 and !hasDesignatedZone(zones, .melee) and !hasDesignatedZone(zones, .ranged)) {
+        allocateRemainingBudgetToDesignatedZones(zones, &remaining_budget, &composition);
+    }
 
     return composition;
 }
@@ -1387,4 +1470,26 @@ test "pickSpawnPositionForEnemy returns null when map has zones but none for ene
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .angler));
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .ranged));
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .elite));
+}
+
+test "generateWaveConfigForProfileAndZones spawns designated enemy types even if round is below standard unlock" {
+    const shaman_zones = [_]MapTypes.SpawnZoneRecord{
+        .{
+            .center_x_pixels = 100.0,
+            .center_y_pixels = 100.0,
+            .width_pixels = 64.0,
+            .height_pixels = 64.0,
+            .enemy_type = .shaman,
+        },
+    };
+
+    // Round 2 is normally below Shaman unlock round 3, but map specifically designates Shaman
+    const config_round_2 = generateWaveConfigForProfileAndZones(2, .normal, &shaman_zones);
+    try std.testing.expect(config_round_2.shaman_count > 0);
+    try std.testing.expectEqual(config_round_2.shaman_count, config_round_2.total_enemies);
+
+    // Round 4 budget distributes to shaman instead of being discarded
+    const config_round_4 = generateWaveConfigForProfileAndZones(4, .normal, &shaman_zones);
+    try std.testing.expect(config_round_4.shaman_count > 1);
+    try std.testing.expectEqual(config_round_4.shaman_count, config_round_4.total_enemies);
 }

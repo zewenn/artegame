@@ -13,43 +13,103 @@ const prefabs = @import("../prefabs.zig");
 
 var shaman_enemy_count: u32 = 0;
 
+inline fn assetPath(path: []const u8) []const u8 {
+    return "characters/enemies/shaman/" ++ path ++ ".png";
+}
+
 pub const shaman_animations = [_]lm.Animation{
     lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -3, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_0"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_0"), .rotation = 0, .width = 64, .height = 64 },
     }),
     lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 3, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_0"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_0"), .rotation = 0, .width = 64, .height = 64 },
     }),
     lm.Animation.init("walk-left", 0.35, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 8, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -5, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_0"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 8, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = -5, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_0"), .rotation = 0, .width = 64, .height = 64 },
     }),
     lm.Animation.init("walk-right", 0.35, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 5, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_0"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = -8, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 5, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("right_0"), .rotation = 0, .width = 64, .height = 64 },
     }),
     lm.Animation.init("windup-cast", 0.35, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_2"), .rotation = -2, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_3"), .rotation = -4, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_4"), .rotation = -6, .width = 70, .height = 64 },
     }),
     lm.Animation.init("cast", 0.50, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 14, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/cast_1"), .rotation = -6, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/cast_2"), .rotation = 14, .width = 70, .height = 64 },
     }),
     lm.Animation.init("winddown-cast", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 14, .width = 64, .height = 64 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_1"), .rotation = 14, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_2"), .rotation = 9, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_3"), .rotation = 4, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_4"), .rotation = 0, .width = 64, .height = 64 },
+    }),
+    lm.Animation.init("windup-cast-call-backup", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/windup_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/windup_2"), .rotation = -2, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/windup_3"), .rotation = -4, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/windup_4"), .rotation = -6, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("cast-call-backup", 0.50, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/cast_1"), .rotation = -6, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/cast_2"), .rotation = 14, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("winddown-cast-call-backup", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_1"), .rotation = 14, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_2"), .rotation = 11, .width = 69, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_3"), .rotation = 8, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_4"), .rotation = 5, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_5"), .rotation = 2, .width = 65, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/call_backup/winddown_6"), .rotation = 0, .width = 64, .height = 64 },
+    }),
+    lm.Animation.init("windup-cast-remote-healing", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/windup_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/windup_2"), .rotation = -1, .width = 65, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/windup_3"), .rotation = -3, .width = 67, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/windup_4"), .rotation = -5, .width = 69, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/windup_5"), .rotation = -6, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("cast-remote-healing", 0.50, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/cast_1"), .rotation = -6, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/cast_2"), .rotation = 14, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("winddown-cast-remote-healing", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/winddown_1"), .rotation = 14, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/winddown_2"), .rotation = 9, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/winddown_3"), .rotation = 4, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/remote_healing/winddown_4"), .rotation = 0, .width = 64, .height = 64 },
+    }),
+    lm.Animation.init("windup-cast-speed-boost", 0.35, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/windup_1"), .rotation = 0, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/windup_2"), .rotation = -2, .width = 66, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/windup_3"), .rotation = -4, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/windup_4"), .rotation = -6, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("cast-speed-boost", 0.50, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/cast_1"), .rotation = -6, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/cast_2"), .rotation = 14, .width = 70, .height = 64 },
+    }),
+    lm.Animation.init("winddown-cast-speed-boost", 0.30, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/winddown_1"), .rotation = 14, .width = 70, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/winddown_2"), .rotation = 10, .width = 68, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/winddown_3"), .rotation = 7, .width = 67, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/winddown_4"), .rotation = 3, .width = 65, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/speed_boost/winddown_5"), .rotation = 0, .width = 64, .height = 64 },
     }),
     lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 20, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_0"), .rotation = 20, .width = 64, .height = 64 },
     }),
 };
 
@@ -115,9 +175,9 @@ pub const shaman_abilities = [_]Ability{
             .health_below_pct = 0.25,
         },
         .custom_action = shamanCallBackup,
-        .windup_animation = "windup-cast",
-        .release_animation = "cast",
-        .winddown_animation = "winddown-cast",
+        .windup_animation = "windup-cast-call-backup",
+        .release_animation = "cast-call-backup",
+        .winddown_animation = "winddown-cast-call-backup",
     },
 
     Ability{
@@ -140,9 +200,9 @@ pub const shaman_abilities = [_]Ability{
             .passtrough = true,
             .sfx_path = "audio/sfx/pickup.mp3",
         },
-        .windup_animation = "windup-cast",
-        .release_animation = "cast",
-        .winddown_animation = "winddown-cast",
+        .windup_animation = "windup-cast-remote-healing",
+        .release_animation = "cast-remote-healing",
+        .winddown_animation = "winddown-cast-remote-healing",
     },
 
     Ability{
@@ -152,9 +212,9 @@ pub const shaman_abilities = [_]Ability{
         .max_range = 800,
         .cooldown = 4.5,
         .custom_action = shamanCastSpeedBoost,
-        .windup_animation = "windup-cast",
-        .release_animation = "cast",
-        .winddown_animation = "winddown-cast",
+        .windup_animation = "windup-cast-speed-boost",
+        .release_animation = "cast-speed-boost",
+        .winddown_animation = "winddown-cast-speed-boost",
     },
 
     Ability{
@@ -210,8 +270,7 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
             .scale = .init(64, 64),
         },
         lm.Renderer.init(.{
-            .img_path = "empty.png",
-            .tint = lm.Color{ .r = 80, .g = 220, .b = 160, .a = 255 },
+            .img_path = assetPath("left_idle_0"),
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
@@ -265,17 +324,22 @@ test "Shaman ability profiles and animations" {
     try std.testing.expectEqual(@as(usize, 4), shaman_abilities.len);
     try std.testing.expectEqual(Ability.ExecutionType.custom, shaman_abilities[0].execution_type);
     try std.testing.expectEqual(@as(f32, 0.25), shaman_abilities[0].conditions.health_below_pct.?);
+    try std.testing.expectEqualStrings("windup-cast-call-backup", shaman_abilities[0].windup_animation.?);
 
     const healing_ability = shaman_abilities[1];
     try std.testing.expect(healing_ability.projectile_profile.?.is_healing);
     try std.testing.expectEqual(@as(usize, 8), healing_ability.projectile_profile.?.spread_angles.len);
     try std.testing.expectEqual(Stats.Teams.enemy, healing_ability.projectile_profile.?.target_team);
+    try std.testing.expectEqualStrings("windup-cast-remote-healing", healing_ability.windup_animation.?);
+
+    try std.testing.expectEqualStrings("windup-cast-speed-boost", shaman_abilities[2].windup_animation.?);
+    try std.testing.expectEqualStrings("windup-cast", shaman_abilities[3].windup_animation.?);
 
     for (shaman_animations) |anim| {
         for (anim.base_keyframes) |keyframe| {
-            try std.testing.expectEqualStrings("empty.png", keyframe.sprite.?);
-            try std.testing.expectEqual(@as(f32, 64.0), keyframe.width.?);
-            try std.testing.expectEqual(@as(f32, 64.0), keyframe.height.?);
+            try std.testing.expect(std.mem.startsWith(u8, keyframe.sprite.?, "characters/enemies/shaman/"));
+            try std.testing.expect(keyframe.width.? >= 64.0);
+            try std.testing.expect(keyframe.height.? >= 64.0);
         }
     }
 }
