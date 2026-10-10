@@ -10,36 +10,40 @@ const ProjectileProfile = Enemy.Ability.ProjectileProfile;
 
 var angler_enemy_count: u32 = 0;
 
+inline fn assetPath() []const u8 {
+    return "characters/enemies/angler.png";
+}
+
 pub const angler_animations = [_]lm.Animation{
     lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -2, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = -2, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 2, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 2, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("walk-left", 0.35, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 8, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -5, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 8, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = -5, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("walk-right", 0.35, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 5, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = -8, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 5, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("fire-cardinal", 0.10, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 4, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 4, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 20, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath(), .rotation = 20, .width = 56, .height = 56 },
     }),
 };
 
@@ -49,7 +53,7 @@ pub const angler_abilities = [_]Ability{
         .execution_type = .projectile,
         .min_range = 0,
         .max_range = 800,
-        .cooldown = 0.10,
+        .cooldown = 2.00,
         .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "empty.png",
@@ -57,6 +61,7 @@ pub const angler_abilities = [_]Ability{
             .base_angle = 0,
             .spread_angles = &.{ 0, 90, -90, 180 },
             .damage = 0.10,
+            .wave_count = 10,
             .damage_type = .physical,
             .speed = 360,
             .lifetime = 1.8,
@@ -72,7 +77,7 @@ const angler_fallback = Ability{
     .execution_type = .projectile,
     .min_range = 0,
     .max_range = 800,
-    .cooldown = 0.10,
+    .cooldown = 2.50,
     .root_movement_during_action = false,
     .projectile_profile = ProjectileProfile{
         .sprite = "empty.png",
@@ -80,6 +85,8 @@ const angler_fallback = Ability{
         .base_angle = 0,
         .spread_angles = &.{ 0, 90, -90, 180 },
         .damage = 0.10,
+        .wave_count = 10,
+        .wave_interval = 0.2,
         .damage_type = .physical,
         .speed = 360,
         .lifetime = 1.8,
@@ -98,8 +105,7 @@ pub fn AnglerEnemy(position: lm.Vector2) !*lm.Entity {
             .scale = .init(56, 56),
         },
         lm.Renderer.init(.{
-            .img_path = "empty.png",
-            .tint = lm.Color{ .r = 255, .g = 200, .b = 40, .a = 255 },
+            .img_path = assetPath(),
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
