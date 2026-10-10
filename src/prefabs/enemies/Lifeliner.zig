@@ -12,43 +12,84 @@ const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 
 var lifeliner_enemy_count: u32 = 0;
 
+inline fn assetPath(sprite: []const u8) []const u8 {
+    return "characters/enemies/lifeliner/" ++ sprite ++ ".png";
+}
+
 pub const lifeliner_animations = [_]lm.Animation{
     lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -3, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = -3, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 3, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = 3, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("walk-left", 0.30, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 8, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -5, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = 8, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = -5, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 56, .height = 56 },
     }),
     lm.Animation.init("walk-right", 0.30, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 5, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = -8, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = 5, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 56, .height = 56 },
     }),
-    lm.Animation.init("windup-cast", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 56, .height = 56 },
+    lm.Animation.init("windup-cast-fallback", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = -8, .width = 64, .height = 48 },
     }),
-    lm.Animation.init("cast", 0.40, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -8, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 12, .width = 56, .height = 56 },
+    lm.Animation.init("cast-fallback", 0.40, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = -8, .width = 64, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = 12, .width = 48, .height = 64 },
     }),
-    lm.Animation.init("winddown-cast", 0.20, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 12, .width = 56, .height = 56 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 56, .height = 56 },
+    lm.Animation.init("winddown-cast-fallback", 0.20, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = 12, .width = 48, .height = 64 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("windup-cast-rescue", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/windup_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/windup_2"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/windup_3"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/windup_4"), .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("cast-rescue", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/cast_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/cast_2"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/cast_3"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/cast_4"), .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("winddown-cast-rescue", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/winddown_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/winddown_2"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/winddown_3"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/rescue/winddown_4"), .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("windup-cast-revive", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_2"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_3"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_4"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_5"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_6"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/windup_7"), .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("cast-revive", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/revive/cast_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/cast_2"), .width = 56, .height = 56 },
+    }),
+    lm.Animation.init("winddown-cast-revive", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/revive/winddown_1"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/winddown_2"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/winddown_3"), .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("spells/revive/winddown_4"), .width = 56, .height = 56 },
     }),
     lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 20, .width = 56, .height = 56 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 20, .width = 56, .height = 56 },
     }),
 };
 
@@ -99,9 +140,9 @@ pub const lifeliner_abilities = [_]Ability{
         .max_range = 9999,
         .cooldown = 3.5,
         .custom_action = lifelinerRescue,
-        .windup_animation = "windup-cast",
-        .release_animation = "cast",
-        .winddown_animation = "winddown-cast",
+        .windup_animation = "windup-cast-rescue",
+        .release_animation = "cast-rescue",
+        .winddown_animation = "winddown-cast-rescue",
     },
 
     Ability{
@@ -111,9 +152,9 @@ pub const lifeliner_abilities = [_]Ability{
         .max_range = 9999,
         .cooldown = 14.0,
         .custom_action = lifelinerRevive,
-        .windup_animation = "windup-cast",
-        .release_animation = "cast",
-        .winddown_animation = "winddown-cast",
+        .windup_animation = "windup-cast-revive",
+        .release_animation = "cast-revive",
+        .winddown_animation = "winddown-cast-revive",
     },
 };
 
@@ -125,6 +166,7 @@ const lifeliner_fallback = Ability{
     .cooldown = 0.5,
     .projectile_profile = ProjectileProfile{
         .sprite = "empty.png",
+        .wave_count = 2,
         .damage = 0.35,
         .damage_type = .magic,
         .speed = 520,
@@ -132,9 +174,9 @@ const lifeliner_fallback = Ability{
         .size = .init(32, 32),
         .sfx_path = "audio/sfx/click.wav",
     },
-    .windup_animation = "windup-cast",
-    .release_animation = "cast",
-    .winddown_animation = "winddown-cast",
+    .windup_animation = "windup-cast-fallback",
+    .release_animation = "cast-fallback",
+    .winddown_animation = "winddown-cast-fallback",
 };
 
 pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
@@ -146,8 +188,7 @@ pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
             .scale = .init(56, 56),
         },
         lm.Renderer.init(.{
-            .img_path = "empty.png",
-            .tint = lm.Color{ .r = 60, .g = 210, .b = 255, .a = 255 },
+            .img_path = assetPath("idle_1"),
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
