@@ -74,7 +74,7 @@ def init():
             pgapi.SCREEN.this.get_width(), pgapi.SCREEN.this.get_height()
         )
 
-        new_ratio = ((pgapi.SCREEN.size.x / 2520) + (pgapi.SCREEN.size.y / 1080)) / 2
+        new_ratio = ((pgapi.SCREEN.size.x / 1920) + (pgapi.SCREEN.size.y / 1080)) / 2
         if ui_ratio != new_ratio:
             ui_ratio = new_ratio
             pgapi.GUI_PIXEL_RATIO = ui_ratio

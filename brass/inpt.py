@@ -55,7 +55,11 @@ last_keys_down_len: int = 0
 def init_controllers():
     pgapi.CONTROLLERS = []
     for i in range(pycontroller.get_count()):
-        pgapi.CONTROLLERS.append(pycontroller.Controller(i))
+        if pycontroller.is_controller(i):
+            try:
+                pgapi.CONTROLLERS.append(pycontroller.Controller(i))
+            except Exception:
+                pass
 
 
 def __inner_get__(key: str) -> Tuple[float, int]:

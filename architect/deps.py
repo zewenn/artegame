@@ -28,6 +28,8 @@ def task(task_name: str):
 def delete_files_in_directory(directory_path: list[str], display: bool = True):
     make_dir_walk(directory_path)
     directory_path = os.path.join(*directory_path)
+    if not os.path.isdir(directory_path):
+        return
     try:
         files = os.listdir(directory_path)
         for index, filename in enumerate(files):
@@ -164,7 +166,7 @@ def is_stack_installed(deps: list[str]) -> bool:
 
 
 @task("lazy check dependencies")
-def handle_dep_stack(deps: list[str]) -> list[Optional[Exception]]:
+def handle_dep_stack(deps: list[str]) -> Optional[Exception]:
     failed: bool = False
 
     longest_dep_name = deps[0]
@@ -203,29 +205,12 @@ def run_python_command(cmd: list[str]) -> Tuple[bool, Optional[Exception]]:
         if x == 0:
             return True, None
         else:
-            return False, f"\tExit code: {x}"
+            return False, Exception(f"\tExit code: {x}")
     except Exception as e:
         return False, e
 
 
 def make_dir_walk(pth: list[str]) -> None:
-    if os.path.isdir(os.path.join(*pth)):
-        return
-
     if "." in pth[-1]:
-        pth = pth[0:-1]
-
-    for index in range(len(pth)):
-        current = pth[0 : index + 1]
-
-        if os.path.isdir(os.path.join(*current)):
-            continue
-
-        path = os.path.abspath(os.path.join(*current))
-
-        if not (os.access(path, os.W_OK)):
-            continue
-
-        print("<", os.path.abspath(os.path.join(*current)), ">")
-
-        os.mkdir(os.path.abspath(os.path.join(*current)), 751)
+        pth = pth[:-1]
+    os.makedirs(os.path.join(*pth), exist_ok=True)

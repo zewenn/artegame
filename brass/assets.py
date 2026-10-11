@@ -13,11 +13,18 @@ from .temp.b64_asset_ref_table import REFERENCE_TABLE as original_b64_ref_table
 
 
 b64_ref_table: dict[string, string] = original_b64_ref_table
+binary_cache: dict[string, bytes] = {}
+
+
+def get_binary_data(filename: string, base64_string: string) -> bytes:
+    if filename not in binary_cache:
+        binary_cache[filename] = base64.b64decode(base64_string)
+    return binary_cache[filename]
 
 
 def load(name: string, base64_string: string, font_size=12):
-    # Convert the Base64 string to bytes
-    binary_data = base64.b64decode(base64_string)
+    # Convert the Base64 string to bytes (cached)
+    binary_data = get_binary_data(name, base64_string)
 
     # Create a BytesIO object from the binary data
     data_buffer = BytesIO(binary_data)
@@ -55,22 +62,9 @@ def use(filename: string, T_type: Optional[UT] = None) -> UT:
 
 def create_runtime_objects(ratio: float = 1):
     for filename, b64_value in b64_ref_table.items():
-
-        # if (
-        #     not filename.endswith(".mp3")
-        #     or not filename.endswith(".wav")
-        #     or not filename.endswith(".png")
-        #     or not filename.endswith(".ttf")
-        # ):
-            
-        #     unreachable(
-        #         f"Invalid file type: " + "'." + filename.split(".")[1] + "'"
-        #         if "." in filename
-        #         else filename
-        #     )
-
         if not filename.endswith(".ttf"):
-            ASSETS[filename] = load(filename, b64_value)
+            if filename not in ASSETS:
+                ASSETS[filename] = load(filename, b64_value)
             continue
 
         # Handling font size, since the pygame can't
