@@ -11,43 +11,84 @@ const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 
 var tank_enemy_count: u32 = 0;
 
+inline fn assetPath(sprite: []const u8) []const u8 {
+    return "characters/enemies/tank/" ++ sprite ++ ".png";
+}
+
 pub const tank_animations = [_]lm.Animation{
     lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -2, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_1"), .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_2"), .rotation = -2, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_1"), .rotation = 0, .width = 80, .height = 80 },
     }),
     lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 2, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_1"), .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_2"), .rotation = 2, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_1"), .rotation = 0, .width = 80, .height = 80 },
     }),
     lm.Animation.init("walk-left", 0.40, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 6, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -4, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = 6, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = -4, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 80, .height = 80 },
     }),
     lm.Animation.init("walk-right", 0.40, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -6, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 4, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = -6, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = 4, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 80, .height = 80 },
     }),
     lm.Animation.init("windup-tank", 0.40, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -12, .width = 96, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = -12, .width = 96, .height = 80 },
     }),
-    lm.Animation.init("attack-tank", 0.20, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = -12, .width = 96, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 16, .width = 70, .height = 80 },
+    lm.Animation.init("cast-tank", 0.20, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = -12, .width = 96, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 16, .width = 80, .height = 96 },
     }),
     lm.Animation.init("winddown-tank", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 16, .width = 70, .height = 80 },
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 0, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 16, .width = 80, .height = 96 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 80, .height = 80 },
     }),
     lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = "empty.png", .rotation = 15, .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 15, .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("windup-root-shield", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_1"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_2"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_3"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_4"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_5"), .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("cast-root-shield", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast"), .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("winddown-root-shield", 0.8, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_1"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_2"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_3"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_4"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_5"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_6"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_7"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_8"), .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("windup-slow-barrage", 0.65, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/windup_1"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/windup_2"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/windup_3"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/windup_4"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/windup_5"), .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("cast-slow-barrage", 0.4, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/cast"), .width = 80, .height = 80 },
+    }),
+    lm.Animation.init("winddown-slow-barrage", 0.65, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/winddown_1"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/winddown_2"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/winddown_3"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/winddown_4"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/slow_barrage/winddown_5"), .width = 80, .height = 80 },
     }),
 };
 
@@ -78,9 +119,9 @@ pub const tank_abilities = [_]Ability{
         .max_range = 800,
         .cooldown = 15.0,
         .custom_action = tankActivateShield,
-        .windup_animation = "windup-tank",
-        .release_animation = "attack-tank",
-        .winddown_animation = "winddown-tank",
+        .windup_animation = "windup-root-shield",
+        .release_animation = "cast-root-shield",
+        .winddown_animation = "winddown-root-shield",
     },
 
     Ability{
@@ -104,9 +145,9 @@ pub const tank_abilities = [_]Ability{
             .onhit_duration = 1.8,
             .sfx_path = "audio/sfx/punch.mp3",
         },
-        .windup_animation = "windup-tank",
-        .release_animation = "attack-tank",
-        .winddown_animation = "winddown-tank",
+        .windup_animation = "windup-slow-barrage",
+        .release_animation = "cast-slow-barrage",
+        .winddown_animation = "winddown-slow-barrage",
     },
 
     Ability{
@@ -127,7 +168,7 @@ pub const tank_abilities = [_]Ability{
             .sfx_path = "audio/sfx/punch.mp3",
         },
         .windup_animation = "windup-tank",
-        .release_animation = "attack-tank",
+        .release_animation = "cast-tank",
         .winddown_animation = "winddown-tank",
     },
 
@@ -152,7 +193,7 @@ pub const tank_abilities = [_]Ability{
             .sfx_path = "audio/sfx/punch.mp3",
         },
         .windup_animation = "windup-tank",
-        .release_animation = "attack-tank",
+        .release_animation = "cast-tank",
         .winddown_animation = "winddown-tank",
     },
 };
@@ -174,7 +215,7 @@ const tank_fallback = Ability{
         .sfx_path = "audio/sfx/punch.mp3",
     },
     .windup_animation = "windup-tank",
-    .release_animation = "attack-tank",
+    .release_animation = "cast-tank",
     .winddown_animation = "winddown-tank",
 };
 
