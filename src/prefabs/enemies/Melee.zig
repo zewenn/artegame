@@ -11,6 +11,51 @@ const MobilityProfile = Enemy.Ability.MobilityProfile;
 
 var melee_enemy_count: u32 = 0;
 
+inline fn assetPath(sprite: []const u8) []const u8 {
+    return "characters/enemies/melee/" ++ sprite ++ ".png";
+}
+
+const melee_animations = [_]lm.Animation{
+    lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("left_idle_1"), .rotation = 0 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_2"), .rotation = -3 },
+        lm.Keyframe{ .sprite = assetPath("left_idle_1"), .rotation = 0 },
+    }),
+    lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("right_idle_1"), .rotation = 0 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_2"), .rotation = 3 },
+        lm.Keyframe{ .sprite = assetPath("right_idle_1"), .rotation = 0 },
+    }),
+    lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = 10 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = -6 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0 },
+    }),
+    lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = -10 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = 6 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0 },
+    }),
+    lm.Animation.init("windup-melee", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_1"), .rotation = 0, .height = 64, .width = 64 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/windup_2"), .rotation = -18, .height = 64, .width = 80 },
+    }),
+    lm.Animation.init("attack-melee", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/cast_1"), .rotation = -18, .height = 64, .width = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/cast_2"), .rotation = 24, .height = 64, .width = 48 },
+    }),
+    lm.Animation.init("winddown-melee", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_1"), .rotation = 24, .height = 64, .width = 48 },
+        lm.Keyframe{ .sprite = assetPath("spells/fallback/winddown_2"), .rotation = 0, .height = 64, .width = 64 },
+    }),
+    lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = 25 },
+        lm.Keyframe{ .rotation = 20 },
+    }),
+};
+
 pub const melee_abilities = [_]Ability{
     Ability{
         .id = "lunge_dash",
@@ -82,7 +127,7 @@ pub fn MeleeEnemy(position: lm.Vector2) !*lm.Entity {
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
         }),
-        lm.Animator.init(&Enemy.Animation.melee_animations),
+        lm.Animator.init(&melee_animations),
 
         Stats.init(.enemy, .{
             .health = 100,
