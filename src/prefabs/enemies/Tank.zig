@@ -60,8 +60,13 @@ pub const tank_animations = [_]lm.Animation{
         lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_4"), .width = 80, .height = 80 },
         lm.Keyframe{ .sprite = assetPath("spells/root_shield/windup_5"), .width = 80, .height = 80 },
     }),
-    lm.Animation.init("cast-root-shield", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast"), .width = 80, .height = 80 },
+    lm.Animation.init("cast-root-shield", 0.6, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_1"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_2"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_3"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_4"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_5"), .width = 80, .height = 80 },
+        lm.Keyframe{ .sprite = assetPath("spells/root_shield/cast_6"), .width = 80, .height = 80 },
     }),
     lm.Animation.init("winddown-root-shield", 0.8, lm.interpolation.lerp, &.{
         lm.Keyframe{ .sprite = assetPath("spells/root_shield/winddown_1"), .width = 80, .height = 80 },
@@ -228,12 +233,11 @@ pub fn TankEnemy(position: lm.Vector2) !*lm.Entity {
             .scale = .init(80, 80),
         },
         lm.Renderer.init(.{
-            .img_path = "empty.png",
-            .tint = lm.Color{ .r = 130, .g = 140, .b = 160, .a = 255 },
+            .img_path = assetPath("left_idle_1"),
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
-            .transform = .{ .scale = .init(84, 84) },
+            .transform = .{ .scale = .init(80, 80) },
             .weight = 3.0,
         }),
         lm.Animator.init(&tank_animations),
