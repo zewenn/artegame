@@ -266,30 +266,3 @@ test "Magician enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 80.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 140.0), stats.current.movement_speed);
 }
-
-test "Magician ability profiles and animations" {
-    try std.testing.expectEqual(@as(usize, 3), magician_abilities.len);
-
-    const blink_ability = magician_abilities[0];
-    try std.testing.expectEqual(Ability.ExecutionType.custom, blink_ability.execution_type);
-    try std.testing.expectEqualStrings("windup-cast-blink", blink_ability.windup_animation.?);
-
-    const pull_ability = magician_abilities[1];
-    try std.testing.expectEqual(@as(f32, 800.0), pull_ability.projectile_profile.?.pull_speed.?);
-    try std.testing.expectEqual(@as(f32, 0.5), pull_ability.projectile_profile.?.pull_duration);
-    try std.testing.expectEqualStrings("windup-cast-where-are-you-going", pull_ability.windup_animation.?);
-
-    const stun_burst = magician_abilities[2];
-    try std.testing.expectEqual(@as(f32, 400.0), stun_burst.max_range);
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.stun, stun_burst.projectile_profile.?.onhit_effect.?);
-    try std.testing.expectEqual(@as(usize, 3), stun_burst.projectile_profile.?.spread_angles.len);
-    try std.testing.expectEqualStrings("windup-cast", stun_burst.windup_animation.?);
-
-    for (magician_animations) |anim| {
-        for (anim.base_keyframes) |keyframe| {
-            try std.testing.expect(std.mem.startsWith(u8, keyframe.sprite.?, "characters/enemies/magician/"));
-            try std.testing.expect(keyframe.width.? >= 64.0);
-            try std.testing.expect(keyframe.height.? >= 64.0);
-        }
-    }
-}

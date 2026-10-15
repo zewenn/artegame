@@ -772,14 +772,6 @@ test "RoomType determination from room number" {
     try std.testing.expectEqual(RoomType.boss, RoomType.fromRoomNumber(30));
 }
 
-test "RoomManager RunStats defaults" {
-    const stats = RunStats{};
-    try std.testing.expectEqual(@as(u32, 0), stats.rooms_cleared);
-    try std.testing.expectEqual(@as(u32, 0), stats.current_room);
-    try std.testing.expectEqual(@as(u32, 0), stats.enemies_defeated);
-    try std.testing.expectEqual(@as(usize, 0), stats.experience_collected);
-}
-
 test "RoomType display names" {
     try std.testing.expectEqualStrings("Tutorial", RoomType.tutorial.displayName());
     try std.testing.expectEqualStrings("Normal", RoomType.normal.displayName());
@@ -787,52 +779,7 @@ test "RoomType display names" {
     try std.testing.expectEqualStrings("Boss", RoomType.boss.displayName());
 }
 
-test "Mini-boss reward boosts max HP by 10 percent and restores current health" {
-    var stats = Stats{
-        .max = .{ .health = 100.0 },
-        .base = .{ .health = 100.0 },
-        .current = .{ .health = 25.0 },
-    };
-
-    stats.max.health *= 1.10;
-    stats.base.health *= 1.10;
-    stats.current.health = stats.max.health;
-
-    try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.max.health, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.base.health, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 110.0), stats.current.health, 0.001);
-}
-
-test "Boss reward boosts max HP by 15 percent, restores HP, and adds +15 physical / +10 magic damage" {
-    var stats = Stats{
-        .max = .{ .health = 100.0 },
-        .current = .{
-            .health = 10.0,
-            .physical_damage = 20.0,
-            .magic_damage = 5.0,
-        },
-        .base = .{
-            .physical_damage = 20.0,
-            .magic_damage = 5.0,
-        },
-    };
-
-    stats.max.health *= 1.15;
-    stats.current.health = stats.max.health;
-    stats.current.physical_damage += 15.0;
-    stats.current.magic_damage += 10.0;
-    stats.base.physical_damage += 15.0;
-    stats.base.magic_damage += 10.0;
-
-    try std.testing.expectApproxEqAbs(@as(f32, 115.0), stats.max.health, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 115.0), stats.current.health, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 35.0), stats.current.physical_damage, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 15.0), stats.current.magic_damage, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 35.0), stats.base.physical_damage, 0.001);
-    try std.testing.expectApproxEqAbs(@as(f32, 15.0), stats.base.magic_damage, 0.001);
-}
-
-test "RoomManager lifecycle state transitions" {
+test "RoomManager initFreshRun starts in the first normal room when tutorial completed" {
     SaveSystem.setTutorialCompleted(true);
     defer SaveSystem.setTutorialCompleted(false);
 
@@ -843,17 +790,6 @@ test "RoomManager lifecycle state transitions" {
     try std.testing.expectEqual(@as(u32, 1), room_manager.current_room);
     try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
     try std.testing.expectEqualStrings("normal", room_manager.room_category);
-
-    room_manager.state = .replenish;
-    room_manager.rooms_cleared += 1;
-    try std.testing.expectEqual(RoomState.replenish, room_manager.state);
-    try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
-
-    room_manager.current_room += 1;
-    room_manager.state = .combat;
-    try std.testing.expectEqual(RoomState.combat, room_manager.state);
-    try std.testing.expectEqual(@as(u32, 2), room_manager.current_room);
-    try std.testing.expectEqual(@as(u32, 1), room_manager.rooms_cleared);
 }
 
 test "RoomManager initFreshRun starts in tutorial when tutorial not completed" {
@@ -867,17 +803,6 @@ test "RoomManager initFreshRun starts in tutorial when tutorial not completed" {
     try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
     try std.testing.expectEqualStrings("tutorial", room_manager.room_category);
     try std.testing.expectEqualStrings("maps/tutorial.json", room_manager.current_map_path);
-}
-
-test "RoomManager saveRunState guards against saving during combat" {
-    var room_manager = Self{};
-    room_manager.initFreshRun();
-
-    try std.testing.expectEqual(RoomState.combat, room_manager.state);
-    room_manager.saveRunState();
-
-    room_manager.state = .replenish;
-    room_manager.saveRunState();
 }
 
 test "RoomManager playtest scaling applies appropriate stats per room tier" {

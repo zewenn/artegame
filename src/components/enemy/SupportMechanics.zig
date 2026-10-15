@@ -173,29 +173,6 @@ pub fn executeEnemyRevive(
     return true;
 }
 
-test "SupportMechanics lowest health ally query filters correctly" {
-    var stats_1 = Stats.init(.enemy, .{
-        .health = 100.0,
-    });
-    defer stats_1.deinit();
-    stats_1.current.health = 50.0;
-
-    var stats_2 = Stats.init(.enemy, .{
-        .health = 100.0,
-    });
-    defer stats_2.deinit();
-    stats_2.current.health = 8.0;
-
-    var stats_3 = Stats.init(.enemy, .{
-        .health = 100.0,
-    });
-    defer stats_3.deinit();
-    stats_3.current.health = 80.0;
-
-    try std.testing.expect(stats_2.current.health / stats_2.max.health < 0.10);
-    try std.testing.expect(stats_1.current.health / stats_1.max.health >= 0.10);
-}
-
 test "SupportMechanics speed boost lifecycle" {
     var stats = Stats.init(.enemy, .{
         .movement_speed = 200.0,

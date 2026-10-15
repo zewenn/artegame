@@ -451,22 +451,6 @@ test "BossBar updateDefeatTransition fades out smoothly" {
     try std.testing.expect(!global_state.is_active);
 }
 
-test "BossBar damage lag delay timer activates on health drop" {
-    unbind();
-    global_state.is_active = true;
-    global_state.current_health = 1000.0;
-    global_state.max_health = 1000.0;
-    global_state.display_health = 1000.0;
-    global_state.damage_lag_health = 1000.0;
-    global_state.damage_lag_delay_timer_seconds = 0.0;
-
-    // Simulate health drop without active entity in scene
-    global_state.current_health = 800.0;
-    global_state.damage_lag_delay_timer_seconds = DAMAGE_LAG_DELAY_SECONDS;
-
-    try std.testing.expectApproxEqAbs(DAMAGE_LAG_DELAY_SECONDS, global_state.damage_lag_delay_timer_seconds, 0.001);
-}
-
 test "BossBar onBossDefeated initiates defeat transition" {
     unbind();
     global_state.is_active = true;

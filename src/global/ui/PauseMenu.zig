@@ -381,26 +381,3 @@ test "PauseMenu show and hide just_opened flag lifecycle" {
     hide();
     try std.testing.expect(!just_opened);
 }
-
-test "PauseMenu root navigation index wrapping" {
-    is_showing = true;
-    current_view = .root;
-    selected_index = 0;
-
-    const max_index: usize = 3;
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 1), selected_index);
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 2), selected_index);
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 3), selected_index);
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 0), selected_index);
-
-    selected_index = if (selected_index == 0) max_index else selected_index - 1;
-    try std.testing.expectEqual(@as(usize, 3), selected_index);
-}

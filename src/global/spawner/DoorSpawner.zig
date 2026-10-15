@@ -207,25 +207,3 @@ pub fn cleanupDoors() void {
         }
     }
 }
-
-test "DoorSpawner room rules determine correct room types and door constraints" {
-    const tutorial_room_type = RoomType.fromRoomNumber(0);
-    try std.testing.expectEqual(RoomType.tutorial, tutorial_room_type);
-
-    const normal_room_type = RoomType.fromRoomNumber(1);
-    try std.testing.expectEqual(RoomType.normal, normal_room_type);
-
-    const mini_boss_room_type = RoomType.fromRoomNumber(5);
-    try std.testing.expectEqual(RoomType.mini_boss, mini_boss_room_type);
-
-    const boss_room_type = RoomType.fromRoomNumber(15);
-    try std.testing.expectEqual(RoomType.boss, boss_room_type);
-
-    const editor_positions = [_]lm.Vector2{
-        .init(100, 100),
-        .init(200, 200),
-        .init(300, 300),
-    };
-    const max_doors_to_spawn = @min(editor_positions.len, @min(3, BoonCategory.all_categories.len));
-    try std.testing.expectEqual(@as(usize, 3), max_doors_to_spawn);
-}

@@ -496,25 +496,3 @@ test "MainMenu getAvailableActions includes tutorial when completed" {
     try std.testing.expect(found_tutorial);
     try std.testing.expectEqual(@as(usize, 1), tutorial_index);
 }
-
-test "MainMenu navigation index wrapping" {
-    var menu = Self{};
-    menu.Awake();
-    defer menu.End();
-
-    try std.testing.expectEqual(Screen.main, menu.screen);
-    try std.testing.expectEqual(@as(usize, 0), menu.selected_index);
-
-    const max_main: usize = 2;
-    menu.selected_index = if (menu.selected_index >= max_main) 0 else menu.selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 1), menu.selected_index);
-
-    menu.selected_index = if (menu.selected_index >= max_main) 0 else menu.selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 2), menu.selected_index);
-
-    menu.selected_index = if (menu.selected_index >= max_main) 0 else menu.selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 0), menu.selected_index);
-
-    menu.selected_index = if (menu.selected_index == 0) max_main else menu.selected_index - 1;
-    try std.testing.expectEqual(@as(usize, 2), menu.selected_index);
-}

@@ -56,7 +56,7 @@ pub fn isExpired(self: Self) bool {
     return self.duration > 0 and self.time_remaining <= 0;
 }
 
-test "Effect initialization and isExpired check" {
+test "Effect isExpired reflects remaining time" {
     const effect = Self{
         .id = "test_stun",
         .effect_type = .stun,
@@ -64,28 +64,9 @@ test "Effect initialization and isExpired check" {
         .time_remaining = 2.0,
     };
 
-    try std.testing.expectEqualStrings("test_stun", effect.id);
-    try std.testing.expectEqual(EffectType.stun, effect.effect_type);
     try std.testing.expect(!effect.isExpired());
 
     var expired_effect = effect;
     expired_effect.time_remaining = 0.0;
     try std.testing.expect(expired_effect.isExpired());
 }
-
-test "Effect with on_tick callback initialization" {
-    const Dummy = struct {
-        fn cb(_: *Stats) void {}
-    };
-
-    const effect = Self{
-        .id = "test_tick",
-        .effect_type = .regen,
-        .duration = 5.0,
-        .on_tick = Dummy.cb,
-    };
-
-    try std.testing.expect(effect.on_tick != null);
-    try std.testing.expectEqual(Dummy.cb, effect.on_tick.?);
-}
-

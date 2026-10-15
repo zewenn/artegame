@@ -402,19 +402,3 @@ test "GameOverMenu show and hide lifecycle" {
     try std.testing.expect(!lm.time.paused());
     try std.testing.expect(!just_opened);
 }
-
-test "GameOverMenu navigation index wrapping" {
-    is_showing = true;
-    selected_index = 0;
-
-    const max_index: usize = 1;
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 1), selected_index);
-
-    selected_index = if (selected_index >= max_index) 0 else selected_index + 1;
-    try std.testing.expectEqual(@as(usize, 0), selected_index);
-
-    selected_index = if (selected_index == 0) max_index else selected_index - 1;
-    try std.testing.expectEqual(@as(usize, 1), selected_index);
-}

@@ -319,19 +319,6 @@ test "SaveSystem updateSettings modifies and retains settings" {
     try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, ControlScheme.getControlScheme());
 }
 
-test "SaveSystem tutorial completed query and persistence" {
-    const testing = std.testing;
-
-    current_save = .{};
-    try testing.expect(!isTutorialCompleted());
-
-    current_save.profile.tutorial_completed = true;
-    try testing.expect(isTutorialCompleted());
-
-    current_save.profile.tutorial_completed = false;
-    try testing.expect(!isTutorialCompleted());
-}
-
 test "SaveSystem saveRun and clearRun lifecycle" {
     const testing = std.testing;
 
@@ -417,32 +404,4 @@ test "SaveSystem load and re-save after resume (boon purchase simulation)" {
     try testing.expectEqual(@as(f32, -2), reloaded.equipped_weapons[0].?.dash_attack.shooting_degrees[0]);
 
     clearRun();
-}
-
-test "SaveSystem detects legacy version mismatch and resets" {
-    const testing = std.testing;
-    const allocator = testing.allocator;
-
-    const legacy_json =
-        \\{
-        \\  "version": 1,
-        \\  "scores": {
-        \\    "high_score": 5000
-        \\  }
-        \\}
-    ;
-
-    var arena = std.heap.ArenaAllocator.init(allocator);
-    defer arena.deinit();
-
-    const parsed = try std.json.parseFromSlice(
-        SaveFile,
-        arena.allocator(),
-        legacy_json,
-        .{ .ignore_unknown_fields = true },
-    );
-
-    try testing.expectEqual(@as(u32, 1), parsed.value.version);
-
-    try testing.expect(parsed.value.version != SaveData.CURRENT_SAVE_VERSION);
 }

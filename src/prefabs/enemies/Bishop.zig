@@ -214,34 +214,3 @@ test "Bishop calculates non-zero magic damage against player" {
     const damage = bishop_stats.calculateDamage(player_stats, .magic, false);
     try std.testing.expect(damage > 0.0);
 }
-
-test "Bishop 4 rotating streak ability variants configuration" {
-    try std.testing.expectEqual(@as(usize, 4), bishop_abilities.len);
-
-    for (bishop_abilities) |ability| {
-        try std.testing.expectEqual(Ability.ExecutionType.projectile, ability.execution_type);
-        const profile = ability.projectile_profile.?;
-        try std.testing.expect(profile.is_channeled);
-        try std.testing.expectEqual(@as(f32, 5.0), profile.channel_duration);
-        try std.testing.expectEqual(@as(f32, 72.0), profile.channel_rotation_speed);
-        try std.testing.expectEqual(@as(f32, 750.0), profile.speed);
-        try std.testing.expectEqual(@as(f32, 5.0), profile.lifetime);
-        try std.testing.expectEqual(@as(usize, 4), profile.spread_angles.len);
-    }
-
-    const stun_variant = bishop_abilities[0];
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.stun, stun_variant.projectile_profile.?.onhit_effect.?);
-    try std.testing.expectEqual(@as(f32, 20.0), stun_variant.cooldown);
-
-    const root_variant = bishop_abilities[1];
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.root, root_variant.projectile_profile.?.onhit_effect.?);
-    try std.testing.expectEqual(@as(f32, 13.0), root_variant.cooldown);
-
-    const slow_variant = bishop_abilities[2];
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.slow, slow_variant.projectile_profile.?.onhit_effect.?);
-    try std.testing.expectEqual(@as(f32, 8.0), slow_variant.cooldown);
-
-    const knockback_variant = bishop_abilities[3];
-    try std.testing.expect(knockback_variant.projectile_profile.?.knockback_strength > 0);
-    try std.testing.expectEqual(@as(f32, 4.0), knockback_variant.cooldown);
-}

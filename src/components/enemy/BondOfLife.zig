@@ -156,7 +156,7 @@ pub fn update(self: *Self, delta_time_seconds: f32) void {
     }
 }
 
-test "BondOfLife application, pop true damage, and caster healing" {
+test "BondOfLife apply activates the bond and rejects a second application" {
     var bond = Self{};
     bond.reset();
 
@@ -171,7 +171,6 @@ test "BondOfLife application, pop true damage, and caster healing" {
         .health = 500.0,
     });
     defer caster_stats.deinit();
-    caster_stats.current.health = 300.0;
 
     var target_entity = lm.Entity.init(std.testing.allocator, "player");
     defer target_entity.deinit();
@@ -184,7 +183,6 @@ test "BondOfLife application, pop true damage, and caster healing" {
     try caster_entity.addPreparedComponents(false);
 
     const target_ptr = target_entity.getComponent(Stats).?;
-    const caster_ptr = caster_entity.getComponent(Stats).?;
 
     const applied = bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0);
     try std.testing.expect(applied);
@@ -192,55 +190,4 @@ test "BondOfLife application, pop true damage, and caster healing" {
     try std.testing.expect(target_ptr.isBondOfLifeActive());
 
     try std.testing.expect(!bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0));
-
-    const true_damage = target_ptr.max.health * bond.effectiveness_fraction;
-    target_ptr.current.health -= true_damage;
-    caster_ptr.current.health = @min(caster_ptr.max.health, caster_ptr.current.health + true_damage);
-    target_ptr.removeEffect(.{ .effect_type = .bond_of_life });
-    bond.state = .popped;
-
-    try std.testing.expectEqual(@as(f32, 180.0), target_ptr.current.health);
-    try std.testing.expectEqual(@as(f32, 320.0), caster_ptr.current.health);
-    try std.testing.expect(!target_ptr.isBondOfLifeActive());
-    try std.testing.expectEqual(BondState.popped, bond.state);
-}
-
-test "BondOfLife expiration and rebound damage to caster" {
-    var bond = Self{};
-    bond.reset();
-
-    var target_stats = Stats.init(.player, .{
-        .health = 200.0,
-    });
-    defer target_stats.deinit();
-
-    var caster_stats = Stats.init(.enemy, .{
-        .health = 500.0,
-    });
-    defer caster_stats.deinit();
-
-    var target_entity = lm.Entity.init(std.testing.allocator, "player");
-    defer target_entity.deinit();
-    try target_entity.addComponent(target_stats);
-    try target_entity.addPreparedComponents(false);
-
-    var caster_entity = lm.Entity.init(std.testing.allocator, "queen");
-    defer caster_entity.deinit();
-    try caster_entity.addComponent(caster_stats);
-    try caster_entity.addPreparedComponents(false);
-
-    const target_ptr = target_entity.getComponent(Stats).?;
-    const caster_ptr = caster_entity.getComponent(Stats).?;
-
-    _ = bond.apply(caster_entity.uuid, &target_entity, 0.10, 5.0);
-
-    const true_damage = target_ptr.max.health * bond.effectiveness_fraction;
-    caster_ptr.current.health -= true_damage;
-    target_ptr.removeEffect(.{ .effect_type = .bond_of_life });
-    bond.state = .expired;
-
-    try std.testing.expectEqual(@as(f32, 200.0), target_ptr.current.health);
-    try std.testing.expectEqual(@as(f32, 480.0), caster_ptr.current.health);
-    try std.testing.expect(!target_ptr.isBondOfLifeActive());
-    try std.testing.expectEqual(BondState.expired, bond.state);
 }

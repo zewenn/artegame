@@ -15,6 +15,21 @@
 
 ## Work in Progress
 
+### [52#ARC] Remove tautological and no-op tests from the codebase
+
+  - tags: [tests, cleanup, code-quality]
+  - priority: low
+  - workload: Normal
+  - steps:
+      - [x] Audit every test block under src/ for tests that assert only constants, struct defaults, or values recomputed inside the test
+      - [x] Delete tests that exercise no production logic
+      - [x] Trim tautological assertions from tests that otherwise exercise real logic
+      - [x] Verify build and tests with zig build and zig build test
+      - [ ] User confirmation that the removed tests were the right ones
+    ```md
+    Removes tests that cannot fail because they re-implement production logic inline, restate configuration literals, or set a field and read it back.
+    ```
+
 ### [51#FIX] Place closed exit doors in rooms during combat and open on wave clear
 
   - tags: [world, doors, spawner, room-manager]

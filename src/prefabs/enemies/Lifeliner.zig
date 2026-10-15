@@ -229,17 +229,3 @@ test "Lifeliner enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 190.0), stats.current.movement_speed);
     try std.testing.expectEqual(@as(f32, 2.0), stats.current.attack_speed);
 }
-
-test "Lifeliner ability profiles and animations" {
-    try std.testing.expectEqual(@as(usize, 2), lifeliner_abilities.len);
-    try std.testing.expectEqual(Ability.ExecutionType.custom, lifeliner_abilities[0].execution_type);
-    try std.testing.expectEqual(Ability.ExecutionType.custom, lifeliner_abilities[1].execution_type);
-
-    for (lifeliner_animations) |anim| {
-        for (anim.base_keyframes) |keyframe| {
-            try std.testing.expect(keyframe.sprite != null);
-            try std.testing.expect(keyframe.width.? >= 48.0);
-            try std.testing.expect(keyframe.height.? >= 48.0);
-        }
-    }
-}

@@ -283,29 +283,3 @@ test "Tank enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 25.0), stats.base.armour);
     try std.testing.expectEqual(@as(f32, 95.0), stats.current.movement_speed);
 }
-
-test "Tank ability profiles and animations" {
-    try std.testing.expectEqual(@as(usize, 4), tank_abilities.len);
-
-    const shield_ability = tank_abilities[0];
-    try std.testing.expectEqual(Ability.ExecutionType.custom, shield_ability.execution_type);
-
-    const slow_barrage = tank_abilities[1];
-    try std.testing.expectEqual(@as(u32, 3), slow_barrage.projectile_profile.?.wave_count);
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.slow, slow_barrage.projectile_profile.?.onhit_effect.?);
-
-    const knockback = tank_abilities[2];
-    try std.testing.expect(knockback.projectile_profile.?.knockback_strength > 0);
-
-    const stun_burst = tank_abilities[3];
-    try std.testing.expectEqual(@as(usize, 8), stun_burst.projectile_profile.?.spread_angles.len);
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.stun, stun_burst.projectile_profile.?.onhit_effect.?);
-
-    for (tank_animations) |anim| {
-        for (anim.base_keyframes) |keyframe| {
-            try std.testing.expect(keyframe.sprite != null);
-            try std.testing.expect(keyframe.width.? >= 70.0);
-            try std.testing.expect(keyframe.height.? >= 80.0);
-        }
-    }
-}

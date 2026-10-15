@@ -155,12 +155,3 @@ test "OverheadUI shouldRender suppresses when GameOverMenu or PauseMenu is showi
     PauseMenu.hide();
     try std.testing.expect(shouldRender());
 }
-
-test "OverheadUI show_health_bar defaults to true and can be toggled" {
-    var overhead_ui = Self{};
-    try std.testing.expect(overhead_ui.show_health_bar);
-
-    overhead_ui.show_health_bar = false;
-    try std.testing.expect(!overhead_ui.show_health_bar);
-}
-

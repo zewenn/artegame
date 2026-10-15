@@ -145,21 +145,3 @@ test "Angler enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 60.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 8.0), stats.current.attack_speed);
 }
-
-test "Angler rapid cardinal fire profile and animations" {
-    try std.testing.expectEqual(@as(usize, 1), angler_abilities.len);
-
-    const cardinal_shot = angler_abilities[0];
-    try std.testing.expectEqual(Ability.AimMode.absolute_world, cardinal_shot.projectile_profile.?.aim_mode);
-    try std.testing.expectEqual(@as(usize, 4), cardinal_shot.projectile_profile.?.spread_angles.len);
-    try std.testing.expectEqual(@as(f32, 2.00), cardinal_shot.cooldown);
-    try std.testing.expect(cardinal_shot.projectile_profile.?.damage <= 10.0);
-
-    for (angler_animations) |anim| {
-        for (anim.base_keyframes) |keyframe| {
-            try std.testing.expect(keyframe.sprite != null);
-            try std.testing.expectEqual(@as(f32, 56.0), keyframe.width.?);
-            try std.testing.expectEqual(@as(f32, 56.0), keyframe.height.?);
-        }
-    }
-}

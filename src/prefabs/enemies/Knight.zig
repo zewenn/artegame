@@ -225,24 +225,3 @@ test "Knight enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 35.0), stats.base.magic_resist);
     try std.testing.expectEqual(@as(f32, 120.0), stats.current.movement_speed);
 }
-
-test "Knight abilities configuration and conditions" {
-    try std.testing.expectEqual(@as(usize, 4), knight_abilities.len);
-
-    const heal_channel_ability = knight_abilities[0];
-    try std.testing.expectEqual(Ability.ExecutionType.custom, heal_channel_ability.execution_type);
-    try std.testing.expectEqual(@as(?f32, 0.25), heal_channel_ability.conditions.health_below_pct);
-
-    const weaken_ability = knight_abilities[1];
-    try std.testing.expectEqual(Ability.ExecutionType.custom, weaken_ability.execution_type);
-    try std.testing.expectEqual(@as(f32, 22.0), weaken_ability.cooldown);
-
-    const beheading_ability = knight_abilities[2];
-    try std.testing.expectEqual(Ability.ExecutionType.projectile, beheading_ability.execution_type);
-    try std.testing.expect(beheading_ability.projectile_profile.?.on_hit_callback != null);
-    try std.testing.expectEqual(Enemy.Ability.OnHitEffect.stun, beheading_ability.projectile_profile.?.onhit_effect.?);
-
-    const strike_ability = knight_abilities[3];
-    try std.testing.expectEqual(Ability.ExecutionType.projectile, strike_ability.execution_type);
-    try std.testing.expect(strike_ability.projectile_profile.?.damage > 1.0);
-}

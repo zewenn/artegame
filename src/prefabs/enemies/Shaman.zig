@@ -319,27 +319,3 @@ test "Shaman enemy creation and component configuration" {
     try std.testing.expectEqual(@as(f32, 140.0), stats.max.health);
     try std.testing.expectEqual(@as(f32, 125.0), stats.current.movement_speed);
 }
-
-test "Shaman ability profiles and animations" {
-    try std.testing.expectEqual(@as(usize, 4), shaman_abilities.len);
-    try std.testing.expectEqual(Ability.ExecutionType.custom, shaman_abilities[0].execution_type);
-    try std.testing.expectEqual(@as(f32, 0.25), shaman_abilities[0].conditions.health_below_pct.?);
-    try std.testing.expectEqualStrings("windup-cast-call-backup", shaman_abilities[0].windup_animation.?);
-
-    const healing_ability = shaman_abilities[1];
-    try std.testing.expect(healing_ability.projectile_profile.?.is_healing);
-    try std.testing.expectEqual(@as(usize, 8), healing_ability.projectile_profile.?.spread_angles.len);
-    try std.testing.expectEqual(Stats.Teams.enemy, healing_ability.projectile_profile.?.target_team);
-    try std.testing.expectEqualStrings("windup-cast-remote-healing", healing_ability.windup_animation.?);
-
-    try std.testing.expectEqualStrings("windup-cast-speed-boost", shaman_abilities[2].windup_animation.?);
-    try std.testing.expectEqualStrings("windup-cast", shaman_abilities[3].windup_animation.?);
-
-    for (shaman_animations) |anim| {
-        for (anim.base_keyframes) |keyframe| {
-            try std.testing.expect(std.mem.startsWith(u8, keyframe.sprite.?, "characters/enemies/shaman/"));
-            try std.testing.expect(keyframe.width.? >= 64.0);
-            try std.testing.expect(keyframe.height.? >= 64.0);
-        }
-    }
-}

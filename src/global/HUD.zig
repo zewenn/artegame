@@ -244,14 +244,6 @@ test "HUD.calculateUiScale integer scaling" {
     try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 800, .y = 600 }));
 }
 
-test "UI button base aspect ratios" {
-    try std.testing.expectEqual(@as(f32, 48.0), MENU_BUTTON_BASE_H);
-    try std.testing.expectEqual(@as(f32, 6.0), MENU_BUTTON_BASE_W / MENU_BUTTON_BASE_H);
-
-    try std.testing.expectEqual(@as(f32, 24.0), UTILITY_BUTTON_BASE_H);
-    try std.testing.expectEqual(@as(f32, 4.0), UTILITY_BUTTON_BASE_W / UTILITY_BUTTON_BASE_H);
-}
-
 test "UI button sprites idle and hover variants" {
     try std.testing.expectEqualStrings("ui/HUD/buttons/large_button1.png", getMenuButtonSprite(false));
     try std.testing.expectEqualStrings("ui/HUD/buttons/large_button2.png", getMenuButtonSprite(true));
