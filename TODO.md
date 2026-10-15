@@ -15,6 +15,22 @@
 
 ## Work in Progress
 
+### [51#FIX] Place closed exit doors in rooms during combat and open on wave clear
+
+  - tags: [world, doors, spawner, room-manager]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Refactor DoorSpawner to support closed door spawning and scene door opening
+      - [x] Update RoomManager to spawn closed doors at combat start across all rooms
+      - [x] Open existing doors upon wave completion in RoomManager
+      - [x] Add unit tests for closed/open door states in DoorSpawner
+      - [x] Verify build and tests with zig build test
+      - [ ] User confirmation that exit doors appear closed during combat and open on clear
+    ```md
+    Ensures exit doors are placed in rooms as closed obstacles during the combat phase and automatically open when the room combat wave is cleared, aligning all rooms with the tutorial room behavior.
+    ```
+
 ### [38#AST] Sprite, particle, UI, and audio asset integration for v4.0.0 content
 
   - tags: [assets, sprites, audio, vfx, ui]

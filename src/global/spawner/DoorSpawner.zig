@@ -12,10 +12,27 @@ const RoomType = RoomManager.RoomType;
 
 const Self = @This();
 
+pub fn spawnCombatDoors(
+    current_room_number: u32,
+    player_stats: ?Stats,
+    player_attack: ?Attack,
+) !void {
+    try spawnRoomDoors(current_room_number, player_stats, player_attack, false);
+}
+
 pub fn spawnReplenishDoors(
     current_room_number: u32,
     player_stats: ?Stats,
     player_attack: ?Attack,
+) !void {
+    try spawnRoomDoors(current_room_number, player_stats, player_attack, true);
+}
+
+pub fn spawnRoomDoors(
+    current_room_number: u32,
+    player_stats: ?Stats,
+    player_attack: ?Attack,
+    is_open: bool,
 ) !void {
     cleanupDoors();
 
@@ -32,7 +49,7 @@ pub fn spawnReplenishDoors(
                 .title = "Map Editor",
                 .icon = "ui/icons/empty_icon.png",
                 .reward_kind = .boon_category,
-                .is_open = true,
+                .is_open = is_open,
             });
         }
         return;
@@ -45,7 +62,7 @@ pub fn spawnReplenishDoors(
             .title = "Room 1",
             .icon = "ui/icons/empty_icon.png",
             .reward_kind = .boon_category,
-            .is_open = false,
+            .is_open = is_open,
         });
         return;
     }
@@ -57,7 +74,7 @@ pub fn spawnReplenishDoors(
             .title = "Boss Room",
             .icon = "ui/icons/goliath_icon.png",
             .reward_kind = .boss,
-            .is_open = true,
+            .is_open = is_open,
         });
         return;
     }
@@ -69,7 +86,7 @@ pub fn spawnReplenishDoors(
             .title = "Mini-Boss",
             .icon = "ui/icons/goliath_icon.png",
             .reward_kind = .mini_boss,
-            .is_open = true,
+            .is_open = is_open,
         });
         return;
     }
@@ -81,12 +98,12 @@ pub fn spawnReplenishDoors(
             .title = "Tutorial",
             .icon = "ui/icons/empty_icon.png",
             .reward_kind = .boon_category,
-            .is_open = true,
+            .is_open = is_open,
         });
         return;
     }
 
-    try spawnNormalRoomDoors(editor_door_positions, player_stats, player_attack);
+    try spawnNormalRoomDoors(editor_door_positions, player_stats, player_attack, is_open);
 }
 
 fn spawnSpecialDoor(
@@ -107,6 +124,7 @@ fn spawnNormalRoomDoors(
     editor_door_positions: []const lm.Vector2,
     maybe_stats: ?Stats,
     maybe_attack: ?Attack,
+    is_open: bool,
 ) !void {
     var category_buffer: [BoonCategory.all_categories.len]BoonCategory = undefined;
     var eligible_categories: []const BoonCategory = &.{};
@@ -154,10 +172,31 @@ fn spawnNormalRoomDoors(
             .title = chosen_category.name,
             .icon = chosen_category.icon,
             .reward_kind = .boon_category,
-            .is_open = true,
+            .is_open = is_open,
         });
         try lm.summoning.entity(door_entity);
     }
+}
+
+pub fn openAllDoors() void {
+    const scene = lm.activeScene() orelse return;
+    for (scene.entities.items()) |entity| {
+        openDoorEntity(entity);
+    }
+}
+
+fn openDoorEntity(entity: *lm.Entity) void {
+    if (!std.mem.startsWith(u8, entity.id, "exit-door")) return;
+    const door = entity.getComponent(Door) orelse return;
+    door.setOpenState(true);
+}
+
+pub fn hasDoorsInScene() bool {
+    const scene = lm.activeScene() orelse return false;
+    for (scene.entities.items()) |entity| {
+        if (std.mem.startsWith(u8, entity.id, "exit-door")) return true;
+    }
+    return false;
 }
 
 pub fn cleanupDoors() void {

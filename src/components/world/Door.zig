@@ -136,15 +136,21 @@ pub fn setOpenState(self: *Self, open: bool) void {
 
 fn applyVisualState(self: *Self) void {
     const renderer = self.renderer orelse return;
-    if (!self.is_open) {
-        renderer.tint = lm.Color{ .r = 70, .g = 75, .b = 90, .a = 220 };
+    const path_start = "items/exit_doors/";
+
+    if (self.is_open) {
+        renderer.img_path = switch (self.reward_kind) {
+            .boon_category => path_start ++ "normal_open.png",
+            .mini_boss => path_start ++ "miniboss_open.png",
+            .boss => path_start ++ "boss_open.png",
+        };
         return;
     }
 
-    renderer.tint = switch (self.reward_kind) {
-        .boss => lm.Color{ .r = 255, .g = 215, .b = 60, .a = 255 },
-        .mini_boss => lm.Color{ .r = 200, .g = 120, .b = 255, .a = 255 },
-        .boon_category => lm.Color{ .r = 120, .g = 210, .b = 255, .a = 255 },
+    renderer.img_path = switch (self.reward_kind) {
+        .boon_category => path_start ++ "normal_closed.png",
+        .mini_boss => path_start ++ "miniboss_closed.png",
+        .boss => path_start ++ "boss_closed.png",
     };
 }
 

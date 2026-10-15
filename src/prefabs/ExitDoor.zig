@@ -21,7 +21,7 @@ pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
             .position = .init(position.x, position.y, 0),
             .scale = .init(96, 96),
         },
-        lm.Renderer.sprite("ui/icons/empty_icon.png"),
+        lm.Renderer.sprite("items/exit_doors/normal_closed.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .static,
             .transform = .{

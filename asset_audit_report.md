@@ -16,7 +16,7 @@ This report details every missing asset (currently relying on placeholders like 
 | **Bosses** | King, Queen | **24 x 24** | 96 x 96 to 100 x 100 |
 | **Mini-Bosses** | Knight, Bishop | **16 x 16** (or **20 x 20**) | 64 x 64 |
 | **World Entities** | Exit Door (open / closed) | **24 x 24** | 96 x 96 |
-| **World Drops** | Boon Drop, Anchor | **16 x 16** | 48 x 48 (drop), 64 x 64 (anchor) |
+| **World Drops** | Boon Drop | **16 x 16** | 48 x 48 |
 | **Pickups** | Experience Orb | **16 x 16** (8x8 crystal) | 32 x 32 |
 | **Projectiles** | Healing shot, Pull orb, Darts, Barrages | **16 x 16** | 32 x 32 to 48 x 48 |
 | **Status Overlays** | Stun, Sleep, Root, Regen, Stasis, Aura | **16 x 16** (Aura: **24 x 24**) | 64 x 64 to 80 x 80 |
@@ -93,10 +93,6 @@ All bosses and mini-bosses currently borrow minion sprites with scale/tint adjus
   - **Required Native Size**: **16 x 16** px (centered 8x8 glowing xp gem)
   - **In-Game Scale**: 32 x 32 px
   - **Current Fallback**: Reuses `ui/icons/sleep_icon.png` (16x16).
-- **Anchor** (`src/prefabs/Anchor.zig`):
-  - **Required Native Size**: **16 x 16** px
-  - **In-Game Scale**: 64 x 64 px
-  - **Current Fallback**: Renders `ui/icons/empty_icon.png`.
 
 ---
 

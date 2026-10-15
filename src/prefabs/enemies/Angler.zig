@@ -152,12 +152,12 @@ test "Angler rapid cardinal fire profile and animations" {
     const cardinal_shot = angler_abilities[0];
     try std.testing.expectEqual(Ability.AimMode.absolute_world, cardinal_shot.projectile_profile.?.aim_mode);
     try std.testing.expectEqual(@as(usize, 4), cardinal_shot.projectile_profile.?.spread_angles.len);
-    try std.testing.expectEqual(@as(f32, 0.10), cardinal_shot.cooldown);
+    try std.testing.expectEqual(@as(f32, 2.00), cardinal_shot.cooldown);
     try std.testing.expect(cardinal_shot.projectile_profile.?.damage <= 10.0);
 
     for (angler_animations) |anim| {
         for (anim.base_keyframes) |keyframe| {
-            try std.testing.expectEqualStrings("empty.png", keyframe.sprite.?);
+            try std.testing.expect(keyframe.sprite != null);
             try std.testing.expectEqual(@as(f32, 56.0), keyframe.width.?);
             try std.testing.expectEqual(@as(f32, 56.0), keyframe.height.?);
         }

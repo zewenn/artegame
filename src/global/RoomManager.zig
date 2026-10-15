@@ -231,7 +231,7 @@ pub fn Awake(self: *Self) !void {
     });
 
     if (self.state == .replenish) {
-        self.spawnDoorsForReplenish();
+        self.spawnDoorsForCurrentRoom(true);
     }
 }
 
@@ -303,33 +303,7 @@ fn getPlayerPosition(self: *const Self) lm.Vector2 {
 
 pub fn Update(self: *Self, scene: *lm.Scene) !void {
     if (self.player == null or self.player_objectives == null) {
-        const player = scene.getEntityById("player") orelse {
-            self.player = null;
-            self.player_objectives = null;
-            return;
-        };
-
-        self.player = player;
-        self.player_objectives = player.getComponent(player_components.Objectives);
-
-        if (is_playtest_mode) {
-            applyPlaytestScalingToPlayer(player, playtest_room_type);
-        } else {
-            applySavedRunToPlayer(player);
-        }
-
-        if (self.state == .combat and !self.spawner.is_active) {
-            try self.startCurrentRoomCombat();
-        } else if (self.state == .replenish) {
-            if (self.player_objectives) |objectives| {
-                const objective_description = if (is_playtest_mode)
-                    playtest_replenish_objective_text
-                else
-                    replenish_objective_text;
-                _ = try objectives.setSingleObjective("Replenish", objective_description);
-            }
-            self.spawnDoorsForReplenish();
-        }
+        try self.initializeActivePlayer(scene);
     }
 
     if (lm.time.paused()) return;
@@ -341,6 +315,44 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     if (self.state == .combat and self.spawner.isWaveFinished()) {
         try self.completeCurrentRoomCombat();
     }
+}
+
+fn initializeActivePlayer(self: *Self, scene: *lm.Scene) !void {
+    const player = scene.getEntityById("player") orelse {
+        self.player = null;
+        self.player_objectives = null;
+        return;
+    };
+
+    self.player = player;
+    self.player_objectives = player.getComponent(player_components.Objectives);
+
+    if (is_playtest_mode) {
+        applyPlaytestScalingToPlayer(player, playtest_room_type);
+    } else {
+        applySavedRunToPlayer(player);
+    }
+
+    if (self.state == .combat and !self.spawner.is_active) {
+        try self.startCurrentRoomCombat();
+        return;
+    }
+
+    if (self.state == .replenish) {
+        self.initializeReplenishObjectives();
+        if (!DoorSpawner.hasDoorsInScene()) {
+            self.spawnDoorsForCurrentRoom(true);
+        }
+    }
+}
+
+fn initializeReplenishObjectives(self: *Self) void {
+    const objectives = self.player_objectives orelse return;
+    const objective_description = if (is_playtest_mode)
+        playtest_replenish_objective_text
+    else
+        replenish_objective_text;
+    _ = objectives.setSingleObjective("Replenish", objective_description) catch {};
 }
 
 pub fn End(self: *Self) !void {
@@ -355,9 +367,10 @@ fn startCurrentRoomCombat(self: *Self) !void {
     self.state = .combat;
     MusicManager.setGlobalPhase(.combat);
 
+    self.spawnDoorsForCurrentRoom(false);
+
     const room_type = self.getRoomType();
     if (room_type == .tutorial) {
-        self.spawnDoorsForReplenish();
         try lm.summoning.entity(try prefabs.enemies.TrainingDummy(.init(200.0, 0.0)));
         if (TutorialManager.get()) |tutorial_manager| {
             tutorial_manager.reset();
@@ -410,17 +423,21 @@ fn completeCurrentRoomCombat(self: *Self) !void {
         _ = try objectives.setSingleObjective("Replenish", objective_description);
     }
 
-    self.spawnDoorsForReplenish();
+    if (DoorSpawner.hasDoorsInScene()) {
+        DoorSpawner.openAllDoors();
+    } else {
+        self.spawnDoorsForCurrentRoom(true);
+    }
     self.saveRunState();
 }
 
-fn spawnDoorsForReplenish(self: *Self) void {
+fn spawnDoorsForCurrentRoom(self: *Self, is_open: bool) void {
     const player_entity = self.player;
     const stats_value = if (player_entity) |entity| (if (entity.getComponent(Stats)) |stats| stats.* else null) else null;
     const attack_value = if (player_entity) |entity| (if (entity.getComponent(player_components.Attack)) |attack| attack.* else null) else null;
 
-    DoorSpawner.spawnReplenishDoors(self.current_room, stats_value, attack_value) catch |err| {
-        std.log.err("Failed to spawn replenish doors: {any}", .{err});
+    DoorSpawner.spawnRoomDoors(self.current_room, stats_value, attack_value, is_open) catch |err| {
+        std.log.err("Failed to spawn room doors: {any}", .{err});
     };
 }
 

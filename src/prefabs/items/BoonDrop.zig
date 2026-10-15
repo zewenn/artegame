@@ -28,7 +28,7 @@ pub fn BoonDrop(position: lm.Vector2) !*lm.Entity {
             .position = .init(position.x, position.y, 0),
             .scale = .init(48, 48),
         },
-        lm.Renderer.sprite("ui/icons/empty_icon.png"),
+        lm.Renderer.sprite("items/boon_drop.png"),
         lm.RectangleCollider.initConfig(.{
             .type = .trigger,
             .transform = .{ .scale = .init(48, 48) },

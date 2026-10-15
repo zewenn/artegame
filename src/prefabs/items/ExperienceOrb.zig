@@ -12,9 +12,9 @@ pub fn ExperienceOrb(position: lm.Vector2, experience_value: usize, initial_velo
     return try lm.makeEntityI("experience-orb", experience_orb_count, .{
         lm.Transform{
             .position = .init(position.x, position.y, 0),
-            .scale = .init(24, 24),
+            .scale = .init(32, 32),
         },
-        lm.Renderer.sprite("ui/icons/sleep_icon.png"),
+        lm.Renderer.sprite("items/exp_orb.png"),
         ExperienceOrbComponent{
             .experience_value = experience_value,
             .velocity = initial_velocity,

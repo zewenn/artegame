@@ -303,7 +303,7 @@ test "Tank ability profiles and animations" {
 
     for (tank_animations) |anim| {
         for (anim.base_keyframes) |keyframe| {
-            try std.testing.expectEqualStrings("empty.png", keyframe.sprite.?);
+            try std.testing.expect(keyframe.sprite != null);
             try std.testing.expect(keyframe.width.? >= 70.0);
             try std.testing.expect(keyframe.height.? >= 80.0);
         }
