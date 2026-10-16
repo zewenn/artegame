@@ -24,10 +24,15 @@ const Self = @This();
 var active_editor_instance: ?*Self = null;
 var playtest_override_arena: ?std.heap.ArenaAllocator = null;
 
+pub const min_map_dimension_tiles: u32 = 32;
+pub const max_map_dimension_tiles: u32 = 128;
+pub const dimension_step_increment_tiles: u32 = 16;
+
 pub const EditorCategory = enum {
     terrain,
     spawners,
     entities,
+    map_size,
     file_management,
 };
 
@@ -81,8 +86,8 @@ allocator: ?std.mem.Allocator = null,
 camera: ?*lm.Camera = null,
 renderer: MapRenderer = MapRenderer.init(),
 
-width_tiles: u32 = 32,
-height_tiles: u32 = 24,
+width_tiles: u32 = min_map_dimension_tiles,
+height_tiles: u32 = min_map_dimension_tiles,
 tile_size_pixels: f32 = 64.0,
 
 background_tiles: []u8 = &.{},
@@ -109,6 +114,9 @@ map_name_length: usize = 0,
 display_name_buffer: [80]u8 = undefined,
 preview_path_buffer: [128]u8 = undefined,
 zoom_text_buffer: [32]u8 = undefined,
+dimension_text_buffer: [64]u8 = undefined,
+pixel_dimension_text_buffer: [64]u8 = undefined,
+status_message_buffer: [64]u8 = undefined,
 is_dirty: bool = true,
 
 pub fn Awake(self: *Self) !void {
@@ -125,7 +133,7 @@ pub fn Awake(self: *Self) !void {
     @memcpy(self.map_name_buffer[0..initial_name.len], initial_name);
     self.map_name_length = initial_name.len;
 
-    try self.resetMapGrid(32, 24);
+    try self.resetMapGrid(min_map_dimension_tiles, min_map_dimension_tiles);
 }
 
 pub fn Start(self: *Self) void {
@@ -225,6 +233,119 @@ pub fn resetMapGrid(self: *Self, new_width_tiles: u32, new_height_tiles: u32) !v
     self.generatePerimeterWalls();
     self.is_dirty = true;
     self.status_message = "Reset to new map";
+}
+
+pub fn stepDimension(current_dimension_tiles: u32, step_direction: i32) u32 {
+    if (step_direction > 0) {
+        if (current_dimension_tiles >= max_map_dimension_tiles) {
+            return max_map_dimension_tiles;
+        }
+        const aligned_step = (current_dimension_tiles / dimension_step_increment_tiles + 1) * dimension_step_increment_tiles;
+        return std.math.clamp(aligned_step, min_map_dimension_tiles, max_map_dimension_tiles);
+    } else if (step_direction < 0) {
+        if (current_dimension_tiles <= min_map_dimension_tiles) {
+            return min_map_dimension_tiles;
+        }
+        const remainder = current_dimension_tiles % dimension_step_increment_tiles;
+        const aligned_step = if (remainder == 0)
+            current_dimension_tiles - dimension_step_increment_tiles
+        else
+            (current_dimension_tiles / dimension_step_increment_tiles) * dimension_step_increment_tiles;
+        return std.math.clamp(aligned_step, min_map_dimension_tiles, max_map_dimension_tiles);
+    }
+    return std.math.clamp(current_dimension_tiles, min_map_dimension_tiles, max_map_dimension_tiles);
+}
+
+pub fn clampEntitiesToBounds(self: *Self) void {
+    const max_x_pixels = @as(f32, @floatFromInt(self.width_tiles)) * self.tile_size_pixels;
+    const max_y_pixels = @as(f32, @floatFromInt(self.height_tiles)) * self.tile_size_pixels;
+    const margin_pixels = self.tile_size_pixels;
+
+    self.player_spawn_position.x = std.math.clamp(
+        self.player_spawn_position.x,
+        margin_pixels,
+        max_x_pixels - margin_pixels,
+    );
+    self.player_spawn_position.y = std.math.clamp(
+        self.player_spawn_position.y,
+        margin_pixels,
+        max_y_pixels - margin_pixels,
+    );
+
+    for (self.exit_door_positions.items()) |*door_position| {
+        door_position.x = std.math.clamp(
+            door_position.x,
+            margin_pixels,
+            max_x_pixels - margin_pixels,
+        );
+        door_position.y = std.math.clamp(
+            door_position.y,
+            margin_pixels,
+            max_y_pixels - margin_pixels,
+        );
+    }
+
+    for (self.spawn_zones.items()) |*zone| {
+        const half_width_pixels = zone.width_pixels / 2.0;
+        const half_height_pixels = zone.height_pixels / 2.0;
+        zone.center_x_pixels = std.math.clamp(
+            zone.center_x_pixels,
+            half_width_pixels,
+            max_x_pixels - half_width_pixels,
+        );
+        zone.center_y_pixels = std.math.clamp(
+            zone.center_y_pixels,
+            half_height_pixels,
+            max_y_pixels - half_height_pixels,
+        );
+    }
+}
+
+pub fn resizeMapGrid(self: *Self, requested_width_tiles: u32, requested_height_tiles: u32) !void {
+    const target_width_tiles = std.math.clamp(requested_width_tiles, min_map_dimension_tiles, max_map_dimension_tiles);
+    const target_height_tiles = std.math.clamp(requested_height_tiles, min_map_dimension_tiles, max_map_dimension_tiles);
+
+    if (target_width_tiles == self.width_tiles and target_height_tiles == self.height_tiles) {
+        return;
+    }
+
+    const alloc = self.allocator orelse return error.MissingAllocator;
+    const total_new_tiles = target_width_tiles * target_height_tiles;
+    const new_background_tiles = try alloc.alloc(u8, total_new_tiles);
+    @memset(new_background_tiles, @intFromEnum(TerrainType.stone));
+
+    if (self.background_tiles.len > 0 and self.width_tiles > 0 and self.height_tiles > 0) {
+        const copy_columns_count = @min(self.width_tiles, target_width_tiles);
+        const copy_rows_count = @min(self.height_tiles, target_height_tiles);
+
+        var row_index: u32 = 0;
+        while (row_index < copy_rows_count) : (row_index += 1) {
+            const source_start_index = row_index * self.width_tiles;
+            const source_end_index = source_start_index + copy_columns_count;
+            const destination_start_index = row_index * target_width_tiles;
+            const destination_end_index = destination_start_index + copy_columns_count;
+
+            @memcpy(
+                new_background_tiles[destination_start_index..destination_end_index],
+                self.background_tiles[source_start_index..source_end_index],
+            );
+        }
+
+        alloc.free(self.background_tiles);
+    }
+
+    self.background_tiles = new_background_tiles;
+    self.width_tiles = target_width_tiles;
+    self.height_tiles = target_height_tiles;
+
+    self.clampEntitiesToBounds();
+    self.regenerateWallBoundingBoxes();
+    self.is_dirty = true;
+    self.status_message = std.fmt.bufPrint(
+        &self.status_message_buffer,
+        "Resized to {d}x{d} tiles",
+        .{ self.width_tiles, self.height_tiles },
+    ) catch "Map resized";
 }
 
 pub fn generatePerimeterWalls(self: *Self) void {
@@ -734,6 +855,7 @@ fn drawEditorUi(self: *Self, window_size: lm.Vector2) void {
             .terrain => self.drawTerrainCategory(),
             .spawners => self.drawSpawnersCategory(),
             .entities => self.drawEntitiesCategory(),
+            .map_size => self.drawSizeCategory(),
             .file_management => self.drawFileCategory(),
         }
 
@@ -799,6 +921,7 @@ fn drawCategoryTabs(self: *Self) void {
         self.drawCategoryButton(.terrain, "TILES");
         self.drawCategoryButton(.spawners, "SPAWN");
         self.drawCategoryButton(.entities, "ENTITY");
+        self.drawCategoryButton(.map_size, "SIZE");
         self.drawCategoryButton(.file_management, "FILE");
     });
 }
@@ -819,6 +942,9 @@ pub fn selectCategory(self: *Self, category: EditorCategory) void {
             self.current_tool = .player_spawn;
             self.status_message = "Switched to Entities panel";
         },
+        .map_size => {
+            self.status_message = "Switched to Map Size panel";
+        },
         .file_management => {
             self.status_message = "Switched to File panel";
         },
@@ -830,7 +956,7 @@ fn drawCategoryButton(self: *Self, category: EditorCategory, label: []const u8) 
     clay.UI()(.{
         .id = .IDI("cat-btn-", @intFromEnum(category)),
         .layout = .{
-            .padding = .axes(4, 8),
+            .padding = .axes(4, 6),
             .child_alignment = .{ .x = .center, .y = .center },
         },
         .background_color = if (is_active) ui.color(240, 200, 100, 220) else ui.color(30, 36, 48, 200),
@@ -1063,6 +1189,263 @@ fn drawEntitiesCategory(self: *Self) void {
         self.drawToolButton(.player_spawn, "Set Player Spawn Position");
         self.drawToolButton(.exit_door, "Place/Toggle Exit Door");
         self.drawToolButton(.exit_door_erase, "Remove Exit Door");
+    });
+}
+
+fn drawDimensionStepButton(
+    self: *Self,
+    element_id: clay.ElementId,
+    label: []const u8,
+    width_step_direction: i32,
+    height_step_direction: i32,
+) void {
+    const is_width_disabled = (width_step_direction < 0 and self.width_tiles <= min_map_dimension_tiles) or
+        (width_step_direction > 0 and self.width_tiles >= max_map_dimension_tiles);
+    const is_height_disabled = (height_step_direction < 0 and self.height_tiles <= min_map_dimension_tiles) or
+        (height_step_direction > 0 and self.height_tiles >= max_map_dimension_tiles);
+
+    const is_disabled = if (width_step_direction != 0 and height_step_direction != 0)
+        (is_width_disabled and is_height_disabled)
+    else if (width_step_direction != 0)
+        is_width_disabled
+    else
+        is_height_disabled;
+
+    const background_color = if (is_disabled)
+        ui.color(30, 34, 44, 150)
+    else
+        ui.color(45, 55, 75, 220);
+
+    const text_color = if (is_disabled)
+        ui.color(100, 110, 130, 180)
+    else
+        ui.color(220, 230, 245, 255);
+
+    clay.UI()(.{
+        .id = element_id,
+        .layout = .{
+            .padding = .axes(6, 8),
+            .sizing = .{ .w = .grow },
+            .child_alignment = .{ .x = .center, .y = .center },
+        },
+        .background_color = background_color,
+        .corner_radius = .all(4),
+    })({
+        if (!is_disabled and clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            const new_width = if (width_step_direction != 0)
+                stepDimension(self.width_tiles, width_step_direction)
+            else
+                self.width_tiles;
+            const new_height = if (height_step_direction != 0)
+                stepDimension(self.height_tiles, height_step_direction)
+            else
+                self.height_tiles;
+
+            self.resizeMapGrid(new_width, new_height) catch |err| {
+                std.log.err("Failed to resize map grid: {any}", .{err});
+                self.status_message = "Resize failed (out of memory)";
+            };
+        }
+        ui.text(label, .{
+            .color = text_color,
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawSizePresetButton(
+    self: *Self,
+    element_id: clay.ElementId,
+    label: []const u8,
+    target_width_tiles: u32,
+    target_height_tiles: u32,
+) void {
+    const is_current = (self.width_tiles == target_width_tiles and self.height_tiles == target_height_tiles);
+    const background_color = if (is_current)
+        ui.color(240, 200, 100, 220)
+    else
+        ui.color(35, 42, 58, 200);
+
+    const text_color = if (is_current)
+        ui.color(10, 12, 16, 255)
+    else
+        ui.color(200, 215, 235, 255);
+
+    clay.UI()(.{
+        .id = element_id,
+        .layout = .{
+            .padding = .axes(5, 8),
+            .sizing = .{ .w = .grow },
+            .child_alignment = .{ .x = .center, .y = .center },
+        },
+        .background_color = background_color,
+        .corner_radius = .all(4),
+    })({
+        if (!is_current and clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            self.resizeMapGrid(target_width_tiles, target_height_tiles) catch |err| {
+                std.log.err("Failed to resize map grid: {any}", .{err});
+                self.status_message = "Resize failed (out of memory)";
+            };
+        }
+        ui.text(label, .{
+            .color = text_color,
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+    });
+}
+
+fn drawSizeCategory(self: *Self) void {
+    ui.new(.{
+        .id = .ID("size-panel"),
+        .layout = .{ .direction = .top_to_bottom, .child_gap = 8 },
+    })({
+        ui.text("CURRENT DIMENSIONS:", .{
+            .color = ui.color(160, 175, 200, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        ui.new(.{
+            .id = .ID("size-info-card"),
+            .layout = .{
+                .direction = .top_to_bottom,
+                .padding = .all(8),
+                .child_gap = 4,
+                .sizing = .{ .w = .grow },
+            },
+            .background_color = ui.color(24, 28, 40, 220),
+            .corner_radius = .all(4),
+        })({
+            const dimension_text = std.fmt.bufPrint(
+                &self.dimension_text_buffer,
+                "{d} x {d} Tiles",
+                .{ self.width_tiles, self.height_tiles },
+            ) catch "Dimensions";
+
+            const pixel_text = std.fmt.bufPrint(
+                &self.pixel_dimension_text_buffer,
+                "{d} x {d} Pixels",
+                .{ self.width_tiles * 64, self.height_tiles * 64 },
+            ) catch "Pixels";
+
+            ui.text(dimension_text, .{
+                .color = ui.color(240, 200, 100, 255),
+                .font_size = 14,
+                .letter_spacing = 1,
+            });
+
+            ui.text(pixel_text, .{
+                .color = ui.color(170, 185, 210, 255),
+                .font_size = 11,
+            });
+        });
+
+        ui.text("ADJUST DIMENSIONS (STEP 16):", .{
+            .color = ui.color(160, 175, 200, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        ui.new(.{
+            .id = .ID("size-width-controls-row"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawDimensionStepButton(.ID("size-width-decrease-button"), "Width -16", -1, 0);
+            self.drawDimensionStepButton(.ID("size-width-increase-button"), "Width +16", 1, 0);
+        });
+
+        ui.new(.{
+            .id = .ID("size-height-controls-row"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawDimensionStepButton(.ID("size-height-decrease-button"), "Height -16", 0, -1);
+            self.drawDimensionStepButton(.ID("size-height-increase-button"), "Height +16", 0, 1);
+        });
+
+        ui.new(.{
+            .id = .ID("size-uniform-controls-row"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawDimensionStepButton(.ID("size-both-decrease-button"), "Both -16", -1, -1);
+            self.drawDimensionStepButton(.ID("size-both-increase-button"), "Both +16", 1, 1);
+        });
+
+        ui.text("SQUARE PRESETS:", .{
+            .color = ui.color(160, 175, 200, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        ui.new(.{
+            .id = .ID("size-presets-row-1"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawSizePresetButton(.ID("size-preset-32-button"), "32 x 32 (Min)", 32, 32);
+            self.drawSizePresetButton(.ID("size-preset-48-button"), "48 x 48", 48, 48);
+        });
+
+        ui.new(.{
+            .id = .ID("size-presets-row-2"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawSizePresetButton(.ID("size-preset-64-button"), "64 x 64", 64, 64);
+            self.drawSizePresetButton(.ID("size-preset-80-button"), "80 x 80", 80, 80);
+        });
+
+        ui.new(.{
+            .id = .ID("size-presets-row-3"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawSizePresetButton(.ID("size-preset-96-button"), "96 x 96", 96, 96);
+            self.drawSizePresetButton(.ID("size-preset-112-button"), "112 x 112", 112, 112);
+        });
+
+        ui.new(.{
+            .id = .ID("size-presets-row-4"),
+            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+        })({
+            self.drawSizePresetButton(.ID("size-preset-128-button"), "128 x 128 (Max)", 128, 128);
+        });
+
+        ui.text("BOUNDARY ACTIONS:", .{
+            .color = ui.color(160, 175, 200, 255),
+            .font_size = 11,
+            .letter_spacing = 1,
+        });
+
+        clay.UI()(.{
+            .id = .ID("size-gen-boundary-button"),
+            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+            .background_color = ui.color(45, 55, 75, 220),
+            .corner_radius = .all(4),
+        })({
+            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                self.generatePerimeterWalls();
+            }
+            ui.text("Generate Perimeter Walls", .{
+                .color = ui.color(220, 230, 245, 255),
+                .font_size = 12,
+                .letter_spacing = 1,
+            });
+        });
+
+        clay.UI()(.{
+            .id = .ID("size-clear-boundary-button"),
+            .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
+            .background_color = ui.color(75, 35, 40, 220),
+            .corner_radius = .all(4),
+        })({
+            if (clay.hovered() and lm.mouse.getButtonDown(.left)) {
+                self.clearPerimeterWalls();
+            }
+            ui.text("Clear Perimeter Walls", .{
+                .color = ui.color(255, 180, 180, 255),
+                .font_size = 12,
+                .letter_spacing = 1,
+            });
+        });
     });
 }
 
@@ -2011,4 +2394,78 @@ test "MapEditor detectCanvasRoomType detects boss and miniboss zones" {
         .enemy_type = .queen,
     });
     try std.testing.expectEqual(RoomManager.RoomType.boss, editor.detectCanvasRoomType());
+}
+
+test "MapEditor stepDimension stepping within bounds and increment of 16" {
+    try std.testing.expectEqual(@as(u32, 32), stepDimension(32, -1));
+    try std.testing.expectEqual(@as(u32, 48), stepDimension(32, 1));
+    try std.testing.expectEqual(@as(u32, 64), stepDimension(48, 1));
+    try std.testing.expectEqual(@as(u32, 128), stepDimension(112, 1));
+    try std.testing.expectEqual(@as(u32, 128), stepDimension(128, 1));
+    try std.testing.expectEqual(@as(u32, 112), stepDimension(128, -1));
+
+    try std.testing.expectEqual(@as(u32, 32), stepDimension(24, 1));
+    try std.testing.expectEqual(@as(u32, 32), stepDimension(24, -1));
+    try std.testing.expectEqual(@as(u32, 48), stepDimension(40, 1));
+    try std.testing.expectEqual(@as(u32, 32), stepDimension(40, -1));
+}
+
+test "MapEditor resizeMapGrid copies tiles and clamps entities within bounds" {
+    var editor = Self{};
+    editor.allocator = std.testing.allocator;
+    editor.walls = lm.List(WallSegment).init(std.testing.allocator);
+    defer editor.walls.deinit();
+    editor.spawn_zones = lm.List(SpawnZoneRecord).init(std.testing.allocator);
+    defer editor.spawn_zones.deinit();
+    editor.exit_door_positions = lm.List(lm.Vector2).init(std.testing.allocator);
+    defer editor.exit_door_positions.deinit();
+
+    try editor.resizeMapGrid(32, 32);
+    defer std.testing.allocator.free(editor.background_tiles);
+
+    try std.testing.expectEqual(@as(u32, 32), editor.width_tiles);
+    try std.testing.expectEqual(@as(u32, 32), editor.height_tiles);
+
+    const test_wall_value = @intFromEnum(TerrainType.wall_top);
+    editor.background_tiles[5 * 32 + 5] = test_wall_value;
+    editor.player_spawn_position = lm.Vec2(1000.0, 1000.0);
+
+    try editor.spawn_zones.append(.{
+        .center_x_pixels = 1500.0,
+        .center_y_pixels = 1500.0,
+        .width_pixels = 192.0,
+        .height_pixels = 192.0,
+    });
+    try editor.exit_door_positions.append(lm.Vec2(1800.0, 1800.0));
+
+    try editor.resizeMapGrid(48, 48);
+
+    try std.testing.expectEqual(@as(u32, 48), editor.width_tiles);
+    try std.testing.expectEqual(@as(u32, 48), editor.height_tiles);
+    try std.testing.expectEqual(test_wall_value, editor.background_tiles[5 * 48 + 5]);
+    try std.testing.expectEqual(@intFromEnum(TerrainType.stone), editor.background_tiles[35 * 48 + 35]);
+
+    try std.testing.expectEqual(@as(f32, 1000.0), editor.player_spawn_position.x);
+    try std.testing.expectEqual(@as(f32, 1000.0), editor.player_spawn_position.y);
+    try std.testing.expectEqual(@as(f32, 1500.0), editor.spawn_zones.items()[0].center_x_pixels);
+    try std.testing.expectEqual(@as(f32, 1800.0), editor.exit_door_positions.items()[0].x);
+
+    editor.player_spawn_position = lm.Vec2(2900.0, 2900.0);
+    editor.spawn_zones.items()[0].center_x_pixels = 2800.0;
+    editor.spawn_zones.items()[0].center_y_pixels = 2800.0;
+    editor.exit_door_positions.items()[0] = lm.Vec2(2900.0, 2900.0);
+
+    try editor.resizeMapGrid(32, 32);
+
+    const max_pixel_boundary: f32 = 32.0 * 64.0;
+    try std.testing.expect(editor.player_spawn_position.x <= max_pixel_boundary - 64.0);
+    try std.testing.expect(editor.player_spawn_position.y <= max_pixel_boundary - 64.0);
+    try std.testing.expect(editor.exit_door_positions.items()[0].x <= max_pixel_boundary - 64.0);
+    try std.testing.expect(editor.spawn_zones.items()[0].center_x_pixels <= max_pixel_boundary - 96.0);
+}
+
+test "MapEditor selectCategory map_size updates current_category" {
+    var editor = Self{};
+    editor.selectCategory(.map_size);
+    try std.testing.expectEqual(EditorCategory.map_size, editor.current_category);
 }

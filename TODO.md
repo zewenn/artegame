@@ -34,6 +34,22 @@
 
 ## Done
 
+### [53#ARC] Map editor dimension resizing tab with 16-tile increments (32x32 to 128x128)
+
+  - tags: [map-editor, resize, dimensions, ui]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Add map_size category to EditorCategory and add "SIZE" tab to drawCategoryTabs in MapEditor.zig
+      - [x] Implement resizeMapGrid with tile preservation, boundary clamping, and renderer dimension updates
+      - [x] Build the Size panel UI (drawSizeCategory) with current dimension readouts, +/- 16 width/height/uniform controls, and preset buttons
+      - [x] Add unit tests for resizeMapGrid verifying dimensions, bounds clamping [32, 128], and tile copying
+      - [x] Verify build and tests with zig build and zig build test
+      - [ ] User confirmation that map resizing tab works as expected
+    ```md
+    Adds a dedicated "SIZE" tab in the MapEditor sidebar allowing the map width and height to be increased or decreased in increments of 16 tiles between 32x32 and 128x128, preserving existing tiles and clamping out-of-bounds entities.
+    ```
+
 ### [51#FIX] Place closed exit doors in rooms during combat and open on wave clear
 
   - tags: [world, doors, spawner, room-manager]
