@@ -2,6 +2,23 @@
 
 ## Backlog
 
+### [54#ARC] Projectile system optimization with Structure of Arrays (SoA)
+
+  - tags: [projectiles, soa, optimization, performance, v4.1.0]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [ ] Design SoA projectile data structure (e.g. std.MultiArrayList) decoupling projectiles from individual Loom entities
+      - [ ] Implement batch projectile lifecycle, motion integration, and lifetime expiration updates
+      - [ ] Implement optimized broadphase/narrowphase collision detection for active projectiles against walls and entities
+      - [ ] Implement batch or instanced projectile sprite rendering
+      - [ ] Migrate player weapons, spells, and enemy attack patterns to emit projectiles into the SoA manager
+      - [ ] Benchmark and stress test with thousands of concurrent projectiles on screen to ensure steady framerate
+      - [ ] User confirmation that projectile SoA system and performance optimizations work as expected
+    ```md
+    Refactors the projectile subsystem from individual heavy Loom entities into a Structure of Arrays (SoA) representation to enable high-throughput cache-coherent updates, fast iteration, and optimized batch collision/rendering when thousands of projectiles are active simultaneously on screen.
+    ```
+
 ### [19#OPS] Linux release build and packaging workflow
 
   - tags: [ci, release, linux]
