@@ -288,6 +288,15 @@ pub fn applySelfImposedStun(self: *Self, duration_seconds: f32) void {
     });
 }
 
+/// Stuns the entity even if it is unstoppable. See `addSelfImposedEffect`.
+pub fn applySelfImposedRoot(self: *Self, duration_seconds: f32) void {
+    self.addSelfImposedEffect(.{
+        .id = "root",
+        .effect_type = .root,
+        .duration = duration_seconds,
+    });
+}
+
 pub fn applyStasis(self: *Self, duration_seconds: f32) void {
     self.addEffect(.{
         .id = "stasis",

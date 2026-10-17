@@ -74,7 +74,13 @@ pub fn startWeaken(self: *Self, duration_seconds: f32) void {
 
     stats.current.armour = self.weaken_prior_armour * 0.5;
     stats.current.magic_resist = self.weaken_prior_magic_resist * 0.5;
-    stats.applySelfImposedStun(duration_seconds);
+
+    stats.addSelfImposedEffect(.{
+        .id = "stun",
+        .visual = .{},
+        .duration = duration_seconds,
+        .effect_type = .stun,
+    });
 
     self.playWeakenFeedbackAudio();
 }
@@ -108,7 +114,12 @@ pub fn startHealChannel(self: *Self, duration_seconds: f32, round: u32) void {
     const round_scaling_bonus: f32 = @as(f32, @floatFromInt(round)) * 0.005;
     self.heal_rate_percent_per_second = base_heal_rate + round_scaling_bonus;
 
-    stats.applySelfImposedStun(duration_seconds);
+    stats.addSelfImposedEffect(.{
+        .id = "stun",
+        .visual = .{},
+        .duration = duration_seconds,
+        .effect_type = .stun,
+    });
 
     self.playHealStartFeedbackAudio();
 }

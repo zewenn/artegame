@@ -13,6 +13,95 @@ const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 
 var knight_enemy_count: u32 = 0;
 
+inline fn assetPath(sprite: []const u8) []const u8 {
+    return "characters/enemies/knight/" ++ sprite ++ ".png";
+}
+
+pub const knight_animations = [_]lm.Animation{
+    lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = -3, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("idle_1"), .rotation = 0, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("idle_2"), .rotation = 3, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("idle_3"), .rotation = 0, .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("left_2"), .rotation = 10, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("left_3"), .rotation = -6, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("left_1"), .rotation = 0, .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("right_2"), .rotation = -10, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("right_3"), .rotation = 6, .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("right_1"), .rotation = 0, .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("windup-melee", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/attack/windup_1"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/windup_2"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/windup_3"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/cast_1"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/cast_2"), .width = 256, .height = 128 },
+    }),
+    lm.Animation.init("attack-melee", 0.2, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/attack/cast_1"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/cast_2"), .width = 256, .height = 128 },
+    }),
+    lm.Animation.init("winddown-melee", 0.3, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/attack/winddown_1"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/winddown_2"), .width = 256, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/attack/winddown_3"), .width = 256, .height = 128 },
+    }),
+    lm.Animation.init("windup-heal-channel", 0.6, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_3"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_4"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_5"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/windup_6"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("attack-heal-channel", 4, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_3"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_4"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_3"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/cast_4"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("winddown-heal-channel", 0.4, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/winddown_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/winddown_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/winddown_3"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/heal_channel/winddown_4"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("windup-weaken", 0.3, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/windup_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/windup_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/windup_3"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("attack-weaken", 3.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/cast_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/cast_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/cast_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/cast_2"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("winddown-weaken", 0.3, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/winddown_1"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/winddown_2"), .width = 128, .height = 128 },
+        lm.Keyframe{ .sprite = assetPath("spells/weaken/winddown_3"), .width = 128, .height = 128 },
+    }),
+    lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = 2 },
+        lm.Keyframe{ .rotation = -2 },
+    }),
+};
+
 fn knightBeheadingOnHit(hit: projectiles.HitInfo) void {
     const player_stats = hit.target.getComponent(Stats) orelse return;
     const damage_percent: f32 = 0.15;
@@ -55,7 +144,7 @@ fn knightCastHealChannel(
     _ = player_stats;
 
     if (enemy_entity.getComponent(KnightMechanics)) |mechanics| {
-        mechanics.startHealChannel(5.0, 1);
+        mechanics.startHealChannel(4.0, 1);
     }
 }
 
@@ -70,9 +159,9 @@ pub const knight_abilities = [_]Ability{
             .health_below_pct = 0.25,
         },
         .custom_action = knightCastHealChannel,
-        .windup_animation = "windup-melee",
-        .release_animation = "attack-melee",
-        .winddown_animation = "winddown-melee",
+        .windup_animation = "windup-heal-channel",
+        .release_animation = "attack-heal-channel",
+        .winddown_animation = "winddown-heal-channel",
     },
 
     Ability{
@@ -81,10 +170,13 @@ pub const knight_abilities = [_]Ability{
         .min_range = 0,
         .max_range = 9999,
         .cooldown = 22.0,
+        .conditions = .{
+            .health_below_pct = 0.85,
+        },
         .custom_action = knightCastWeaken,
-        .windup_animation = "windup-melee",
-        .release_animation = "attack-melee",
-        .winddown_animation = "winddown-melee",
+        .windup_animation = "windup-weaken",
+        .release_animation = "attack-weaken",
+        .winddown_animation = "winddown-weaken",
     },
 
     Ability{
@@ -159,18 +251,17 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
     return try lm.makeEntityI("knight-enemy", knight_enemy_count, .{
         lm.Transform{
             .position = .init(position.x, position.y, 0),
-            .scale = .init(88, 88),
+            .scale = .init(128, 128),
         },
         lm.Renderer.init(.{
-            .img_path = "characters/enemies/melee/left_1.png",
-            .tint = lm.Color{ .r = 235, .g = 195, .b = 65, .a = 255 },
+            .img_path = "characters/enemies/knight/idle_1.png",
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
             .transform = .{ .scale = .init(90, 90) },
             .weight = 4.0,
         }),
-        lm.Animator.init(&Enemy.Animation.melee_animations),
+        lm.Animator.init(&knight_animations),
 
         Stats.initUnstoppable(.enemy, .{
             .health = 1200,

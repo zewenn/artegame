@@ -13,6 +13,7 @@ const Self = @This();
 pub const ActionState = enum {
     idle,
     winding_up,
+    releasing,
     channeling,
     firing_waves,
     winding_down,
@@ -83,6 +84,10 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     switch (self.action_state) {
         .winding_up => {
             self.processWindingUp(entity, transform, stats, player_transform, delta_seconds);
+            return;
+        },
+        .releasing => {
+            self.processReleasing(delta_seconds);
             return;
         },
         .channeling => {
@@ -189,7 +194,7 @@ fn processChanneling(
     if (self.channel_timer_seconds <= 0) {
         if (self.getActiveAbilityPtr()) |ability| {
             ability.cooldown_remaining = ability.cooldown;
-            self.finishActionAfterCast(ability);
+            self.transitionToWinddown(ability);
         } else {
             self.cancelCurrentAction();
         }
@@ -232,7 +237,7 @@ fn processFiringWaves(
     if (self.waves_remaining == 0) {
         if (self.getActiveAbilityPtr()) |ability| {
             ability.cooldown_remaining = ability.cooldown;
-            self.finishActionAfterCast(ability);
+            self.transitionToWinddown(ability);
         } else {
             self.cancelCurrentAction();
         }
@@ -302,7 +307,11 @@ pub fn isActing(self: *const Self) bool {
 
 pub fn cancelCurrentAction(self: *Self) void {
     if (self.getActiveAbilityPtr()) |ability| {
-        if (self.action_state == .channeling or self.action_state == .firing_waves or self.action_state == .winding_up) {
+        const is_active_state = self.action_state == .channeling or
+            self.action_state == .firing_waves or
+            self.action_state == .winding_up or
+            self.action_state == .releasing;
+        if (is_active_state) {
             ability.cooldown_remaining = ability.cooldown;
         }
     }
@@ -429,30 +438,57 @@ fn dispatchAbilityExecution(
     };
 
     ability.cooldown_remaining = ability.cooldown;
-    self.finishActionAfterCast(ability);
+    self.transitionToReleasing(ability);
 }
 
-fn finishActionAfterCast(self: *Self, ability: *Ability) void {
-    const animator = self.animator orelse {
-        self.action_state = .idle;
-        self.active_ability_index = null;
-        self.is_fallback_active = false;
-        self.action_timer_seconds = 0;
+fn transitionToReleasing(self: *Self, ability: *Ability) void {
+    if (ability.release_animation) |release_animation| {
+        if (self.animator) |animator| {
+            var duration_seconds = Animation.getAnimationDuration(animator, release_animation);
+            if (duration_seconds <= 0) duration_seconds = 0.2;
+
+            self.action_state = .releasing;
+            self.action_timer_seconds = duration_seconds;
+            animator.play(release_animation) catch {};
+            return;
+        }
+    }
+
+    self.transitionToWinddown(ability);
+}
+
+fn processReleasing(self: *Self, delta_seconds: f32) void {
+    self.action_timer_seconds -= delta_seconds;
+
+    var is_finished = self.action_timer_seconds <= 0;
+    calculate_finished: {
+        if (is_finished or self.animator == null) break :calculate_finished;
+        const active_ability = self.getActiveAbilityPtr() orelse break :calculate_finished;
+        const animation_name = active_ability.release_animation orelse break :calculate_finished;
+        is_finished = !self.animator.?.isPlaying(animation_name);
+    }
+
+    if (!is_finished) return;
+
+    const ability = self.getActiveAbilityPtr() orelse {
+        self.cancelCurrentAction();
         return;
     };
 
-    if (ability.release_animation) |release_animation| {
-        animator.play(release_animation) catch {};
-    }
+    self.transitionToWinddown(ability);
+}
 
+fn transitionToWinddown(self: *Self, ability: *Ability) void {
     if (ability.winddown_animation) |winddown_animation| {
-        self.action_state = .winding_down;
-        var duration = Animation.getAnimationDuration(animator, winddown_animation);
-        if (duration <= 0) duration = 0.15;
+        if (self.animator) |animator| {
+            var duration_seconds = Animation.getAnimationDuration(animator, winddown_animation);
+            if (duration_seconds <= 0) duration_seconds = 0.15;
 
-        self.action_timer_seconds = duration;
-        animator.play(winddown_animation) catch {};
-        return;
+            self.action_state = .winding_down;
+            self.action_timer_seconds = duration_seconds;
+            animator.play(winddown_animation) catch {};
+            return;
+        }
     }
 
     self.action_state = .idle;
@@ -560,4 +596,35 @@ test "Enemy Attack cancelCurrentAction cleanly halts channeling and sets cooldow
     try std.testing.expect(attack.active_ability_index == null);
 
     try std.testing.expectEqual(@as(f32, 8.0), attack.abilities.?.items()[0].cooldown_remaining);
+}
+
+test "Enemy Attack action transitions through winding_up, releasing, and winding_down" {
+    const template = [_]Ability{
+        .{
+            .id = "test_combo",
+            .execution_type = .custom,
+            .cooldown = 5.0,
+            .windup_animation = "windup-test",
+            .release_animation = "release-test",
+            .winddown_animation = "winddown-test",
+        },
+    };
+
+    var attack = Self.init(&template, null);
+    var list = lm.List(Ability).init(std.testing.allocator);
+    try list.append(template[0]);
+    attack.abilities = list;
+    defer attack.End();
+
+    attack.active_ability_index = 0;
+    attack.action_state = .releasing;
+    attack.action_timer_seconds = 1.0;
+
+    try std.testing.expect(attack.isActing());
+    try std.testing.expectEqual(ActionState.releasing, attack.action_state);
+
+    attack.cancelCurrentAction();
+    try std.testing.expect(!attack.isActing());
+    try std.testing.expectEqual(ActionState.idle, attack.action_state);
+    try std.testing.expectEqual(@as(f32, 5.0), attack.abilities.?.items()[0].cooldown_remaining);
 }
