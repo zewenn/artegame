@@ -432,7 +432,7 @@ pub fn draw(
     var nav_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
 
     if (lm.gamepad.isAvailable(0)) {
         if (lm.gamepad.getButtonDown(0, .right_face_right)) {

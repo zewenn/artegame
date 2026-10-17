@@ -208,7 +208,7 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Alloca
             const footer_text = if (DevicePrompts.isGamepad())
                 "Navigate: D-Pad / L-Stick  |  Select: A  |  Resume: B / Start"
             else
-                "Navigate: WASD / Arrows  |  Select: Enter / Space  |  Resume: Esc";
+                "Navigate: WASD / Arrows  |  Select: Enter  |  Resume: Esc";
 
             ui.text(footer_text, .{
                 .color = ui.color(140, 150, 175, 200),
@@ -269,7 +269,7 @@ fn handleRootInput() void {
     DevicePrompts.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
     var back_pressed = lm.keyboard.getKeyDown(.escape);
 
     if (lm.gamepad.isAvailable(0)) {

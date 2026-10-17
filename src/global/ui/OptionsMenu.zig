@@ -774,7 +774,7 @@ fn handleInput() bool {
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var nav_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
     var nav_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
-    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
     var back_pressed = lm.keyboard.getKeyDown(.escape);
     var tab_prev = lm.keyboard.getKeyDown(.q);
     var tab_next = lm.keyboard.getKeyDown(.e) or lm.keyboard.getKeyDown(.tab);

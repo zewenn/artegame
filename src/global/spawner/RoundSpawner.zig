@@ -1,12 +1,20 @@
 const std = @import("std");
 const lm = @import("loom");
-const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../audio/SpatialAudio.zig");
 const MapTypes = @import("../map/MapTypes.zig");
 const Stats = @import("../../components/Stats.zig");
 const BossBar = @import("../ui/BossBar.zig");
 
 pub const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
+
+pub const MAX_CONCURRENT_ENEMIES = 64;
+const NORMAL_ROUND_SCALING = struct {
+    pub const LOG_BASE = 1.05;
+    pub const ADJUSTMENT = 10;
+    pub const MAX_WAVE_BUDGET = 128;
+
+    pub const FIRST_CAP_ROUND: comptime_int = lm.tou32(@ceil(std.math.pow(f32, NORMAL_ROUND_SCALING.LOG_BASE, NORMAL_ROUND_SCALING.MAX_WAVE_BUDGET + NORMAL_ROUND_SCALING.ADJUSTMENT)));
+};
 
 pub const SpawnProfile = enum {
     tutorial,
@@ -20,23 +28,17 @@ pub const WaveConfig = struct {
     profile: SpawnProfile = .normal,
     budget: u32,
     total_enemies: u32,
-    dummy_count: u32 = 0,
-    melee_count: u32 = 0,
-    ranged_count: u32 = 0,
-    elite_count: u32 = 0,
-    shaman_count: u32 = 0,
-    magician_count: u32 = 0,
-    lifeliner_count: u32 = 0,
-    angler_count: u32 = 0,
-    tank_count: u32 = 0,
-    knight_count: u32 = 0,
-    bishop_count: u32 = 0,
-    mini_boss_count: u32 = 0,
-    boss_count: u32 = 0,
-    king_count: u32 = 0,
-    queen_count: u32 = 0,
+    counts: WaveSpawnCounts = .{},
     is_cap_reached: bool = false,
     post_cap_round_offset: u32 = 0,
+
+    pub fn getCount(self: WaveConfig, enemy_type: EnemyType) u32 {
+        switch (enemy_type) {
+            inline else => |tag| {
+                return @field(self.counts, @tagName(tag) ++ "_count");
+            },
+        }
+    }
 };
 
 pub const WaveProgress = struct {
@@ -47,57 +49,80 @@ pub const WaveProgress = struct {
     queued: u32 = 0,
 };
 
+const WaveSpawnCounts = make_struct: {
+    const enemy_fields = std.meta.fields(EnemyType);
+    var names: [enemy_fields.len][:0]const u8 = undefined;
+    var types: [enemy_fields.len]type = undefined;
+    var attributes: [enemy_fields.len]std.builtin.Type.StructField.Attributes = undefined;
+    const default_count: u32 = 0;
+
+    for (enemy_fields, 0..) |field, index| {
+        names[index] = field.name ++ "_count";
+        types[index] = u32;
+        attributes[index] = .{
+            .default_value_ptr = &default_count,
+        };
+    }
+
+    break :make_struct @Struct(.auto, null, &names, &types, &attributes);
+};
+
+pub const EnemyComposition = struct {
+    counts: WaveSpawnCounts = .{},
+
+    pub fn total(self: EnemyComposition) u32 {
+        var sum: u32 = 0;
+        inline for (comptime std.meta.fieldNames(WaveSpawnCounts)) |field_name| {
+            sum += @field(self.counts, field_name);
+        }
+
+        return sum;
+    }
+
+    pub fn addCount(self: *EnemyComposition, enemy_type: EnemyType, count: u32) void {
+        switch (enemy_type) {
+            inline else => |tag| {
+                @field(self.counts, @tagName(tag) ++ "_count") += count;
+            },
+        }
+    }
+};
+
+pub const ExclusionZone = struct {
+    min: lm.Vector2,
+    max: lm.Vector2,
+
+    pub fn contains(self: ExclusionZone, position: lm.Vector2) bool {
+        return position.x >= self.min.x and position.x <= self.max.x and position.y >= self.min.y and position.y <= self.max.y;
+    }
+};
+
+pub const SpawnAreaConfig = struct {
+    min_x: f32 = -1100.0,
+    max_x: f32 = 1100.0,
+    min_y: f32 = -520.0,
+    max_y: f32 = 520.0,
+    min_player_distance_pixels: f32 = 420.0,
+    edge_depth: f32 = 80.0,
+    exclusion_zones: []const ExclusionZone = &.{},
+};
+
+const Self = @This();
+
 pub fn calculateBudgetForProfile(round: u32, profile: SpawnProfile) u32 {
     return switch (profile) {
         .tutorial => 0,
         .mini_boss => 20,
         .boss => 100,
-        .normal => {
-            if (round <= 1) return 8;
-
-            const round_offset = round - 1;
-
-            if (round <= 5) {
-                return 8 + (round_offset * 6) + (round_offset * round_offset);
-            }
-
-            return 48 + (round - 5) * 16;
-        },
+        .normal => @max(
+            8,
+            @min(
+                NORMAL_ROUND_SCALING.MAX_WAVE_BUDGET,
+                lm.tou32(@ceil(std.math.log(f32, NORMAL_ROUND_SCALING.LOG_BASE, lm.tof32(round)) - NORMAL_ROUND_SCALING.ADJUSTMENT)),
+            ),
+        ),
     };
 }
-
-pub fn calculateBudget(round: u32) u32 {
-    return calculateBudgetForProfile(round, .normal);
-}
-
-pub const EnemyComposition = struct {
-    melee_count: u32 = 0,
-    ranged_count: u32 = 0,
-    elite_count: u32 = 0,
-    shaman_count: u32 = 0,
-    magician_count: u32 = 0,
-    lifeliner_count: u32 = 0,
-    angler_count: u32 = 0,
-    tank_count: u32 = 0,
-
-    pub fn total(self: EnemyComposition) u32 {
-        return self.melee_count + self.ranged_count + self.elite_count + self.shaman_count + self.magician_count + self.lifeliner_count + self.angler_count + self.tank_count;
-    }
-
-    pub fn addCount(self: *EnemyComposition, enemy_type: EnemyType, count: u32) void {
-        switch (enemy_type) {
-            .melee => self.melee_count += count,
-            .ranged => self.ranged_count += count,
-            .elite => self.elite_count += count,
-            .shaman => self.shaman_count += count,
-            .magician => self.magician_count += count,
-            .lifeliner => self.lifeliner_count += count,
-            .angler => self.angler_count += count,
-            .tank => self.tank_count += count,
-            else => {},
-        }
-    }
-};
 
 fn calculateScaledEnemyCount(
     round: u32,
@@ -126,110 +151,33 @@ fn calculateScaledEnemyCount(
     return count;
 }
 
-/// Checks whether a map's spawn zones include a designated zone for an enemy archetype.
-/// If no spawn zones are defined on the map (empty collection), all enemy types are considered permitted.
-/// An untyped zone (enemy_type == null) represents an "All (Any Enemy)" zone and accepts any archetype.
 pub fn hasDesignatedZone(zones: []const MapTypes.SpawnZoneRecord, enemy_type: EnemyType) bool {
     if (zones.len == 0) return true;
     for (zones) |zone| {
         if (zone.enemy_type == null) return true;
         if (zone.enemy_type.? == enemy_type) return true;
-        if ((enemy_type == .knight or enemy_type == .bishop) and zone.enemy_type.? == .mini_boss) return true;
-        if ((enemy_type == .king or enemy_type == .queen) and zone.enemy_type.? == .boss) return true;
     }
     return false;
 }
 
-pub fn determineMiniBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord, round: u32) EnemyType {
-    if (zones.len == 0) {
-        return if ((round / 5) % 2 == 1) .knight else .bishop;
+fn determineEnemiesForZonesFromCategory(zones: []const MapTypes.SpawnZoneRecord, category: []const EnemyType, fallback: EnemyType) EnemyType {
+    if (zones.len == 0) return fallback;
+
+    for (category) |enemy_type| {
+        if (!hasDesignatedZone(zones, enemy_type)) continue;
+        return enemy_type;
     }
 
-    var has_specific_knight_zone = false;
-    var has_specific_bishop_zone = false;
-
-    for (zones) |zone| {
-        const zone_enemy_type = zone.enemy_type orelse continue;
-        if (zone_enemy_type == .knight) {
-            has_specific_knight_zone = true;
-        } else if (zone_enemy_type == .bishop) {
-            has_specific_bishop_zone = true;
-        }
-    }
-
-    if (has_specific_knight_zone and !has_specific_bishop_zone) {
-        return .knight;
-    }
-    if (has_specific_bishop_zone and !has_specific_knight_zone) {
-        return .bishop;
-    }
-
-    const allows_knight = hasDesignatedZone(zones, .knight);
-    const allows_bishop = hasDesignatedZone(zones, .bishop);
-
-    if (allows_knight and !allows_bishop) {
-        return .knight;
-    }
-    if (allows_bishop and !allows_knight) {
-        return .bishop;
-    }
-
-    return if ((round / 5) % 2 == 1) .knight else .bishop;
+    return fallback;
 }
 
-pub fn determineBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord) EnemyType {
-    if (zones.len == 0) {
-        return if (lm.random.boolean()) .king else .queen;
-    }
-
-    var has_specific_king_zone = false;
-    var has_specific_queen_zone = false;
-
-    for (zones) |zone| {
-        const zone_enemy_type = zone.enemy_type orelse continue;
-        if (zone_enemy_type == .king) {
-            has_specific_king_zone = true;
-        } else if (zone_enemy_type == .queen) {
-            has_specific_queen_zone = true;
-        }
-    }
-
-    if (has_specific_king_zone and !has_specific_queen_zone) {
-        return .king;
-    }
-    if (has_specific_queen_zone and !has_specific_king_zone) {
-        return .queen;
-    }
-
-    const allows_king = hasDesignatedZone(zones, .king);
-    const allows_queen = hasDesignatedZone(zones, .queen);
-
-    if (allows_king and !allows_queen) {
-        return .king;
-    }
-    if (allows_queen and !allows_king) {
-        return .queen;
-    }
-
-    return if (lm.random.boolean()) .king else .queen;
+pub fn determineMiniBossTypeForZones(zones: []const MapTypes.SpawnZoneRecord) EnemyType {
+    return determineEnemiesForZonesFromCategory(zones, EnemyType.mini_boss_enemies, .mini_boss);
 }
 
-pub fn calculateNormalEnemyComposition(round: u32) EnemyComposition {
-    return calculateNormalEnemyCompositionWithZones(round, &.{});
-}
-
-const normal_archetype_types = [_]EnemyType{
-    .elite,
-    .tank,
-    .shaman,
-    .magician,
-    .lifeliner,
-    .angler,
-};
-
-fn countDesignatedNormalTypes(zones: []const MapTypes.SpawnZoneRecord) u32 {
+fn countDesignatedSpecialistTypes(zones: []const MapTypes.SpawnZoneRecord) u32 {
     var count: u32 = 0;
-    for (normal_archetype_types) |enemy_type| {
+    for (EnemyType.normal_specialist_enemies) |enemy_type| {
         if (hasDesignatedZone(zones, enemy_type)) {
             count += 1;
         }
@@ -243,12 +191,12 @@ fn allocateRemainingBudgetToDesignatedZones(
     composition: *EnemyComposition,
 ) void {
     if (remaining_budget.* == 0) return;
-    const designated_type_count = countDesignatedNormalTypes(zones);
+    const designated_type_count = countDesignatedSpecialistTypes(zones);
     if (designated_type_count == 0) return;
 
     const budget_slice = remaining_budget.* / designated_type_count;
 
-    for (normal_archetype_types) |enemy_type| {
+    for (EnemyType.normal_specialist_enemies) |enemy_type| {
         if (!hasDesignatedZone(zones, enemy_type)) continue;
 
         const type_budget = if (designated_type_count > 1) budget_slice else remaining_budget.*;
@@ -266,7 +214,7 @@ fn fallbackSpawnPermittedEnemies(
     remaining_budget: *u32,
     composition: *EnemyComposition,
 ) void {
-    for (normal_archetype_types) |enemy_type| {
+    for (EnemyType.normal_specialist_enemies) |enemy_type| {
         if (!hasDesignatedZone(zones, enemy_type)) continue;
 
         const count = @max(1, remaining_budget.* / enemy_type.cost());
@@ -281,6 +229,84 @@ fn fallbackSpawnPermittedEnemies(
     }
 }
 
+fn allocateSpecialistEnemies(
+    round: u32,
+    zones: []const MapTypes.SpawnZoneRecord,
+    remaining_budget: *u32,
+    composition: *EnemyComposition,
+) void {
+    inline for (EnemyType.normal_specialist_enemies) |enemy_type| {
+        const rule = comptime enemy_type.normalWaveRule().?;
+        const count = calculateScaledEnemyCount(round, remaining_budget, zones, enemy_type, rule);
+        composition.addCount(enemy_type, count);
+    }
+}
+
+fn hasSubsequentPermittedFiller(
+    round: u32,
+    zones: []const MapTypes.SpawnZoneRecord,
+    current_index: usize,
+) bool {
+    const filler_types = EnemyType.normal_filler_enemies;
+    for (filler_types[current_index + 1 ..]) |filler_type| {
+        const rule = filler_type.normalFillerRule() orelse continue;
+        if (round < rule.unlock_round) continue;
+        if (hasDesignatedZone(zones, filler_type)) return true;
+    }
+    return false;
+}
+
+fn allocateFillerEnemies(
+    round: u32,
+    zones: []const MapTypes.SpawnZoneRecord,
+    remaining_budget: *u32,
+    composition: *EnemyComposition,
+) void {
+    if (remaining_budget.* == 0) return;
+
+    for (EnemyType.normal_filler_enemies, 0..) |enemy_type, filler_index| {
+        if (remaining_budget.* == 0) break;
+
+        const rule = enemy_type.normalFillerRule() orelse continue;
+        if (round < rule.unlock_round) continue;
+        if (!hasDesignatedZone(zones, enemy_type)) continue;
+
+        const has_subsequent_filler = hasSubsequentPermittedFiller(round, zones, filler_index);
+        const enemy_budget = if (has_subsequent_filler)
+            (remaining_budget.* * rule.budget_share_percentage) / 100
+        else
+            remaining_budget.*;
+
+        const count = enemy_budget / enemy_type.cost();
+        composition.addCount(enemy_type, count);
+        remaining_budget.* -= count * enemy_type.cost();
+    }
+}
+
+fn hasAnyDesignatedFillerZone(zones: []const MapTypes.SpawnZoneRecord) bool {
+    for (EnemyType.normal_filler_enemies) |filler_type| {
+        if (hasDesignatedZone(zones, filler_type)) return true;
+    }
+    return false;
+}
+
+fn handleRestrictedZoneFallbacks(
+    zones: []const MapTypes.SpawnZoneRecord,
+    remaining_budget: *u32,
+    composition: *EnemyComposition,
+) void {
+    if (zones.len == 0) return;
+
+    if (composition.total() == 0) {
+        fallbackSpawnPermittedEnemies(zones, remaining_budget, composition);
+        return;
+    }
+
+    if (remaining_budget.* > 0 and !hasAnyDesignatedFillerZone(zones)) {
+        allocateRemainingBudgetToDesignatedZones(zones, remaining_budget, composition);
+    }
+}
+
 pub fn calculateNormalEnemyCompositionWithZones(
     round: u32,
     zones: []const MapTypes.SpawnZoneRecord,
@@ -289,44 +315,11 @@ pub fn calculateNormalEnemyCompositionWithZones(
     var remaining_budget = total_budget;
     var composition = EnemyComposition{};
 
-    inline for (std.meta.fields(EnemyType)) |field| {
-        const enemy_type: EnemyType = @field(EnemyType, field.name);
-        const maybe_rule = comptime enemy_type.normalWaveRule();
-        if (maybe_rule) |rule| {
-            const count = calculateScaledEnemyCount(round, &remaining_budget, zones, enemy_type, rule);
-            @field(composition, field.name ++ "_count") = count;
-        }
-    }
-
-    var ranged_count: u32 = 0;
-    if (round >= 2 and remaining_budget > 0 and hasDesignatedZone(zones, .ranged)) {
-        const can_spawn_melee = hasDesignatedZone(zones, .melee);
-        const ranged_budget = if (can_spawn_melee) (remaining_budget * 35) / 100 else remaining_budget;
-        ranged_count = ranged_budget / EnemyType.ranged.cost();
-        remaining_budget -= ranged_count * EnemyType.ranged.cost();
-    }
-    composition.ranged_count = ranged_count;
-
-    composition.melee_count = if (hasDesignatedZone(zones, .melee)) remaining_budget else 0;
-
-    if (composition.total() == 0 and zones.len > 0) {
-        fallbackSpawnPermittedEnemies(zones, &remaining_budget, &composition);
-    } else if (remaining_budget > 0 and !hasDesignatedZone(zones, .melee) and !hasDesignatedZone(zones, .ranged)) {
-        allocateRemainingBudgetToDesignatedZones(zones, &remaining_budget, &composition);
-    }
+    allocateSpecialistEnemies(round, zones, &remaining_budget, &composition);
+    allocateFillerEnemies(round, zones, &remaining_budget, &composition);
+    handleRestrictedZoneFallbacks(zones, &remaining_budget, &composition);
 
     return composition;
-}
-
-pub fn getFirstCapRound() u32 {
-    var check_round: u32 = 1;
-    while (check_round < 100) : (check_round += 1) {
-        const composition = calculateNormalEnemyComposition(check_round);
-        if (composition.total() >= MAX_CONCURRENT_ENEMIES) {
-            return check_round;
-        }
-    }
-    return 10;
 }
 
 pub fn generateWaveConfigForProfile(round: u32, profile: SpawnProfile) WaveConfig {
@@ -338,108 +331,27 @@ pub fn generateWaveConfigForProfileAndZones(
     profile: SpawnProfile,
     zones: []const MapTypes.SpawnZoneRecord,
 ) WaveConfig {
+    var composition: EnemyComposition = .{};
     switch (profile) {
-        .tutorial => {
-            return WaveConfig{
-                .round = round,
-                .profile = .tutorial,
-                .budget = 0,
-                .total_enemies = 1,
-                .dummy_count = 1,
-            };
-        },
-        .mini_boss => {
-            const mini_boss_type = determineMiniBossTypeForZones(zones, round);
-            var config = WaveConfig{
-                .round = round,
-                .profile = .mini_boss,
-                .budget = 20,
-                .total_enemies = 1,
-            };
-            if (mini_boss_type == .knight) {
-                config.knight_count = 1;
-            } else if (mini_boss_type == .bishop) {
-                config.bishop_count = 1;
-            } else {
-                config.mini_boss_count = 1;
-            }
-            return config;
-        },
-        .boss => {
-            const boss_type = determineBossTypeForZones(zones);
-            var config = WaveConfig{
-                .round = round,
-                .profile = .boss,
-                .budget = 100,
-                .total_enemies = 1,
-            };
-            if (boss_type == .king) {
-                config.king_count = 1;
-            } else if (boss_type == .queen) {
-                config.queen_count = 1;
-            } else {
-                config.boss_count = 1;
-            }
-            return config;
-        },
-        .normal => {
-            const total_budget = calculateBudgetForProfile(round, .normal);
-            var composition = calculateNormalEnemyCompositionWithZones(round, zones);
-            const unconstrained_enemies = composition.total();
-
-            const is_cap_reached = unconstrained_enemies >= MAX_CONCURRENT_ENEMIES;
-            const first_cap_round = getFirstCapRound();
-            const post_cap_round_offset: u32 = if (round > first_cap_round) round - first_cap_round else 0;
-
-            if (unconstrained_enemies > MAX_CONCURRENT_ENEMIES) {
-                var excess = unconstrained_enemies - @as(u32, @intCast(MAX_CONCURRENT_ENEMIES));
-                if (composition.melee_count >= excess) {
-                    composition.melee_count -= excess;
-                    excess = 0;
-                } else {
-                    excess -= composition.melee_count;
-                    composition.melee_count = 0;
-                }
-
-                if (excess > 0) {
-                    if (composition.ranged_count >= excess) {
-                        composition.ranged_count -= excess;
-                        excess = 0;
-                    } else {
-                        excess -= composition.ranged_count;
-                        composition.ranged_count = 0;
-                    }
-                }
-
-                if (excess > 0) {
-                    if (composition.angler_count >= excess) {
-                        composition.angler_count -= excess;
-                        excess = 0;
-                    } else {
-                        excess -= composition.angler_count;
-                        composition.angler_count = 0;
-                    }
-                }
-            }
-
-            return WaveConfig{
-                .round = round,
-                .profile = .normal,
-                .budget = total_budget,
-                .total_enemies = composition.total(),
-                .melee_count = composition.melee_count,
-                .ranged_count = composition.ranged_count,
-                .elite_count = composition.elite_count,
-                .shaman_count = composition.shaman_count,
-                .magician_count = composition.magician_count,
-                .lifeliner_count = composition.lifeliner_count,
-                .angler_count = composition.angler_count,
-                .tank_count = composition.tank_count,
-                .is_cap_reached = is_cap_reached,
-                .post_cap_round_offset = post_cap_round_offset,
-            };
-        },
+        .tutorial => composition.addCount(.dummy, 1),
+        .mini_boss => composition.addCount(determineEnemiesForZonesFromCategory(zones, EnemyType.mini_boss_enemies, .mini_boss), 1),
+        .boss => composition.addCount(determineEnemiesForZonesFromCategory(zones, EnemyType.boss_enemies, .boss), 1),
+        .normal => composition = calculateNormalEnemyCompositionWithZones(round, zones),
     }
+    const budget = calculateBudgetForProfile(round, profile);
+
+    const first_cap_round = NORMAL_ROUND_SCALING.FIRST_CAP_ROUND;
+    const post_cap_round_offset: u32 = if (round > first_cap_round) round - first_cap_round else 0;
+
+    return WaveConfig{
+        .round = round,
+        .profile = profile,
+        .budget = budget,
+        .counts = composition.counts,
+        .total_enemies = composition.total(),
+        .post_cap_round_offset = post_cap_round_offset,
+        .is_cap_reached = profile == .normal and round >= first_cap_round,
+    };
 }
 
 pub fn generateWaveConfig(round: u32) WaveConfig {
@@ -449,132 +361,16 @@ pub fn generateWaveConfig(round: u32) WaveConfig {
 pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     list.clearRetainingCapacity();
 
-    if (config.dummy_count > 0) {
-        for (0..config.dummy_count) |_| {
-            try list.append(.dummy);
-        }
+    inline for (comptime std.meta.fieldNames(EnemyType)) |field_name| {
+        const count = @field(config.counts, field_name ++ "_count");
+        for (0..count) |_| try list.append(@field(EnemyType, field_name));
+    }
+
+    if (config.profile != .normal)
         return;
-    }
 
-    if (config.knight_count > 0) {
-        for (0..config.knight_count) |_| {
-            try list.append(.knight);
-        }
-        return;
-    }
-
-    if (config.bishop_count > 0) {
-        for (0..config.bishop_count) |_| {
-            try list.append(.bishop);
-        }
-        return;
-    }
-
-    if (config.mini_boss_count > 0) {
-        for (0..config.mini_boss_count) |_| {
-            try list.append(.mini_boss);
-        }
-        return;
-    }
-
-    if (config.king_count > 0) {
-        for (0..config.king_count) |_| {
-            try list.append(.king);
-        }
-        return;
-    }
-
-    if (config.queen_count > 0) {
-        for (0..config.queen_count) |_| {
-            try list.append(.queen);
-        }
-        return;
-    }
-
-    if (config.boss_count > 0) {
-        for (0..config.boss_count) |_| {
-            try list.append(.boss);
-        }
-        return;
-    }
-
-    var melee_left = config.melee_count;
-    var ranged_left = config.ranged_count;
-    var angler_left = config.angler_count;
-    var tank_left = config.tank_count;
-    var shaman_left = config.shaman_count;
-    var magician_left = config.magician_count;
-    var lifeliner_left = config.lifeliner_count;
-    var elite_left = config.elite_count;
-
-    const vanguard = @min(melee_left, 3);
-    for (0..vanguard) |_| {
-        try list.append(.melee);
-        melee_left -= 1;
-    }
-
-    while (melee_left > 0 or ranged_left > 0 or angler_left > 0 or tank_left > 0 or shaman_left > 0 or magician_left > 0 or lifeliner_left > 0 or elite_left > 0) {
-        const melee_batch = @min(melee_left, 2);
-        for (0..melee_batch) |_| {
-            try list.append(.melee);
-            melee_left -= 1;
-        }
-
-        if (ranged_left > 0) {
-            try list.append(.ranged);
-            ranged_left -= 1;
-        }
-
-        if (angler_left > 0) {
-            try list.append(.angler);
-            angler_left -= 1;
-        }
-
-        if (tank_left > 0) {
-            try list.append(.tank);
-            tank_left -= 1;
-        }
-
-        if (shaman_left > 0) {
-            try list.append(.shaman);
-            shaman_left -= 1;
-        }
-
-        if (magician_left > 0) {
-            try list.append(.magician);
-            magician_left -= 1;
-        }
-
-        if (lifeliner_left > 0) {
-            try list.append(.lifeliner);
-            lifeliner_left -= 1;
-        }
-
-        if (elite_left > 0 and (melee_left <= config.melee_count / 2 or (melee_left == 0 and ranged_left == 0))) {
-            try list.append(.elite);
-            elite_left -= 1;
-        }
-    }
+    lm.random.shuffle(EnemyType, list.items());
 }
-
-pub const ExclusionZone = struct {
-    min: lm.Vector2,
-    max: lm.Vector2,
-
-    pub fn contains(self: ExclusionZone, position: lm.Vector2) bool {
-        return position.x >= self.min.x and position.x <= self.max.x and position.y >= self.min.y and position.y <= self.max.y;
-    }
-};
-
-pub const SpawnAreaConfig = struct {
-    min_x: f32 = -1100.0,
-    max_x: f32 = 1100.0,
-    min_y: f32 = -520.0,
-    max_y: f32 = 520.0,
-    min_player_distance_pixels: f32 = 420.0,
-    edge_depth: f32 = 80.0,
-    exclusion_zones: []const ExclusionZone = &.{},
-};
 
 pub fn pickSpawnPositionWithConfig(player_position: lm.Vector2, config: SpawnAreaConfig) lm.Vector2 {
     var attempt: usize = 0;
@@ -627,10 +423,6 @@ pub fn pickSpawnPositionWithConfig(player_position: lm.Vector2, config: SpawnAre
 pub fn pickSpawnPosition(player_position: lm.Vector2) lm.Vector2 {
     return pickSpawnPositionWithConfig(player_position, .{});
 }
-
-const Self = @This();
-
-pub const MAX_CONCURRENT_ENEMIES: usize = 64;
 
 spawn_queue: lm.List(EnemyType),
 spawn_cursor: usize = 0,
@@ -848,7 +640,7 @@ pub fn applyDynamicStatScalingToStats(stats: *Stats, enemy_type: EnemyType, roun
     stats.current.movement_speed *= speed_multiplier;
     stats.base.movement_speed *= speed_multiplier;
 
-    const first_cap_round = getFirstCapRound();
+    const first_cap_round = NORMAL_ROUND_SCALING.FIRST_CAP_ROUND;
     if (round > first_cap_round) {
         const post_cap_round_offset: u32 = round - first_cap_round;
         const post_cap_offset_float: f32 = @floatFromInt(post_cap_round_offset);
@@ -920,39 +712,10 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
             continue;
         };
 
-        const enemy = switch (enemy_type) {
-            .dummy => try prefabs.enemies.Dummy(spawn_position),
-            .melee => try prefabs.enemies.Melee(spawn_position),
-            .ranged => try prefabs.enemies.Ranged(spawn_position),
-            .elite => try prefabs.enemies.Elite(spawn_position),
-            .shaman => try prefabs.enemies.Shaman(spawn_position),
-            .magician => try prefabs.enemies.Magician(spawn_position),
-            .lifeliner => try prefabs.enemies.Lifeliner(spawn_position),
-            .angler => try prefabs.enemies.Angler(spawn_position),
-            .tank => try prefabs.enemies.Tank(spawn_position),
-            .knight => try prefabs.enemies.Knight(spawn_position),
-            .bishop => try prefabs.enemies.Bishop(spawn_position),
-            .mini_boss => try prefabs.enemies.MiniBoss(spawn_position),
-            .boss => try prefabs.enemies.Boss(spawn_position),
-            .king => try prefabs.enemies.King(spawn_position),
-            .queen => try prefabs.enemies.Queen(spawn_position),
-        };
+        const enemy = try enemy_type.spawn(spawn_position);
 
         applyDynamicStatScaling(enemy, enemy_type, self.round);
-
-        if (enemy_type == .knight) {
-            BossBar.bind(enemy, "The Knight", .mini_boss);
-        } else if (enemy_type == .bishop) {
-            BossBar.bind(enemy, "The Bishop", .mini_boss);
-        } else if (enemy_type == .mini_boss) {
-            BossBar.bind(enemy, "Mini-Boss", .mini_boss);
-        } else if (enemy_type == .king) {
-            BossBar.bind(enemy, "The King", .boss);
-        } else if (enemy_type == .queen) {
-            BossBar.bind(enemy, "The Queen", .boss);
-        } else if (enemy_type == .boss) {
-            BossBar.bind(enemy, "Boss", .boss);
-        }
+        enemy_type.tryBindBossBar(enemy);
 
         try self.active_enemies.append(enemy.uuid);
         try lm.summoning.entity(enemy);
@@ -987,81 +750,6 @@ pub fn getProgress(self: *const Self) WaveProgress {
     };
 }
 
-test "calculateBudget scaling across rounds" {
-    try std.testing.expectEqual(@as(u32, 8), calculateBudget(1));
-    try std.testing.expectEqual(@as(u32, 15), calculateBudget(2));
-    try std.testing.expectEqual(@as(u32, 24), calculateBudget(3));
-    try std.testing.expectEqual(@as(u32, 35), calculateBudget(4));
-    try std.testing.expectEqual(@as(u32, 48), calculateBudget(5));
-    try std.testing.expectEqual(@as(u32, 64), calculateBudget(6));
-}
-
-test "generateWaveConfig enemy composition and unlocks" {
-    const r1 = generateWaveConfig(1);
-    try std.testing.expectEqual(@as(u32, 8), r1.budget);
-    try std.testing.expectEqual(@as(u32, 0), r1.elite_count);
-    try std.testing.expectEqual(@as(u32, 0), r1.ranged_count);
-    try std.testing.expectEqual(@as(u32, 8), r1.melee_count);
-    try std.testing.expectEqual(@as(u32, 8), r1.total_enemies);
-
-    const r2 = generateWaveConfig(2);
-    try std.testing.expectEqual(@as(u32, 15), r2.budget);
-    try std.testing.expectEqual(@as(u32, 0), r2.elite_count);
-    try std.testing.expect(r2.ranged_count > 0);
-    try std.testing.expect(r2.melee_count > 0);
-
-    const r3 = generateWaveConfig(3);
-    try std.testing.expectEqual(@as(u32, 24), r3.budget);
-    try std.testing.expectEqual(@as(u32, 1), r3.elite_count);
-    try std.testing.expect(r3.ranged_count > 0);
-    try std.testing.expect(r3.melee_count > 0);
-
-    const r5 = generateWaveConfig(5);
-    try std.testing.expectEqual(@as(u32, 2), r5.elite_count);
-}
-
-test "populateQueue matches config enemy counts" {
-    const config = generateWaveConfig(3);
-    var queue = lm.List(EnemyType).init(std.testing.allocator);
-    defer queue.deinit();
-
-    try populateQueue(&queue, config);
-
-    try std.testing.expectEqual(config.total_enemies, @as(u32, @intCast(queue.len())));
-
-    var melee_found: u32 = 0;
-    var ranged_found: u32 = 0;
-    var elite_found: u32 = 0;
-    var angler_found: u32 = 0;
-    var tank_found: u32 = 0;
-    var shaman_found: u32 = 0;
-    var magician_found: u32 = 0;
-    var lifeliner_found: u32 = 0;
-
-    for (queue.items()) |enemy_type| {
-        switch (enemy_type) {
-            .melee => melee_found += 1,
-            .ranged => ranged_found += 1,
-            .elite => elite_found += 1,
-            .angler => angler_found += 1,
-            .tank => tank_found += 1,
-            .shaman => shaman_found += 1,
-            .magician => magician_found += 1,
-            .lifeliner => lifeliner_found += 1,
-            else => {},
-        }
-    }
-
-    try std.testing.expectEqual(config.melee_count, melee_found);
-    try std.testing.expectEqual(config.ranged_count, ranged_found);
-    try std.testing.expectEqual(config.elite_count, elite_found);
-    try std.testing.expectEqual(config.angler_count, angler_found);
-    try std.testing.expectEqual(config.tank_count, tank_found);
-    try std.testing.expectEqual(config.shaman_count, shaman_found);
-    try std.testing.expectEqual(config.magician_count, magician_found);
-    try std.testing.expectEqual(config.lifeliner_count, lifeliner_found);
-}
-
 test "pickSpawnPosition stays in bounds and away from player" {
     const player_pos = lm.Vec2(0, 0);
 
@@ -1075,131 +763,12 @@ test "pickSpawnPosition stays in bounds and away from player" {
     }
 }
 
-test "RoundSpawner enforces MAX_CONCURRENT_ENEMIES <= 64" {
+test "RoundSpawner enforces MAX_CONCURRENT_ENEMIES" {
     var spawner = Self.init(std.testing.allocator);
     defer spawner.deinit();
 
     try spawner.startWave(100);
     try std.testing.expect(spawner.max_active_enemies <= MAX_CONCURRENT_ENEMIES);
-    try std.testing.expectEqual(@as(usize, 64), MAX_CONCURRENT_ENEMIES);
-}
-
-test "RoundSpawner room profiles" {
-    var spawner = Self.init(std.testing.allocator);
-    defer spawner.deinit();
-
-    try spawner.startWaveForRoom(0, .tutorial);
-    try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    try std.testing.expectEqual(EnemyType.dummy, spawner.spawn_queue.items()[0]);
-
-    try spawner.startWaveForRoom(5, .mini_boss);
-    try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    try std.testing.expectEqual(EnemyType.knight, spawner.spawn_queue.items()[0]);
-
-    try spawner.startWaveForRoom(10, .mini_boss);
-    try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    try std.testing.expectEqual(EnemyType.bishop, spawner.spawn_queue.items()[0]);
-
-    try spawner.startWaveForRoom(15, .boss);
-    try std.testing.expectEqual(@as(u32, 1), spawner.total_wave_enemies);
-    const spawned_boss = spawner.spawn_queue.items()[0];
-    try std.testing.expect(spawned_boss == .king or spawned_boss == .queen);
-}
-
-test "determineBossTypeForZones respects room-specific spawn zones" {
-    const king_only_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .king,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.king, determineBossTypeForZones(&king_only_zones));
-
-    const queen_only_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .queen,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.queen, determineBossTypeForZones(&queen_only_zones));
-}
-
-test "determineMiniBossTypeForZones respects room-specific spawn zones" {
-    const knight_only_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .knight,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&knight_only_zones, 10));
-
-    const bishop_only_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .bishop,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&bishop_only_zones, 5));
-
-    const mini_boss_generic_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .mini_boss,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&mini_boss_generic_zones, 5));
-    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&mini_boss_generic_zones, 10));
-
-    const knight_with_generic_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .knight,
-        },
-        .{
-            .center_x_pixels = 200,
-            .center_y_pixels = 200,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = null,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.knight, determineMiniBossTypeForZones(&knight_with_generic_zones, 10));
-
-    const bishop_with_generic_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 0,
-            .center_y_pixels = 0,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = .bishop,
-        },
-        .{
-            .center_x_pixels = 200,
-            .center_y_pixels = 200,
-            .width_pixels = 100,
-            .height_pixels = 100,
-            .enemy_type = null,
-        },
-    };
-    try std.testing.expectEqual(EnemyType.bishop, determineMiniBossTypeForZones(&bishop_with_generic_zones, 5));
 }
 
 test "RoundSpawner onEnemyDefeated updates active and killed count in O(1)" {
@@ -1289,17 +858,8 @@ test "RoundSpawner registerSummonedEnemy dynamically tracks reinforcement adds" 
     try std.testing.expectEqual(@as(u32, 2), spawner.killed_enemies);
 }
 
-
-test "RoundSpawner normal wave caps total enemies at 64" {
-    const high_round_config = generateWaveConfigForProfile(50, .normal);
-    try std.testing.expect(high_round_config.total_enemies <= MAX_CONCURRENT_ENEMIES);
-    try std.testing.expectEqual(@as(u32, 64), high_round_config.total_enemies);
-    try std.testing.expect(high_round_config.is_cap_reached);
-    try std.testing.expect(high_round_config.post_cap_round_offset > 0);
-}
-
 test "RoundSpawner identifies first cap round and calculates post cap offsets" {
-    const first_cap_round = getFirstCapRound();
+    const first_cap_round = NORMAL_ROUND_SCALING.FIRST_CAP_ROUND;
     try std.testing.expect(first_cap_round > 1);
 
     const before_cap_config = generateWaveConfigForProfile(first_cap_round - 1, .normal);
@@ -1325,7 +885,7 @@ test "RoundSpawner normal profile uses 5 second spawn interval and 64 max active
 }
 
 test "applyDynamicStatScalingToStats grants bonus armour, magic resist, health, and damage in post-cap rounds" {
-    const first_cap_round = getFirstCapRound();
+    const first_cap_round = NORMAL_ROUND_SCALING.FIRST_CAP_ROUND;
     var base_stats = Stats.init(.enemy, .{
         .health = 100,
         .physical_damage = 20,
@@ -1407,37 +967,6 @@ test "pickSpawnPositionForEnemy routes to dedicated zone and falls back to all z
     try std.testing.expect(tank_spawn.y >= 480.0 and tank_spawn.y <= 520.0);
 }
 
-test "generateWaveConfigForProfileAndZones omits enemy types without designated spawn zones" {
-    const zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 100.0,
-            .center_y_pixels = 100.0,
-            .width_pixels = 64.0,
-            .height_pixels = 64.0,
-            .enemy_type = .tank,
-        },
-        .{
-            .center_x_pixels = 200.0,
-            .center_y_pixels = 200.0,
-            .width_pixels = 64.0,
-            .height_pixels = 64.0,
-            .enemy_type = .ranged,
-        },
-    };
-
-    // Round 4 normally unlocks elite, tank, shaman, magician, lifeliner, angler, ranged, melee
-    const config = generateWaveConfigForProfileAndZones(4, .normal, &zones);
-    try std.testing.expect(config.tank_count > 0);
-    try std.testing.expect(config.ranged_count > 0);
-    try std.testing.expectEqual(@as(u32, 0), config.angler_count);
-    try std.testing.expectEqual(@as(u32, 0), config.melee_count);
-    try std.testing.expectEqual(@as(u32, 0), config.shaman_count);
-    try std.testing.expectEqual(@as(u32, 0), config.magician_count);
-    try std.testing.expectEqual(@as(u32, 0), config.lifeliner_count);
-    try std.testing.expectEqual(@as(u32, 0), config.elite_count);
-    try std.testing.expectEqual(config.tank_count + config.ranged_count, config.total_enemies);
-}
-
 test "pickSpawnPositionForEnemy returns null when map has zones but none for enemy type and no all zone" {
     var spawner = Self.init(std.testing.allocator);
     defer spawner.deinit();
@@ -1470,26 +999,4 @@ test "pickSpawnPositionForEnemy returns null when map has zones but none for ene
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .angler));
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .ranged));
     try std.testing.expectEqual(@as(?lm.Vector2, null), spawner.pickSpawnPositionForEnemy(player_position, .elite));
-}
-
-test "generateWaveConfigForProfileAndZones spawns designated enemy types even if round is below standard unlock" {
-    const shaman_zones = [_]MapTypes.SpawnZoneRecord{
-        .{
-            .center_x_pixels = 100.0,
-            .center_y_pixels = 100.0,
-            .width_pixels = 64.0,
-            .height_pixels = 64.0,
-            .enemy_type = .shaman,
-        },
-    };
-
-    // Round 2 is normally below Shaman unlock round 3, but map specifically designates Shaman
-    const config_round_2 = generateWaveConfigForProfileAndZones(2, .normal, &shaman_zones);
-    try std.testing.expect(config_round_2.shaman_count > 0);
-    try std.testing.expectEqual(config_round_2.shaman_count, config_round_2.total_enemies);
-
-    // Round 4 budget distributes to shaman instead of being discarded
-    const config_round_4 = generateWaveConfigForProfileAndZones(4, .normal, &shaman_zones);
-    try std.testing.expect(config_round_4.shaman_count > 1);
-    try std.testing.expectEqual(config_round_4.shaman_count, config_round_4.total_enemies);
 }

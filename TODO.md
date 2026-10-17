@@ -38,18 +38,63 @@
   - priority: low
   - workload: Hard
   - steps:
-      - [ ] Source or generate pixel-art sprites and directional animations for new enemies (Shaman, Magician, Lifeliner, Angler, Tank) and bosses (Knight, Bishop, King, Queen, Training Dummy)
-      - [ ] Create visual effect textures and animations: Bond of Life tether, stasis barrier, reactive root aura, distance drain beam, heal pulse, and radial projectiles
-      - [ ] Create dedicated projectile sprites: healing projectile, caster-directed pull force orb, and specialized mob shots
-      - [ ] Create room exit door sprites (open and closed states) and reward category icon badges (Boss, Mini-Boss, Vitality, Supplements, Weapons)
-      - [ ] Source or record dedicated SFX for new abilities: heal impact chime, pull force, blink, shield activation, and door interact
-      - [ ] Integrate boss encounter background music (BGM) tracks and thematic arena tilesets
-      - [ ] User confirmation that all acquired visual, audio, and UI assets load and function without glitches
+      - [x] Shaman enemy sprites and animations (idle, walk, windup, and cast)
+      - [x] Magician enemy sprites and animations (idle, walk, blink, and cast)
+      - [x] Lifeliner enemy sprites and animations (idle, walk, rescue, and revive)
+      - [x] Angler enemy base sprite and animations (idle, walk, and cardinal fire)
+      - [x] Tank enemy sprites and animations (idle, walk, root shield, and slow barrage)
+      - [x] Training Dummy enemy sprite (dummy.png)
+      - [x] Room exit door sprites (normal, mini-boss, and boss in open and closed states)
+      - [x] Boon drop pedestal and floating gift orb sprite
+      - [x] Experience orb crystal pickup sprite
+      - [x] Shaman healing projectile sprite (remote_healing.png)
+      - [x] Shaman grieving wounds projectile sprite (grieving_wounds.png)
+      - [x] Magician pull orb projectile sprite (where_are_you_going.png)
+      - [x] Magician covered attack dart projectile sprite (fallback.png)
+      - [x] Lifeliner rapid dart projectile sprite (fallback.png)
+      - [x] Angler cardinal darts projectile sprite (fallback.png)
+      - [x] Tank slow barrage, knockback shot, and stun burst projectile sprites
+      - [x] Wall trim sprites for normal and short wall fronts (wall_normal.png, wall_short.png)
+      - [ ] Knight Mini-Boss dedicated sprite and animations
+      - [ ] Bishop Mini-Boss dedicated sprite and animations
+      - [ ] King Boss dedicated regal armor and crown sprite
+      - [ ] Queen Boss dedicated royal robe and floating orbs sprite
+      - [ ] Elite enemy dedicated armored sprite
+      - [ ] Bond of Life tether horizontal tileable chain/tether sprite
+      - [ ] Bond of Life status overlay sprite
+      - [ ] Stasis barrier crystal and invulnerability dome sprite
+      - [ ] Slow effect overlay ice crystals and sludge particles sprite
+      - [ ] Reactive root aura thorny ground roots sprite
+      - [ ] Distance drain beam pulsing siphon beam animation sprite
+      - [ ] Heal pulse expanding ring animation sprite
+      - [ ] Exit door category badge icons (Boss, Mini-Boss, Room 1, Tutorial, Vitality, Supplements, Upgrades)
+      - [ ] Status effect icons (Stun, Root, Slow, Bond of Life)
+      - [ ] Boon card artwork (passive boons badges, spell flasks/fruits, and fallback icon)
+      - [ ] Main menu panoramic pixel-art arena background illustration
+      - [ ] Game Over screen defeat vignette background illustration
+      - [ ] Royal Arena dual-grid tileset sheets (marble floor, carpet, gold brick walls)
+      - [ ] Sanctuary Arena dual-grid tileset sheets (mosaic flagstones, vaulted stone walls)
+      - [ ] User confirmation that all acquired visual and UI assets load and function without glitches
     ```md
     Consolidated asset integration encompassing tickets 38#AST and 39#AST: character spritesheets, projectile/VFX overlays, exit door and reward badge artwork, dedicated ability sound effects, and encounter music tracks across v4.0.0 content.
     ```
 
 ## Done
+
+### [55#SPW] Comptime reflection wave spawner refactoring and dynamic enemy composition
+
+  - tags: [spawner, enemies, wave, scaling, comptime, refactor]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [x] Unify WaveConfig and EnemyComposition using comptime-generated WaveSpawnCounts
+      - [x] Implement dynamic enemy spawning and boss bar binding via EnemyType methods
+      - [x] Refactor wave budget calculation with logarithmic scaling up to 128 max budget
+      - [x] Remove obsolete hardcoded spawner fields and clean up unit tests
+      - [x] User confirmation that wave spawner and dynamic enemy composition work as expected
+    ```md
+    Refactors the wave spawner subsystem to dynamically generate enemy spawn counts using comptime reflection over EnemyType fields, decoupling RoundSpawner from hardcoded enemy types and centralizing spawn logic, costs, and wave rules inside EnemyType.
+    ```
 
 ### [53#ARC] Map editor dimension resizing tab with 16-tile increments (32x32 to 128x128)
 
@@ -62,7 +107,7 @@
       - [x] Build the Size panel UI (drawSizeCategory) with current dimension readouts, +/- 16 width/height/uniform controls, and preset buttons
       - [x] Add unit tests for resizeMapGrid verifying dimensions, bounds clamping [32, 128], and tile copying
       - [x] Verify build and tests with zig build and zig build test
-      - [ ] User confirmation that map resizing tab works as expected
+      - [x] User confirmation that map resizing tab works as expected
     ```md
     Adds a dedicated "SIZE" tab in the MapEditor sidebar allowing the map width and height to be increased or decreased in increments of 16 tiles between 32x32 and 128x128, preserving existing tiles and clamping out-of-bounds entities.
     ```
@@ -78,7 +123,7 @@
       - [x] Open existing doors upon wave completion in RoomManager
       - [x] Add unit tests for closed/open door states in DoorSpawner
       - [x] Verify build and tests with zig build test
-      - [ ] User confirmation that exit doors appear closed during combat and open on clear
+      - [x] User confirmation that exit doors appear closed during combat and open on clear
     ```md
     Ensures exit doors are placed in rooms as closed obstacles during the combat phase and automatically open when the room combat wave is cleared, aligning all rooms with the tutorial room behavior.
     ```

@@ -1,8 +1,34 @@
 const std = @import("std");
 const lm = @import("loom");
 const rl = lm.deps.rl;
+const prefabs = @import("../../prefabs/prefabs.zig");
+const BossBar = @import("../../global/ui/BossBar.zig");
 
 pub const EnemyType = enum {
+    pub const NormalWaveRule = struct {
+        unlock_round: u32,
+        round_divisor: u32,
+        max_count: u32,
+    };
+
+    pub const NormalFillerRule = struct {
+        unlock_round: u32,
+        budget_share_percentage: u32,
+    };
+
+    pub const NormalWaveRole = union(enum) {
+        specialist: NormalWaveRule,
+        filler: NormalFillerRule,
+    };
+
+    pub const normal_enemies = makeListByBossRank(null);
+    pub const mini_boss_enemies = makeListByBossRank(.mini_boss);
+    pub const boss_enemies = makeListByBossRank(.boss);
+
+    pub const normal_filler_enemies = [_]EnemyType{ .ranged, .melee };
+    pub const excluded_normal_enemies = [_]EnemyType{.dummy};
+    pub const normal_specialist_enemies = getSpecialistEnemies();
+
     dummy,
     melee,
     ranged,
@@ -18,6 +44,34 @@ pub const EnemyType = enum {
     boss,
     king,
     queen,
+
+    pub fn spawn(self: @This(), position: lm.Vector2) !*lm.Entity {
+        return switch (self) {
+            .dummy => try prefabs.enemies.Dummy(position),
+            .melee => try prefabs.enemies.Melee(position),
+            .ranged => try prefabs.enemies.Ranged(position),
+            .elite => try prefabs.enemies.Elite(position),
+            .shaman => try prefabs.enemies.Shaman(position),
+            .magician => try prefabs.enemies.Magician(position),
+            .lifeliner => try prefabs.enemies.Lifeliner(position),
+            .angler => try prefabs.enemies.Angler(position),
+            .tank => try prefabs.enemies.Tank(position),
+            .knight => try prefabs.enemies.Knight(position),
+            .bishop => try prefabs.enemies.Bishop(position),
+            .mini_boss => try spawn(self.takeFromCategoryNotSelf(mini_boss_enemies), position),
+            .boss => try spawn(self.takeFromCategoryNotSelf(boss_enemies), position),
+            .king => try prefabs.enemies.King(position),
+            .queen => try prefabs.enemies.Queen(position),
+        };
+    }
+
+    pub inline fn bossRank(self: EnemyType) ?BossBar.BossRank {
+        return switch (self) {
+            .knight, .bishop, .mini_boss => .mini_boss,
+            .king, .queen, .boss => .boss,
+            else => null,
+        };
+    }
 
     pub fn cost(self: EnemyType) u32 {
         return switch (self) {
@@ -37,12 +91,6 @@ pub const EnemyType = enum {
         };
     }
 
-    pub const NormalWaveRule = struct {
-        unlock_round: u32,
-        round_divisor: u32,
-        max_count: u32,
-    };
-
     pub fn normalWaveRule(self: EnemyType) ?NormalWaveRule {
         return switch (self) {
             .elite => .{ .unlock_round = 3, .round_divisor = 2, .max_count = 16 },
@@ -53,6 +101,24 @@ pub const EnemyType = enum {
             .angler => .{ .unlock_round = 2, .round_divisor = 2, .max_count = 8 },
             else => null,
         };
+    }
+
+    pub fn normalFillerRule(self: EnemyType) ?NormalFillerRule {
+        return switch (self) {
+            .ranged => .{ .unlock_round = 2, .budget_share_percentage = 35 },
+            .melee => .{ .unlock_round = 1, .budget_share_percentage = 100 },
+            else => null,
+        };
+    }
+
+    pub fn normalWaveRole(self: EnemyType) ?NormalWaveRole {
+        if (self.normalWaveRule()) |rule| {
+            return .{ .specialist = rule };
+        }
+        if (self.normalFillerRule()) |rule| {
+            return .{ .filler = rule };
+        }
+        return null;
     }
 
     pub fn displayName(self: EnemyType) []const u8 {
@@ -73,6 +139,17 @@ pub const EnemyType = enum {
             .king => "The King",
             .queen => "The Queen",
         };
+    }
+
+    pub inline fn canBindBossBar(self: EnemyType) bool {
+        return self.bossRank() != null;
+    }
+
+    pub fn tryBindBossBar(self: EnemyType, entity: *lm.Entity) void {
+        if (!self.canBindBossBar()) return;
+        const boss_rank = self.bossRank() orelse return;
+
+        BossBar.bind(entity, self.displayName(), boss_rank);
     }
 
     pub fn label(self: ?EnemyType) [:0]const u8 {
@@ -137,20 +214,82 @@ pub const EnemyType = enum {
             .queen => rl.Color{ .r = 255, .g = 80, .b = 230, .a = 220 },
         };
     }
+
+    fn takeFromCategoryNotSelf(self: EnemyType, category: []const EnemyType) EnemyType {
+        for (category, 0..) |enemy_type, index| {
+            if (enemy_type != self) continue;
+
+            return category[if (index > 0) index - 1 else index + 1];
+        }
+        return category[lm.random.intRangeAtMost(usize, 0, category.len - 1)];
+    }
+
+    fn makeListByBossRank(comptime for_rank: ?BossBar.BossRank) []const EnemyType {
+        comptime var list: []const EnemyType = &.{};
+
+        const enemy_fields = std.meta.fields(EnemyType);
+        for (0..enemy_fields.len) |index| {
+            const value = lm.coerceTo(EnemyType, index) orelse .dummy;
+            const boss_rank = value.bossRank();
+
+            if (boss_rank != for_rank) continue;
+
+            const add: []const EnemyType = &.{value};
+            list = list ++ add;
+        }
+
+        return list;
+    }
+
+    fn getSpecialistEnemies() []const EnemyType {
+        comptime var list: []const EnemyType = &.{};
+        for (normal_enemies) |normal_enemy_type| {
+            var found = false;
+            for (normal_filler_enemies) |filler| {
+                if (normal_enemy_type != filler) continue;
+                found = true;
+                break;
+            }
+            for (excluded_normal_enemies) |excluded| {
+                if (normal_enemy_type != excluded) continue;
+                found = true;
+                break;
+            }
+
+            if (found) continue;
+
+            const add: []const EnemyType = &.{normal_enemy_type};
+            list = list ++ add;
+        }
+
+        return list;
+    }
 };
 
-test "EnemyType labels and costs" {
-    try std.testing.expectEqualStrings("ALL", EnemyType.label(null));
-    try std.testing.expectEqualStrings("RANGED", EnemyType.label(.ranged));
-    try std.testing.expectEqualStrings("MELEE", EnemyType.label(.melee));
-    try std.testing.expectEqualStrings("KNIGHT", EnemyType.label(.knight));
-    try std.testing.expectEqualStrings("BISHOP", EnemyType.label(.bishop));
-    try std.testing.expectEqualStrings("KING", EnemyType.label(.king));
-    try std.testing.expectEqualStrings("QUEEN", EnemyType.label(.queen));
-    try std.testing.expectEqual(@as(u32, 2), EnemyType.ranged.cost());
-    try std.testing.expectEqual(@as(u32, 1), EnemyType.melee.cost());
-    try std.testing.expectEqual(@as(u32, 20), EnemyType.knight.cost());
-    try std.testing.expectEqual(@as(u32, 20), EnemyType.bishop.cost());
-    try std.testing.expectEqual(@as(u32, 100), EnemyType.king.cost());
-    try std.testing.expectEqual(@as(u32, 100), EnemyType.queen.cost());
+test "makeListByBossRank categories are created correctly" {
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.knight}));
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.bishop}));
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.mini_boss}));
+
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.king}));
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.queen}));
+    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.boss}));
+}
+
+test "normal wave roles and categorization" {
+    for (EnemyType.normal_specialist_enemies) |enemy_type| {
+        try std.testing.expect(enemy_type.normalWaveRule() != null);
+        const role = enemy_type.normalWaveRole().?;
+        try std.testing.expect(role == .specialist);
+    }
+
+    for (EnemyType.normal_filler_enemies) |enemy_type| {
+        try std.testing.expect(enemy_type.normalFillerRule() != null);
+        const role = enemy_type.normalWaveRole().?;
+        try std.testing.expect(role == .filler);
+    }
+
+    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.dummy.normalWaveRole());
+    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.knight.normalWaveRole());
+    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.king.normalWaveRole());
 }

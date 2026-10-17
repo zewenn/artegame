@@ -329,6 +329,97 @@
       "width_pixels": 192,
       "height_pixels": 192,
       "enemy_type": "ranged"
+    },
+    {
+      "center_x_pixels": 864,
+      "center_y_pixels": 992,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1248,
+      "center_y_pixels": 1120,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1184,
+      "center_y_pixels": 736,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2592,
+      "center_y_pixels": 1504,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1696,
+      "center_y_pixels": 2080,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2656,
+      "center_y_pixels": 2272,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 3552,
+      "center_y_pixels": 1888,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2528,
+      "center_y_pixels": 736,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2080,
+      "center_y_pixels": 416,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1248,
+      "center_y_pixels": 2528,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2848,
+      "center_y_pixels": 2848,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2272,
+      "center_y_pixels": 2208,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    },
+    {
+      "center_x_pixels": 992,
+      "center_y_pixels": 352,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
     }
   ],
   "entities": [

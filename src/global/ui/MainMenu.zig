@@ -310,7 +310,7 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
         const footer_text = if (DevicePrompts.isGamepad())
             "Navigate: D-Pad / L-Stick  |  Select: A"
         else
-            "Navigate: WASD / Arrows  |  Select: Enter / Space / Click";
+            "Navigate: WASD / Arrows  |  Select: Enter / Click";
 
         ui.text(footer_text, .{
             .color = ui.color(140, 150, 175, 220),
@@ -367,7 +367,7 @@ fn drawMenuButton(
 fn handleInput(self: *Self) void {
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
 
     if (lm.gamepad.isAvailable(0)) {
         nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);

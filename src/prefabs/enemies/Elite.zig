@@ -12,6 +12,61 @@ const SpellProfile = Enemy.Ability.SpellProfile;
 
 var elite_enemy_count: u32 = 0;
 
+pub const elite_animations = [_]lm.Animation{
+    lm.Animation.init("idle-left", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_idle_1.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_idle_2.png", .rotation = -3 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_idle_1.png", .rotation = 0 },
+    }),
+    lm.Animation.init("idle-right", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_idle_1.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_idle_2.png", .rotation = 3 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_idle_1.png", .rotation = 0 },
+    }),
+    lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_1.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_2.png", .rotation = 10 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_2.png", .rotation = -6 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/left_1.png", .rotation = 0 },
+    }),
+    lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_1.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_2.png", .rotation = -10 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_2.png", .rotation = 6 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/right_1.png", .rotation = 0 },
+    }),
+    lm.Animation.init("windup-fallback", 0.5, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = 0, .height = 64, .width = 64 },
+        lm.Keyframe{ .rotation = -18, .height = 64, .width = 80 },
+    }),
+    lm.Animation.init("cast-fallback", 0.15, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = -18, .height = 64, .width = 80 },
+        lm.Keyframe{ .rotation = 24, .height = 64, .width = 48 },
+    }),
+    lm.Animation.init("winddown-fallback", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = 24, .height = 64, .width = 48 },
+        lm.Keyframe{ .rotation = 0, .height = 64, .width = 64 },
+    }),
+    lm.Animation.init("windup-haste", 0.3, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/windup_1.png", .height = 64, .width = 64 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/windup_2.png", .height = 70, .width = 64 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/windup_3.png", .height = 76, .width = 64 },
+    }),
+    lm.Animation.init("cast-haste", 0.2, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/cast.png", .height = 76, .width = 64 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/cast.png", .height = 76, .width = 64 },
+    }),
+    lm.Animation.init("winddown-haste", 0.3, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/winddown_1.png", .height = 76, .width = 64 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/winddown_2.png", .height = 70, .width = 64 },
+        lm.Keyframe{ .sprite = "characters/enemies/elite/spells/haste/winddown_3.png", .height = 64, .width = 64 },
+    }),
+    lm.Animation.init("stunned", 0.25, lm.interpolation.lerp, &.{
+        lm.Keyframe{ .rotation = 25 },
+        lm.Keyframe{ .rotation = 20 },
+    }),
+};
+
 fn onHasteEnable(s: *Stats) void {
     s.current.movement_speed *= 1.4;
     s.current.attack_speed *= 1.4;
@@ -45,9 +100,9 @@ pub const elite_abilities = [_]Ability{
             },
             .sfx_path = "audio/sfx/click.wav",
         },
-        .windup_animation = "windup-melee",
-        .release_animation = "attack-melee",
-        .winddown_animation = "winddown-melee",
+        .windup_animation = "windup-haste",
+        .release_animation = "cast-haste",
+        .winddown_animation = "winddown-haste",
     },
 
     Ability{
@@ -63,12 +118,14 @@ pub const elite_abilities = [_]Ability{
             .speed = 360,
             .lifetime = 1.6,
             .size = .init(48, 48),
+            .wave_count = 2,
+            .wave_interval = 0.4,
             .spread_angles = &.{ -20, 0, 20 },
             .sfx_path = "audio/sfx/punch.mp3",
         },
-        .windup_animation = "windup-melee",
-        .release_animation = "attack-melee",
-        .winddown_animation = "winddown-melee",
+        .windup_animation = "windup-fallback",
+        .release_animation = "cast-fallback",
+        .winddown_animation = "winddown-fallback",
     },
 };
 
@@ -88,9 +145,9 @@ const elite_fallback = Ability{
         .knockback_duration = 0.2,
         .sfx_path = "audio/sfx/punch.mp3",
     },
-    .windup_animation = "windup-melee",
-    .release_animation = "attack-melee",
-    .winddown_animation = "winddown-melee",
+    .windup_animation = "windup-fallback",
+    .release_animation = "cast-fallback",
+    .winddown_animation = "winddown-fallback",
 };
 
 pub fn EliteEnemy(position: lm.Vector2) !*lm.Entity {
@@ -102,14 +159,13 @@ pub fn EliteEnemy(position: lm.Vector2) !*lm.Entity {
             .scale = .init(64, 64),
         },
         lm.Renderer.init(.{
-            .img_path = "characters/enemies/melee/left_1.png",
-            .tint = lm.Color{ .r = 255, .g = 210, .b = 60, .a = 255 },
+            .img_path = "characters/enemies/elite/left_idle_1.png",
         }),
         lm.RectangleCollider.initConfig(.{
             .type = .dynamic,
             .transform = .{ .scale = .init(70, 70) },
         }),
-        lm.Animator.init(&Enemy.Animation.melee_animations),
+        lm.Animator.init(&elite_animations),
 
         Stats.init(.enemy, .{
             .health = 120,

@@ -9,11 +9,16 @@ const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 
+pub const RESTART_LOCKOUT_DURATION_SECONDS: f32 = 1.5;
+
 pub var is_showing: bool = false;
 pub var run_stats: RoomManager.RunStats = .{};
 pub var selected_index: usize = 0;
 pub var prev_selected_index: usize = 0;
+pub var restart_lockout_timer_seconds: f32 = 0.0;
 var just_opened: bool = false;
+var last_mouse_position: lm.Vector2 = .init(-1, -1);
+var mouse_moved: bool = false;
 
 pub fn show(stats: RoomManager.RunStats) void {
     if (is_showing) return;
@@ -22,6 +27,9 @@ pub fn show(stats: RoomManager.RunStats) void {
     selected_index = 0;
     prev_selected_index = 0;
     just_opened = true;
+    restart_lockout_timer_seconds = RESTART_LOCKOUT_DURATION_SECONDS;
+    last_mouse_position = lm.mouse.getPosition();
+    mouse_moved = false;
     lm.time.pause();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.4, -0.2);
     if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
@@ -33,6 +41,7 @@ pub fn hide() void {
     if (!is_showing) return;
     is_showing = false;
     just_opened = false;
+    restart_lockout_timer_seconds = 0.0;
     lm.time.proceed();
 }
 
@@ -41,6 +50,24 @@ pub fn reset() void {
     just_opened = false;
     selected_index = 0;
     prev_selected_index = 0;
+    restart_lockout_timer_seconds = 0.0;
+    last_mouse_position = .init(-1, -1);
+    mouse_moved = false;
+}
+
+pub fn update(delta_seconds: f32) void {
+    if (restart_lockout_timer_seconds > 0.0) {
+        restart_lockout_timer_seconds = @max(0.0, restart_lockout_timer_seconds - delta_seconds);
+    }
+}
+
+pub fn canRestart() bool {
+    return restart_lockout_timer_seconds <= 0.0;
+}
+
+pub fn isButtonActive(index: usize) bool {
+    const is_disabled = (index == 0 and !canRestart());
+    return !is_disabled and (selected_index == index);
 }
 
 pub fn isShowing() bool {
@@ -52,6 +79,8 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
 
     const window_size = lm.window.size.get();
     const ui_scale = HUD.calculateUiScale(window_size);
+
+    update(lm.time.deltaTime());
 
     if (just_opened) {
         just_opened = false;
@@ -225,22 +254,41 @@ fn drawStatRow(
     });
 }
 
-fn drawActionButtons(btn_max_w: f32, ui_scale: f32) void {
-    const btn_w = @min(btn_max_w, @round(HUD.MENU_BUTTON_BASE_W * ui_scale));
-    const btn_h = @round(HUD.MENU_BUTTON_BASE_H * ui_scale);
-    const gap = lm.tou16(@round(10 * ui_scale));
+fn updateHoverSelection() void {
+    const current_mouse_position = lm.mouse.getPosition();
+    mouse_moved = (current_mouse_position.x != last_mouse_position.x or current_mouse_position.y != last_mouse_position.y);
+    last_mouse_position = current_mouse_position;
+
+    if (!mouse_moved) return;
+
+    const total_buttons: usize = 2;
+    for (0..total_buttons) |button_index| {
+        const button_element_id = clay.ElementId.IDI("gameover-btn-", @as(u32, @intCast(button_index)));
+        if (clay.pointerOver(button_element_id)) {
+            selected_index = button_index;
+            return;
+        }
+    }
+}
+
+fn drawActionButtons(button_max_width: f32, ui_scale: f32) void {
+    updateHoverSelection();
+
+    const button_width = @min(button_max_width, @round(HUD.MENU_BUTTON_BASE_W * ui_scale));
+    const button_height = @round(HUD.MENU_BUTTON_BASE_H * ui_scale);
+    const gap_pixels = lm.tou16(@round(10 * ui_scale));
 
     ui.new(.{
         .id = .ID("gameover-buttons-col"),
         .layout = .{
-            .sizing = .{ .w = .fixed(btn_w) },
+            .sizing = .{ .w = .fixed(button_width) },
             .direction = .top_to_bottom,
-            .child_gap = gap,
+            .child_gap = gap_pixels,
             .child_alignment = .{ .x = .center },
         },
     })({
-        drawButton(0, "RESTART", true, btn_w, btn_h, ui_scale);
-        drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, btn_w, btn_h, ui_scale);
+        drawButton(0, "RESTART", true, button_width, button_height, ui_scale);
+        drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, button_width, button_height, ui_scale);
 
         ui.new(.{
             .id = .ID("gameover-footer-spacer"),
@@ -254,7 +302,7 @@ fn drawActionButtons(btn_max_w: f32, ui_scale: f32) void {
             const footer_text = if (DevicePrompts.isGamepad())
                 "Navigate: D-Pad / L-Stick  |  Select: A"
             else
-                "Navigate: WASD / Arrows  |  Select: Enter / Space / Click";
+                "Navigate: WASD / Arrows  |  Select: Enter / Click";
 
             ui.text(footer_text, .{
                 .color = ui.color(140, 150, 175, 200),
@@ -270,11 +318,12 @@ fn drawButton(
     index: usize,
     caption: []const u8,
     is_primary: bool,
-    w: f32,
-    h: f32,
+    button_width: f32,
+    button_height: f32,
     ui_scale: f32,
 ) void {
-    const is_selected = (selected_index == index);
+    const is_disabled = (index == 0 and !canRestart());
+    const is_button_active = isButtonActive(index);
     const font_size = lm.tou16(@max(13, @round(15 * ui_scale)));
     const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
 
@@ -282,27 +331,34 @@ fn drawButton(
         .id = .IDI("gameover-btn-", @intCast(index)),
         .layout = .{
             .sizing = .{
-                .w = .fixed(w),
-                .h = .fixed(h),
+                .w = .fixed(button_width),
+                .h = .fixed(button_height),
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .image = ui.image(HUD.getMenuButtonSprite(clay.hovered() or is_selected), .init(w, h)) catch .{ .image_data = null },
+        .image = ui.image(HUD.getMenuButtonSprite(is_button_active), .init(button_width, button_height)) catch .{ .image_data = null },
     })({
         if (clay.hovered()) {
-            selected_index = index;
-            if (lm.mouse.getButtonDown(.left)) {
+            if (mouse_moved) {
+                selected_index = index;
+            }
+            if (lm.mouse.getButtonDown(.left) and !is_disabled) {
+                selected_index = index;
                 activateAction(index);
             }
         }
 
+        const text_color = if (is_disabled)
+            ui.color(120, 105, 115, 200)
+        else if (is_button_active)
+            ui.color(255, 255, 255, 255)
+        else if (is_primary)
+            ui.color(240, 200, 205, 255)
+        else
+            ui.color(190, 180, 200, 255);
+
         ui.text(caption, .{
-            .color = if (clay.hovered() or is_selected)
-                ui.color(255, 255, 255, 255)
-            else if (is_primary)
-                ui.color(240, 200, 205, 255)
-            else
-                ui.color(190, 180, 200, 255),
+            .color = text_color,
             .font_size = font_size,
             .letter_spacing = letter_spacing,
             .alignment = .center,
@@ -314,7 +370,7 @@ fn handleInput() void {
     DevicePrompts.update();
     var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
     var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter) or lm.keyboard.getKeyDown(.space);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
 
     if (lm.gamepad.isAvailable(0)) {
         nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);
@@ -334,13 +390,16 @@ fn handleInput() void {
         if (selected_index >= max_index) selected_index = 0 else selected_index += 1;
     }
     if (select_pressed) {
-        activateAction(selected_index);
+        if (selected_index != 0 or canRestart()) {
+            activateAction(selected_index);
+        }
     }
 }
 
 fn activateAction(index: usize) void {
     switch (index) {
         0 => {
+            if (!canRestart()) return;
             if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
                 SaveSystem.clearRun();
             }
@@ -402,3 +461,54 @@ test "GameOverMenu show and hide lifecycle" {
     try std.testing.expect(!lm.time.paused());
     try std.testing.expect(!just_opened);
 }
+
+test "GameOverMenu restart lockout timeout and rejection" {
+    reset();
+    lm.time.proceed();
+
+    show(.{});
+    try std.testing.expect(is_showing);
+    try std.testing.expect(!canRestart());
+    try std.testing.expectEqual(@as(f32, RESTART_LOCKOUT_DURATION_SECONDS), restart_lockout_timer_seconds);
+
+    activateAction(0);
+    try std.testing.expect(is_showing);
+
+    update(1.0);
+    try std.testing.expect(!canRestart());
+    try std.testing.expectApproxEqAbs(@as(f32, 0.5), restart_lockout_timer_seconds, 0.001);
+
+    activateAction(0);
+    try std.testing.expect(is_showing);
+
+    update(0.5);
+    try std.testing.expect(canRestart());
+    try std.testing.expectEqual(@as(f32, 0.0), restart_lockout_timer_seconds);
+
+    hide();
+    try std.testing.expect(!is_showing);
+    try std.testing.expect(canRestart());
+}
+
+test "GameOverMenu button active state and mutual exclusion" {
+    reset();
+    restart_lockout_timer_seconds = 0.0;
+
+    selected_index = 0;
+    try std.testing.expect(isButtonActive(0));
+    try std.testing.expect(!isButtonActive(1));
+
+    selected_index = 1;
+    try std.testing.expect(!isButtonActive(0));
+    try std.testing.expect(isButtonActive(1));
+
+    restart_lockout_timer_seconds = 1.0;
+    selected_index = 0;
+    try std.testing.expect(!isButtonActive(0));
+    try std.testing.expect(!isButtonActive(1));
+
+    selected_index = 1;
+    try std.testing.expect(!isButtonActive(0));
+    try std.testing.expect(isButtonActive(1));
+}
+
