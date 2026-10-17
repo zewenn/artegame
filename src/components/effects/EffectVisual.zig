@@ -47,16 +47,16 @@ pub const EffectVisualRegistry = struct {
     pub fn getDefault(effect_type: EffectType) ?EffectVisual {
         return switch (effect_type) {
             .stun => EffectVisual{
+                .icon = "ui/icons/stun_icon.png",
                 .frames = &.{
-                    "effects/stun_effect_1.png",
-                    "effects/stun_effect_2.png",
-                    "effects/stun_effect_3.png",
-                    "effects/stun_effect_4.png",
+                    "effects/stun/stun_1.png",
+                    "effects/stun/stun_2.png",
+                    "effects/stun/stun_3.png",
+                    "effects/stun/stun_4.png",
                 },
                 .frame_duration = 0.1,
                 .offset = .init(0, 0),
                 .scale = .init(64, 64),
-                .icon = "ui/icons/empty_icon.png",
             },
             .sleep => EffectVisual{
                 .frames = &.{
@@ -69,6 +69,7 @@ pub const EffectVisualRegistry = struct {
                 .icon = "ui/icons/sleep_icon.png",
             },
             .root => EffectVisual{
+                .icon = "ui/icons/root_icon.png",
                 .frames = &.{
                     "effects/root.png",
                 },
@@ -76,7 +77,6 @@ pub const EffectVisualRegistry = struct {
                 .offset = .init(0, 0),
                 .scale = .init(64, 64),
                 .loop = true,
-                .icon = "ui/icons/sleep_icon.png",
             },
             .regen => EffectVisual{
                 .frames = &.{
@@ -110,7 +110,17 @@ pub const EffectVisualRegistry = struct {
                 .scale = .init(64, 64),
                 .offset = .init(0, 0),
             },
-            .bond_of_life, .custom => null,
+            .bond_of_life => EffectVisual{
+                .icon = "ui/icons/bond_of_life.png",
+                .frame_duration = 0.2,
+                .frames = &.{
+                    "effects/bond_of_life/bond_of_life_1.png",
+                    "effects/bond_of_life/bond_of_life_2.png",
+                },
+                .scale = .init(64, 64),
+                .offset = .init(0, 0),
+            },
+            .custom => null,
         };
     }
 };

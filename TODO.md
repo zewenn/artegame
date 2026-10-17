@@ -62,14 +62,14 @@
       - [ ] Queen Boss dedicated royal robe and floating orbs sprite
       - [x] Elite enemy dedicated armored sprite
       - [ ] Bond of Life tether horizontal tileable chain/tether sprite
-      - [ ] Bond of Life status overlay sprite
+      - [ ] Distance drain beam pulsing siphon beam animation sprite
+      - [x] Bond of Life status overlay sprite
       - [x] Stasis barrier crystal and invulnerability dome sprite
       - [x] Slow effect overlay ice crystals and sludge particles sprite
       - [ ] Reactive root aura thorny ground roots sprite
-      - [ ] Distance drain beam pulsing siphon beam animation sprite
       - [ ] Heal pulse expanding ring animation sprite
       - [ ] Exit door category badge icons (Boss, Mini-Boss, Room 1, Tutorial, Vitality, Supplements, Upgrades)
-      - [ ] Status effect icons (Stun, Root, Slow, Bond of Life)
+      - [x] Status effect icons (Stun, Root, Slow, Bond of Life)
       - [ ] Boon card artwork (passive boons badges, spell flasks/fruits, and fallback icon)
       - [ ] Main menu panoramic pixel-art arena background illustration
       - [ ] Game Over screen defeat vignette background illustration
