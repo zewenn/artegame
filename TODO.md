@@ -37,6 +37,7 @@
   - tags: [assets, sprites, audio, vfx, ui]
   - priority: low
   - workload: Hard
+  - defaultExpanded: false
   - steps:
       - [x] Shaman enemy sprites and animations (idle, walk, windup, and cast)
       - [x] Magician enemy sprites and animations (idle, walk, blink, and cast)
@@ -59,11 +60,11 @@
       - [ ] Bishop Mini-Boss dedicated sprite and animations
       - [ ] King Boss dedicated regal armor and crown sprite
       - [ ] Queen Boss dedicated royal robe and floating orbs sprite
-      - [ ] Elite enemy dedicated armored sprite
+      - [x] Elite enemy dedicated armored sprite
       - [ ] Bond of Life tether horizontal tileable chain/tether sprite
       - [ ] Bond of Life status overlay sprite
-      - [ ] Stasis barrier crystal and invulnerability dome sprite
-      - [ ] Slow effect overlay ice crystals and sludge particles sprite
+      - [x] Stasis barrier crystal and invulnerability dome sprite
+      - [x] Slow effect overlay ice crystals and sludge particles sprite
       - [ ] Reactive root aura thorny ground roots sprite
       - [ ] Distance drain beam pulsing siphon beam animation sprite
       - [ ] Heal pulse expanding ring animation sprite

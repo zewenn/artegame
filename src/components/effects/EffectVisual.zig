@@ -58,8 +58,7 @@ pub const EffectVisualRegistry = struct {
                 .scale = .init(64, 64),
                 .icon = "ui/icons/empty_icon.png",
             },
-            .sleep,
-            => EffectVisual{
+            .sleep => EffectVisual{
                 .frames = &.{
                     "effects/sleep_effect.png",
                 },
@@ -95,7 +94,23 @@ pub const EffectVisualRegistry = struct {
             .goliath => EffectVisual{
                 .icon = "ui/icons/goliath_icon.png",
             },
-            .slow, .stasis, .bond_of_life, .custom => null,
+            .slow => EffectVisual{
+                .frames = &.{
+                    "effects/slow/slow_1.png",
+                    "effects/slow/slow_2.png",
+                },
+                .icon = "ui/icons/slow_icon.png",
+                .scale = .init(64, 64),
+                .offset = .init(0, 0),
+                .frame_duration = 0.1,
+            },
+            .stasis => EffectVisual{
+                .icon = "ui/icons/stasis_icon.png",
+                .frames = &.{"effects/stasis.png"},
+                .scale = .init(64, 64),
+                .offset = .init(0, 0),
+            },
+            .bond_of_life, .custom => null,
         };
     }
 };

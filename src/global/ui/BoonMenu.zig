@@ -266,7 +266,7 @@ fn boonCard(
                     },
                 },
                 .image = ui.image(
-                    "ui/icons/sleep_icon.png",
+                    "items/exp_orb.png",
                     .init(cost_image_size, cost_image_size),
                 ) catch .{ .image_data = null },
             })({});

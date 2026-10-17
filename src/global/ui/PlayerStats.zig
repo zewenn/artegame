@@ -180,7 +180,7 @@ fn experienceCounter(experience: usize, alloc: ?std.mem.Allocator) void {
                 },
             },
             .image = ui.image(
-                "ui/icons/sleep_icon.png",
+                "items/exp_orb.png",
                 .init(HUD.hud_height, HUD.hud_height),
             ) catch .{ .image_data = null },
         })({});
