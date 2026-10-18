@@ -17,6 +17,8 @@ pub const DistanceDrainConfig = struct {
     min_damage_per_second: f32 = 1.0,
     max_damage_per_second: f32 = 15.0,
     room_scaling_factor: f32 = 1.0,
+    health_cap: f32 = 10,
+    heal_percentage: f32 = 1.0,
 };
 
 pub const ProximitySlowConfig = struct {
@@ -116,43 +118,42 @@ fn updateDistanceDrain(
     if (damage_per_second <= 0.0) return;
 
     const drain_amount = damage_per_second * delta_time_seconds;
-    player_stats.current.health = @max(1.0, player_stats.current.health - drain_amount);
-    caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + drain_amount);
+    player_stats.current.health = @max(config.health_cap, player_stats.current.health - drain_amount);
+    caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + drain_amount * config.heal_percentage);
 }
 
 fn updateProximitySlow(self: *Self, player_stats: *Stats, distance_pixels: f32) void {
     const config = self.proximity_slow orelse return;
 
-    if (distance_pixels < config.threshold_distance_pixels) {
-        if (!self.is_player_slow_applied) {
-            player_stats.addEffect(.{
-                .id = "proximity_aura_slow",
-                .effect_type = .slow,
-                .duration = 0.0,
-                .value = config.slow_strength,
-                .on_enable = struct {
-                    pub fn onEnable(s: *Stats) void {
-                        if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
-                            s.current.movement_speed = @max(10.0, s.current.movement_speed - effect.value);
-                        }
-                    }
-                }.onEnable,
-                .on_disable = struct {
-                    pub fn onDisable(s: *Stats) void {
-                        if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
-                            s.current.movement_speed += effect.value;
-                        }
-                    }
-                }.onDisable,
-            });
-            self.is_player_slow_applied = true;
-        }
-    } else {
-        if (self.is_player_slow_applied) {
-            player_stats.removeEffect(.{ .id = "proximity_aura_slow" });
-            self.is_player_slow_applied = false;
-        }
-    }
+    if (distance_pixels >= config.threshold_distance_pixels) if (self.is_player_slow_applied) {
+        player_stats.removeEffect(.{ .id = "proximity_aura_slow" });
+        self.is_player_slow_applied = false;
+        return;
+    };
+
+    if (self.is_player_slow_applied) return;
+
+    player_stats.addEffect(.{
+        .id = "proximity_aura_slow",
+        .effect_type = .slow,
+        .duration = 0.0,
+        .value = config.slow_strength,
+        .on_enable = struct {
+            pub fn onEnable(s: *Stats) void {
+                if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
+                    s.current.movement_speed = @max(10.0, s.current.movement_speed - effect.value);
+                }
+            }
+        }.onEnable,
+        .on_disable = struct {
+            pub fn onDisable(s: *Stats) void {
+                if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
+                    s.current.movement_speed += effect.value;
+                }
+            }
+        }.onDisable,
+    });
+    self.is_player_slow_applied = true;
 }
 
 pub fn calculateParabolicBonus(
