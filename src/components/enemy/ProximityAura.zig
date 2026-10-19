@@ -5,6 +5,8 @@ const Stats = @import("../Stats.zig");
 
 const Self = @This();
 
+const TETHER_BUILD_TIME: comptime_float = 0.15;
+
 const Textures = struct {
     drain_right: ?*lm.Texture,
     drain_middle: ?*lm.Texture,
@@ -12,9 +14,9 @@ const Textures = struct {
 
     pub fn load() Textures {
         return Textures{
-            .drain_right = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
-            .drain_middle = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
-            .drain_left = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
+            .drain_right = lm.assets.texture.get("effects/drain/right.png", &.{ 64, 64 }),
+            .drain_middle = lm.assets.texture.get("effects/drain/middle.png", &.{ 64, 64 }),
+            .drain_left = lm.assets.texture.get("effects/drain/left.png", &.{ 64, 64 }),
         };
     }
 
@@ -59,6 +61,7 @@ transform: ?*lm.Transform = null,
 
 textures: ?Textures = null,
 is_draining: bool = false,
+tether_anim_start: f32 = 0,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
@@ -88,10 +91,9 @@ pub fn Update(self: *Self) void {
     self.updateDistanceDrain(stats, player_stats, distance_pixels, delta_time_seconds);
     self.updateProximitySlow(player_stats, distance_pixels);
 
-    if (self.is_draining)
-        self.renderDrainTether(caster_position, player_position, distance_pixels) catch {
-            std.log.err("failed to render drain tether", .{});
-        };
+    self.renderDrainTether(caster_position, player_position, distance_pixels) catch {
+        std.log.err("failed to render drain tether", .{});
+    };
 }
 
 pub fn End(self: *Self) void {
@@ -146,7 +148,13 @@ fn updateDistanceDrain(
         distance_pixels,
     );
 
+    const previous_state = self.is_draining;
     self.is_draining = damage_per_second > 0;
+
+    if (previous_state != self.is_draining) {
+        self.tether_anim_start = lm.time.gameTime();
+    }
+
     if (damage_per_second <= 0.0) return;
 
     const drain_amount = damage_per_second * delta_time_seconds;
@@ -226,19 +234,27 @@ pub fn calculateDrainRate(
 
 fn renderDrainTether(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: f32) !void {
     const textures = self.textures orelse return;
+    const anim_percent = @min(1, (lm.time.gameTime() - self.tether_anim_start) / TETHER_BUILD_TIME);
+
+    if (anim_percent == 1 and !self.is_draining) return;
+
+    const start_vector = if (self.is_draining) start else start.lerp(end, anim_percent);
+    const end_vector = if (self.is_draining) start.lerp(end, anim_percent) else end;
+
+    const current_distance = if (self.is_draining) distance * anim_percent else distance * (1.0 - anim_percent);
 
     const base_vector = lm.Vec2(1, 0);
-    const delta = end.subtract(start);
-    const angle = std.math.radiansToDegrees(base_vector.angle(delta));
-    const middle_width = distance - (2 * 32);
+    const delta_vector = end.subtract(start);
+    const angle = std.math.radiansToDegrees(base_vector.angle(delta_vector));
 
-    const middle_point = delta.divide(.init(2, 2)).add(start);
+    const middle_point = start_vector.lerp(end_vector, 0.5);
+    const middle_width = @max(0.0, current_distance - 64.0);
 
     if (textures.drain_left) |drain_left|
         try lm.display.add(.{
             .texture = drain_left.*,
             .transform = .{
-                .position = .init(start.x, start.y, -100),
+                .position = .init(start_vector.x, start_vector.y, -100),
                 .rotation = angle,
             },
             .display = .{
@@ -252,7 +268,7 @@ fn renderDrainTether(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: 
         try lm.display.add(.{
             .texture = drain_right.*,
             .transform = .{
-                .position = .init(end.x, end.y, -100),
+                .position = .init(end_vector.x, end_vector.y, -100),
                 .rotation = angle,
             },
             .display = .{
