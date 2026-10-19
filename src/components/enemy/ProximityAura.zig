@@ -5,6 +5,26 @@ const Stats = @import("../Stats.zig");
 
 const Self = @This();
 
+const Textures = struct {
+    drain_right: ?*lm.Texture,
+    drain_middle: ?*lm.Texture,
+    drain_left: ?*lm.Texture,
+
+    pub fn load() Textures {
+        return Textures{
+            .drain_right = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
+            .drain_middle = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
+            .drain_left = lm.assets.texture.get("empty.png", &.{ 64, 64 }),
+        };
+    }
+
+    pub fn unload(self: Textures) void {
+        if (self.drain_right) |drain_right| lm.assets.texture.releasePtr(drain_right);
+        if (self.drain_middle) |drain_middle| lm.assets.texture.releasePtr(drain_middle);
+        if (self.drain_left) |drain_left| lm.assets.texture.releasePtr(drain_left);
+    }
+};
+
 pub const ParabolicDefenseConfig = struct {
     inner_distance_pixels: f32 = 400.0,
     outer_distance_pixels: f32 = 1000.0,
@@ -37,9 +57,13 @@ is_player_slow_applied: bool = false,
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 
+textures: ?Textures = null,
+is_draining: bool = false,
+
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
+    self.textures = .load();
 }
 
 pub fn Update(self: *Self) void {
@@ -63,9 +87,16 @@ pub fn Update(self: *Self) void {
     self.updateParabolicDefense(stats, distance_pixels);
     self.updateDistanceDrain(stats, player_stats, distance_pixels, delta_time_seconds);
     self.updateProximitySlow(player_stats, distance_pixels);
+
+    if (self.is_draining)
+        self.renderDrainTether(caster_position, player_position, distance_pixels) catch {
+            std.log.err("failed to render drain tether", .{});
+        };
 }
 
 pub fn End(self: *Self) void {
+    if (self.textures) |textures| textures.unload();
+
     if (self.stats) |stats| {
         stats.current.armour = @max(0.0, stats.current.armour - self.applied_defense_bonus);
         stats.current.magic_resist = @max(0.0, stats.current.magic_resist - self.applied_defense_bonus);
@@ -115,6 +146,7 @@ fn updateDistanceDrain(
         distance_pixels,
     );
 
+    self.is_draining = damage_per_second > 0;
     if (damage_per_second <= 0.0) return;
 
     const drain_amount = damage_per_second * delta_time_seconds;
@@ -190,4 +222,58 @@ pub fn calculateDrainRate(
     const base_rate = min_rate + (max_rate - min_rate) * normalized_t;
 
     return base_rate * room_scaling;
+}
+
+fn renderDrainTether(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: f32) !void {
+    const textures = self.textures orelse return;
+
+    const base_vector = lm.Vec2(1, 0);
+    const delta = end.subtract(start);
+    const angle = std.math.radiansToDegrees(base_vector.angle(delta));
+    const middle_width = distance - (2 * 32);
+
+    const middle_point = delta.divide(.init(2, 2)).add(start);
+
+    if (textures.drain_left) |drain_left|
+        try lm.display.add(.{
+            .texture = drain_left.*,
+            .transform = .{
+                .position = .init(start.x, start.y, -100),
+                .rotation = angle,
+            },
+            .display = .{
+                .fill_color = null,
+                .img_path = "",
+                .tint = lm.Color.white,
+            },
+        });
+
+    if (textures.drain_right) |drain_right|
+        try lm.display.add(.{
+            .texture = drain_right.*,
+            .transform = .{
+                .position = .init(end.x, end.y, -100),
+                .rotation = angle,
+            },
+            .display = .{
+                .fill_color = null,
+                .img_path = "",
+                .tint = lm.Color.white,
+            },
+        });
+
+    if (textures.drain_middle) |drain_middle|
+        try lm.display.add(.{
+            .texture = drain_middle.*,
+            .transform = .{
+                .position = .init(middle_point.x, middle_point.y, -100),
+                .rotation = angle,
+                .scale = .init(middle_width, 64),
+            },
+            .display = .{
+                .fill_color = null,
+                .img_path = "",
+                .tint = lm.Color.white,
+            },
+        });
 }

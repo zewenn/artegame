@@ -2,6 +2,23 @@
 
 ## Backlog
 
+### [57#ARC] Enemy system optimization with Structure of Arrays (SoA)
+
+  - tags: [enemies, soa, optimization, performance, v4.1.0]
+  - priority: medium
+  - workload: Hard
+  - steps:
+      - [ ] Design SoA enemy data layout (positions, velocities, stats, health, cooldowns, AI states) using std.MultiArrayList
+      - [ ] Implement batch enemy lifecycle, velocity integration, and movement steering towards player
+      - [ ] Implement batch enemy spatial partitioning and broadphase/narrowphase collision queries
+      - [ ] Implement batch animation tick and instanced sprite rendering for active enemies
+      - [ ] Migrate EnemyType spawn pipeline and wave spawner to instantiate enemies into the SoA manager
+      - [ ] Benchmark and stress test with hundreds of concurrent enemies on screen to guarantee 60 FPS
+      - [ ] User confirmation that enemy SoA optimization works as expected
+    ```md
+    Refactors the enemy subsystem from individual heavyweight Loom entity components into a cache-coherent Structure of Arrays (SoA) layout (e.g. using std.MultiArrayList), enabling high-density enemy hordes with optimized batch motion integration, batch collisions, and minimal per-frame overhead.
+    ```
+
 ### [54#ARC] Projectile system optimization with Structure of Arrays (SoA)
 
   - tags: [projectiles, soa, optimization, performance, v4.1.0]
@@ -17,6 +34,22 @@
       - [ ] User confirmation that projectile SoA system and performance optimizations work as expected
     ```md
     Refactors the projectile subsystem from individual heavy Loom entities into a Structure of Arrays (SoA) representation to enable high-throughput cache-coherent updates, fast iteration, and optimized batch collision/rendering when thousands of projectiles are active simultaneously on screen.
+    ```
+
+### [56#AUD] Dynamic adaptive music system with room binding and intensity scaling
+
+  - tags: [audio, music, adaptive, rooms, v4.2.0]
+  - priority: medium
+  - workload: Hard
+  - defaultExpanded: false
+  - steps:
+      - [ ] Design multi-stem audio manager supporting dynamic track registration, cross-fading, and volume layers
+      - [ ] Implement room-to-track binding configuration within RoomManager and room progression lifecycle
+      - [ ] Implement event-driven music intensity scaling based on active enemy wave count, combat state, and player health
+      - [ ] Add smooth audio cross-fading transitions between exploration, combat, victory, and boss encounter phases
+      - [ ] User confirmation that dynamic music system works as expected
+    ```md
+    Implements an adaptive music subsystem capable of binding distinct soundtrack stems to specific room layouts and modulating layered audio stems and playback intensity in real time based on active combat events (enemy wave density, boss encounter phases, and player peril).
     ```
 
 ### [19#OPS] Linux release build and packaging workflow
