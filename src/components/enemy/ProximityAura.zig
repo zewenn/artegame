@@ -140,7 +140,7 @@ fn updateDistanceDrain(
     );
 
     if (self.tether) |*tether| {
-        const previous_state = self.is_active;
+        const previous_state = tether.is_active;
         tether.is_active = damage_per_second > 0;
 
         if (previous_state != tether.is_active)
