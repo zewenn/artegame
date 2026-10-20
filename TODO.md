@@ -94,8 +94,8 @@
       - [ ] King Boss dedicated regal armor and crown sprite
       - [ ] Queen Boss dedicated royal robe and floating orbs sprite
       - [x] Elite enemy dedicated armored sprite
-      - [ ] Bond of Life tether horizontal tileable chain/tether sprite
-      - [ ] Distance drain beam pulsing siphon beam animation sprite
+      - [x] Bond of Life tether horizontal tileable chain/tether sprite
+      - [x] Distance drain beam pulsing siphon beam animation sprite
       - [x] Bond of Life status overlay sprite
       - [x] Stasis barrier crystal and invulnerability dome sprite
       - [x] Slow effect overlay ice crystals and sludge particles sprite

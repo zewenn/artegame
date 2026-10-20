@@ -4,6 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../Stats.zig");
 const Attack = @import("Attack.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
+const Tether = @import("Tether.zig");
 
 const Self = @This();
 
@@ -17,16 +18,32 @@ pub const BondState = enum {
 state: BondState = .inactive,
 target_uuid: ?u128 = null,
 caster_uuid: ?u128 = null,
+
+target: ?*lm.Entity = null,
+caster: ?*lm.Entity = null,
+
+target_transform: ?*lm.Transform = null,
+caster_transform: ?*lm.Transform = null,
+
 effectiveness_fraction: f32 = 0.10,
 duration_seconds: f32 = 5.0,
 time_remaining_seconds: f32 = 0.0,
+
+tether: ?Tether = null,
+previous_frame_active: bool = false,
 
 pub var instance: Self = .{};
 
 pub fn reset(self: *Self) void {
     self.state = .inactive;
+
     self.target_uuid = null;
     self.caster_uuid = null;
+    self.target = null;
+    self.caster = null;
+    self.target_transform = null;
+    self.caster_transform = null;
+
     self.effectiveness_fraction = 0.10;
     self.duration_seconds = 5.0;
     self.time_remaining_seconds = 0.0;
@@ -51,6 +68,15 @@ pub fn apply(
     self.state = .active;
     self.caster_uuid = caster_uuid;
     self.target_uuid = target_entity.uuid;
+
+    self.caster = lm.getEntity(.byUUID(caster_uuid));
+    self.target = target_entity;
+
+    if (self.caster) |caster|
+        self.caster_transform = caster.getComponent(lm.Transform);
+
+    self.target_transform = target_entity.getComponent(lm.Transform);
+
     self.effectiveness_fraction = effectiveness;
     self.duration_seconds = duration_seconds;
     self.time_remaining_seconds = duration_seconds;
@@ -147,7 +173,46 @@ pub fn expireOnMiss(self: *Self) bool {
     return true;
 }
 
-pub fn update(self: *Self, delta_time_seconds: f32) void {
+pub fn update(self: *Self, delta_time_seconds: f32) !void {
+    if (self.tether == null) {
+        self.tether = .init(
+            try .load(
+                "effects/bond_of_life/right.png",
+                "effects/bond_of_life/left.png",
+                &.{
+                    "effects/bond_of_life/middle_1.png",
+                    "effects/bond_of_life/middle_2.png",
+                    "effects/bond_of_life/middle_3.png",
+                    "effects/bond_of_life/middle_4.png",
+                },
+            ),
+            .{},
+        );
+    }
+
+    if (self.tether) |*tether| tether: {
+        const caster_uuid = self.caster_uuid orelse break :tether;
+        const target_uuid = self.target_uuid orelse break :tether;
+
+        if (!lm.activeScene().?.isEntityAliveUuid(target_uuid) or
+            !lm.activeScene().?.isEntityAliveUuid(caster_uuid)) break :tether;
+
+        const caster_transform = self.caster_transform orelse break :tether;
+        const target_transform = self.target_transform orelse break :tether;
+
+        const caster_position = lm.vec3ToVec2(caster_transform.position);
+        const target_position = lm.vec3ToVec2(target_transform.position);
+
+        const distance = caster_position.distance(target_position);
+
+        self.previous_frame_active = tether.is_active;
+        tether.is_active = self.isActive();
+        if (self.previous_frame_active != tether.is_active)
+            tether.startAnim();
+
+        try tether.render(caster_position, target_position, distance);
+    }
+
     if (!self.isActive()) return;
 
     self.time_remaining_seconds -= delta_time_seconds;

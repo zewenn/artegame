@@ -41,7 +41,7 @@ pub fn Update(self: *Self) !void {
     }
 
     const delta_seconds = lm.time.deltaTime();
-    BondOfLife.instance.update(delta_seconds);
+    try BondOfLife.instance.update(delta_seconds);
 
     self.updateDashCharge(delta_seconds);
 }
