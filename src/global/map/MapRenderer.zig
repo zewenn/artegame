@@ -83,6 +83,7 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
     for (0..TerrainType.count) |layer_index| {
         const terrain_type = lm.coerceTo(TerrainType, layer_index) orelse continue;
         const active_terrain_texture = lm.assets.texture.get(terrain_type.assetPath(), &.{ 64, 64 }) orelse continue;
+        defer lm.assets.texture.releasePtr(active_terrain_texture);
 
         for (0..quad_height_count) |row_index| {
             for (0..quad_width_count) |column_index| {
@@ -137,17 +138,25 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
 }
 
 fn renderSideSprites(self: *Self, background_tiles: []const u8) void {
-    const normal_side_texture = lm.assets.texture.get("backgrounds/wall_normal.png", &.{ 16, 16 });
-    const short_side_texture = lm.assets.texture.get("backgrounds/wall_short.png", &.{ 16, 12 });
-
     for (0..self.height_tiles) |row_index| {
         for (0..self.width_tiles) |column_index| {
+            const tile_index = row_index * self.width_tiles + column_index;
+            const terrain_type = lm.coerceTo(TerrainType, background_tiles[tile_index]) orelse continue;
+            const wall_type = terrain_type.toWallType() orelse continue;
+            const side_asset_path = terrain_type.sideAssetPath() orelse continue;
+
+            const texture = lm.assets.texture.get(side_asset_path, switch (wall_type) {
+                .low => &.{ 16, 12 },
+                .solid => &.{ 16, 16 },
+            }) orelse continue;
+            defer lm.assets.texture.releasePtr(texture);
+
             self.drawTileSideSprite(
                 background_tiles,
                 @intCast(column_index),
                 @intCast(row_index),
-                normal_side_texture,
-                short_side_texture,
+                terrain_type,
+                texture,
             );
         }
     }
@@ -158,44 +167,23 @@ fn drawTileSideSprite(
     background_tiles: []const u8,
     column_index: u32,
     row_index: u32,
-    normal_side_texture: ?*const rl.Texture,
-    short_side_texture: ?*const rl.Texture,
+    terrain_type: TerrainType,
+    texture: *const lm.Texture,
 ) void {
-    const tile_index = row_index * self.width_tiles + column_index;
-    const terrain_type = lm.coerceTo(TerrainType, background_tiles[tile_index]) orelse return;
-    const wall_type = terrain_type.toWallType() orelse return;
-
     if (!self.isWallBlockBottom(background_tiles, column_index, row_index, terrain_type)) return;
 
     const half_tile_pixels = self.tile_size_pixels * 0.5;
     const destination_x_pixels = @as(f32, @floatFromInt(column_index)) * self.tile_size_pixels - half_tile_pixels;
     const destination_y_pixels = @as(f32, @floatFromInt(row_index)) * self.tile_size_pixels + half_tile_pixels;
 
-    switch (wall_type) {
-        .solid => {
-            const texture = normal_side_texture orelse return;
-            const source_rectangle = lm.Rect(0.0, 0.0, 16.0, 16.0);
-            const destination_rectangle = lm.Rect(
-                destination_x_pixels,
-                destination_y_pixels,
-                self.tile_size_pixels,
-                self.tile_size_pixels,
-            );
-            rl.drawTexturePro(texture.*, source_rectangle, destination_rectangle, lm.Vec2(0, 0), 0.0, rl.Color.white);
-        },
-        .low => {
-            const texture = short_side_texture orelse return;
-            const short_height_pixels = self.tile_size_pixels * (12.0 / 16.0);
-            const source_rectangle = lm.Rect(0.0, 0.0, 16.0, 12.0);
-            const destination_rectangle = lm.Rect(
-                destination_x_pixels,
-                destination_y_pixels,
-                self.tile_size_pixels,
-                short_height_pixels,
-            );
-            rl.drawTexturePro(texture.*, source_rectangle, destination_rectangle, lm.Vec2(0, 0), 0.0, rl.Color.white);
-        },
-    }
+    const source_rectangle = lm.Rect(0, 0, texture.width, texture.height);
+    const destination_rectangle = lm.Rect(
+        destination_x_pixels,
+        destination_y_pixels,
+        self.tile_size_pixels,
+        self.tile_size_pixels * (@max(1, lm.tof32(texture.height)) / 16.0),
+    );
+    rl.drawTexturePro(texture.*, source_rectangle, destination_rectangle, lm.Vec2(0, 0), 0.0, rl.Color.white);
 }
 
 fn isWallBlockBottom(

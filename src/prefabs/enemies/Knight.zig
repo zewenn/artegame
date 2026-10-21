@@ -373,6 +373,7 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
             .armour = 60,
             .magic_resist = 35,
             .movement_speed = 175,
+            .magic_damage = 5,
             .aggro_range = 9999,
         }),
         StatusOverlays{},

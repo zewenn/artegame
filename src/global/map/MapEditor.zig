@@ -985,21 +985,21 @@ fn drawTerrainCategory(self: *Self) void {
             .letter_spacing = 1,
         });
 
-        ui.new(.{
-            .id = .ID("terrain-row-1"),
-            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
-        })({
-            self.drawTerrainOption(.stone, "Stone");
-            self.drawTerrainOption(.carpet, "Carpet");
-        });
+        const rows: comptime_int = @intFromFloat(@ceil(lm.coerceTo(comptime_float, TerrainType.count).? / 2));
+        for (0..rows) |row_index| {
+            const terrain_index = row_index * 2;
 
-        ui.new(.{
-            .id = .ID("terrain-row-2"),
-            .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
-        })({
-            self.drawTerrainOption(.wall_top, "Solid Wall");
-            self.drawTerrainOption(.wall_low_top, "Low Wall");
-        });
+            ui.new(.{
+                .id = .IDI("terrain-row-", lm.tou32(row_index)),
+                .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
+            })(blk: {
+                const terrain_one = lm.coerceTo(TerrainType, terrain_index) orelse break :blk;
+                self.drawTerrainOption(terrain_one, terrain_one.displayName());
+
+                const terrain_two = lm.coerceTo(TerrainType, terrain_index + 1) orelse break :blk;
+                self.drawTerrainOption(terrain_two, terrain_two.displayName());
+            });
+        }
 
         ui.text("PAINT TOOLS:", .{
             .color = ui.color(160, 175, 200, 255),

@@ -240,12 +240,12 @@
     {
       "entity_type": "exit_door",
       "position_x": 992,
-      "position_y": 160
+      "position_y": 1440
     },
     {
       "entity_type": "exit_door",
       "position_x": 992,
-      "position_y": 1440
+      "position_y": 96
     }
   ]
 }

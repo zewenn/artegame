@@ -11,92 +11,28 @@ const BASE_ANIM_LENGTH: comptime_float = 0.25;
 
 const HAND_ANIMATIONS = &[_]lm.Animation{
     lm.Animation.init("hit-left-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 32,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 32, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
     }),
     lm.Animation.init("hit-right-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 32,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 32, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
     }),
     lm.Animation.init("hit-left-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = -32,
-            .rotation = -30,
-        },
-        lm.Keyframe{
-            .pos_x = 32,
-            .rotation = 90,
-            .pos_y = 0,
-        },
-        lm.Keyframe{
-            .rotation = 0,
-            .pos_x = 0,
-            .pos_y = 0,
-        },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = -32, .rotation = -30 },
+        lm.Keyframe{ .pos_x = 32, .rotation = 90, .pos_y = 0 },
+        lm.Keyframe{ .rotation = 0, .pos_x = 0, .pos_y = 0 },
     }),
     lm.Animation.init("hit-right-wide", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 0,
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .pos_x = 0,
-            .pos_y = 32,
-            .rotation = 30,
-        },
-        lm.Keyframe{
-            .rotation = -90,
-            .pos_x = 32,
-            .pos_y = 0,
-        },
-        lm.Keyframe{
-            .rotation = 0,
-            .pos_x = 0,
-            .pos_y = 0,
-        },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
+        lm.Keyframe{ .pos_x = 0, .pos_y = 32, .rotation = 30 },
+        lm.Keyframe{ .rotation = -90, .pos_x = 32, .pos_y = 0 },
+        lm.Keyframe{ .rotation = 0, .pos_x = 0, .pos_y = 0 },
     }),
 };
 

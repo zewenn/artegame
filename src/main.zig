@@ -10,7 +10,7 @@ pub fn main() !void {
             .resizable = true,
             .restore_state = true,
             .size = .init(1280, 720),
-            .clear_color = lm.Color.black,
+            .clear_color = lm.Color.init(14, 12, 12, 255),
             .exit_key = .null,
         },
         .asset_paths = .{

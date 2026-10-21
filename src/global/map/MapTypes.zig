@@ -28,6 +28,14 @@ pub const TerrainType = enum(u8) {
         };
     }
 
+    pub fn sideAssetPath(self: TerrainType) ?[]const u8 {
+        return switch (self) {
+            .wall_top => "backgrounds/wall_normal.png",
+            .wall_low_top => "backgrounds/wall_short.png",
+            else => null,
+        };
+    }
+
     pub fn isWall(self: TerrainType) bool {
         return switch (self) {
             .wall_top, .wall_low_top => true,

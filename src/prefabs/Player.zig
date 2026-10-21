@@ -10,48 +10,18 @@ const player = @import("../components/player/export.zig");
 
 const player_animations = &.{
     lm.Animation.init("walk-left", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{
-            .sprite = "characters/player/left_0.png",
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/left_1.png",
-            .rotation = 15,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/left_1.png",
-            .rotation = 5,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/left_0.png",
-            .rotation = -2,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/left_1.png",
-            .rotation = 0,
-        },
+        lm.Keyframe{ .sprite = "characters/player/left_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/player/left_1.png", .rotation = 15 },
+        lm.Keyframe{ .sprite = "characters/player/left_1.png", .rotation = 5 },
+        lm.Keyframe{ .sprite = "characters/player/left_0.png", .rotation = -2 },
+        lm.Keyframe{ .sprite = "characters/player/left_0.png", .rotation = 0 },
     }),
     lm.Animation.init("walk-right", 0.25, lm.interpolation.lerp, &.{
-        lm.Keyframe{
-            .sprite = "characters/player/right_0.png",
-            .rotation = 0,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/right_1.png",
-            .rotation = 15,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/right_1.png",
-            .rotation = 5,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/right_0.png",
-            .rotation = -2,
-        },
-        lm.Keyframe{
-            .sprite = "characters/player/right_0.png",
-            .rotation = 0,
-        },
+        lm.Keyframe{ .sprite = "characters/player/right_0.png", .rotation = 0 },
+        lm.Keyframe{ .sprite = "characters/player/right_1.png", .rotation = 15 },
+        lm.Keyframe{ .sprite = "characters/player/right_1.png", .rotation = 5 },
+        lm.Keyframe{ .sprite = "characters/player/right_0.png", .rotation = -2 },
+        lm.Keyframe{ .sprite = "characters/player/right_0.png", .rotation = 0 },
     }),
 };
 
