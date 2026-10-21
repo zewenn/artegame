@@ -52,6 +52,7 @@ pub fn main() !void {
                 gbl.TutorialManager{},
                 gbl.HUD{},
                 gbl.MusicManager{},
+                gbl.input.ControlSchemeModule{},
             });
         });
 
