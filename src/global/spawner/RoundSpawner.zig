@@ -9,9 +9,9 @@ pub const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
 
 pub const MAX_CONCURRENT_ENEMIES = 64;
 const NORMAL_ROUND_SCALING = struct {
-    pub const LOG_BASE = 1.05;
+    pub const LOG_BASE = 1.025;
     pub const ADJUSTMENT = 10;
-    pub const MAX_WAVE_BUDGET = 128;
+    pub const MAX_WAVE_BUDGET = 256;
 
     pub const FIRST_CAP_ROUND: comptime_int = lm.tou32(@ceil(std.math.pow(f32, NORMAL_ROUND_SCALING.LOG_BASE, NORMAL_ROUND_SCALING.MAX_WAVE_BUDGET + NORMAL_ROUND_SCALING.ADJUSTMENT)));
 };

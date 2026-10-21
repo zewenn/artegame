@@ -217,6 +217,13 @@
       "width_pixels": 192,
       "height_pixels": 192,
       "enemy_type": "elite"
+    },
+    {
+      "center_x_pixels": 928,
+      "center_y_pixels": 1248,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "elite"
     }
   ],
   "entities": [

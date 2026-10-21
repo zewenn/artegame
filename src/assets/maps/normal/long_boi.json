@@ -1,0 +1,491 @@
+{
+  "version": 1,
+  "name": "long_boi",
+  "width_tiles": 64,
+  "height_tiles": 32,
+  "tile_size_pixels": 64,
+  "background_tiles": "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0003\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0003\u0003\u0003\u0003\u0003\u0001\u0001\u0001\u0001\u0003\u0003\u0003\u0003\u0003\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0003\u0003\u0003\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0003\u0003\u0003\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0003\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0003\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0003\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0003\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0003\u0003\u0003\u0003\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0003\u0003\u0003\u0003\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0003\u0003\u0003\u0003\u0003\u0001\u0001\u0001\u0001\u0003\u0003\u0003\u0003\u0003\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0003\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002",
+  "walls": [
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 0,
+      "end_x_tiles": 63,
+      "end_y_tiles": 3,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 4,
+      "end_x_tiles": 16,
+      "end_y_tiles": 4,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 58,
+      "start_y_tiles": 4,
+      "end_x_tiles": 63,
+      "end_y_tiles": 4,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 5,
+      "end_x_tiles": 12,
+      "end_y_tiles": 5,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 60,
+      "start_y_tiles": 5,
+      "end_x_tiles": 63,
+      "end_y_tiles": 5,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 6,
+      "end_x_tiles": 8,
+      "end_y_tiles": 6,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 62,
+      "start_y_tiles": 6,
+      "end_x_tiles": 63,
+      "end_y_tiles": 6,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 7,
+      "end_x_tiles": 6,
+      "end_y_tiles": 7,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 63,
+      "start_y_tiles": 7,
+      "end_x_tiles": 63,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 8,
+      "end_x_tiles": 5,
+      "end_y_tiles": 8,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 8,
+      "start_y_tiles": 8,
+      "end_x_tiles": 8,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 55,
+      "start_y_tiles": 8,
+      "end_x_tiles": 55,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 9,
+      "end_x_tiles": 3,
+      "end_y_tiles": 9,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 7,
+      "start_y_tiles": 9,
+      "end_x_tiles": 7,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 56,
+      "start_y_tiles": 9,
+      "end_x_tiles": 56,
+      "end_y_tiles": 9,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 10,
+      "end_x_tiles": 2,
+      "end_y_tiles": 10,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 0,
+      "start_y_tiles": 11,
+      "end_x_tiles": 0,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 25,
+      "start_y_tiles": 12,
+      "end_x_tiles": 29,
+      "end_y_tiles": 12,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 34,
+      "start_y_tiles": 12,
+      "end_x_tiles": 38,
+      "end_y_tiles": 12,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 22,
+      "start_y_tiles": 13,
+      "end_x_tiles": 25,
+      "end_y_tiles": 13,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 38,
+      "start_y_tiles": 13,
+      "end_x_tiles": 41,
+      "end_y_tiles": 13,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 21,
+      "start_y_tiles": 14,
+      "end_x_tiles": 22,
+      "end_y_tiles": 14,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 41,
+      "start_y_tiles": 14,
+      "end_x_tiles": 42,
+      "end_y_tiles": 14,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 21,
+      "start_y_tiles": 15,
+      "end_x_tiles": 21,
+      "end_y_tiles": 17,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 42,
+      "start_y_tiles": 15,
+      "end_x_tiles": 42,
+      "end_y_tiles": 17,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 22,
+      "start_y_tiles": 17,
+      "end_x_tiles": 22,
+      "end_y_tiles": 18,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 41,
+      "start_y_tiles": 17,
+      "end_x_tiles": 41,
+      "end_y_tiles": 18,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 23,
+      "start_y_tiles": 18,
+      "end_x_tiles": 25,
+      "end_y_tiles": 18,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 38,
+      "start_y_tiles": 18,
+      "end_x_tiles": 40,
+      "end_y_tiles": 18,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 25,
+      "start_y_tiles": 19,
+      "end_x_tiles": 29,
+      "end_y_tiles": 19,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 34,
+      "start_y_tiles": 19,
+      "end_x_tiles": 38,
+      "end_y_tiles": 19,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 1,
+      "start_y_tiles": 21,
+      "end_x_tiles": 2,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 3,
+      "start_y_tiles": 22,
+      "end_x_tiles": 3,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 7,
+      "start_y_tiles": 22,
+      "end_x_tiles": 8,
+      "end_y_tiles": 22,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 55,
+      "start_y_tiles": 22,
+      "end_x_tiles": 56,
+      "end_y_tiles": 22,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 4,
+      "start_y_tiles": 23,
+      "end_x_tiles": 5,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 8,
+      "start_y_tiles": 23,
+      "end_x_tiles": 8,
+      "end_y_tiles": 23,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 55,
+      "start_y_tiles": 23,
+      "end_x_tiles": 55,
+      "end_y_tiles": 23,
+      "wall_type": "low"
+    },
+    {
+      "start_x_tiles": 6,
+      "start_y_tiles": 24,
+      "end_x_tiles": 6,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 7,
+      "start_y_tiles": 25,
+      "end_x_tiles": 8,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 62,
+      "start_y_tiles": 25,
+      "end_x_tiles": 62,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 9,
+      "start_y_tiles": 26,
+      "end_x_tiles": 12,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 60,
+      "start_y_tiles": 26,
+      "end_x_tiles": 61,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 13,
+      "start_y_tiles": 27,
+      "end_x_tiles": 16,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 58,
+      "start_y_tiles": 27,
+      "end_x_tiles": 59,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    },
+    {
+      "start_x_tiles": 17,
+      "start_y_tiles": 28,
+      "end_x_tiles": 57,
+      "end_y_tiles": 31,
+      "wall_type": "solid"
+    }
+  ],
+  "spawn_zones": [
+    {
+      "center_x_pixels": 992,
+      "center_y_pixels": 992,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    },
+    {
+      "center_x_pixels": 1504,
+      "center_y_pixels": 1376,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "elite"
+    },
+    {
+      "center_x_pixels": 1504,
+      "center_y_pixels": 672,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "elite"
+    },
+    {
+      "center_x_pixels": 2272,
+      "center_y_pixels": 1056,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "ranged"
+    },
+    {
+      "center_x_pixels": 2016,
+      "center_y_pixels": 1056,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "lifeliner"
+    },
+    {
+      "center_x_pixels": 1760,
+      "center_y_pixels": 1056,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "ranged"
+    },
+    {
+      "center_x_pixels": 2080,
+      "center_y_pixels": 1376,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "shaman"
+    },
+    {
+      "center_x_pixels": 2016,
+      "center_y_pixels": 672,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "shaman"
+    },
+    {
+      "center_x_pixels": 1760,
+      "center_y_pixels": 672,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1760,
+      "center_y_pixels": 1376,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1760,
+      "center_y_pixels": 1568,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 1760,
+      "center_y_pixels": 480,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2848,
+      "center_y_pixels": 544,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "angler"
+    },
+    {
+      "center_x_pixels": 2848,
+      "center_y_pixels": 1568,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "angler"
+    },
+    {
+      "center_x_pixels": 3232,
+      "center_y_pixels": 1056,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "magician"
+    },
+    {
+      "center_x_pixels": 2976,
+      "center_y_pixels": 800,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 2976,
+      "center_y_pixels": 1248,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "melee"
+    },
+    {
+      "center_x_pixels": 3552,
+      "center_y_pixels": 800,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "elite"
+    },
+    {
+      "center_x_pixels": 3552,
+      "center_y_pixels": 1248,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "elite"
+    },
+    {
+      "center_x_pixels": 3744,
+      "center_y_pixels": 992,
+      "width_pixels": 192,
+      "height_pixels": 192,
+      "enemy_type": "tank"
+    }
+  ],
+  "entities": [
+    {
+      "entity_type": "player_spawn",
+      "position_x": 96,
+      "position_y": 992
+    },
+    {
+      "entity_type": "exit_door",
+      "position_x": 4000,
+      "position_y": 1120
+    },
+    {
+      "entity_type": "exit_door",
+      "position_x": 4000,
+      "position_y": 928
+    }
+  ]
+}
