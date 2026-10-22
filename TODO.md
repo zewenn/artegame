@@ -99,8 +99,7 @@
       - [x] Bond of Life status overlay sprite
       - [x] Stasis barrier crystal and invulnerability dome sprite
       - [x] Slow effect overlay ice crystals and sludge particles sprite
-      - [ ] Reactive root aura thorny ground roots sprite
-      - [ ] Heal pulse expanding ring animation sprite
+      - [x] Reactive root on-hit effect indicator overhead sprite
       - [ ] Exit door category badge icons (Boss, Mini-Boss, Room 1, Tutorial, Vitality, Supplements, Upgrades)
       - [x] Status effect icons (Stun, Root, Slow, Bond of Life)
       - [ ] Boon card artwork (passive boons badges, spell flasks/fruits, and fallback icon)

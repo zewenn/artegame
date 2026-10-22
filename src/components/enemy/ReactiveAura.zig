@@ -4,6 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../Stats.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
+const EffectVisualRegistry = @import("../effects/EffectVisual.zig").EffectVisualRegistry;
 
 const Self = @This();
 
@@ -26,17 +27,23 @@ active_timer_seconds: f32 = 0.0,
 cooldown_seconds: f32 = 0.0,
 cooldown_remaining_seconds: f32 = 0.0,
 
+reactive_effect_texture: ?*lm.Texture = null,
+
 apply_effect_on_hit: ?ReactiveEffect = null,
 reflect_damage_percent: f32 = 0.0,
 on_death_retaliation: ?OnDeathRetaliation = null,
 
 stats: ?*Stats = null,
+transform: ?*lm.Transform = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
+    self.transform = try entity.pullComponent(lm.Transform);
+
+    self.reactive_effect_texture = lm.assets.texture.get("effects/reactive_root.png", &.{ 64, 64 });
 }
 
-pub fn Update(self: *Self) void {
+pub fn Update(self: *Self) !void {
     if (lm.time.paused()) return;
 
     const delta_time_seconds = lm.time.deltaTime();
@@ -54,6 +61,32 @@ pub fn Update(self: *Self) void {
             self.cooldown_remaining_seconds = 0.0;
         }
     }
+
+    if (self.is_active and self.apply_effect_on_hit != null) render: {
+        const transform = self.transform orelse break :render;
+        const y_offset = (transform.scale.y - 64) / 2 + 8;
+        const texture = self.reactive_effect_texture orelse break :render;
+
+        try lm.display.add(.{
+            .texture = texture.*,
+            .transform = .{
+                .position = lm.Vec3(
+                    transform.position.x,
+                    transform.position.y - y_offset,
+                    10,
+                ),
+            },
+            .display = .{
+                .fill_color = null,
+                .img_path = "",
+                .tint = .white,
+            },
+        });
+    }
+}
+
+pub fn End(self: *Self) void {
+    if (self.reactive_effect_texture) |texture| lm.assets.texture.releasePtr(texture);
 }
 
 pub fn activateShield(self: *Self, duration_seconds: f32) void {
