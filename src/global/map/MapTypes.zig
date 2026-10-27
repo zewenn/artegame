@@ -8,7 +8,7 @@ pub const TerrainType = enum(u8) {
     wall_top = 2,
     wall_low_top = 3,
 
-    pub const count = @typeInfo(TerrainType).@"enum".fields.len;
+    pub const count = @typeInfo(TerrainType).@"enum".field_names.len;
 
     pub fn assetPath(self: TerrainType) []const u8 {
         return switch (self) {

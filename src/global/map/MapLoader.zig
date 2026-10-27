@@ -23,15 +23,15 @@ pub const MapBackgroundBehaviour = struct {
         const texture = active_renderer.getTexture() orelse return;
         const transform = self.transform orelse return;
 
-        try lm.display.add(.{
-            .texture = texture,
-            .transform = transform.*,
-            .display = .{
-                .img_path = "map_background",
+        try lm.display.addRenderer(.{
+            .renderer = .{ .texture = .{
+                .texture = texture,
+                .transform = transform.*,
                 .tint = lm.deps.rl.Color.white,
                 .fill_color = null,
-            },
-            .entity = entity,
+                .entity = entity,
+            } },
+            .index = lm.toisize(transform.position.z),
         });
     }
 };

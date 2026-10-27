@@ -120,7 +120,12 @@ pub fn build(b: *std.Build) void {
                 "--deep",
                 "--sign",
                 "-",
-                b.fmt("{s}/artegame.app", .{b.getInstallPath(.bin, "")}),
+            });
+            sign_cmd.addDirectoryArg(.{
+                .relative = .{
+                    .base = .install_bin,
+                    .sub_path = "artegame.app",
+                },
             });
             sign_cmd.step.dependOn(b.getInstallStep());
             const sign_step = b.step("sign", "Sign the macOS app bundle with an ad-hoc signature");
@@ -132,9 +137,7 @@ pub fn build(b: *std.Build) void {
 
     run_cmd.step.dependOn(b.getInstallStep());
 
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
+    run_cmd.addPassthruArgs();
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
@@ -151,10 +154,20 @@ pub fn build(b: *std.Build) void {
     const installer_step = b.step("installer", "Build Windows installer with NSIS (requires makensis)");
     const makensis_cmd = b.addSystemCommand(&.{"makensis"});
     makensis_cmd.addArg(b.fmt("-DVERSION={s}", .{app_version}));
-    makensis_cmd.addArg(b.fmt("-DBIN_DIR={s}", .{b.getInstallPath(.bin, "")}));
-    makensis_cmd.addArg(b.fmt("-DOUTPUT_DIR={s}", .{b.getInstallPath(.bin, "")}));
+    makensis_cmd.addPrefixedDirectoryArg("-DBIN_DIR=", .{
+        .relative = .{
+            .base = .install_bin,
+            .sub_path = "",
+        },
+    });
+    makensis_cmd.addPrefixedDirectoryArg("-DOUTPUT_DIR=", .{
+        .relative = .{
+            .base = .install_bin,
+            .sub_path = "",
+        },
+    });
     makensis_cmd.addArg("-DOUTPUT_NAME=artegame-windows-x86_64-setup.exe");
-    makensis_cmd.addArg(b.fmt("-DICON_PATH={s}", .{b.pathFromRoot("src/assets/ui/branding/icon.ico")}));
+    makensis_cmd.addPrefixedFileArg("-DICON_PATH=", b.path("src/assets/ui/branding/icon.ico"));
     makensis_cmd.addFileArg(b.path("packaging/windows/installer.nsi"));
 
     makensis_cmd.step.dependOn(b.getInstallStep());
@@ -163,14 +176,25 @@ pub fn build(b: *std.Build) void {
     const dmg_step = b.step("dmg", "Build macOS drag-and-drop DMG disk image (requires macOS)");
     const create_dmg_cmd = b.addSystemCommand(&.{"python3"});
     create_dmg_cmd.addFileArg(b.path("packaging/macos/create_dmg.py"));
+    create_dmg_cmd.addArgs(&.{"--app"});
+    create_dmg_cmd.addDirectoryArg(.{
+        .relative = .{
+            .base = .install_bin,
+            .sub_path = "artegame.app",
+        },
+    });
+    create_dmg_cmd.addArgs(&.{"--out"});
+    create_dmg_cmd.addFileArg(.{
+        .relative = .{
+            .base = .install_bin,
+            .sub_path = "artegame-macos.dmg",
+        },
+    });
     create_dmg_cmd.addArgs(&.{
-        "--app",
-        b.fmt("{s}/artegame.app", .{b.getInstallPath(.bin, "")}),
-        "--out",
-        b.fmt("{s}/artegame-macos.dmg", .{b.getInstallPath(.bin, "")}),
         "--volname",
         "Artegame",
     });
     create_dmg_cmd.step.dependOn(b.getInstallStep());
     dmg_step.dependOn(&create_dmg_cmd.step);
 }
+

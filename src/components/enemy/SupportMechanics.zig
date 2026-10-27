@@ -38,7 +38,7 @@ pub fn findRandomLivingAlly(caster_uuid: u128) ?*lm.Entity {
     const active_items = room_manager.spawner.active_enemies.items();
     if (active_items.len == 0) return null;
 
-    var valid_candidates: [32]u128 = [_]u128{0} ** 32;
+    var valid_candidates: [32]u128 = @splat(0);
     var candidate_count: usize = 0;
 
     for (active_items) |enemy_uuid| {

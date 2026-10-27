@@ -12,19 +12,22 @@ const Textures = struct {
         var middle_sprites: lm.List(*lm.Texture) = .init(lm.allocators.generic());
         defer middle_sprites.deinit();
 
-        for (middle) |img_path| {
-            const texture = lm.assets.texture.get(img_path, &.{ 64, 64 }) orelse {
-                std.log.err("Failed to load asset: {s}", .{img_path});
+        for (middle) |image_path| {
+            const texture = lm.assets.texture.get(image_path, &.{ 64, 64 }) orelse {
+                std.log.err("Failed to load asset: {s}", .{image_path});
                 continue;
             };
 
             try middle_sprites.append(texture);
         }
 
+        const right_texture = lm.assets.texture.get(right, &.{ 64, 64 }) orelse return error.AssetNotFound;
+        const left_texture = lm.assets.texture.get(left, &.{ 64, 64 }) orelse return error.AssetNotFound;
+
         return Textures{
-            .right = lm.assets.texture.get(right, &.{ 64, 64 }) orelse return error.AssetNotFound,
+            .right = right_texture,
             .middle = try middle_sprites.toOwnedSlice(),
-            .left = lm.assets.texture.get(left, &.{ 64, 64 }) orelse return error.AssetNotFound,
+            .left = left_texture,
         };
     }
 
@@ -96,46 +99,46 @@ pub fn render(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: f32) !v
         }
     }
 
-    try lm.display.add(.{
-        .texture = textures.left.*,
-        .transform = .{
-            .position = .init(start_vector.x, start_vector.y, -100),
-            .rotation = angle,
-        },
-        .display = .{
-            .fill_color = null,
-            .img_path = "",
+    try lm.display.addRenderer(.{
+        .renderer = .{ .texture = .{
+            .texture = textures.left.*,
+            .transform = .{
+                .position = .init(start_vector.x, start_vector.y, -100),
+                .rotation = angle,
+            },
             .tint = lm.Color.white,
-        },
+            .fill_color = null,
+        } },
+        .index = -100,
     });
 
-    try lm.display.add(.{
-        .texture = textures.right.*,
-        .transform = .{
-            .position = .init(end_vector.x, end_vector.y, -100),
-            .rotation = angle,
-        },
-        .display = .{
-            .fill_color = null,
-            .img_path = "",
+    try lm.display.addRenderer(.{
+        .renderer = .{ .texture = .{
+            .texture = textures.right.*,
+            .transform = .{
+                .position = .init(end_vector.x, end_vector.y, -100),
+                .rotation = angle,
+            },
             .tint = lm.Color.white,
-        },
+            .fill_color = null,
+        } },
+        .index = -100,
     });
 
     if (textures.middle.len <= self.current_frame_index) return;
 
     const middle_texture = textures.middle[self.current_frame_index];
-    try lm.display.add(.{
-        .texture = middle_texture.*,
-        .transform = .{
-            .position = .init(middle_point.x, middle_point.y, -100),
-            .rotation = angle,
-            .scale = .init(middle_width, 64),
-        },
-        .display = .{
-            .fill_color = null,
-            .img_path = "",
+    try lm.display.addRenderer(.{
+        .renderer = .{ .texture = .{
+            .texture = middle_texture.*,
+            .transform = .{
+                .position = .init(middle_point.x, middle_point.y, -100),
+                .rotation = angle,
+                .scale = .init(middle_width, 64),
+            },
             .tint = lm.Color.white,
-        },
+            .fill_color = null,
+        } },
+        .index = -100,
     });
 }

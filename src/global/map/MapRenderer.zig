@@ -78,47 +78,17 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
     const quad_width_count = if (self.width_tiles > 0) self.width_tiles - 1 else 0;
     const quad_height_count = if (self.height_tiles > 0) self.height_tiles - 1 else 0;
 
-    var layer_scores: [TerrainType.count]usize = undefined;
-
     for (0..TerrainType.count) |layer_index| {
         const terrain_type = lm.coerceTo(TerrainType, layer_index) orelse continue;
         const active_terrain_texture = lm.assets.texture.get(terrain_type.assetPath(), &.{ 64, 64 }) orelse continue;
-        defer lm.assets.texture.releasePtr(active_terrain_texture);
 
-        for (0..quad_height_count) |row_index| {
-            for (0..quad_width_count) |column_index| {
-                const north_west = background_tiles[row_index * self.width_tiles + column_index];
-                const north_east = background_tiles[row_index * self.width_tiles + (column_index + 1)];
-                const south_west = background_tiles[(row_index + 1) * self.width_tiles + column_index];
-                const south_east = background_tiles[(row_index + 1) * self.width_tiles + (column_index + 1)];
-
-                DualGridMesher.calculateQuadScores(north_west, north_east, south_west, south_east, &layer_scores);
-
-                const score = layer_scores[layer_index];
-                if (score == 0) continue;
-
-                const sheet_coordinate = DualGridMesher.scoreToSheetCoordinate(score) orelse continue;
-                const source_rectangle = sheet_coordinate.sourceRectangle();
-
-                const destination_x_pixels = @as(f32, @floatFromInt(column_index)) * self.tile_size_pixels;
-                const destination_y_pixels = @as(f32, @floatFromInt(row_index)) * self.tile_size_pixels;
-                const destination_rectangle = lm.Rect(
-                    destination_x_pixels,
-                    destination_y_pixels,
-                    self.tile_size_pixels,
-                    self.tile_size_pixels,
-                );
-
-                rl.drawTexturePro(
-                    active_terrain_texture.*,
-                    source_rectangle,
-                    destination_rectangle,
-                    lm.Vec2(0, 0),
-                    0.0,
-                    rl.Color.white,
-                );
-            }
-        }
+        self.bakeTerrainLayer(
+            background_tiles,
+            layer_index,
+            quad_width_count,
+            quad_height_count,
+            active_terrain_texture,
+        );
     }
 
     self.renderSideSprites(background_tiles);
@@ -137,19 +107,66 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
     self.is_baked = true;
 }
 
+fn bakeTerrainLayer(
+    self: *Self,
+    background_tiles: []const u8,
+    layer_index: usize,
+    quad_width_count: u32,
+    quad_height_count: u32,
+    active_terrain_texture: *const lm.Texture,
+) void {
+    var layer_scores: [TerrainType.count]usize = undefined;
+
+    for (0..quad_height_count) |row_index| {
+        for (0..quad_width_count) |column_index| {
+            const north_west = background_tiles[row_index * self.width_tiles + column_index];
+            const north_east = background_tiles[row_index * self.width_tiles + (column_index + 1)];
+            const south_west = background_tiles[(row_index + 1) * self.width_tiles + column_index];
+            const south_east = background_tiles[(row_index + 1) * self.width_tiles + (column_index + 1)];
+
+            DualGridMesher.calculateQuadScores(north_west, north_east, south_west, south_east, &layer_scores);
+
+            const score = layer_scores[layer_index];
+            if (score == 0) continue;
+
+            const sheet_coordinate = DualGridMesher.scoreToSheetCoordinate(score) orelse continue;
+            const source_rectangle = sheet_coordinate.sourceRectangle();
+
+            const destination_x_pixels = @as(f32, @floatFromInt(column_index)) * self.tile_size_pixels;
+            const destination_y_pixels = @as(f32, @floatFromInt(row_index)) * self.tile_size_pixels;
+            const destination_rectangle = lm.Rect(
+                destination_x_pixels,
+                destination_y_pixels,
+                self.tile_size_pixels,
+                self.tile_size_pixels,
+            );
+
+            rl.drawTexturePro(
+                active_terrain_texture.*,
+                source_rectangle,
+                destination_rectangle,
+                lm.Vec2(0, 0),
+                0.0,
+                rl.Color.white,
+            );
+        }
+    }
+}
+
 fn renderSideSprites(self: *Self, background_tiles: []const u8) void {
+    const solid_texture = lm.assets.texture.get("backgrounds/wall_normal.png", &.{ 16, 16 });
+    const low_texture = lm.assets.texture.get("backgrounds/wall_short.png", &.{ 16, 12 });
+
     for (0..self.height_tiles) |row_index| {
         for (0..self.width_tiles) |column_index| {
             const tile_index = row_index * self.width_tiles + column_index;
             const terrain_type = lm.coerceTo(TerrainType, background_tiles[tile_index]) orelse continue;
             const wall_type = terrain_type.toWallType() orelse continue;
-            const side_asset_path = terrain_type.sideAssetPath() orelse continue;
 
-            const texture = lm.assets.texture.get(side_asset_path, switch (wall_type) {
-                .low => &.{ 16, 12 },
-                .solid => &.{ 16, 16 },
-            }) orelse continue;
-            defer lm.assets.texture.releasePtr(texture);
+            const texture = switch (wall_type) {
+                .solid => solid_texture,
+                .low => low_texture,
+            } orelse continue;
 
             self.drawTileSideSprite(
                 background_tiles,

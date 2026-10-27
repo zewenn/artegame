@@ -37,7 +37,7 @@ reward_title: []const u8 = "Next Room",
 reward_icon: []const u8 = "ui/icons/empty_icon.png",
 reward_kind: RewardKind = .boon_category,
 is_open: bool = true,
-action_text_buffer: [64]u8 = [_]u8{0} ** 64,
+action_text_buffer: [64]u8 = @splat(0),
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);

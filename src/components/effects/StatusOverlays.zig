@@ -47,19 +47,19 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
             .add(lm.vec2ToVec3(visual.offset))
             .add(.init(0, 0, 1.0));
 
-        try lm.display.add(.{
-            .texture = texture.*,
-            .transform = lm.Transform{
-                .position = overlay_position,
-                .rotation = rotation,
-                .scale = visual.scale,
-            },
-            .display = .{
-                .img_path = current_frame_path,
+        try lm.display.addRenderer(.{
+            .renderer = .{ .texture = .{
+                .texture = texture.*,
+                .transform = lm.Transform{
+                    .position = overlay_position,
+                    .rotation = rotation,
+                    .scale = visual.scale,
+                },
                 .tint = visual.tint,
                 .fill_color = null,
-            },
-            .entity = entity,
+                .entity = entity,
+            } },
+            .index = lm.toisize(overlay_position.z),
         });
     }
 
@@ -89,7 +89,10 @@ pub fn getOrLoadTexture(self: *Self, path: []const u8, scale: lm.Vector2) ?*lm.T
         .path = path,
         .scale = scale,
         .texture = texture,
-    }) catch return null;
+    }) catch {
+        lm.assets.texture.releasePtr(texture);
+        return null;
+    };
 
     return texture;
 }

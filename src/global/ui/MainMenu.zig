@@ -66,7 +66,7 @@ pub fn getAvailableActions(buffer: *[MAX_MENU_ACTIONS]MenuAction) []const MenuAc
     buffer[count] = .options;
     count += 1;
 
-    if (builtin.mode == .Debug) {
+    if (builtin.mode == .debug) {
         buffer[count] = .map_editor;
         count += 1;
     }

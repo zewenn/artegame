@@ -1157,8 +1157,7 @@ fn drawSpawnersCategory(self: *Self) void {
         });
 
         self.drawArchetypeButton(null, "All (Any Enemy)");
-        inline for (std.meta.fields(EnemyType)) |field| {
-            const enemy_type: EnemyType = @field(EnemyType, field.name);
+        inline for (std.enums.values(EnemyType)) |enemy_type| {
             self.drawArchetypeButton(enemy_type, enemy_type.displayName());
         }
 
@@ -2267,7 +2266,7 @@ test "MapEditor generatePerimeterWalls and clearPerimeterWalls" {
     editor.height_tiles = 4;
     const total_tile_count: usize = 16;
 
-    var tiles: [total_tile_count]u8 = [_]u8{0} ** total_tile_count;
+    var tiles: [total_tile_count]u8 = @splat(0);
     editor.background_tiles = &tiles;
 
     editor.generatePerimeterWalls();

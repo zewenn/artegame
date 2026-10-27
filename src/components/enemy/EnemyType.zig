@@ -227,11 +227,8 @@ pub const EnemyType = enum {
     fn makeListByBossRank(comptime for_rank: ?BossBar.BossRank) []const EnemyType {
         comptime var list: []const EnemyType = &.{};
 
-        const enemy_fields = std.meta.fields(EnemyType);
-        for (0..enemy_fields.len) |index| {
-            const value = lm.coerceTo(EnemyType, index) orelse .dummy;
+        for (std.enums.values(EnemyType)) |value| {
             const boss_rank = value.bossRank();
-
             if (boss_rank != for_rank) continue;
 
             const add: []const EnemyType = &.{value};

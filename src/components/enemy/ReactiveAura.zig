@@ -62,27 +62,27 @@ pub fn Update(self: *Self) !void {
         }
     }
 
-    if (self.is_active and self.apply_effect_on_hit != null) render: {
-        const transform = self.transform orelse break :render;
-        const y_offset = (transform.scale.y - 64) / 2 + 8;
-        const texture = self.reactive_effect_texture orelse break :render;
+    if (!self.is_active or self.apply_effect_on_hit == null) return;
 
-        try lm.display.add(.{
+    const transform = self.transform orelse return;
+    const texture = self.reactive_effect_texture orelse return;
+    const y_offset_pixels = (transform.scale.y - 64) / 2 + 8;
+
+    try lm.display.addRenderer(.{
+        .renderer = .{ .texture = .{
             .texture = texture.*,
             .transform = .{
                 .position = lm.Vec3(
                     transform.position.x,
-                    transform.position.y - y_offset,
+                    transform.position.y - y_offset_pixels,
                     10,
                 ),
             },
-            .display = .{
-                .fill_color = null,
-                .img_path = "",
-                .tint = .white,
-            },
-        });
-    }
+            .tint = .white,
+            .fill_color = null,
+        } },
+        .index = 10,
+    });
 }
 
 pub fn End(self: *Self) void {
@@ -125,20 +125,24 @@ pub fn onHitByAttacker(
             }),
         }
 
-        if (defender_entity.getComponent(lm.Transform)) |defender_transform| {
-            const defender_position = lm.vec3ToVec2(defender_transform.position);
-            var listener_position = defender_position;
-            if (attacker_entity.getComponent(lm.Transform)) |attacker_transform| {
-                listener_position = lm.vec3ToVec2(attacker_transform.position);
-            }
-            SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", defender_position, listener_position, 700.0, 0.6, 0.1);
-        }
+        playReactiveHitSound(defender_entity, attacker_entity);
     }
 
     if (self.reflect_damage_percent > 0.0 and damage_dealt > 0.0) {
         const reflected_damage = damage_dealt * self.reflect_damage_percent;
         attacker_stats.current.health = @max(0.0, attacker_stats.current.health - reflected_damage);
     }
+}
+
+fn playReactiveHitSound(defender_entity: *lm.Entity, attacker_entity: *lm.Entity) void {
+    const defender_transform = defender_entity.getComponent(lm.Transform) orelse return;
+    const defender_position = lm.vec3ToVec2(defender_transform.position);
+    const listener_position = if (attacker_entity.getComponent(lm.Transform)) |attacker_transform|
+        lm.vec3ToVec2(attacker_transform.position)
+    else
+        defender_position;
+
+    SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", defender_position, listener_position, 700.0, 0.6, 0.1);
 }
 
 pub fn executeDeathRetaliation(self: *Self) void {

@@ -74,7 +74,7 @@ pub const Options = struct {
     knockback_strength: f32 = 0,
     knockback_duration: f32 = 0,
 
-    hit_targets: [MAX_HIT_TARGETS]u128 = [_]u128{0} ** MAX_HIT_TARGETS,
+    hit_targets: [MAX_HIT_TARGETS]u128 = @splat(0),
     hit_count: usize = 0,
 
     pub fn hasHit(self: *const Options, target_uuid: u128) bool {

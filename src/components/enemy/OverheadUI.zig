@@ -10,7 +10,7 @@ const PauseMenu = @import("../../global/ui/PauseMenu.zig");
 
 const Self = @This();
 
-var id_pool: [256]bool = [_]bool{false} ** 256;
+var id_pool: [256]bool = @splat(false);
 
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,

@@ -133,7 +133,7 @@ fn transitionTo(self: *Self, next_track: ?[]const u8) void {
         const full_path = lm.assets.files.getFilePath(track_path) catch return;
         defer lm.allocators.generic().free(full_path);
 
-        const path_z = lm.allocators.generic().dupeZ(u8, full_path) catch return;
+        const path_z = lm.allocators.generic().dupeSentinel(u8, full_path, 0) catch return;
         defer lm.allocators.generic().free(path_z);
 
         var music = rl.loadMusicStream(path_z) catch return;

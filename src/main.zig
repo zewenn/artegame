@@ -56,7 +56,7 @@ pub fn main() !void {
             });
         });
 
-        if (@import("builtin").mode == .Debug) {
+        if (@import("builtin").mode == .debug) {
             lm.scene("map_editor")({
                 lm.useMainCamera();
 

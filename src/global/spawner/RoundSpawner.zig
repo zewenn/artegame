@@ -50,21 +50,17 @@ pub const WaveProgress = struct {
 };
 
 const WaveSpawnCounts = make_struct: {
-    const enemy_fields = std.meta.fields(EnemyType);
-    var names: [enemy_fields.len][:0]const u8 = undefined;
-    var types: [enemy_fields.len]type = undefined;
-    var attributes: [enemy_fields.len]std.builtin.Type.StructField.Attributes = undefined;
+    const enum_info = @typeInfo(EnemyType).@"enum";
+    var names: [enum_info.field_names.len][:0]const u8 = undefined;
     const default_count: u32 = 0;
 
-    for (enemy_fields, 0..) |field, index| {
-        names[index] = field.name ++ "_count";
-        types[index] = u32;
-        attributes[index] = .{
-            .default_value_ptr = &default_count,
-        };
+    for (enum_info.field_names, 0..) |field_name, index| {
+        names[index] = field_name ++ "_count";
     }
 
-    break :make_struct @Struct(.auto, null, &names, &types, &attributes);
+    break :make_struct @Struct(.auto, null, &names, &@splat(u32), &@splat(.{
+        .default_value_ptr = &default_count,
+    }));
 };
 
 pub const EnemyComposition = struct {
@@ -72,7 +68,7 @@ pub const EnemyComposition = struct {
 
     pub fn total(self: EnemyComposition) u32 {
         var sum: u32 = 0;
-        inline for (comptime std.meta.fieldNames(WaveSpawnCounts)) |field_name| {
+        inline for (comptime @typeInfo(WaveSpawnCounts).@"struct".field_names) |field_name| {
             sum += @field(self.counts, field_name);
         }
 
@@ -361,7 +357,7 @@ pub fn generateWaveConfig(round: u32) WaveConfig {
 pub fn populateQueue(list: *lm.List(EnemyType), config: WaveConfig) !void {
     list.clearRetainingCapacity();
 
-    inline for (comptime std.meta.fieldNames(EnemyType)) |field_name| {
+    inline for (comptime @typeInfo(EnemyType).@"enum".field_names) |field_name| {
         const count = @field(config.counts, field_name ++ "_count");
         for (0..count) |_| try list.append(@field(EnemyType, field_name));
     }

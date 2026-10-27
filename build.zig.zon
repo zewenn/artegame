@@ -5,12 +5,12 @@
 
     .fingerprint = 0xc19ae7346f78b31f,
 
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         .loom = .{
-            .url = "git+https://github.com/ironloom/loom?ref=main#11e189863f77372517e810b63cb19fe95d65e6e3",
-            .hash = "loom-0.10.2-rtZyxCWlAgAcjYd1Y5vJePYoaEsWogi-d2MrEseRuAql",
+            .url = "git+https://github.com/ironloom/loom?ref=stable#e7d92b844ad2ed4de2f7d412a98748764039c986",
+            .hash = "loom-0.12.1-rtZyxJ7UAgC1y-lrorOVqFyM-089Gpqr8QfIPCjcv_78",
         },
     },
 
