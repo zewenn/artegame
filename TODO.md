@@ -65,37 +65,6 @@
 
 ## Work in Progress
 
-### [59#FIX] Fix ranged enemy sprite glitch and combat attack lag spikes
-
-  - tags: [enemies, animation, audio, performance, fix]
-  - priority: high
-  - workload: Normal
-  - steps:
-      - [ ] Remove dynamic keyframe scale overrides from ranged and melee enemy attack animations
-      - [ ] Preload combat audio effects and prevent sound eviction in AudioManager
-      - [ ] Preload status overlay visuals and optimize texture caching in StatusOverlays and OverheadUI
-      - [ ] Replace training dummy scale wobble with rotation wobble to eliminate texture resize thrashing
-      - [ ] Verify clean build and test suite with zig build
-      - [ ] User confirmation that ranged sprite rendering and combat framerate work as expected
-    ```md
-    Fixes the ranged enemy sprite flickering/glitching during its attack cycle caused by keyframe scale mutations invalidating Loom's Renderer display cache, and resolves combat lag spikes caused by repeated sound and status overlay texture unloading/re-decoding on the main thread.
-    ```
-
-### [58#SYS] Migrate project to Zig v0.17.0 and Loom v0.12.0
-
-  - tags: [migration, zig, loom, engine, compiler]
-  - priority: high
-  - workload: Hard
-  - steps:
-      - [x] Update build.zig for Zig 0.17.0 Build API changes
-      - [x] Audit and adapt to Loom v0.11.0 and v0.12.0 breaking changes and synchronous AssetCache rework
-      - [x] Resolve any Zig 0.17.0 language/stdlib breaking changes across src/
-      - [x] Verify test suite and clean compilation with zig build test and zig build
-      - [x] User confirmation that migration to Zig 0.17.0 and Loom 0.12.0 works as expected
-    ```md
-    Migrates Artegame to Zig v0.17.0 and Loom v0.12.0, updating build scripts, synchronous AssetCache texture/sound/font handling, reflections/allocators, and resolving compiler breaking changes.
-    ```
-
 ### [38#AST] Sprite, particle, UI, and audio asset integration for v4.0.0 content
 
   - tags: [assets, sprites, audio, vfx, ui]
@@ -144,6 +113,21 @@
     ```
 
 ## Done
+
+### [58#SYS] Migrate project to Zig v0.17.0 and Loom v0.12.0
+
+  - tags: [migration, zig, loom, engine, compiler]
+  - priority: high
+  - workload: Hard
+  - steps:
+      - [x] Update build.zig for Zig 0.17.0 Build API changes
+      - [x] Audit and adapt to Loom v0.11.0 and v0.12.0 breaking changes and synchronous AssetCache rework
+      - [x] Resolve any Zig 0.17.0 language/stdlib breaking changes across src/
+      - [x] Verify test suite and clean compilation with zig build test and zig build
+      - [x] User confirmation that migration to Zig 0.17.0 and Loom 0.12.0 works as expected
+    ```md
+    Migrates Artegame to Zig v0.17.0 and Loom v0.12.0, updating build scripts, synchronous AssetCache texture/sound/font handling, reflections/allocators, and resolving compiler breaking changes.
+    ```
 
 ### [55#SPW] Comptime reflection wave spawner refactoring and dynamic enemy composition
 
