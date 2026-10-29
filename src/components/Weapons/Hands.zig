@@ -7,10 +7,10 @@ const ControlScheme = @import("../../global/input/ControlScheme.zig");
 
 const Self = @This();
 
-const BASE_ANIM_LENGTH: comptime_float = 0.25;
+const BASE_ANIM_LENGTH: comptime_float = 0.025;
 
 const HAND_ANIMATIONS = &[_]lm.Animation{
-    lm.Animation.init("hit-left-close", BASE_ANIM_LENGTH, lm.interpolation.lerp, &[_]lm.Keyframe{
+    lm.Animation.init("hit-left-close", 0.25, lm.interpolation.lerp, &[_]lm.Keyframe{
         lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
         lm.Keyframe{ .pos_x = 32, .pos_y = 0, .rotation = 0 },
         lm.Keyframe{ .pos_x = 0, .pos_y = 0, .rotation = 0 },
@@ -118,10 +118,10 @@ pub fn Update(self: *Self) !void {
     const camera: *lm.Camera = try lm.ensureComponent(self.camera);
 
     for (right_hand_animator.animations.items()) |anim| {
-        anim.length = 1.25 * (1 + 4 / stats.current.attack_speed);
+        anim.length = 0.125 * (1 + 4 / stats.current.attack_speed);
     }
     for (left_hand_animator.animations.items()) |anim| {
-        anim.length = 1.25 * (1 + 4 / stats.current.attack_speed);
+        anim.length = 0.125 * (1 + 4 / stats.current.attack_speed);
     }
 
     const mouse_position = camera.screenToWorldPos(lm.mouse.getPosition());

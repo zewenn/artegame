@@ -14,10 +14,30 @@ const DevicePrompts = @import("../input/DevicePrompts.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
+pub const BASE_CARD_WIDTH_PIXELS: f32 = 72.0;
+pub const BASE_CARD_HEIGHT_PIXELS: f32 = 112.0;
+pub const CARD_SCALE_MULTIPLIER: f32 = 4.0;
+pub const CARD_ASPECT_RATIO: f32 = 9.0 / 14.0;
+
+pub const BOON_CARD_SPRITE: []const u8 = "ui/hud/boon_card.png";
+pub const BOON_CARD_HOVER_SPRITE: []const u8 = "ui/hud/boon_card_hovered.png";
+
 pub var slots: ?[]const BoonSlot = null;
 pub var selected_index: usize = 0;
 var stick_moved_x: bool = false;
 var stick_moved_y: bool = false;
+
+pub fn getBoonCardSprite(is_active: bool) []const u8 {
+    return if (is_active) BOON_CARD_HOVER_SPRITE else BOON_CARD_SPRITE;
+}
+
+pub fn calculateCardWidthPixels(ui_scale: f32) f32 {
+    return @round(BASE_CARD_WIDTH_PIXELS * CARD_SCALE_MULTIPLIER * ui_scale);
+}
+
+pub fn calculateCardHeightPixels(ui_scale: f32) f32 {
+    return @round(BASE_CARD_HEIGHT_PIXELS * CARD_SCALE_MULTIPLIER * ui_scale);
+}
 
 pub fn findFirstAvailableIndex(slot_array: []const BoonSlot) usize {
     for (slot_array, 0..) |slot, slot_index| {
@@ -26,38 +46,38 @@ pub fn findFirstAvailableIndex(slot_array: []const BoonSlot) usize {
     return slot_array.len;
 }
 
-pub fn findNextAvailableIndex(current: usize, direction: i32, slot_array: []const BoonSlot) usize {
-    const num_cards = slot_array.len;
-    const close_index = num_cards;
+pub fn findNextAvailableIndex(current_index: usize, direction: i32, slot_array: []const BoonSlot) usize {
+    const card_count = slot_array.len;
+    const close_index = card_count;
 
-    if (num_cards == 0) return 0;
+    if (card_count == 0) return 0;
 
     if (direction > 0) {
-        var search_index = current + 1;
-        while (search_index < num_cards) : (search_index += 1) {
+        var search_index = current_index + 1;
+        while (search_index < card_count) : (search_index += 1) {
             if (!slot_array[search_index].is_purchased) return search_index;
         }
         var wrap_index: usize = 0;
-        while (wrap_index <= current and wrap_index < num_cards) : (wrap_index += 1) {
-            if (!slot_array[wrap_index].is_purchased) return wrap_index;
-        }
-        return close_index;
-    } else {
-        if (current > 0) {
-            var search_index = current - 1;
-            while (true) {
-                if (!slot_array[search_index].is_purchased) return search_index;
-                if (search_index == 0) break;
-                search_index -= 1;
-            }
-        }
-        var wrap_index = num_cards;
-        while (wrap_index > current) {
-            wrap_index -= 1;
+        while (wrap_index <= current_index and wrap_index < card_count) : (wrap_index += 1) {
             if (!slot_array[wrap_index].is_purchased) return wrap_index;
         }
         return close_index;
     }
+
+    if (current_index > 0) {
+        var search_index = current_index - 1;
+        while (true) {
+            if (!slot_array[search_index].is_purchased) return search_index;
+            if (search_index == 0) break;
+            search_index -= 1;
+        }
+    }
+    var wrap_index = card_count;
+    while (wrap_index > current_index) {
+        wrap_index -= 1;
+        if (!slot_array[wrap_index].is_purchased) return wrap_index;
+    }
+    return close_index;
 }
 
 pub fn show(slots_to_show: []const BoonSlot) void {
@@ -67,10 +87,9 @@ pub fn show(slots_to_show: []const BoonSlot) void {
 }
 
 pub fn hide() void {
-    if (slots != null) {
-        slots = null;
-        lm.time.proceed();
-    }
+    if (slots == null) return;
+    slots = null;
+    lm.time.proceed();
 }
 
 pub fn isShowing() bool {
@@ -101,8 +120,8 @@ fn selectBoon(slot_index: usize, maybe_stats: ?*Stats, maybe_attack: ?*Attack) v
 
     if (maybe_attack) |attack| {
         slots = BoonPool.getSlots(stats.*, attack.*);
-        if (slots) |updated| {
-            selected_index = findNextAvailableIndex(slot_index, 1, updated);
+        if (slots) |updated_slots| {
+            selected_index = findNextAvailableIndex(slot_index, 1, updated_slots);
         }
         return;
     }
@@ -121,62 +140,97 @@ fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
     };
 }
 
-fn rarityBgColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
-    if (!is_hovered) return ui.color(28, 30, 38, 230);
-    return switch (rarity) {
-        .normal => ui.color(42, 46, 56, 245),
-        .rare => ui.color(28, 44, 68, 245),
-        .epic => ui.color(44, 28, 68, 245),
-        .legendary => ui.color(60, 48, 24, 245),
-        .mythic => ui.color(60, 24, 34, 245),
-        .cosmic => ui.color(24, 54, 58, 245),
-    };
-}
+fn renderBoonCostBox(
+    card_index: u32,
+    cost: usize,
+    ui_scale: f32,
+    letter_spacing: u16,
+    allocator: ?std.mem.Allocator,
+) void {
+    const cost_box_padding_x_pixels = lm.tou16(@round(12 * ui_scale));
+    const cost_box_padding_y_pixels = lm.tou16(@round(5 * ui_scale));
+    const cost_image_size_pixels = @round(18 * ui_scale);
 
-fn rarityBorderColor(rarity: Boon.Rarity, is_hovered: bool) lm.deps.clay.Color {
-    if (!is_hovered) return ui.color(55, 60, 75, 180);
-    return rarityColor(rarity);
+    ui.new(.{
+        .id = .IDI("boon-cost-box-", card_index),
+        .background_color = ui.color(20, 22, 28, 220),
+        .corner_radius = .all(6 * ui_scale),
+        .border = .{
+            .color = ui.color(55, 60, 75, 200),
+            .width = .outside(1),
+        },
+        .layout = .{
+            .padding = .axes(cost_box_padding_y_pixels, cost_box_padding_x_pixels),
+            .child_gap = lm.tou16(@round(6 * ui_scale)),
+            .child_alignment = .{ .y = .center },
+            .direction = .left_to_right,
+        },
+    })({
+        const price_text = if (allocator) |active_allocator|
+            std.fmt.allocPrint(active_allocator, "{d}", .{cost}) catch "0"
+        else
+            "0";
+
+        ui.new(.{
+            .id = .IDI("experience-img-", card_index),
+            .layout = .{
+                .sizing = .{
+                    .h = .fixed(cost_image_size_pixels),
+                    .w = .fixed(cost_image_size_pixels),
+                },
+            },
+            .image = ui.image(
+                "items/exp_orb.png",
+                .init(cost_image_size_pixels, cost_image_size_pixels),
+            ) catch .{ .image_data = null },
+        })({});
+        ui.text(price_text, .{
+            .color = ui.color(255, 255, 255, 255),
+            .letter_spacing = letter_spacing,
+            .font_size = lm.tou16(@round(14 * ui_scale)),
+            .alignment = .center,
+        });
+    });
 }
 
 fn boonCard(
     boon: Boon,
-    index: u32,
-    card_width: f32,
+    card_index: u32,
+    card_width_pixels: f32,
+    card_height_pixels: f32,
     stats: ?*Stats,
     attack: ?*Attack,
     allocator: ?std.mem.Allocator,
 ) void {
     const ui_scale = HUD.ui_scale;
-    const card_padding = lm.tou16(@round(16 * ui_scale));
-    const card_content_gap = lm.tou16(@round(6 * ui_scale));
-    const image_size = @round(128 * ui_scale);
+    const card_padding_pixels = lm.tou16(@round(16 * ui_scale));
+    const card_content_gap_pixels = lm.tou16(@round(6 * ui_scale));
+    const icon_size_pixels = @round(96 * ui_scale);
     const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
-    const is_focused = (selected_index == index);
+    const is_focused = (selected_index == card_index);
 
     lm.deps.clay.UI()(.{
-        .id = .IDI("boon-card-", index),
+        .id = .IDI("boon-card-", card_index),
         .layout = .{
             .sizing = .{
-                .h = .percent(1),
-                .w = .fixed(card_width),
+                .w = .fixed(card_width_pixels),
+                .h = .fixed(card_height_pixels),
             },
             .direction = .top_to_bottom,
-            .padding = .all(card_padding),
-            .child_gap = card_content_gap,
+            .padding = .all(card_padding_pixels),
+            .child_gap = card_content_gap_pixels,
             .child_alignment = .{ .x = .center },
         },
-        .background_color = rarityBgColor(boon.rarity, lm.deps.clay.hovered() or is_focused),
-        .corner_radius = .all(10 * ui_scale),
-        .border = .{
-            .color = rarityBorderColor(boon.rarity, lm.deps.clay.hovered() or is_focused),
-            .width = .outside(if (lm.deps.clay.hovered() or is_focused) 2 else 1),
-        },
+        .image = ui.image(
+            getBoonCardSprite(lm.deps.clay.hovered() or is_focused),
+            .init(card_width_pixels, card_height_pixels),
+        ) catch .{ .image_data = null },
     })({
         if (lm.deps.clay.hovered()) {
-            selected_index = index;
-            if (lm.mouse.getButtonDown(.left)) {
-                selectBoon(index, stats, attack);
-            }
+            selected_index = card_index;
+        }
+        if (lm.deps.clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            selectBoon(card_index, stats, attack);
         }
 
         ui.text(
@@ -190,16 +244,16 @@ fn boonCard(
         );
 
         ui.new(.{
-            .id = .IDI("boon-image-", index),
+            .id = .IDI("boon-image-", card_index),
             .image = ui.image(
                 boon.icon,
-                .init(image_size, image_size),
+                .init(icon_size_pixels, icon_size_pixels),
             ) catch .{ .image_data = null },
             .aspect_ratio = .{ .aspect_ratio = 1 },
             .layout = .{
                 .sizing = .{
-                    .w = .fixed(image_size),
-                    .h = .fixed(image_size),
+                    .w = .fixed(icon_size_pixels),
+                    .h = .fixed(icon_size_pixels),
                 },
             },
         })({});
@@ -225,7 +279,7 @@ fn boonCard(
         });
 
         ui.new(.{
-            .id = .IDI("boon-card-spacer-", index),
+            .id = .IDI("boon-card-spacer-", card_index),
             .layout = .{
                 .sizing = .{
                     .h = .grow,
@@ -233,82 +287,64 @@ fn boonCard(
             },
         })({});
 
-        const cost_box_padding_x = lm.tou16(@round(12 * ui_scale));
-        const cost_box_padding_y = lm.tou16(@round(5 * ui_scale));
-        const cost_image_size = @round(18 * ui_scale);
+        renderBoonCostBox(card_index, boon.cost(), ui_scale, letter_spacing, allocator);
+    });
+}
 
-        ui.new(.{
-            .id = .IDI("boon-cost-box-", index),
-            .background_color = ui.color(20, 22, 28, 220),
-            .corner_radius = .all(6 * ui_scale),
-            .border = .{
-                .color = ui.color(55, 60, 75, 200),
-                .width = .outside(1),
-            },
-            .layout = .{
-                .padding = .axes(cost_box_padding_y, cost_box_padding_x),
-                .child_gap = lm.tou16(@round(6 * ui_scale)),
-                .child_alignment = .{ .y = .center },
-                .direction = .left_to_right,
-            },
-        })({
-            const price_text = if (allocator) |active_allocator|
-                std.fmt.allocPrint(active_allocator, "{d}", .{boon.cost()}) catch "0"
-            else
-                "0";
+fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
+    const badge_padding_x_pixels = lm.tou16(@round(14 * ui_scale));
+    const badge_padding_y_pixels = lm.tou16(@round(6 * ui_scale));
 
-            ui.new(.{
-                .id = .IDI("experience-img-", index),
-                .layout = .{
-                    .sizing = .{
-                        .h = .fixed(cost_image_size),
-                        .w = .fixed(cost_image_size),
-                    },
-                },
-                .image = ui.image(
-                    "items/exp_orb.png",
-                    .init(cost_image_size, cost_image_size),
-                ) catch .{ .image_data = null },
-            })({});
-            ui.text(price_text, .{
-                .color = ui.color(255, 255, 255, 255),
-                .letter_spacing = letter_spacing,
-                .font_size = lm.tou16(@round(14 * ui_scale)),
-                .alignment = .center,
-            });
+    ui.new(.{
+        .id = .IDI("boon-dummy-badge-", card_index),
+        .background_color = ui.color(24, 27, 35, 230),
+        .corner_radius = .all(6 * ui_scale),
+        .border = .{
+            .color = ui.color(60, 68, 85, 180),
+            .width = .outside(1),
+        },
+        .layout = .{
+            .padding = .axes(badge_padding_y_pixels, badge_padding_x_pixels),
+            .child_alignment = .{ .x = .center, .y = .center },
+        },
+    })({
+        ui.text("PURCHASED", .{
+            .color = ui.color(160, 165, 180, 255),
+            .letter_spacing = lm.tou16(@round(2 * ui_scale)),
+            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .alignment = .center,
         });
     });
 }
 
 fn dummyBoonCard(
     boon: Boon,
-    index: u32,
-    card_width: f32,
+    card_index: u32,
+    card_width_pixels: f32,
+    card_height_pixels: f32,
 ) void {
     const ui_scale = HUD.ui_scale;
-    const card_padding = lm.tou16(@round(16 * ui_scale));
-    const card_content_gap = lm.tou16(@round(6 * ui_scale));
-    const image_size = @round(128 * ui_scale);
+    const card_padding_pixels = lm.tou16(@round(16 * ui_scale));
+    const card_content_gap_pixels = lm.tou16(@round(6 * ui_scale));
+    const icon_size_pixels = @round(96 * ui_scale);
     const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
 
     lm.deps.clay.UI()(.{
-        .id = .IDI("boon-dummy-card-", index),
+        .id = .IDI("boon-dummy-card-", card_index),
         .layout = .{
             .sizing = .{
-                .h = .percent(1),
-                .w = .fixed(card_width),
+                .w = .fixed(card_width_pixels),
+                .h = .fixed(card_height_pixels),
             },
             .direction = .top_to_bottom,
-            .padding = .all(card_padding),
-            .child_gap = card_content_gap,
+            .padding = .all(card_padding_pixels),
+            .child_gap = card_content_gap_pixels,
             .child_alignment = .{ .x = .center },
         },
-        .background_color = ui.color(18, 20, 26, 190),
-        .corner_radius = .all(10 * ui_scale),
-        .border = .{
-            .color = ui.color(45, 50, 65, 140),
-            .width = .outside(1),
-        },
+        .image = ui.image(
+            BOON_CARD_SPRITE,
+            .init(card_width_pixels, card_height_pixels),
+        ) catch .{ .image_data = null },
     })({
         ui.text(
             boon.rarity.toString(),
@@ -321,16 +357,16 @@ fn dummyBoonCard(
         );
 
         ui.new(.{
-            .id = .IDI("boon-dummy-image-", index),
+            .id = .IDI("boon-dummy-image-", card_index),
             .image = ui.image(
                 boon.icon,
-                .init(image_size, image_size),
+                .init(icon_size_pixels, icon_size_pixels),
             ) catch .{ .image_data = null },
             .aspect_ratio = .{ .aspect_ratio = 1 },
             .layout = .{
                 .sizing = .{
-                    .w = .fixed(image_size),
-                    .h = .fixed(image_size),
+                    .w = .fixed(icon_size_pixels),
+                    .h = .fixed(icon_size_pixels),
                 },
             },
         })({});
@@ -356,7 +392,7 @@ fn dummyBoonCard(
         });
 
         ui.new(.{
-            .id = .IDI("boon-dummy-spacer-", index),
+            .id = .IDI("boon-dummy-spacer-", card_index),
             .layout = .{
                 .sizing = .{
                     .h = .grow,
@@ -364,29 +400,7 @@ fn dummyBoonCard(
             },
         })({});
 
-        const badge_padding_x = lm.tou16(@round(14 * ui_scale));
-        const badge_padding_y = lm.tou16(@round(6 * ui_scale));
-
-        ui.new(.{
-            .id = .IDI("boon-dummy-badge-", index),
-            .background_color = ui.color(24, 27, 35, 230),
-            .corner_radius = .all(6 * ui_scale),
-            .border = .{
-                .color = ui.color(60, 68, 85, 180),
-                .width = .outside(1),
-            },
-            .layout = .{
-                .padding = .axes(badge_padding_y, badge_padding_x),
-                .child_alignment = .{ .x = .center, .y = .center },
-            },
-        })({
-            ui.text("PURCHASED", .{
-                .color = ui.color(160, 165, 180, 255),
-                .letter_spacing = lm.tou16(@round(2 * ui_scale)),
-                .font_size = lm.tou16(@round(12 * ui_scale)),
-                .alignment = .center,
-            });
-        });
+        renderPurchasedBadge(card_index, ui_scale);
     });
 }
 
@@ -410,6 +424,200 @@ fn updateStickAxis(
     stick_moved.* = true;
 }
 
+fn handleInputNavigation(slot_array: []const BoonSlot, stats: ?*Stats, attack: ?*Attack) void {
+    if (lm.keyboard.getKeyDown(.escape)) {
+        hide();
+        return;
+    }
+
+    const card_count = slot_array.len;
+    const close_index = card_count;
+    if (selected_index > close_index) selected_index = 0;
+
+    var navigate_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
+    var navigate_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
+    var navigate_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
+    var navigate_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
+    var select_pressed = lm.keyboard.getKeyDown(.enter);
+
+    if (lm.gamepad.isAvailable(0)) {
+        if (lm.gamepad.getButtonDown(0, .right_face_right)) {
+            hide();
+            return;
+        }
+
+        const stick_vector = lm.gamepad.getStickVector(0, .left, 0.2);
+        navigate_left = navigate_left or lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
+        navigate_right = navigate_right or lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
+        navigate_up = navigate_up or lm.gamepad.getButtonDown(0, .left_face_up);
+        navigate_down = navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
+
+        updateStickAxis(stick_vector.x, &stick_moved_x, &navigate_right, &navigate_left);
+        updateStickAxis(stick_vector.y, &stick_moved_y, &navigate_down, &navigate_up);
+
+        select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
+    }
+
+    if (selected_index < card_count) {
+        if (navigate_left) {
+            selected_index = findNextAvailableIndex(selected_index, -1, slot_array);
+        }
+        if (navigate_right) {
+            selected_index = findNextAvailableIndex(selected_index, 1, slot_array);
+        }
+        if (navigate_down) {
+            selected_index = close_index;
+        }
+    } else {
+        if (navigate_up or navigate_left or navigate_right) {
+            selected_index = findFirstAvailableIndex(slot_array);
+        }
+    }
+
+    if (!select_pressed) return;
+
+    if (selected_index < card_count) {
+        selectBoon(selected_index, stats, attack);
+        return;
+    }
+
+    hide();
+}
+
+fn renderMenuHeader(ui_scale: f32) void {
+    ui.new(.{
+        .id = .ID("boon-menu-header"),
+        .layout = .{
+            .direction = .top_to_bottom,
+            .child_alignment = .{ .x = .center },
+            .child_gap = lm.tou16(@round(4 * ui_scale)),
+        },
+    })({
+        const room_category = RoomManager.getRoomCategory();
+        const maybe_category = BoonCategory.getCategoryById(room_category);
+        const header_title = if (maybe_category) |category| category.name else "CHOOSE A BOON";
+        const header_subtitle = if (maybe_category) |category| category.description else "Select an upgrade to enhance your abilities";
+
+        ui.text(header_title, .{
+            .color = ui.color(255, 215, 100, 255),
+            .letter_spacing = lm.tou16(@round(3 * ui_scale)),
+            .font_size = lm.tou16(@round(22 * ui_scale)),
+            .alignment = .center,
+        });
+        ui.text(header_subtitle, .{
+            .color = ui.color(150, 155, 170, 255),
+            .letter_spacing = lm.tou16(@round(1 * ui_scale)),
+            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .alignment = .center,
+        });
+    });
+}
+
+fn renderCardSlot(
+    slot: BoonSlot,
+    slot_index: usize,
+    card_width_pixels: f32,
+    card_height_pixels: f32,
+    stats: ?*Stats,
+    attack: ?*Attack,
+    allocator: ?std.mem.Allocator,
+) void {
+    const card_index = lm.tou32(slot_index);
+    if (slot.is_purchased) {
+        dummyBoonCard(slot.boon, card_index, card_width_pixels, card_height_pixels);
+        return;
+    }
+    boonCard(slot.boon, card_index, card_width_pixels, card_height_pixels, stats, attack, allocator);
+}
+
+fn renderCardRow(
+    slot_array: []const BoonSlot,
+    card_width_pixels: f32,
+    card_height_pixels: f32,
+    card_gap_pixels: u16,
+    total_cards_width_pixels: f32,
+    stats: ?*Stats,
+    attack: ?*Attack,
+    allocator: ?std.mem.Allocator,
+) void {
+    ui.new(.{
+        .id = .ID("boon-cards-row"),
+        .layout = .{
+            .direction = .left_to_right,
+            .sizing = .{
+                .w = .fixed(total_cards_width_pixels),
+                .h = .fixed(card_height_pixels),
+            },
+            .child_alignment = .{ .x = .center, .y = .center },
+            .child_gap = card_gap_pixels,
+        },
+    })({
+        for (slot_array, 0..) |slot, slot_index| {
+            renderCardSlot(slot, slot_index, card_width_pixels, card_height_pixels, stats, attack, allocator);
+        }
+    });
+}
+
+fn renderCloseButton(ui_scale: f32, close_index: usize) void {
+    const is_close_focused = (selected_index == close_index);
+    const button_width_pixels = @round(HUD.UTILITY_BUTTON_BASE_W * ui_scale);
+    const button_height_pixels = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
+
+    lm.deps.clay.UI()(.{
+        .id = .ID("boon-close-button"),
+        .layout = .{
+            .sizing = .{
+                .w = .fixed(button_width_pixels),
+                .h = .fixed(button_height_pixels),
+            },
+            .child_alignment = .{ .x = .center, .y = .center },
+        },
+        .image = ui.image(
+            HUD.getUtilityButtonSprite(lm.deps.clay.hovered() or is_close_focused),
+            .init(button_width_pixels, button_height_pixels),
+        ) catch .{ .image_data = null },
+    })({
+        if (lm.deps.clay.hovered()) {
+            selected_index = close_index;
+        }
+        if (lm.deps.clay.hovered() and lm.mouse.getButtonDown(.left)) {
+            hide();
+        }
+
+        const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
+        ui.text(close_label, .{
+            .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
+            .letter_spacing = 1,
+            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .alignment = .center,
+        });
+    });
+}
+
+fn renderFooter(ui_scale: f32) void {
+    lm.deps.clay.UI()(.{
+        .id = .ID("boon-footer-spacer"),
+        .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+    })({});
+
+    lm.deps.clay.UI()(.{
+        .id = .ID("boon-footer-container"),
+        .layout = .{ .child_alignment = .{ .x = .center } },
+    })({
+        const navigation_hint = if (DevicePrompts.isGamepad())
+            "Navigate: D-Pad / L-Stick  |  Select: A  |  Close: B"
+        else
+            "Navigate: WASD / Arrows / Click  |  Select: Enter / Click  |  Close: Esc";
+
+        ui.text(navigation_hint, .{
+            .color = ui.color(140, 150, 175, 200),
+            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .letter_spacing = 1,
+            .alignment = .center,
+        });
+    });
+}
+
 pub fn draw(
     slot_array: []const BoonSlot,
     stats: ?*Stats,
@@ -419,79 +627,22 @@ pub fn draw(
     if (slots == null) return;
     DevicePrompts.update();
 
-    if (lm.keyboard.getKeyDown(.escape)) {
-        hide();
-        return;
-    }
+    handleInputNavigation(slot_array, stats, attack);
+    if (!isShowing()) return;
 
-    const num_cards = slot_array.len;
-    const close_index = num_cards;
-    if (selected_index > close_index) selected_index = 0;
-
-    var nav_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
-    var nav_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
-    var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
-    var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter);
-
-    if (lm.gamepad.isAvailable(0)) {
-        if (lm.gamepad.getButtonDown(0, .right_face_right)) {
-            hide();
-            return;
-        }
-
-        const stick = lm.gamepad.getStickVector(0, .left, 0.2);
-        nav_left = nav_left or lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
-        nav_right = nav_right or lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
-        nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);
-        nav_down = nav_down or lm.gamepad.getButtonDown(0, .left_face_down);
-
-        updateStickAxis(stick.x, &stick_moved_x, &nav_right, &nav_left);
-        updateStickAxis(stick.y, &stick_moved_y, &nav_down, &nav_up);
-
-        select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
-    }
-
-    if (selected_index < num_cards) {
-        if (nav_left) {
-            selected_index = findNextAvailableIndex(selected_index, -1, slot_array);
-        }
-        if (nav_right) {
-            selected_index = findNextAvailableIndex(selected_index, 1, slot_array);
-        }
-        if (nav_down) {
-            selected_index = close_index;
-        }
-    } else {
-        if (nav_up or nav_left or nav_right) {
-            selected_index = findFirstAvailableIndex(slot_array);
-        }
-    }
-
-    if (select_pressed) {
-        if (selected_index < num_cards) {
-            selectBoon(selected_index, stats, attack);
-            if (!isShowing()) return;
-        } else {
-            hide();
-            return;
-        }
-    }
-
-    const window_size = HUD.window_size;
     const ui_scale = HUD.ui_scale;
+    const card_width_pixels = calculateCardWidthPixels(ui_scale);
+    const card_height_pixels = calculateCardHeightPixels(ui_scale);
 
-    const container_width = @min(window_size.x - 32, @max(740 * ui_scale, window_size.x * 0.78));
-    const container_height = @min(window_size.y - 32, @max(440 * ui_scale, window_size.y * 0.76));
+    const card_gap_pixels = lm.tou16(@round(16 * ui_scale));
+    const container_padding_x_pixels = lm.tou16(@round(24 * ui_scale));
+    const container_padding_y_pixels = lm.tou16(@round(20 * ui_scale));
+    const container_gap_pixels = lm.tou16(@round(14 * ui_scale));
 
-    const container_padding = lm.tou16(@round(18 * ui_scale));
-    const container_gap = lm.tou16(@round(14 * ui_scale));
-    const card_gap = lm.tou16(@round(14 * ui_scale));
-
-    const num_cards_float: f32 = @floatFromInt(slot_array.len);
-    const inner_width = container_width - @as(f32, @floatFromInt(container_padding * 2));
-    const total_card_gaps = @as(f32, @floatFromInt(card_gap)) * (num_cards_float - 1);
-    const card_width = if (num_cards_float > 0) (inner_width - total_card_gaps) / num_cards_float else 0;
+    const card_count_float: f32 = @floatFromInt(slot_array.len);
+    const total_cards_width_pixels = (card_count_float * card_width_pixels) + (@max(0.0, card_count_float - 1.0) * @as(f32, @floatFromInt(card_gap_pixels)));
+    const container_width_pixels = total_cards_width_pixels + @as(f32, @floatFromInt(container_padding_x_pixels * 2));
+    const close_index = slot_array.len;
 
     ui.new(.{
         .id = .ID("boon-menu-container"),
@@ -504,13 +655,13 @@ pub fn draw(
         },
         .layout = .{
             .sizing = .{
-                .h = .fixed(container_height),
-                .w = .fixed(container_width),
+                .w = .fixed(container_width_pixels),
+                .h = .fit,
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = container_gap,
-            .padding = .all(container_padding),
+            .child_gap = container_gap_pixels,
+            .padding = .axes(container_padding_y_pixels, container_padding_x_pixels),
         },
         .background_color = ui.color(18, 20, 26, 235),
         .corner_radius = .all(14 * ui_scale),
@@ -519,103 +670,10 @@ pub fn draw(
             .width = .outside(1),
         },
     })({
-        ui.new(.{
-            .id = .ID("boon-menu-header"),
-            .layout = .{
-                .direction = .top_to_bottom,
-                .child_alignment = .{ .x = .center },
-                .child_gap = lm.tou16(@round(4 * ui_scale)),
-            },
-        })({
-            const room_category = RoomManager.getRoomCategory();
-            const maybe_category = BoonCategory.getCategoryById(room_category);
-            const header_title = if (maybe_category) |category| category.name else "CHOOSE A BOON";
-            const header_subtitle = if (maybe_category) |category| category.description else "Select an upgrade to enhance your abilities";
-
-            ui.text(header_title, .{
-                .color = ui.color(255, 215, 100, 255),
-                .letter_spacing = lm.tou16(@round(3 * ui_scale)),
-                .font_size = lm.tou16(@round(22 * ui_scale)),
-                .alignment = .center,
-            });
-            ui.text(header_subtitle, .{
-                .color = ui.color(150, 155, 170, 255),
-                .letter_spacing = lm.tou16(@round(1 * ui_scale)),
-                .font_size = lm.tou16(@round(12 * ui_scale)),
-                .alignment = .center,
-            });
-        });
-
-        ui.new(.{
-            .id = .ID("boon-cards-row"),
-            .layout = .{
-                .direction = .left_to_right,
-                .sizing = .{
-                    .w = .percent(1),
-                    .h = .grow,
-                },
-                .child_gap = card_gap,
-            },
-        })({
-            for (slot_array, 0..) |slot, index| {
-                if (slot.is_purchased) {
-                    dummyBoonCard(slot.boon, lm.tou32(index), card_width);
-                } else {
-                    boonCard(slot.boon, lm.tou32(index), card_width, stats, attack, allocator);
-                }
-            }
-        });
-
-        const is_close_focused = (selected_index == close_index);
-
-        lm.deps.clay.UI()(.{
-            .id = .ID("boon-close-button"),
-            .layout = .{
-                .sizing = .{
-                    .w = .fixed(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale)),
-                    .h = .fixed(@round(HUD.UTILITY_BUTTON_BASE_H * ui_scale)),
-                },
-                .child_alignment = .{ .x = .center, .y = .center },
-            },
-            .image = ui.image(HUD.getUtilityButtonSprite(lm.deps.clay.hovered() or is_close_focused), .init(@round(HUD.UTILITY_BUTTON_BASE_W * ui_scale), @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale))) catch .{ .image_data = null },
-        })({
-            if (lm.deps.clay.hovered()) {
-                selected_index = close_index;
-                if (lm.mouse.getButtonDown(.left)) {
-                    hide();
-                }
-            }
-
-            const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
-            ui.text(close_label, .{
-                .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
-                .letter_spacing = 1,
-                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
-                .alignment = .center,
-            });
-        });
-
-        lm.deps.clay.UI()(.{
-            .id = .ID("boon-footer-spacer"),
-            .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
-        })({});
-
-        lm.deps.clay.UI()(.{
-            .id = .ID("boon-footer-container"),
-            .layout = .{ .child_alignment = .{ .x = .center } },
-        })({
-            const nav_hint = if (DevicePrompts.isGamepad())
-                "Navigate: D-Pad / L-Stick  |  Select: A  |  Close: B"
-            else
-                "Navigate: WASD / Arrows / Click  |  Select: Enter / Click  |  Close: Esc";
-
-            ui.text(nav_hint, .{
-                .color = ui.color(140, 150, 175, 200),
-                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
-                .letter_spacing = 1,
-                .alignment = .center,
-            });
-        });
+        renderMenuHeader(ui_scale);
+        renderCardRow(slot_array, card_width_pixels, card_height_pixels, card_gap_pixels, total_cards_width_pixels, stats, attack, allocator);
+        renderCloseButton(ui_scale, close_index);
+        renderFooter(ui_scale);
     });
 }
 
@@ -691,4 +749,19 @@ test "BoonMenu show and hide lifecycle" {
 
     hide();
     try std.testing.expect(!isShowing());
+}
+
+test "BoonMenu card dimensions maintain fixed 9:14 aspect ratio and 288x448 at scale 1" {
+    const scale: f32 = 1.0;
+    const width_pixels = calculateCardWidthPixels(scale);
+    const height_pixels = calculateCardHeightPixels(scale);
+
+    try std.testing.expectEqual(@as(f32, 288.0), width_pixels);
+    try std.testing.expectEqual(@as(f32, 448.0), height_pixels);
+    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_pixels / height_pixels, 0.0001);
+}
+
+test "BoonMenu getBoonCardSprite selects regular and hovered sprites" {
+    try std.testing.expectEqualStrings(BOON_CARD_SPRITE, getBoonCardSprite(false));
+    try std.testing.expectEqualStrings(BOON_CARD_HOVER_SPRITE, getBoonCardSprite(true));
 }

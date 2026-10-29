@@ -114,6 +114,21 @@
 
 ## Done
 
+### [60#UIB] Rework boon UI with fixed 9:14 aspect ratio cards and dedicated card sprites
+
+  - tags: [ui, boons, hud, sprites, layout]
+  - priority: high
+  - workload: Easy
+  - steps:
+      - [x] Define 9:14 boon card base dimensions (72x112 upscaled to 288x448 at UI_SCALE 1) and sprite selector helpers in BoonMenu.zig
+      - [x] Rework boonCard and dummyBoonCard to render boon_card.png / boon_card_hovered.png at fixed 9:14 dimensions without flat background/border boxes
+      - [x] Update BoonMenu.draw container and card row layout to fit fixed-size cards and enforce CodeAesthetic naming/indentation
+      - [x] Add unit tests for card dimensions, 9:14 aspect ratio, and sprite selection, and verify with zig build and zig build test
+      - [x] User confirmation that reworked boon card UI works as expected
+    ```md
+    Reworks the boon selection UI in BoonMenu.zig so every card uses a fixed 9:14 aspect ratio (72x112 base upscaled 4x to 288x448 at UI_SCALE 1.0) and renders ui/hud/boon_card.png and ui/hud/boon_card_hovered.png for non-hovered and hovered/focused states.
+    ```
+
 ### [59#FIX] Fix status effect overlay texture corruption and visual stacking
 
   - tags: [vfx, status-effects, rendering, bugfix, textures]
