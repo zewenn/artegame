@@ -90,7 +90,7 @@
       - [x] Tank slow barrage, knockback shot, and stun burst projectile sprites
       - [x] Wall trim sprites for normal and short wall fronts (wall_normal.png, wall_short.png)
       - [x] Knight Mini-Boss dedicated sprite and animations
-      - [ ] Bishop Mini-Boss dedicated sprite and animations
+      - [x] Bishop Mini-Boss dedicated sprite and animations
       - [ ] King Boss dedicated regal armor and crown sprite
       - [ ] Queen Boss dedicated royal robe and floating orbs sprite
       - [x] Elite enemy dedicated armored sprite
