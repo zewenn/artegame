@@ -172,6 +172,28 @@ pub fn addEffect(self: *Self, effect: Effect) void {
     self.addSelfImposedEffect(effect);
 }
 
+/// Refreshes an existing active effect with incoming properties while preventing
+/// shorter refreshed durations from shortening remaining time or overwriting visuals.
+pub fn refreshExistingEffect(existing_effect: *Effect, incoming_effect: Effect) void {
+    const candidate_duration_seconds = @max(incoming_effect.time_remaining, incoming_effect.duration);
+    const refreshed_remaining_seconds = @max(existing_effect.time_remaining, candidate_duration_seconds);
+
+    existing_effect.time_remaining = refreshed_remaining_seconds;
+    existing_effect.duration = @max(existing_effect.duration, refreshed_remaining_seconds);
+    if (existing_effect.on_disable == null) {
+        existing_effect.value = incoming_effect.value;
+        existing_effect.secondary_value = incoming_effect.secondary_value;
+    }
+    existing_effect.on_tick = incoming_effect.on_tick;
+
+    if (incoming_effect.visual) |incoming_visual| {
+        const has_visual_content = incoming_visual.frames.len > 0 or incoming_visual.icon != null;
+        if (has_visual_content) {
+            existing_effect.visual = incoming_visual;
+        }
+    }
+}
+
 /// Adds an effect while bypassing immunities. Reserved for an entity's own scripted
 /// mechanics (e.g. channels or vulnerability windows), never for hostile sources.
 pub fn addSelfImposedEffect(self: *Self, effect: Effect) void {
@@ -182,15 +204,9 @@ pub fn addSelfImposedEffect(self: *Self, effect: Effect) void {
 
     const effects = self.getEffectsList();
 
-    for (effects.items()) |*existing| {
-        if (std.mem.eql(u8, existing.id, new_effect.id)) {
-            if (existing.on_disable) |on_disable| {
-                on_disable(self);
-            }
-            existing.* = new_effect;
-            if (existing.on_enable) |on_enable| {
-                on_enable(self);
-            }
+    for (effects.items()) |*existing_effect| {
+        if (std.mem.eql(u8, existing_effect.id, new_effect.id)) {
+            refreshExistingEffect(existing_effect, new_effect);
             return;
         }
     }
@@ -583,4 +599,42 @@ test "Stats indefinite stasis lifecycle and explicit removal" {
     try std.testing.expect(!stats.isStasis());
     try std.testing.expect(!stats.isInvulnerable());
     try std.testing.expect(stats.canMove());
+}
+
+test "Stats refreshExistingEffect preserves longer remaining time and updates duration" {
+    var existing_effect = Effect{
+        .id = "root",
+        .effect_type = .root,
+        .duration = 5.0,
+        .time_remaining = 4.0,
+        .visual = .{
+            .frames = &.{"effects/root.png"},
+            .icon = "ui/icons/root_icon.png",
+        },
+    };
+
+    const shorter_incoming_effect = Effect{
+        .id = "root",
+        .effect_type = .root,
+        .duration = 1.0,
+        .time_remaining = 1.0,
+        .visual = .{},
+    };
+    refreshExistingEffect(&existing_effect, shorter_incoming_effect);
+
+    try std.testing.expectEqual(@as(f32, 4.0), existing_effect.time_remaining);
+    try std.testing.expectEqual(@as(f32, 5.0), existing_effect.duration);
+    try std.testing.expect(existing_effect.visual != null);
+    try std.testing.expectEqual(@as(usize, 1), existing_effect.visual.?.frames.len);
+
+    const longer_incoming_effect = Effect{
+        .id = "root",
+        .effect_type = .root,
+        .duration = 6.0,
+        .time_remaining = 6.0,
+    };
+    refreshExistingEffect(&existing_effect, longer_incoming_effect);
+
+    try std.testing.expectEqual(@as(f32, 6.0), existing_effect.time_remaining);
+    try std.testing.expectEqual(@as(f32, 6.0), existing_effect.duration);
 }

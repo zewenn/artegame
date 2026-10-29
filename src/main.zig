@@ -83,6 +83,7 @@ test {
     _ = @import("global/save/SaveSystem.zig");
     _ = @import("components/effects/Effect.zig");
     _ = @import("components/effects/EffectVisual.zig");
+    _ = @import("components/effects/StatusOverlays.zig");
     _ = @import("components/Stats.zig");
     _ = @import("global/audio/AudioManager.zig");
     _ = @import("global/audio/MusicManager.zig");

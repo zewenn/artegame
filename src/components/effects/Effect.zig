@@ -57,16 +57,24 @@ pub fn isExpired(self: Self) bool {
 }
 
 test "Effect isExpired reflects remaining time" {
-    const effect = Self{
+    const stun_effect = Self{
         .id = "test_stun",
         .effect_type = .stun,
         .duration = 2.0,
         .time_remaining = 2.0,
     };
 
-    try std.testing.expect(!effect.isExpired());
+    try std.testing.expect(!stun_effect.isExpired());
 
-    var expired_effect = effect;
-    expired_effect.time_remaining = 0.0;
-    try std.testing.expect(expired_effect.isExpired());
+    var expired_stun_effect = stun_effect;
+    expired_stun_effect.time_remaining = 0.0;
+    try std.testing.expect(expired_stun_effect.isExpired());
+}
+
+test "EffectTarget helper methods" {
+    const stun_target = EffectTarget.byType(.stun);
+    try std.testing.expectEqual(EffectType.stun, stun_target.effect_type);
+
+    const poison_target = EffectTarget.byId("poison_effect");
+    try std.testing.expectEqualStrings("poison_effect", poison_target.id);
 }

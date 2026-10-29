@@ -20,27 +20,33 @@ pub const EffectVisual = struct {
 
     loop: bool = true,
 
-    pub fn getFrameIndex(self: EffectVisual, elapsed_time: f32) usize {
+    pub fn getFrameIndex(self: EffectVisual, animation_elapsed_seconds: f32) usize {
         if (self.frames.len == 0) return 0;
         if (self.frame_duration <= 0) return 0;
-        if (elapsed_time <= 0) return 0;
+        if (animation_elapsed_seconds <= 0) return 0;
 
-        const total_frames = @as(usize, @intFromFloat(elapsed_time / self.frame_duration));
+        const total_frames = @as(usize, @intFromFloat(animation_elapsed_seconds / self.frame_duration));
         if (!self.loop) {
             return @min(total_frames, self.frames.len - 1);
         }
         return total_frames % self.frames.len;
     }
 
-    pub fn getCurrentFrame(self: EffectVisual, elapsed_time: f32) ?[]const u8 {
+    pub fn getCurrentFrame(self: EffectVisual, animation_elapsed_seconds: f32) ?[]const u8 {
         if (self.frames.len == 0) return null;
-        return self.frames[self.getFrameIndex(elapsed_time)];
+        const frame_index = self.getFrameIndex(animation_elapsed_seconds);
+        return self.frames[frame_index];
+    }
+
+    pub fn getRotation(self: EffectVisual, animation_elapsed_seconds: f32) f32 {
+        if (self.rotation_speed == 0) return 0;
+        return @mod(animation_elapsed_seconds * self.rotation_speed, 360.0);
     }
 };
 
 pub const EffectVisualRegistry = struct {
     pub fn resolve(effect: Effect) ?EffectVisual {
-        if (effect.visual) |v| return v;
+        if (effect.visual) |visual| return visual;
         return getDefault(effect.effect_type);
     }
 
@@ -139,6 +145,21 @@ test "EffectVisual frame index calculation" {
 
     try std.testing.expectEqual(@as(usize, 0), visual.getFrameIndex(0.30));
     try std.testing.expectEqual(@as(usize, 1), visual.getFrameIndex(0.40));
+}
+
+test "EffectVisual getRotation calculation" {
+    const rotating_visual = EffectVisual{
+        .rotation_speed = 90.0,
+    };
+    try std.testing.expectEqual(@as(f32, 0.0), rotating_visual.getRotation(0.0));
+    try std.testing.expectEqual(@as(f32, 45.0), rotating_visual.getRotation(0.5));
+    try std.testing.expectEqual(@as(f32, 90.0), rotating_visual.getRotation(1.0));
+    try std.testing.expectEqual(@as(f32, 0.0), rotating_visual.getRotation(4.0));
+
+    const static_visual = EffectVisual{
+        .rotation_speed = 0.0,
+    };
+    try std.testing.expectEqual(@as(f32, 0.0), static_visual.getRotation(1.5));
 }
 
 test "EffectVisualRegistry resolve precedence" {

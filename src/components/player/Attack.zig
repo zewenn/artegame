@@ -155,7 +155,7 @@ fn executeLightAttack(
     self.cooldown = 1.0 / stats.current.attack_speed;
 
     stats.addEffect(.{
-        .id = "root",
+        .id = "attack_commitment_root",
         .effect_type = .root,
         .duration = 0.075,
         .visual = .{},
@@ -191,7 +191,7 @@ fn executeHeavyAttack(
     self.cooldown = 1.8 / stats.current.attack_speed;
 
     stats.addEffect(.{
-        .id = "root",
+        .id = "attack_commitment_root",
         .effect_type = .root,
         .duration = 0.12,
         .visual = .{},

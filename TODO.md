@@ -114,6 +114,22 @@
 
 ## Done
 
+### [59#FIX] Fix status effect overlay texture corruption and visual stacking
+
+  - tags: [vfx, status-effects, rendering, bugfix, textures]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Fix StatusOverlays.pruneUnusedTextures loop label bug and add per-EffectType visual deduplication + layer z-offsets
+      - [x] Clean up EffectVisual, Effect, and spells.zig redundant visual overrides per CodeAesthetic rules
+      - [x] Harden Stats.addSelfImposedEffect refresh duration/visual preservation and separate player Attack self-root ID
+      - [x] Deduplicate status badge icons by EffectType in enemy OverheadUI
+      - [x] Verify build and unit tests with zig build and zig build test
+      - [x] User confirmation that status effect overlay rendering and stacking fixes work as expected
+    ```md
+    Fixes a critical OpenGL texture use-after-unload bug in StatusOverlays.pruneUnusedTextures where a misplaced loop label caused active effect textures to be released mid-frame whenever 2+ effects were active (such as during every player attack), resulting in random sprites rendering over entities. Also prevents duplicate status overlays and overhead badges from stacking on the same EffectType and stops player attack self-roots from overwriting enemy roots.
+    ```
+
 ### [58#SYS] Migrate project to Zig v0.17.0 and Loom v0.12.0
 
   - tags: [migration, zig, loom, engine, compiler]
