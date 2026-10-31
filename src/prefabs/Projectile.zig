@@ -136,7 +136,7 @@ pub fn Projectile(options: Options) !*lm.Entity {
 }
 
 pub fn processWallCollision(options: *Options, wall: Wall) bool {
-    if (wall.wall_type == .solid) {
+    if (wall.wall_type.blocksProjectiles()) {
         if (options.inactive) return true;
         options.inactive = true;
         return true;
@@ -323,7 +323,7 @@ test "Projectile Options per-target hit tracking" {
     try std.testing.expectEqual(2, options.hit_count);
 }
 
-test "Projectile wall collision: solid destroys, low passes through" {
+test "Projectile processWallCollision destroys solid walls and ignores low walls" {
     var projectile_options = Options{};
 
     const low_wall = Wall{ .wall_type = .low };
@@ -335,4 +335,10 @@ test "Projectile wall collision: solid destroys, low passes through" {
     const solid_result = processWallCollision(&projectile_options, solid_wall);
     try std.testing.expectEqual(true, solid_result);
     try std.testing.expectEqual(true, projectile_options.inactive);
+
+    var royale_options = Options{};
+    const royale_wall = Wall{ .wall_type = .royale };
+    const royale_result = processWallCollision(&royale_options, royale_wall);
+    try std.testing.expectEqual(true, royale_result);
+    try std.testing.expectEqual(true, royale_options.inactive);
 }

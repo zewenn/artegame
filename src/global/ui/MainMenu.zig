@@ -194,7 +194,7 @@ fn drawMainScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
                 },
             },
             .image = ui.image(
-                "ui/branding/artegame_reimagined_logo.png",
+                "ui/branding/amrap_logo_large.png",
                 .init(logo_w, logo_h),
             ) catch .{ .image_data = null },
         })({});

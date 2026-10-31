@@ -12,9 +12,9 @@ import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Create a drag-to-Applications macOS DMG disk image.")
-    parser.add_argument("--app", required=True, help="Path to the .app bundle (e.g. zig-out/bin/artegame.app)")
+    parser.add_argument("--app", required=True, help="Path to the .app bundle (e.g. zig-out/bin/amrap.app)")
     parser.add_argument("--out", required=True, help="Path to the output .dmg file")
-    parser.add_argument("--volname", default="Artegame", help="Volume name of the mounted disk image")
+    parser.add_argument("--volname", default="AMRAP", help="Volume name of the mounted disk image")
     parser.add_argument("--staging", default=None, help="Custom staging directory (temporary)")
     return parser.parse_args()
 
@@ -51,7 +51,7 @@ def create_dmg(app_path: str, out_path: str, volname: str, staging_dir: str):
         os.symlink("/Applications", apps_link)
 
         # Ensure executable permissions on main binary
-        bin_path = os.path.join(dest_app, "Contents", "MacOS", "artegame")
+        bin_path = os.path.join(dest_app, "Contents", "MacOS", "amrap")
         if os.path.exists(bin_path):
             os.chmod(bin_path, 0o755)
 

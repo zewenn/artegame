@@ -79,7 +79,7 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
     const quad_height_count = if (self.height_tiles > 0) self.height_tiles - 1 else 0;
 
     for (0..TerrainType.count) |layer_index| {
-        const terrain_type = lm.coerceTo(TerrainType, layer_index) orelse continue;
+        const terrain_type = TerrainType.fromInt(layer_index) orelse continue;
         const active_terrain_texture = lm.assets.texture.get(terrain_type.assetPath(), &.{ 64, 64 }) orelse continue;
 
         self.bakeTerrainLayer(
@@ -153,20 +153,27 @@ fn bakeTerrainLayer(
     }
 }
 
+fn loadWallSideTextures() [WallType.count]?*const lm.Texture {
+    var textures: [WallType.count]?*const lm.Texture = @splat(null);
+    inline for (std.enums.values(WallType), 0..) |wall_type, wall_index| {
+        const dimensions = comptime wall_type.sideDimensionsPixels();
+        textures[wall_index] = lm.assets.texture.get(
+            comptime wall_type.sideAssetPath(),
+            &.{ dimensions.width_pixels, dimensions.height_pixels },
+        );
+    }
+    return textures;
+}
+
 fn renderSideSprites(self: *Self, background_tiles: []const u8) void {
-    const solid_texture = lm.assets.texture.get("backgrounds/wall_normal.png", &.{ 16, 16 });
-    const low_texture = lm.assets.texture.get("backgrounds/wall_short.png", &.{ 16, 12 });
+    const side_textures = loadWallSideTextures();
 
     for (0..self.height_tiles) |row_index| {
         for (0..self.width_tiles) |column_index| {
             const tile_index = row_index * self.width_tiles + column_index;
-            const terrain_type = lm.coerceTo(TerrainType, background_tiles[tile_index]) orelse continue;
+            const terrain_type = TerrainType.fromInt(background_tiles[tile_index]) orelse continue;
             const wall_type = terrain_type.toWallType() orelse continue;
-
-            const texture = switch (wall_type) {
-                .solid => solid_texture,
-                .low => low_texture,
-            } orelse continue;
+            const texture = side_textures[@intFromEnum(wall_type)] orelse continue;
 
             self.drawTileSideSprite(
                 background_tiles,
@@ -214,7 +221,7 @@ fn isWallBlockBottom(
     if (next_row_index >= self.height_tiles) return false;
 
     const next_tile_index = next_row_index * self.width_tiles + column_index;
-    const next_terrain = lm.coerceTo(TerrainType, background_tiles[next_tile_index]) orelse return false;
+    const next_terrain = TerrainType.fromInt(background_tiles[next_tile_index]) orelse return false;
     return next_terrain != current_terrain;
 }
 

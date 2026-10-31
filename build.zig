@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) void {
     }
 
     const exe = b.addExecutable(.{
-        .name = "artegame",
+        .name = "amrap",
         .root_module = exe_mod,
     });
 
@@ -51,7 +51,7 @@ pub fn build(b: *std.Build) void {
     });
 
     if (target.result.os.tag.isDarwin()) {
-        const app_dir = "artegame.app";
+        const app_dir = "amrap.app";
         const write_files = b.addWriteFiles();
         const info_plist = write_files.add("Info.plist", b.fmt(
             \\<?xml version="1.0" encoding="UTF-8"?>
@@ -61,17 +61,17 @@ pub fn build(b: *std.Build) void {
             \\    <key>CFBundleDevelopmentRegion</key>
             \\    <string>en</string>
             \\    <key>CFBundleExecutable</key>
-            \\    <string>artegame</string>
+            \\    <string>amrap</string>
             \\    <key>CFBundleIconFile</key>
             \\    <string>icon.icns</string>
             \\    <key>CFBundleIdentifier</key>
-            \\    <string>com.zewenn.artegame</string>
+            \\    <string>com.zewenn.amrap</string>
             \\    <key>CFBundleInfoDictionaryVersion</key>
             \\    <string>6.0</string>
             \\    <key>CFBundleName</key>
-            \\    <string>Artegame</string>
+            \\    <string>AMRAP</string>
             \\    <key>CFBundleDisplayName</key>
-            \\    <string>Artegame</string>
+            \\    <string>AMRAP</string>
             \\    <key>CFBundlePackageType</key>
             \\    <string>APPL</string>
             \\    <key>CFBundleShortVersionString</key>
@@ -124,7 +124,7 @@ pub fn build(b: *std.Build) void {
             sign_cmd.addDirectoryArg(.{
                 .relative = .{
                     .base = .install_bin,
-                    .sub_path = "artegame.app",
+                    .sub_path = "amrap.app",
                 },
             });
             sign_cmd.step.dependOn(b.getInstallStep());
@@ -166,7 +166,7 @@ pub fn build(b: *std.Build) void {
             .sub_path = "",
         },
     });
-    makensis_cmd.addArg("-DOUTPUT_NAME=artegame-windows-x86_64-setup.exe");
+    makensis_cmd.addArg("-DOUTPUT_NAME=amrap-windows-x86_64-setup.exe");
     makensis_cmd.addPrefixedFileArg("-DICON_PATH=", b.path("src/assets/ui/branding/icon.ico"));
     makensis_cmd.addFileArg(b.path("packaging/windows/installer.nsi"));
 
@@ -180,19 +180,19 @@ pub fn build(b: *std.Build) void {
     create_dmg_cmd.addDirectoryArg(.{
         .relative = .{
             .base = .install_bin,
-            .sub_path = "artegame.app",
+            .sub_path = "amrap.app",
         },
     });
     create_dmg_cmd.addArgs(&.{"--out"});
     create_dmg_cmd.addFileArg(.{
         .relative = .{
             .base = .install_bin,
-            .sub_path = "artegame-macos.dmg",
+            .sub_path = "amrap-macos.dmg",
         },
     });
     create_dmg_cmd.addArgs(&.{
         "--volname",
-        "Artegame",
+        "AMRAP",
     });
     create_dmg_cmd.step.dependOn(b.getInstallStep());
     dmg_step.dependOn(&create_dmg_cmd.step);

@@ -1,4 +1,4 @@
-# Artegame Tasks
+# AMRAP Tasks
 
 ## Backlog
 
@@ -105,14 +105,44 @@
       - [ ] Boon card artwork (passive boons badges, spell flasks/fruits, and fallback icon)
       - [ ] Main menu panoramic pixel-art arena background illustration
       - [ ] Game Over screen defeat vignette background illustration
-      - [ ] Royal Arena dual-grid tileset sheets (marble floor, carpet, gold brick walls)
-      - [ ] Sanctuary Arena dual-grid tileset sheets (mosaic flagstones, vaulted stone walls)
+      - [x] Royal Arena dual-grid tileset sheets (marble floor, carpet, gold brick walls)
       - [ ] User confirmation that all acquired visual and UI assets load and function without glitches
     ```md
     Consolidated asset integration encompassing tickets 38#AST and 39#AST: character spritesheets, projectile/VFX overlays, exit door and reward badge artwork, dedicated ability sound effects, and encounter music tracks across v4.0.0 content.
     ```
 
 ## Done
+
+### [62#ARC] Comptime-reflected wall system and map asset serialization overhaul
+
+  - tags: [map, walls, comptime, serialization, map-editor, assets]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Refactor MapTypes.zig with royale_wall_top, WallType.royale, comptime-reflected assetPath/toWallType, and comptime bijection check
+      - [x] Refactor MapRenderer.renderSideSprites to load all WallType side textures via comptime reflection and update Projectile.processWallCollision
+      - [x] Update MapLoader and MapEditor to use WallType.terrainType(), editorOutlineColor(), and selected wall perimeter generation
+      - [x] Add tile_palette serialization/remapping in MapSerializer and repair all 8 bundled map JSON files
+      - [x] Verify build and test suite with zig build and zig build test
+      - [x] User confirmation that comptime-reflected wall system and Royale walls work as expected
+    ```md
+    Refactors TerrainType and WallType in MapTypes.zig to use comptime reflection as a single source of truth for dual-grid tile paths, south-facing wall trim sprites, collider outlines, and projectile blocking rules. Adds tile_palette support to MapSerializer so future enum insertions never corrupt saved maps, and repairs shifted tile indices across all bundled map JSON files.
+    ```
+
+### [61#ARC] Rework BossBar into a mountable enemy component
+
+  - tags: [ui, hud, enemies, architecture, refactor]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Refactor BossBar.zig from global state into a mountable Loom behaviour component following CodeAesthetic rules
+      - [x] Export BossBar in src/components/enemy/export.zig and mount on Knight, Bishop, King, and Queen prefabs
+      - [x] Decouple global BossBar calls from HUD.zig, RoundSpawner.zig, and EnemyType.zig and register unit tests in main.zig
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that component-based BossBar works as expected
+    ```md
+    Refactors BossBar.zig from a global singleton into a self-contained Loom behaviour component mounted directly onto boss and mini-boss enemy prefabs (mirroring OverheadUI.zig), eliminating global state coupling across HUD, RoundSpawner, and EnemyType while enforcing CodeAesthetic standards.
+    ```
 
 ### [60#UIB] Rework boon UI with fixed 9:14 aspect ratio cards and dedicated card sprites
 
@@ -157,7 +187,7 @@
       - [x] Verify test suite and clean compilation with zig build test and zig build
       - [x] User confirmation that migration to Zig 0.17.0 and Loom 0.12.0 works as expected
     ```md
-    Migrates Artegame to Zig v0.17.0 and Loom v0.12.0, updating build scripts, synchronous AssetCache texture/sound/font handling, reflections/allocators, and resolving compiler breaking changes.
+    Migrates AMRAP to Zig v0.17.0 and Loom v0.12.0, updating build scripts, synchronous AssetCache texture/sound/font handling, reflections/allocators, and resolving compiler breaking changes.
     ```
 
 ### [55#SPW] Comptime reflection wave spawner refactoring and dynamic enemy composition

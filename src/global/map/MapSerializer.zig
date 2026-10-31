@@ -6,11 +6,23 @@ const WallSegment = MapTypes.WallSegment;
 const SpawnZoneRecord = MapTypes.SpawnZoneRecord;
 const EntityRecord = MapTypes.EntityRecord;
 
+fn remapTilesFromPalette(background_tiles: []u8, palette: []const MapTypes.TerrainType) void {
+    for (background_tiles) |*tile_byte| {
+        if (tile_byte.* < palette.len) {
+            tile_byte.* = @intFromEnum(palette[tile_byte.*]);
+        }
+    }
+}
+
 pub fn serializeToJson(allocator: std.mem.Allocator, map_data: MapData) ![]const u8 {
+    var serializable_map = map_data;
+    if (serializable_map.tile_palette == null) {
+        serializable_map.tile_palette = MapTypes.TerrainType.all_values;
+    }
     return try std.fmt.allocPrint(
         allocator,
         "{f}",
-        .{std.json.fmt(map_data, .{ .whitespace = .indent_2 })},
+        .{std.json.fmt(serializable_map, .{ .whitespace = .indent_2 })},
     );
 }
 
@@ -24,6 +36,9 @@ pub fn deserializeFromJson(allocator: std.mem.Allocator, json_content: []const u
             .allocate = .alloc_always,
         },
     );
+    if (parsed.value.tile_palette) |palette| {
+        remapTilesFromPalette(parsed.value.background_tiles, palette);
+    }
     return parsed.value;
 }
 
@@ -83,9 +98,10 @@ test "MapSerializer roundtrip JSON" {
     tiles[2] = 1;
     tiles[3] = 0;
 
-    const walls = try arena_allocator.alloc(WallSegment, 2);
+    const walls = try arena_allocator.alloc(WallSegment, 3);
     walls[0] = .{ .start_x_tiles = 0, .start_y_tiles = 0, .end_x_tiles = 1, .end_y_tiles = 0, .wall_type = .solid };
     walls[1] = .{ .start_x_tiles = 0, .start_y_tiles = 1, .end_x_tiles = 1, .end_y_tiles = 1, .wall_type = .low };
+    walls[2] = .{ .start_x_tiles = 1, .start_y_tiles = 0, .end_x_tiles = 1, .end_y_tiles = 1, .wall_type = .royale };
 
     const spawn_zones = try arena_allocator.alloc(SpawnZoneRecord, 2);
     spawn_zones[0] = .{
@@ -133,6 +149,7 @@ test "MapSerializer roundtrip JSON" {
     try std.testing.expectEqual(original_map.walls.len, parsed_map.walls.len);
     try std.testing.expectEqual(MapTypes.WallType.solid, parsed_map.walls[0].wall_type);
     try std.testing.expectEqual(MapTypes.WallType.low, parsed_map.walls[1].wall_type);
+    try std.testing.expectEqual(MapTypes.WallType.royale, parsed_map.walls[2].wall_type);
     try std.testing.expectEqual(original_map.spawn_zones.len, parsed_map.spawn_zones.len);
     try std.testing.expectEqual(original_map.spawn_zones[0].enemy_type, parsed_map.spawn_zones[0].enemy_type);
     try std.testing.expectEqual(original_map.spawn_zones[1].enemy_type, parsed_map.spawn_zones[1].enemy_type);
@@ -167,6 +184,68 @@ test "MapSerializer deserializeFromJson supports integer array background_tiles"
     try std.testing.expectEqual(@as(u8, 1), parsed_map.background_tiles[3]);
 }
 
+test "MapSerializer deserializeFromJson remaps background_tiles using tile_palette" {
+    const testing_allocator = std.testing.allocator;
+    var arena = std.heap.ArenaAllocator.init(testing_allocator);
+    defer arena.deinit();
+    const arena_allocator = arena.allocator();
+
+    const sample_json =
+        \\{
+        \\  "version": 1,
+        \\  "name": "palette_remap_test",
+        \\  "width_tiles": 2,
+        \\  "height_tiles": 2,
+        \\  "tile_size_pixels": 64,
+        \\  "tile_palette": ["stone", "carpet", "wall_top", "royale_wall_top"],
+        \\  "background_tiles": [0, 1, 2, 3],
+        \\  "walls": [],
+        \\  "spawn_zones": [],
+        \\  "entities": []
+        \\}
+    ;
+
+    const parsed_map = try deserializeFromJson(arena_allocator, sample_json);
+    try std.testing.expectEqual(@as(usize, 4), parsed_map.background_tiles.len);
+    try std.testing.expectEqual(@as(u8, 0), parsed_map.background_tiles[0]);
+    try std.testing.expectEqual(@as(u8, 2), parsed_map.background_tiles[1]);
+    try std.testing.expectEqual(@as(u8, 4), parsed_map.background_tiles[2]);
+    try std.testing.expectEqual(@as(u8, 6), parsed_map.background_tiles[3]);
+}
+
+fn verifyWallRowTiles(
+    map_data: MapData,
+    row_index: u32,
+    min_column: u32,
+    max_column: u32,
+    expected_wall_byte: u8,
+) !void {
+    var column_index = min_column;
+    while (column_index <= max_column and column_index < map_data.width_tiles) : (column_index += 1) {
+        const tile_index = row_index * map_data.width_tiles + column_index;
+        try std.testing.expectEqual(expected_wall_byte, map_data.background_tiles[tile_index]);
+    }
+}
+
+fn verifyWallSegmentTiles(map_data: MapData, wall: WallSegment) !void {
+    const expected_wall_byte = @intFromEnum(wall.wall_type.terrainType());
+    const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
+    const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
+    const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
+    const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
+
+    var row_index = min_row;
+    while (row_index <= max_row and row_index < map_data.height_tiles) : (row_index += 1) {
+        try verifyWallRowTiles(map_data, row_index, min_column, max_column, expected_wall_byte);
+    }
+}
+
+fn verifyMapWallsMatchTiles(map_data: MapData) !void {
+    for (map_data.walls) |wall| {
+        try verifyWallSegmentTiles(map_data, wall);
+    }
+}
+
 test "MapSerializer verify all bundled map assets deserialize correctly" {
     const testing_allocator = std.testing.allocator;
     const io = lm.io.singleThreaded();
@@ -178,6 +257,7 @@ test "MapSerializer verify all bundled map assets deserialize correctly" {
         "src/assets/maps/mini_boss/knight_arena.json",
         "src/assets/maps/mini_boss/bishop_arena.json",
         "src/assets/maps/normal/arena_normal.json",
+        "src/assets/maps/normal/long_boi.json",
         "src/assets/maps/tutorial.json",
     };
 
@@ -196,5 +276,11 @@ test "MapSerializer verify all bundled map assets deserialize correctly" {
         const expected_tile_count = map_data.width_tiles * map_data.height_tiles;
         try std.testing.expectEqual(expected_tile_count, map_data.background_tiles.len);
         try std.testing.expect(map_data.walls.len > 0);
+
+        for (map_data.background_tiles) |tile_byte| {
+            try std.testing.expect(MapTypes.TerrainType.fromInt(tile_byte) != null);
+        }
+
+        try verifyMapWallsMatchTiles(map_data);
     }
 }

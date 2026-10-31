@@ -167,5 +167,6 @@ pub fn KingEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .king },
         Enemy.OverheadUI{ .show_health_bar = false },
+        Enemy.BossBar{ .boss_name = "The King", .rank = .boss },
     });
 }

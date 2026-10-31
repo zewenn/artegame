@@ -215,7 +215,7 @@ pub fn resetMapGrid(self: *Self, new_width_tiles: u32, new_height_tiles: u32) !v
 
     const total_tile_count = self.width_tiles * self.height_tiles;
     self.background_tiles = try alloc.alloc(u8, total_tile_count);
-    @memset(self.background_tiles, @intFromEnum(TerrainType.stone));
+    @memset(self.background_tiles, @backingInt(TerrainType.stone));
 
     self.walls.clearRetainingCapacity();
     self.spawn_zones.clearRetainingCapacity();
@@ -312,7 +312,7 @@ pub fn resizeMapGrid(self: *Self, requested_width_tiles: u32, requested_height_t
     const alloc = self.allocator orelse return error.MissingAllocator;
     const total_new_tiles = target_width_tiles * target_height_tiles;
     const new_background_tiles = try alloc.alloc(u8, total_new_tiles);
-    @memset(new_background_tiles, @intFromEnum(TerrainType.stone));
+    @memset(new_background_tiles, @backingInt(TerrainType.stone));
 
     if (self.background_tiles.len > 0 and self.width_tiles > 0 and self.height_tiles > 0) {
         const copy_columns_count = @min(self.width_tiles, target_width_tiles);
@@ -350,7 +350,8 @@ pub fn resizeMapGrid(self: *Self, requested_width_tiles: u32, requested_height_t
 
 pub fn generatePerimeterWalls(self: *Self) void {
     if (self.width_tiles == 0 or self.height_tiles == 0) return;
-    const wall_value = @intFromEnum(TerrainType.wall_top);
+    const perimeter_terrain = if (self.selected_terrain.isWall()) self.selected_terrain else TerrainType.wall_top;
+    const wall_value = @backingInt(perimeter_terrain);
 
     for (0..self.width_tiles) |column_index| {
         self.background_tiles[column_index] = wall_value;
@@ -369,7 +370,7 @@ pub fn generatePerimeterWalls(self: *Self) void {
 
 pub fn clearPerimeterWalls(self: *Self) void {
     if (self.width_tiles == 0 or self.height_tiles == 0) return;
-    const stone_value = @intFromEnum(TerrainType.stone);
+    const stone_value = @backingInt(TerrainType.stone);
 
     for (0..self.width_tiles) |column_index| {
         self.background_tiles[column_index] = stone_value;
@@ -556,7 +557,7 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
         .brush_1x1 => self.paintBrush(column_index, row_index, 1),
         .brush_2x2 => self.paintBrush(column_index, row_index, 2),
         .brush_3x3 => self.paintBrush(column_index, row_index, 3),
-        .eraser => self.paintTile(column_index, row_index, @intFromEnum(TerrainType.stone)),
+        .eraser => self.paintTile(column_index, row_index, @backingInt(TerrainType.stone)),
         .spawn_zone_erase => {
             if (lm.mouse.getButtonDown(.left)) {
                 if (self.getRelativeMousePosition()) |relative_position| {
@@ -573,7 +574,7 @@ fn applyToolAction(self: *Self, column_index: u32, row_index: u32) void {
         },
         .bucket_fill => {
             if (lm.mouse.getButtonDown(.left)) {
-                self.bucketFill(column_index, row_index, @intFromEnum(self.selected_terrain));
+                self.bucketFill(column_index, row_index, @backingInt(self.selected_terrain));
             }
         },
         .spawn_zone => {
@@ -628,7 +629,7 @@ fn commitToolAction(self: *Self, column_index: u32, row_index: u32) void {
         while (fill_row_index <= max_row) : (fill_row_index += 1) {
             var fill_column_index = min_column;
             while (fill_column_index <= max_column) : (fill_column_index += 1) {
-                self.paintTile(fill_column_index, fill_row_index, @intFromEnum(self.selected_terrain));
+                self.paintTile(fill_column_index, fill_row_index, @backingInt(self.selected_terrain));
             }
         }
         self.box_fill_start = null;
@@ -637,7 +638,7 @@ fn commitToolAction(self: *Self, column_index: u32, row_index: u32) void {
 }
 
 fn paintBrush(self: *Self, center_column: u32, center_row: u32, radius: u32) void {
-    const terrain_value = @intFromEnum(self.selected_terrain);
+    const terrain_value = @backingInt(self.selected_terrain);
     const half_radius = radius / 2;
 
     var row_offset: u32 = 0;
@@ -770,10 +771,7 @@ fn drawCanvasOverlays(self: *Self, top_left: lm.Vector2) void {
         const rect_x = top_left.x + @as(f32, @floatFromInt(min_column)) * self.tile_size_pixels;
         const rect_y = top_left.y + @as(f32, @floatFromInt(min_row)) * self.tile_size_pixels + WallMesher.wall_collider_vertical_offset_pixels;
 
-        const wall_outline_color = switch (wall.wall_type) {
-            .solid => rl.Color.lime,
-            .low => rl.Color.sky_blue,
-        };
+        const wall_outline_color = wall.wall_type.editorOutlineColor();
 
         rl.drawRectangleLinesEx(
             lm.Rect(rect_x, rect_y, width_pixels, height_pixels),
@@ -954,7 +952,7 @@ pub fn selectCategory(self: *Self, category: EditorCategory) void {
 fn drawCategoryButton(self: *Self, category: EditorCategory, label: []const u8) void {
     const is_active = (self.current_category == category);
     clay.UI()(.{
-        .id = .IDI("cat-btn-", @intFromEnum(category)),
+        .id = .IDI("cat-btn-", @backingInt(category)),
         .layout = .{
             .padding = .axes(4, 6),
             .child_alignment = .{ .x = .center, .y = .center },
@@ -985,19 +983,21 @@ fn drawTerrainCategory(self: *Self) void {
             .letter_spacing = 1,
         });
 
-        const rows: comptime_int = @intFromFloat(@ceil(lm.coerceTo(comptime_float, TerrainType.count).? / 2));
+        const rows = @divCeil(TerrainType.count, 2);
         for (0..rows) |row_index| {
             const terrain_index = row_index * 2;
 
             ui.new(.{
                 .id = .IDI("terrain-row-", lm.tou32(row_index)),
                 .layout = .{ .direction = .left_to_right, .child_gap = 6, .sizing = .{ .w = .grow } },
-            })(blk: {
-                const terrain_one = lm.coerceTo(TerrainType, terrain_index) orelse break :blk;
-                self.drawTerrainOption(terrain_one, terrain_one.displayName());
+            })({
+                if (TerrainType.fromInt(terrain_index)) |terrain_one| {
+                    self.drawTerrainOption(terrain_one, terrain_one.displayName());
+                }
 
-                const terrain_two = lm.coerceTo(TerrainType, terrain_index + 1) orelse break :blk;
-                self.drawTerrainOption(terrain_two, terrain_two.displayName());
+                if (TerrainType.fromInt(terrain_index + 1)) |terrain_two| {
+                    self.drawTerrainOption(terrain_two, terrain_two.displayName());
+                }
             });
         }
 
@@ -1075,7 +1075,7 @@ fn capitalizedEnumFieldName(comptime EnumType: type, target_index: usize) []cons
 fn drawTerrainOption(self: *Self, terrain: TerrainType, label: []const u8) void {
     const is_selected = (self.selected_terrain == terrain);
     clay.UI()(.{
-        .id = .IDI("terrain-opt-", @intFromEnum(terrain)),
+        .id = .IDI("terrain-opt-", @backingInt(terrain)),
         .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow }, .child_alignment = .{ .x = .center } },
         .background_color = if (is_selected) ui.color(70, 130, 220, 240) else ui.color(35, 42, 56, 200),
         .corner_radius = .all(4),
@@ -1095,7 +1095,7 @@ fn drawTerrainOption(self: *Self, terrain: TerrainType, label: []const u8) void 
 fn drawToolButton(self: *Self, tool: EditorTool, label: []const u8) void {
     const is_active = (self.current_tool == tool);
     clay.UI()(.{
-        .id = .IDI("tool-btn-", @intFromEnum(tool)),
+        .id = .IDI("tool-btn-", @backingInt(tool)),
         .layout = .{ .padding = .axes(6, 10), .sizing = .{ .w = .grow } },
         .background_color = if (is_active) ui.color(240, 180, 70, 220) else ui.color(28, 34, 46, 200),
         .corner_radius = .all(4),
@@ -1122,7 +1122,7 @@ fn drawArchetypeButton(self: *Self, maybe_enemy_type: ?EnemyType, label_text: []
 
     clay.UI()(.{
         .id = if (maybe_enemy_type) |enemy_type|
-            .IDI("spawn-archetype-", @intFromEnum(enemy_type))
+            .IDI("spawn-archetype-", @backingInt(enemy_type))
         else
             .ID("spawn-archetype-all"),
         .layout = .{ .padding = .axes(5, 8), .sizing = .{ .w = .grow } },
@@ -1883,15 +1883,16 @@ pub fn playtestMap(self: *Self, map_path: []const u8, room_type: RoomManager.Roo
 }
 
 pub fn detectCanvasRoomType(self: *const Self) RoomManager.RoomType {
+    var detected_room_type: ?RoomManager.RoomType = null;
     for (self.spawn_zones.items()) |zone| {
         const enemy_type = zone.enemy_type orelse continue;
         switch (enemy_type) {
             .boss, .king, .queen => return .boss,
-            .knight, .bishop, .mini_boss => return .mini_boss,
+            .knight, .bishop, .mini_boss => detected_room_type = .mini_boss,
             else => {},
         }
     }
-    return self.selected_arena_category.toRoomType();
+    return detected_room_type orelse self.selected_arena_category.toRoomType();
 }
 
 pub fn clearPlaytestOverride() void {
@@ -1989,7 +1990,7 @@ fn handleSavePopupInput(self: *Self) void {
 fn drawCategoryChoiceButton(self: *Self, category: ArenaCategory) void {
     const is_selected = (self.selected_arena_category == category);
     clay.UI()(.{
-        .id = .IDI("save-cat-opt-", @intFromEnum(category)),
+        .id = .IDI("save-cat-opt-", @backingInt(category)),
         .layout = .{
             .padding = .axes(6, 10),
             .sizing = .{ .w = .grow },
@@ -2183,24 +2184,12 @@ fn loadMapFromPath(self: *Self, path: []const u8) void {
     }
     self.background_tiles = alloc.dupe(u8, loaded_data.background_tiles) catch return;
 
-    for (loaded_data.walls) |wall| {
-        const wall_value: u8 = switch (wall.wall_type) {
-            .solid => @intFromEnum(TerrainType.wall_top),
-            .low => @intFromEnum(TerrainType.wall_low_top),
-        };
-        const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
-        const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
-        const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
-        const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
-
-        var row_index = min_row;
-        while (row_index <= max_row and row_index < self.height_tiles) : (row_index += 1) {
-            var column_index = min_column;
-            while (column_index <= max_column and column_index < self.width_tiles) : (column_index += 1) {
-                self.background_tiles[row_index * self.width_tiles + column_index] = wall_value;
-            }
-        }
-    }
+    MapLoader.applyWallSegmentsToTiles(
+        self.background_tiles,
+        self.width_tiles,
+        self.height_tiles,
+        loaded_data.walls,
+    );
 
     self.regenerateWallBoundingBoxes();
 
@@ -2271,16 +2260,43 @@ test "MapEditor generatePerimeterWalls and clearPerimeterWalls" {
 
     editor.generatePerimeterWalls();
 
-    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[0]);
-    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[3]);
-    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[12]);
-    try std.testing.expectEqual(@as(u8, 2), editor.background_tiles[15]);
+    const wall_value = @backingInt(TerrainType.wall_top);
+    try std.testing.expectEqual(wall_value, editor.background_tiles[0]);
+    try std.testing.expectEqual(wall_value, editor.background_tiles[3]);
+    try std.testing.expectEqual(wall_value, editor.background_tiles[12]);
+    try std.testing.expectEqual(wall_value, editor.background_tiles[15]);
 
     try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[5]);
 
     editor.clearPerimeterWalls();
     try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[0]);
     try std.testing.expectEqual(@as(u8, 0), editor.background_tiles[15]);
+
+    editor.selected_terrain = .royale_wall_top;
+    editor.generatePerimeterWalls();
+    const royale_wall_value = @backingInt(TerrainType.royale_wall_top);
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[0]);
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[3]);
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[12]);
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[15]);
+
+    const royale_wall_segments = [_]WallSegment{
+        .{
+            .start_x_tiles = 1,
+            .start_y_tiles = 1,
+            .end_x_tiles = 2,
+            .end_y_tiles = 2,
+            .wall_type = .royale,
+        },
+    };
+    MapLoader.applyWallSegmentsToTiles(
+        editor.background_tiles,
+        editor.width_tiles,
+        editor.height_tiles,
+        &royale_wall_segments,
+    );
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[1 * 4 + 1]);
+    try std.testing.expectEqual(royale_wall_value, editor.background_tiles[2 * 4 + 2]);
 }
 
 test "MapEditor removeSpawnZoneAt targeted deletion" {
@@ -2419,13 +2435,15 @@ test "MapEditor resizeMapGrid copies tiles and clamps entities within bounds" {
     editor.exit_door_positions = lm.List(lm.Vector2).init(std.testing.allocator);
     defer editor.exit_door_positions.deinit();
 
+    editor.width_tiles = 0;
+    editor.height_tiles = 0;
     try editor.resizeMapGrid(32, 32);
     defer std.testing.allocator.free(editor.background_tiles);
 
     try std.testing.expectEqual(@as(u32, 32), editor.width_tiles);
     try std.testing.expectEqual(@as(u32, 32), editor.height_tiles);
 
-    const test_wall_value = @intFromEnum(TerrainType.wall_top);
+    const test_wall_value = @backingInt(TerrainType.wall_top);
     editor.background_tiles[5 * 32 + 5] = test_wall_value;
     editor.player_spawn_position = lm.Vec2(1000.0, 1000.0);
 
@@ -2442,7 +2460,7 @@ test "MapEditor resizeMapGrid copies tiles and clamps entities within bounds" {
     try std.testing.expectEqual(@as(u32, 48), editor.width_tiles);
     try std.testing.expectEqual(@as(u32, 48), editor.height_tiles);
     try std.testing.expectEqual(test_wall_value, editor.background_tiles[5 * 48 + 5]);
-    try std.testing.expectEqual(@intFromEnum(TerrainType.stone), editor.background_tiles[35 * 48 + 35]);
+    try std.testing.expectEqual(@backingInt(TerrainType.stone), editor.background_tiles[35 * 48 + 35]);
 
     try std.testing.expectEqual(@as(f32, 1000.0), editor.player_spawn_position.x);
     try std.testing.expectEqual(@as(f32, 1000.0), editor.player_spawn_position.y);

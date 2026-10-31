@@ -6,7 +6,7 @@ const gbl = @import("global/global.zig");
 pub fn main() !void {
     lm.project(.{
         .window = .{
-            .title = "artegame",
+            .title = "AMRAP",
             .resizable = true,
             .restore_state = true,
             .size = .init(1280, 720),
@@ -74,6 +74,7 @@ test {
     _ = @import("global/ui/OptionsMenu.zig");
     _ = @import("global/ui/BoonMenu.zig");
     _ = @import("global/ui/GameOverMenu.zig");
+    _ = @import("global/ui/BossBar.zig");
     _ = @import("global/RoomManager.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Weapon.zig");
@@ -98,6 +99,8 @@ test {
     _ = @import("global/map/DualGridMesher.zig");
     _ = @import("global/map/WallMesher.zig");
     _ = @import("global/map/MapSerializer.zig");
+    _ = @import("global/map/MapTypes.zig");
+    _ = @import("global/map/MapEditor.zig");
     _ = @import("prefabs/Projectile.zig");
     _ = @import("prefabs/enemies/Shaman.zig");
     _ = @import("prefabs/enemies/Magician.zig");

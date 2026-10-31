@@ -126,7 +126,7 @@ pub fn generateSegmentsFromTiles(
             if (visited_tiles[tile_index]) continue;
 
             const terrain_byte = background_tiles[tile_index];
-            const terrain_type = lm.coerceTo(MapTypes.TerrainType, terrain_byte) orelse {
+            const terrain_type = MapTypes.TerrainType.fromInt(terrain_byte) orelse {
                 visited_tiles[tile_index] = true;
                 continue;
             };
@@ -306,11 +306,13 @@ test "WallMesher generateSegmentsFromTiles 2D block merge" {
     const width: u32 = 4;
     const height: u32 = 4;
 
+    const wall_top_byte: u8 = @intFromEnum(MapTypes.TerrainType.wall_top);
+    const wall_low_top_byte: u8 = @intFromEnum(MapTypes.TerrainType.wall_low_top);
     const tiles = [_]u8{
         0, 0, 0, 0,
-        0, 2, 2, 0,
-        0, 2, 2, 0,
-        3, 3, 0, 0,
+        0, wall_top_byte, wall_top_byte, 0,
+        0, wall_top_byte, wall_top_byte, 0,
+        wall_low_top_byte, wall_low_top_byte, 0, 0,
     };
 
     const segments = try generateSegmentsFromTiles(testing_allocator, &tiles, width, height);

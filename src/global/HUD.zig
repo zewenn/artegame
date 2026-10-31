@@ -96,18 +96,11 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
 
     ui_scale = calculateUiScale(window_size);
 
-    const delta_seconds = lm.time.deltaTime();
-    BossBar.update(delta_seconds);
-
     round_indicator: {
         const progress = RoomManager.getWaveProgress() orelse break :round_indicator;
         if (progress.round == 0) break :round_indicator;
 
-        drawRoundIndicator(progress, self.alloc);
-    }
-
-    if (!PauseMenu.isShowing() and !GameOverMenu.isShowing() and !BoonMenu.isShowing()) {
-        BossBar.draw(self.alloc, ui_scale, scale);
+        drawRoundIndicator(progress);
     }
 
     player_stats: {
@@ -151,7 +144,6 @@ pub fn End(self: *Self) void {
     if (self.arena) |*arena| arena.deinit();
     self.arena = null;
     self.alloc = null;
-    BossBar.unbind();
     BoonMenu.hide();
     PauseMenu.hide();
     GameOverMenu.hide();
@@ -161,25 +153,16 @@ pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
     BoonMenu.show(slots);
 }
 
-fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Allocator) void {
+fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
     const room_type = if (RoomManager.get()) |rm| rm.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
-    const room_str = if (alloc) |a|
-        switch (room_type) {
-            .mini_boss => std.fmt.allocPrint(a, "Room {d} - Mini-Boss", .{progress.round}) catch "Mini-Boss",
-            .boss => std.fmt.allocPrint(a, "Room {d} - Boss", .{progress.round}) catch "Boss",
-            .tutorial => std.fmt.allocPrint(a, "Tutorial Room", .{}) catch "Tutorial",
-            .normal => std.fmt.allocPrint(a, "Room {d}", .{progress.round}) catch "Room",
-        }
-    else
-        "Room";
+    const room_str = switch (room_type) {
+        .mini_boss => "  -  Mini-Boss",
+        .boss => "  -  Boss",
+        .tutorial => "  -  Tutorial",
+        .normal => "",
+    };
 
-    const count_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d} / {d}", .{ progress.killed, progress.total }) catch "0 / 0"
-    else
-        "0 / 0";
-
-    const title_font_size = lm.tou16(@max(10, @round(24 * scale)));
-    const count_font_size = lm.tou16(@max(12, @round(16 * scale)));
+    const font_size = lm.tou16(@max(10, @round(10 * scale)));
     const pad_y = lm.tou16(@round(6 * ui_scale));
     const pad_x = lm.tou16(@round(16 * ui_scale));
 
@@ -194,11 +177,7 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
             .offset = .{ .x = 0, .y = 16 * scale },
         },
         .background_color = lm.ui.color(18, 20, 26, 210),
-        .corner_radius = .all(8 * ui_scale),
-        .border = .{
-            .color = lm.ui.color(240, 200, 100, 160),
-            .width = .outside(1),
-        },
+        .corner_radius = .all(4 * ui_scale),
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
@@ -206,24 +185,10 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress, alloc: ?std.mem.Alloc
             .padding = .axes(pad_y, pad_x),
         },
     })({
-        lm.ui.new(.{
-            .id = .ID("hud-round-title"),
-        })({
-            lm.ui.text(room_str, .{
-                .color = lm.ui.color(255, 235, 170, 255),
-                .font_size = title_font_size,
-                .letter_spacing = 1,
-            });
-        });
-
-        lm.ui.new(.{
-            .id = .ID("hud-round-count"),
-        })({
-            lm.ui.text(count_str, .{
-                .color = lm.ui.color(210, 225, 245, 255),
-                .font_size = count_font_size,
-                .letter_spacing = 1,
-            });
+        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_str, progress.killed, progress.total }, .{
+            .color = lm.ui.color(255, 235, 170, 255),
+            .font_size = font_size,
+            .letter_spacing = 1,
         });
     });
 }

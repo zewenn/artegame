@@ -192,5 +192,6 @@ pub fn QueenEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .queen },
         Enemy.OverheadUI{ .show_health_bar = false },
+        Enemy.BossBar{ .boss_name = "The Queen", .rank = .boss },
     });
 }

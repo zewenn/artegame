@@ -3,7 +3,6 @@ const lm = @import("loom");
 const SpatialAudio = @import("../audio/SpatialAudio.zig");
 const MapTypes = @import("../map/MapTypes.zig");
 const Stats = @import("../../components/Stats.zig");
-const BossBar = @import("../ui/BossBar.zig");
 
 pub const EnemyType = @import("../../components/enemy/EnemyType.zig").EnemyType;
 
@@ -543,7 +542,6 @@ pub fn deinit(self: *Self) void {
     self.spawn_cursor = 0;
     self.active_enemies.deinit();
     self.is_active = false;
-    BossBar.unbind();
 }
 
 pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
@@ -557,10 +555,6 @@ pub fn startWaveForRoom(self: *Self, round: u32, profile: SpawnProfile) !void {
 
     try populateQueue(&self.spawn_queue, config);
     self.active_enemies.clearRetainingCapacity();
-
-    if (profile != .mini_boss and profile != .boss) {
-        BossBar.unbind();
-    }
 
     switch (profile) {
         .tutorial => {
@@ -597,7 +591,6 @@ pub fn removeDefeatedEnemy(self: *Self, uuid: u128) void {
 
         _ = self.active_enemies.swapRemove(index);
         self.killed_enemies += 1;
-        BossBar.onBossDefeated(uuid);
 
         break;
     }
@@ -711,7 +704,6 @@ pub fn update(self: *Self, delta_seconds: f32, scene: ?*lm.Scene, player_positio
         const enemy = try enemy_type.spawn(spawn_position);
 
         applyDynamicStatScaling(enemy, enemy_type, self.round);
-        enemy_type.tryBindBossBar(enemy);
 
         try self.active_enemies.append(enemy.uuid);
         try lm.summoning.entity(enemy);

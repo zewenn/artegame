@@ -1,5 +1,5 @@
 ; ==============================================================================
-; Artegame - Windows Installer Script (NSIS)
+; AMRAP - Windows Installer Script (NSIS)
 ; ==============================================================================
 
 !include "MUI2.nsh"
@@ -26,7 +26,7 @@
 !endif
 
 !ifndef OUTPUT_NAME
-  !define OUTPUT_NAME "artegame-windows-x86_64-setup.exe"
+  !define OUTPUT_NAME "amrap-windows-x86_64-setup.exe"
 !endif
 
 !ifndef ICON_PATH
@@ -36,8 +36,8 @@
 ; ------------------------------------------------------------------------------
 ; General Configuration
 ; ------------------------------------------------------------------------------
-Name "Artegame"
-Caption "Artegame ${VERSION} Setup"
+Name "AMRAP"
+Caption "AMRAP ${VERSION} Setup"
 OutFile "${OUTPUT_DIR}\${OUTPUT_NAME}"
 Unicode True
 SetCompressor /SOLID lzma
@@ -46,8 +46,8 @@ SetCompressor /SOLID lzma
 RequestExecutionLevel user
 
 ; Default installation directory
-InstallDir "$LOCALAPPDATA\Programs\Artegame"
-InstallDirRegKey HKCU "Software\Artegame" "InstallDir"
+InstallDir "$LOCALAPPDATA\Programs\AMRAP"
+InstallDirRegKey HKCU "Software\AMRAP" "InstallDir"
 
 ; ------------------------------------------------------------------------------
 ; Modern UI 2 Settings & Icons
@@ -64,8 +64,8 @@ InstallDirRegKey HKCU "Software\Artegame" "InstallDir"
 !insertmacro MUI_PAGE_INSTFILES
 
 ; Finish page allows launching the game immediately
-!define MUI_FINISHPAGE_RUN "$INSTDIR\artegame.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Launch Artegame"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\amrap.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch AMRAP"
 !insertmacro MUI_PAGE_FINISH
 
 ; ------------------------------------------------------------------------------
@@ -82,14 +82,14 @@ InstallDirRegKey HKCU "Software\Artegame" "InstallDir"
 ; ------------------------------------------------------------------------------
 ; Installation Section
 ; ------------------------------------------------------------------------------
-Section "Artegame (required)" SecMain
+Section "AMRAP (required)" SecMain
     SectionIn RO
 
     ; Set destination directory
     SetOutPath "$INSTDIR"
 
     ; Main executable
-    File "${BIN_DIR}\artegame.exe"
+    File "${BIN_DIR}\amrap.exe"
 
     ; Game assets directory
     File /r "${BIN_DIR}\assets"
@@ -103,20 +103,20 @@ Section "Artegame (required)" SecMain
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 
     ; Start Menu Shortcuts
-    CreateDirectory "$SMPROGRAMS\Artegame"
-    CreateShortcut "$SMPROGRAMS\Artegame\Artegame.lnk" "$INSTDIR\artegame.exe" "" "$INSTDIR\artegame.exe" 0 SW_SHOWNORMAL "" "Artegame"
-    CreateShortcut "$SMPROGRAMS\Artegame\Uninstall Artegame.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL "" "Uninstall Artegame"
+    CreateDirectory "$SMPROGRAMS\AMRAP"
+    CreateShortcut "$SMPROGRAMS\AMRAP\AMRAP.lnk" "$INSTDIR\amrap.exe" "" "$INSTDIR\amrap.exe" 0 SW_SHOWNORMAL "" "AMRAP"
+    CreateShortcut "$SMPROGRAMS\AMRAP\Uninstall AMRAP.lnk" "$INSTDIR\Uninstall.exe" "" "$INSTDIR\Uninstall.exe" 0 SW_SHOWNORMAL "" "Uninstall AMRAP"
 
     ; Desktop Shortcut
-    CreateShortcut "$DESKTOP\Artegame.lnk" "$INSTDIR\artegame.exe" "" "$INSTDIR\artegame.exe" 0 SW_SHOWNORMAL "" "Artegame"
+    CreateShortcut "$DESKTOP\AMRAP.lnk" "$INSTDIR\amrap.exe" "" "$INSTDIR\amrap.exe" 0 SW_SHOWNORMAL "" "AMRAP"
 
     ; Store installation folder in registry
-    WriteRegStr HKCU "Software\Artegame" "InstallDir" "$INSTDIR"
+    WriteRegStr HKCU "Software\AMRAP" "InstallDir" "$INSTDIR"
 
     ; Register in Windows "Installed apps" / "Add or Remove Programs"
-    !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\Artegame"
-    WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "Artegame"
-    WriteRegStr HKCU "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\artegame.exe,0"
+    !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\AMRAP"
+    WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "AMRAP"
+    WriteRegStr HKCU "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\amrap.exe,0"
     WriteRegStr HKCU "${UNINST_KEY}" "DisplayVersion" "${VERSION}"
     WriteRegStr HKCU "${UNINST_KEY}" "Publisher" "zewenn"
     WriteRegStr HKCU "${UNINST_KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
@@ -136,13 +136,13 @@ SectionEnd
 ; ------------------------------------------------------------------------------
 Section "Uninstall"
     ; Remove shortcuts
-    Delete "$DESKTOP\Artegame.lnk"
-    Delete "$SMPROGRAMS\Artegame\Artegame.lnk"
-    Delete "$SMPROGRAMS\Artegame\Uninstall Artegame.lnk"
-    RMDir "$SMPROGRAMS\Artegame"
+    Delete "$DESKTOP\AMRAP.lnk"
+    Delete "$SMPROGRAMS\AMRAP\AMRAP.lnk"
+    Delete "$SMPROGRAMS\AMRAP\Uninstall AMRAP.lnk"
+    RMDir "$SMPROGRAMS\AMRAP"
 
     ; Remove files and directories
-    Delete "$INSTDIR\artegame.exe"
+    Delete "$INSTDIR\amrap.exe"
     Delete "$INSTDIR\Uninstall.exe"
     RMDir /r "$INSTDIR\assets"
     RMDir /r "$INSTDIR\src"
@@ -151,6 +151,6 @@ Section "Uninstall"
     RMDir "$INSTDIR"
 
     ; Remove registry keys
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Artegame"
-    DeleteRegKey HKCU "Software\Artegame"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AMRAP"
+    DeleteRegKey HKCU "Software\AMRAP"
 SectionEnd

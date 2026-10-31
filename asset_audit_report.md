@@ -2,7 +2,7 @@
 
 This report details every missing asset (currently relying on placeholders like `empty.png` or `empty_icon.png`) and reused asset (repurposed from existing minions, weapons, or UI icons) identified across the codebase for tickets `38#AST` and `39#AST`, including their exact native pixel resolutions and in-game rendered scales.
 
-> **Resolution Baseline**: Artegame uses a **16x16 pixel-art baseline**. Standard characters and minions use a **16x16** native sprite texture scaled 4x in-engine to **64x64**. Dual-grid tilemap sheets are **64x64** (4x4 grid of 16x16 sub-quad tiles).
+> **Resolution Baseline**: AMRAP uses a **16x16 pixel-art baseline**. Standard characters and minions use a **16x16** native sprite texture scaled 4x in-engine to **64x64**. Dual-grid tilemap sheets are **64x64** (4x4 grid of 16x16 sub-quad tiles).
 
 ---
 

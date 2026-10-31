@@ -1,9 +1,9 @@
 .{
-    .name = .artegame,
+    .name = .amrap,
 
-    .version = "3.0.2",
+    .version = "4.0.0",
 
-    .fingerprint = 0xc19ae7346f78b31f,
+    .fingerprint = 0xd0aa11da4916c42e,
 
     .minimum_zig_version = "0.17.0",
 

@@ -374,6 +374,7 @@ pub fn BishopEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .bishop },
         Enemy.OverheadUI{ .show_health_bar = false },
+        Enemy.BossBar{ .boss_name = "Bishop", .rank = .mini_boss },
     });
 }
 
@@ -387,6 +388,7 @@ test "Bishop enemy creation and component configuration" {
     try std.testing.expect(bishop.getComponent(Enemy.Attack) != null);
     try std.testing.expect(bishop.getComponent(Enemy.Movement) != null);
     try std.testing.expect(bishop.getComponent(Enemy.Death) != null);
+    try std.testing.expect(bishop.getComponent(Enemy.BossBar) != null);
 
     const stats = bishop.getComponent(Stats).?;
     try std.testing.expectEqual(@as(f32, 950.0), stats.max.health);

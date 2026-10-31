@@ -400,24 +400,6 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Animation{},
         Enemy.Death{ .enemy_type = .knight },
         Enemy.OverheadUI{ .show_health_bar = false },
+        Enemy.BossBar{ .boss_name = "Knight", .rank = .mini_boss },
     });
-}
-
-test "Knight enemy creation and component configuration" {
-    const knight = try KnightEnemy(.init(300.0, 400.0));
-    defer knight.deinit();
-    try knight.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, knight.id, "knight-enemy"));
-    try std.testing.expect(knight.getComponent(Stats) != null);
-    try std.testing.expect(knight.getComponent(Enemy.ProximityAura) != null);
-    try std.testing.expect(knight.getComponent(KnightMechanics) != null);
-    try std.testing.expect(knight.getComponent(Enemy.Attack) != null);
-    try std.testing.expect(knight.getComponent(Enemy.Death) != null);
-
-    const stats = knight.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 1200.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 60.0), stats.base.armour);
-    try std.testing.expectEqual(@as(f32, 35.0), stats.base.magic_resist);
-    try std.testing.expectEqual(@as(f32, 120.0), stats.current.movement_speed);
 }

@@ -125,6 +125,38 @@ pub fn unload() void {
     global_renderer.deinit();
 }
 
+fn fillWallSegmentTiles(
+    background_tiles: []u8,
+    width_tiles: u32,
+    height_tiles: u32,
+    wall: MapTypes.WallSegment,
+) void {
+    const wall_value: u8 = @intFromEnum(wall.wall_type.terrainType());
+    const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
+    const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
+    const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
+    const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
+
+    var row_index = min_row;
+    while (row_index <= max_row and row_index < height_tiles) : (row_index += 1) {
+        var column_index = min_column;
+        while (column_index <= max_column and column_index < width_tiles) : (column_index += 1) {
+            background_tiles[row_index * width_tiles + column_index] = wall_value;
+        }
+    }
+}
+
+pub fn applyWallSegmentsToTiles(
+    background_tiles: []u8,
+    width_tiles: u32,
+    height_tiles: u32,
+    walls: []const MapTypes.WallSegment,
+) void {
+    for (walls) |wall| {
+        fillWallSegmentTiles(background_tiles, width_tiles, height_tiles, wall);
+    }
+}
+
 pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     init();
     unload();
@@ -133,7 +165,7 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     errdefer arena.deinit();
     const arena_allocator = arena.allocator();
 
-    var map_data = if (in_memory_map_override) |override_data|
+    const map_data = if (in_memory_map_override) |override_data|
         MapData{
             .version = override_data.version,
             .name = try arena_allocator.dupe(u8, override_data.name),
@@ -158,24 +190,12 @@ pub fn loadAndInstantiate(relative_map_path: []const u8) !void {
     active_map_width_pixels = width_pixels;
     active_map_height_pixels = height_pixels;
 
-    for (map_data.walls) |wall| {
-        const wall_value: u8 = switch (wall.wall_type) {
-            .solid => @intFromEnum(MapTypes.TerrainType.wall_top),
-            .low => @intFromEnum(MapTypes.TerrainType.wall_low_top),
-        };
-        const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
-        const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
-        const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
-        const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
-
-        var row_index = min_row;
-        while (row_index <= max_row and row_index < map_data.height_tiles) : (row_index += 1) {
-            var column_index = min_column;
-            while (column_index <= max_column and column_index < map_data.width_tiles) : (column_index += 1) {
-                map_data.background_tiles[row_index * map_data.width_tiles + column_index] = wall_value;
-            }
-        }
-    }
+    applyWallSegmentsToTiles(
+        map_data.background_tiles,
+        map_data.width_tiles,
+        map_data.height_tiles,
+        map_data.walls,
+    );
 
     try global_renderer.configureDimensions(
         map_data.width_tiles,

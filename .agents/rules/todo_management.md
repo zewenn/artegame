@@ -4,11 +4,11 @@ trigger: always_on
 
 # TODO & Kanban Workflow Rule
 
-Artegame manages project tasks using a Markdown Kanban board in [TODO.md](TODO.md) based on the `markdown-kanban` format.
+AMRAP manages project tasks using a Markdown Kanban board in [TODO.md](TODO.md) based on the `markdown-kanban` format.
 
 ## Board Structure
 
-- **Board Heading:** Level 1 `# Artegame Tasks`
+- **Board Heading:** Level 1 `# AMRAP Tasks`
 - **Status Columns:** Level 2 headings:
   - `## Backlog`: Tasks planned for future work.
   - `## Work in Progress`: Tasks currently being designed, implemented, or awaiting user verification.

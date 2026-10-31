@@ -141,17 +141,6 @@ pub const EnemyType = enum {
         };
     }
 
-    pub inline fn canBindBossBar(self: EnemyType) bool {
-        return self.bossRank() != null;
-    }
-
-    pub fn tryBindBossBar(self: EnemyType, entity: *lm.Entity) void {
-        if (!self.canBindBossBar()) return;
-        const boss_rank = self.bossRank() orelse return;
-
-        BossBar.bind(entity, self.displayName(), boss_rank);
-    }
-
     pub fn label(self: ?EnemyType) [:0]const u8 {
         const enemy_type = self orelse return "ALL";
         return switch (enemy_type) {

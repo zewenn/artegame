@@ -51,20 +51,20 @@ jobs:
           - name: macos-arm64
             os: macos-latest
             target: aarch64-macos
-            binary_name: artegame
-            archive_name: artegame-macos-arm64.dmg
+            binary_name: amrap
+            archive_name: amrap-macos-arm64.dmg
             format: dmg
           - name: macos-x86_64
             os: macos-latest
             target: x86_64-macos
-            binary_name: artegame
-            archive_name: artegame-macos-x86_64.dmg
+            binary_name: amrap
+            archive_name: amrap-macos-x86_64.dmg
             format: dmg
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-windows
-            binary_name: artegame.exe
-            archive_name: artegame-windows-x86_64.zip
+            binary_name: amrap.exe
+            archive_name: amrap-windows-x86_64.zip
             format: zip
 
     steps:
@@ -100,9 +100,9 @@ jobs:
               # For macOS releases, package into a drag-to-Applications DMG
               subprocess.run([
                   'python3', 'packaging/macos/create_dmg.py',
-                  '--app', 'zig-out/bin/artegame.app',
+                  '--app', 'zig-out/bin/amrap.app',
                   '--out', archive_name,
-                  '--volname', 'Artegame',
+                  '--volname', 'AMRAP',
               ], check=True)
               print(f'DMG created: {archive_name}')
           else:
@@ -133,9 +133,9 @@ jobs:
           echo "Building Windows installer with NSIS at repo root: $REPO_DIR"
           makensis \
             -DVERSION="${{ needs.prepare-release.outputs.version }}" \
-            -DBIN_DIR="$REPO_DIR/dist/artegame-windows-x86_64" \
+            -DBIN_DIR="$REPO_DIR/dist/amrap-windows-x86_64" \
             -DOUTPUT_DIR="$REPO_DIR" \
-            -DOUTPUT_NAME="artegame-windows-x86_64-setup.exe" \
+            -DOUTPUT_NAME="amrap-windows-x86_64-setup.exe" \
             -DICON_PATH="$REPO_DIR/src/assets/ui/branding/icon.ico" \
             packaging/windows/installer.nsi
 
@@ -150,8 +150,8 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: artegame-windows-x86_64-setup.exe
-          path: artegame-windows-x86_64-setup.exe
+          name: amrap-windows-x86_64-setup.exe
+          path: amrap-windows-x86_64-setup.exe
           if-no-files-found: error
 
   publish-release:
