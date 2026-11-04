@@ -1,4 +1,5 @@
 pub const RoomManager = @import("RoomManager.zig");
+pub const ProjectileManager = @import("ProjectileManager.zig");
 pub const TutorialManager = @import("tutorial/TutorialManager.zig");
 pub const HUD = @import("HUD.zig");
 pub const Setup = @import("Setup.zig");

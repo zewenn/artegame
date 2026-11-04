@@ -7,7 +7,6 @@ const Dashing = @import("../Dashing.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 const projectiles = @import("../../prefabs/Projectile.zig");
 const ProjectileOptions = projectiles.Options;
-const Projectile = projectiles.Projectile;
 
 pub const OnHitEffect = projectiles.OnHitEffect;
 
@@ -192,7 +191,7 @@ pub fn fireProjectileWave(
         const target_direction = lm.Vec2(std.math.cos(angle), std.math.sin(angle));
         const target_position = start_position.add(target_direction.multiply(.init(100, 100)));
 
-        try lm.summoning.entity(try Projectile(.{
+        try projectiles.emit(.{
             .start_position = start_position,
             .target_position = target_position,
             .shooter_stats = enemy_stats.*,
@@ -218,7 +217,7 @@ pub fn fireProjectileWave(
             .caster_position = start_position,
             .caster_uuid = enemy_entity.uuid,
             .on_hit_callback = profile.on_hit_callback,
-        }));
+        });
     }
 
     if (profile.sfx_path) |sfx_path| {

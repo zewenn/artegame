@@ -7,6 +7,7 @@ const Stats = @import("../components/Stats.zig");
 const Dashing = @import("../components/Dashing.zig");
 const ExperienceOrbComponent = @import("../components/items/ExperienceOrb.zig");
 const ProjectileMovement = @import("../components/ProjectileMovement.zig");
+const ProjectileManager = @import("ProjectileManager.zig");
 const BoonPool = @import("boons/BoonPool.zig");
 const AudioManager = @import("audio/AudioManager.zig");
 const MusicManager = @import("audio/MusicManager.zig");
@@ -567,6 +568,7 @@ fn isCleanupTarget(entity: *lm.Entity) bool {
 }
 
 pub fn cleanupRoomEntities() void {
+    ProjectileManager.clearAll();
     const scene = lm.activeScene() orelse return;
     for (scene.entities.items()) |entity| {
         if (isCleanupTarget(entity)) {

@@ -4,7 +4,7 @@ const lm = @import("loom");
 const Stats = @import("../Stats.zig");
 const Spell = @import("Spell.zig");
 
-const Projectile = @import("../../prefabs/Projectile.zig").Projectile;
+const projectiles = @import("../../prefabs/Projectile.zig");
 
 pub const heal: Spell = Spell{
     .id = "Heal",
@@ -46,19 +46,16 @@ pub const root: Spell = Spell{
                     .rotate(std.math.degreesToRadians(value))
                     .add(lm.vec3ToVec2(transform.position));
 
-                const projectile = try Projectile(.{
+                try projectiles.emit(.{
                     .target_team = .enemy,
                     .size = .init(128, 64),
                     .onhit_effect = if (level < 10) .root else .stun,
                     .onhit_duration = if (level < 10) lm.tof32(level + 1) else lm.tof32((level) + 1) - 9.5,
                     .passtrough = true,
                     .damage = 0,
-
                     .target_position = target_position,
                     .start_position = lm.vec3ToVec2(transform.position),
                 });
-
-                try lm.summoning.entity(projectile);
             }
         }
     }.callback,

@@ -48,6 +48,7 @@ pub fn main() !void {
             lm.useMainCamera();
 
             lm.globalBehaviours(.{
+                gbl.ProjectileManager{},
                 gbl.RoomManager{},
                 gbl.TutorialManager{},
                 gbl.HUD{},
@@ -101,6 +102,7 @@ test {
     _ = @import("global/map/MapSerializer.zig");
     _ = @import("global/map/MapTypes.zig");
     _ = @import("global/map/MapEditor.zig");
+    _ = @import("global/ProjectileManager.zig");
     _ = @import("prefabs/Projectile.zig");
     _ = @import("prefabs/enemies/Shaman.zig");
     _ = @import("prefabs/enemies/Magician.zig");

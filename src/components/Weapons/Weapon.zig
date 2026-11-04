@@ -3,7 +3,6 @@ const lm = @import("loom");
 
 const projectiles = @import("../../prefabs/Projectile.zig");
 const ProjectileOptions = projectiles.Options;
-const Projectile = projectiles.Projectile;
 
 const Stats = @import("../Stats.zig");
 
@@ -163,7 +162,7 @@ pub fn doAttack(
         };
         options.shooter_stats = shooter_stats;
 
-        try lm.summoning.entity(try Projectile(options));
+        try projectiles.emit(options);
     }
 }
 
