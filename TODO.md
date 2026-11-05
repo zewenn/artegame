@@ -87,14 +87,42 @@
       - [x] Status effect icons (Stun, Root, Slow, Bond of Life)
       - [ ] Boon card artwork (passive boons badges, spell flasks/fruits, and fallback icon)
       - [ ] Main menu panoramic pixel-art arena background illustration
-      - [ ] Game Over screen defeat vignette background illustration
       - [x] Royal Arena dual-grid tileset sheets (marble floor, carpet, gold brick walls)
-      - [ ] User confirmation that all acquired visual and UI assets load and function without glitches
     ```md
     Consolidated asset integration encompassing tickets 38#AST and 39#AST: character spritesheets, projectile/VFX overlays, exit door and reward badge artwork, dedicated ability sound effects, and encounter music tracks across v4.0.0 content.
     ```
 
 ## Done
+
+### [64#UIB] Refactor OptionsMenu and BoonMenu to use shared utility_button
+
+  - tags: [ui, menus, buttons, options, boons, refactor]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Finalize and export utility_button.zig in ui.zig and register unit tests in main.zig
+      - [x] Rewrite OptionsMenu.zig tabs, setting toggle buttons, and back button to use utility_button.draw and adhere to CodeAesthetic rules
+      - [x] Rewrite BoonMenu.zig close button to use utility_button.draw
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that utility_button integration across OptionsMenu and BoonMenu works as expected
+    ```md
+    Refactors all utility button instances across OptionsMenu.zig (tab bar items, mute badge button, fullscreen badge button, control scheme badge button, and back button) and BoonMenu.zig (close button) to use the shared src/global/ui/buttons/utility_button.zig module while enforcing CodeAesthetic standards.
+    ```
+
+### [63#UIM] Refactor MainMenu and PauseMenu to use shared MenuButton
+
+  - tags: [ui, menus, buttons, refactor]
+  - priority: medium
+  - workload: Easy
+  - steps:
+      - [x] Complete and export MenuButton.zig with CodeAesthetic naming, unit suffixes, and public draw API
+      - [x] Rewrite MainMenu.zig to render menu buttons via MenuButton and adhere to CodeAesthetic rules
+      - [x] Rewrite PauseMenu.zig to render pause buttons via MenuButton and adhere to CodeAesthetic rules
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that MainMenu and PauseMenu button refactoring works as expected
+    ```md
+    Extracts shared menu button rendering, hover/selection state, 3D press offset padding, and Silkscreen font switching into MenuButton.zig and rewrites MainMenu.zig and PauseMenu.zig to use it.
+    ```
 
 ### [54#ARC] Projectile system optimization with Structure of Arrays (SoA)
 

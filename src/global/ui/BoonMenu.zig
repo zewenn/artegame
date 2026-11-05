@@ -11,6 +11,7 @@ const HUD = @import("../HUD.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const utility_button = @import("buttons/utility_button.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
@@ -559,39 +560,20 @@ fn renderCardRow(
 }
 
 fn renderCloseButton(ui_scale: f32, close_index: usize) void {
-    const is_close_focused = (selected_index == close_index);
-    const button_width_pixels = @round(HUD.UTILITY_BUTTON_BASE_W * ui_scale);
-    const button_height_pixels = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
+    const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
+    const font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
+    utility_button.draw(
+        close_index,
+        close_label,
+        &selected_index,
+        activateCloseButton,
+        font_size,
+        1,
+    );
+}
 
-    lm.deps.clay.UI()(.{
-        .id = .ID("boon-close-button"),
-        .layout = .{
-            .sizing = .{
-                .w = .fixed(button_width_pixels),
-                .h = .fixed(button_height_pixels),
-            },
-            .child_alignment = .{ .x = .center, .y = .center },
-        },
-        .image = ui.image(
-            HUD.getUtilityButtonSprite(lm.deps.clay.hovered() or is_close_focused),
-            .init(button_width_pixels, button_height_pixels),
-        ) catch .{ .image_data = null },
-    })({
-        if (lm.deps.clay.hovered()) {
-            selected_index = close_index;
-        }
-        if (lm.deps.clay.hovered() and lm.mouse.getButtonDown(.left)) {
-            hide();
-        }
-
-        const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
-        ui.text(close_label, .{
-            .color = if (lm.deps.clay.hovered() or is_close_focused) ui.color(255, 255, 255, 255) else ui.color(220, 225, 235, 255),
-            .letter_spacing = 1,
-            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
-            .alignment = .center,
-        });
-    });
+fn activateCloseButton(_: usize) void {
+    hide();
 }
 
 fn renderFooter(ui_scale: f32) void {

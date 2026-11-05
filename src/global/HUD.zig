@@ -20,8 +20,8 @@ pub const PauseMenu = ui.PauseMenu;
 pub const GameOverMenu = ui.GameOverMenu;
 pub const BossBar = ui.BossBar;
 
-pub const MENU_BUTTON_BASE_H: f32 = 48.0;
-pub const MENU_BUTTON_BASE_W: f32 = MENU_BUTTON_BASE_H * 6.0;
+pub const MENU_BUTTON_BASE_HEIGHT: f32 = 48.0;
+pub const MENU_BUTTON_BASE_WIDTH: f32 = MENU_BUTTON_BASE_HEIGHT * 6.0;
 pub const UTILITY_BUTTON_BASE_H: f32 = 24.0;
 pub const UTILITY_BUTTON_BASE_W: f32 = UTILITY_BUTTON_BASE_H * 4.0;
 

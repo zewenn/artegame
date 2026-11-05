@@ -274,8 +274,8 @@ fn updateHoverSelection() void {
 fn drawActionButtons(button_max_width: f32, ui_scale: f32) void {
     updateHoverSelection();
 
-    const button_width = @min(button_max_width, @round(HUD.MENU_BUTTON_BASE_W * ui_scale));
-    const button_height = @round(HUD.MENU_BUTTON_BASE_H * ui_scale);
+    const button_width = @min(button_max_width, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
+    const button_height = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
     const gap_pixels = lm.tou16(@round(10 * ui_scale));
 
     ui.new(.{
@@ -511,4 +511,3 @@ test "GameOverMenu button active state and mutual exclusion" {
     try std.testing.expect(!isButtonActive(0));
     try std.testing.expect(isButtonActive(1));
 }
-

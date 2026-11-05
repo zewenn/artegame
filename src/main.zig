@@ -76,6 +76,8 @@ test {
     _ = @import("global/ui/BoonMenu.zig");
     _ = @import("global/ui/GameOverMenu.zig");
     _ = @import("global/ui/BossBar.zig");
+    _ = @import("global/ui/buttons/menu_button.zig");
+    _ = @import("global/ui/buttons/utility_button.zig");
     _ = @import("global/RoomManager.zig");
     _ = @import("global/boons/BoonPool.zig");
     _ = @import("components/Weapons/Weapon.zig");
