@@ -48,6 +48,22 @@
 
 ## Work in Progress
 
+### [65#UIS] Centralize Silkscreen font constants in HUD and apply across in-game UI
+
+  - tags: [ui, hud, fonts, menus, refactor]
+  - priority: medium
+  - workload: Easy
+  - steps:
+      - [x] Define FONT_REGULAR, FONT_BOLD, and font ID helper functions in HUD.zig and update drawRoundIndicator
+      - [x] Replace hardcoded Silkscreen font paths in menu_button, utility_button, ObjectiveUI, BoonMenu, and OptionsMenu
+      - [x] Apply Silkscreen font helpers across PlayerStats, BossBar, InteractionPrompt, PromptBadge, and Door
+      - [x] Apply Silkscreen font helpers across MainMenu, PauseMenu, GameOverMenu, and remaining OptionsMenu texts
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [ ] User confirmation that Silkscreen font constants and UI text styling work as expected
+    ```md
+    Centralizes Silkscreen-Regular.ttf and Silkscreen-Bold.ttf path constants and frame-time font ID helpers in HUD.zig, replacing hardcoded font paths and migrating all remaining in-game HUD, world prompt, and menu text elements to the Silkscreen font family.
+    ```
+
 ### [38#AST] Sprite, particle, UI, and audio asset integration for v4.0.0 content
 
   - tags: [assets, sprites, audio, vfx, ui]

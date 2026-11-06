@@ -5,18 +5,19 @@ const ui = lm.ui;
 const Objectives = @import("../../components/player/Objectives.zig");
 const HUD = @import("../HUD.zig");
 
-pub fn draw(tracking: Objectives.Objective) void {
+pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
     ui.new(.{
         .id = .ID("objective-container"),
         .floating = .{
             .attach_to = .to_root,
-            .offset = .{ .x = 0, .y = HUD.window_size.y * 0.3 },
+            .offset = .{ .x = -16, .y = HUD.window_size.y * 0.075 },
             .attach_points = .{
                 .element = .right_top,
                 .parent = .right_top,
             },
         },
-        .background_color = ui.color(50, 50, 50, 128),
+        .corner_radius = .all(lm.tou16(4 * ui_scale)),
+        .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .top_to_bottom,
             .child_gap = 5,
@@ -30,6 +31,7 @@ pub fn draw(tracking: Objectives.Objective) void {
                 .color = ui.color(255, 255, 255, 255),
                 .font_size = 32,
                 .letter_spacing = 1,
+                .font_id = HUD.boldFontId(),
             });
         });
         ui.new(.{
@@ -39,6 +41,7 @@ pub fn draw(tracking: Objectives.Objective) void {
                 .color = ui.color(255, 255, 255, 255),
                 .font_size = 16,
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
     });

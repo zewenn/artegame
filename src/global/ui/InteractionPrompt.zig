@@ -30,12 +30,8 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
                 .parent = .left_top,
             },
         },
-        .background_color = ui.color(20, 24, 32, 235),
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = ui.color(80, 160, 255, 220),
-            .width = .outside(1),
-        },
+        .corner_radius = .all(lm.tou16(4 * ui_scale)),
+        .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
@@ -66,6 +62,7 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
                 .color = prompt.text_color,
                 .font_size = lm.tou16(@round(13 * ui_scale)),
                 .letter_spacing = 1,
+                .font_id = HUD.boldFontId(),
             });
         });
 
@@ -76,6 +73,7 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
                 .color = ui.color(230, 235, 245, 255),
                 .font_size = lm.tou16(@round(13 * ui_scale)),
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
     });

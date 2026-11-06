@@ -136,7 +136,7 @@ fn drawTitle(title_font_size: u16) void {
             .font_size = title_font_size,
             .letter_spacing = 2,
             .alignment = .center,
-            .font_id = ui.fontID("ui/fonts/Silkscreen-Bold.ttf"),
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -218,6 +218,7 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
             .color = ui.color(190, 200, 220, 230),
             .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -312,7 +313,7 @@ fn drawVolumeLabel(index: usize, label: []const u8, is_selected: bool, ui_scale:
             .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
             .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
             .letter_spacing = 1,
-            .font_id = ui.fontID("ui/fonts/Silkscreen-Regular.ttf"),
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -344,6 +345,7 @@ fn drawVolumeStepButton(
             .color = ui.color(255, 255, 255, 255),
             .font_size = lm.tou16(@max(14, @round(16 * ui_scale))),
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -418,6 +420,7 @@ fn drawVolumePercentage(
             .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(180, 185, 200, 255),
             .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
             .alignment = .right,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -465,6 +468,7 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
                 .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
 
@@ -538,6 +542,7 @@ fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
                 .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
 
@@ -632,6 +637,7 @@ fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_sc
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
                 .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
 
@@ -690,6 +696,7 @@ fn drawControlsHeaderCell(
             .color = text_color,
             .font_size = font_size,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -708,6 +715,7 @@ fn drawControlsHeaderGrowCell(
             .color = text_color,
             .font_size = font_size,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -758,6 +766,7 @@ fn drawBindingCell(
         ui.text(cell_text, .{
             .color = text_color,
             .font_size = font_size,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -776,6 +785,7 @@ fn drawBindingGrowCell(
         ui.text(cell_text, .{
             .color = text_color,
             .font_size = font_size,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

@@ -70,6 +70,8 @@ pub fn main() !void {
 }
 
 test {
+    _ = @import("global/HUD.zig");
+    _ = @import("global/ui/PlayerStats.zig");
     _ = @import("global/ui/MainMenu.zig");
     _ = @import("global/ui/PauseMenu.zig");
     _ = @import("global/ui/OptionsMenu.zig");

@@ -73,7 +73,7 @@ fn drawButtonLabel(
     const bottom_padding_pixels: u16 = if (is_selected) 0 else 4 * lm.tou16(ui_scale);
     const top_padding_pixels: u16 = if (!is_selected) 0 else 2 * lm.tou16(ui_scale);
     const text_color = if (is_selected) ui.color(255, 255, 255, 255) else ui.color(238, 230, 234, 255);
-    const font_id = if (is_selected) ui.fontID("ui/fonts/Silkscreen-Bold.ttf") else ui.fontID("ui/fonts/Silkscreen-Regular.ttf");
+    const font_id = HUD.getFontId(is_selected);
 
     ui.new(.{
         .id = .IDI("utility-btn-text-container-", @intCast(index)),

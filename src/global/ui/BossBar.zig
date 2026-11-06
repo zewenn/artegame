@@ -174,6 +174,7 @@ fn renderTitleText(self: *const Self, ui_scale: f32) void {
             .color = ui.color(255, 240, 245, 255),
             .font_size = title_font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -198,6 +199,7 @@ fn renderRankBadge(self: *const Self, ui_scale: f32) void {
             .color = ui.color(accent_color.r, accent_color.g, accent_color.b, 255),
             .font_size = rank_font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -336,6 +338,7 @@ fn renderHealthText(
             .color = ui.color(255, 255, 255, 255),
             .font_size = font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

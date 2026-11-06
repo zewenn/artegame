@@ -8,6 +8,7 @@ const AudioManager = @import("../../global/audio/AudioManager.zig");
 const GameOverMenu = @import("../../global/ui/GameOverMenu.zig");
 const PauseMenu = @import("../../global/ui/PauseMenu.zig");
 const BoonMenu = @import("../../global/ui/BoonMenu.zig");
+const HUD = @import("../../global/HUD.zig");
 
 const Self = @This();
 
@@ -44,12 +45,9 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.renderer = entity.getComponent(lm.Renderer);
     self.interactable = entity.getComponent(Interactable);
 
-    if (std.fmt.bufPrint(&self.action_text_buffer, "Enter: {s}", .{self.reward_title})) |formatted_text| {
-        if (self.interactable) |interactable| {
-            interactable.action_text = formatted_text;
-            interactable.enabled = self.is_open;
-        }
-    } else |_| {}
+    if (self.interactable) |interactable| {
+        interactable.enabled = self.is_open;
+    }
 
     self.applyVisualState();
 }
@@ -60,7 +58,7 @@ pub fn Start(self: *Self) void {
 }
 
 pub fn Update(self: *Self) !void {
-    const is_tutorial = if (RoomManager.get()) |rm| rm.getRoomType() == .tutorial else false;
+    const is_tutorial = if (RoomManager.get()) |room_manager| room_manager.getRoomType() == .tutorial else false;
     if (!self.is_open or (!RoomManager.isReplenish() and !is_tutorial)) return;
     if (PauseMenu.isShowing() or GameOverMenu.isShowing() or BoonMenu.isShowing() or lm.time.paused()) return;
 
@@ -76,16 +74,7 @@ pub fn Update(self: *Self) !void {
     const screen_position = camera.worldToScreenPos(overhead_world_position);
 
     const badge_id = @as(u32, @intCast(self.door_index));
-    const border_color = switch (self.reward_kind) {
-        .boss => ui.color(255, 205, 50, 255),
-        .mini_boss => ui.color(195, 95, 255, 255),
-        .boon_category => ui.color(75, 175, 255, 255),
-    };
-    const accent_title_color = switch (self.reward_kind) {
-        .boss => ui.color(255, 230, 120, 255),
-        .mini_boss => ui.color(230, 170, 255, 255),
-        .boon_category => ui.color(200, 235, 255, 255),
-    };
+    const accent_title_color = ui.color(238, 230, 234, 255);
 
     ui.new(.{
         .id = .IDI("door-reward-badge-", badge_id),
@@ -97,12 +86,8 @@ pub fn Update(self: *Self) !void {
                 .parent = .left_top,
             },
         },
-        .background_color = ui.color(18, 22, 30, 240),
-        .corner_radius = .all(6),
-        .border = .{
-            .color = border_color,
-            .width = .outside(1),
-        },
+        .corner_radius = .all(lm.tou16(4 * HUD.ui_scale)),
+        .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
@@ -122,6 +107,7 @@ pub fn Update(self: *Self) !void {
             .color = accent_title_color,
             .font_size = 13,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -162,19 +148,19 @@ pub fn onDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.9, 0.05);
 
     if (RoomManager.isPlaytestMode() or RoomManager.isPracticeTutorialMode()) {
-        RoomManager.enterNextRoom() catch |err| {
-            std.log.err("Failed to exit standalone room: {any}", .{err});
+        RoomManager.enterNextRoom() catch |transition_error| {
+            std.log.err("Failed to exit standalone room: {any}", .{transition_error});
         };
         return;
     }
 
     if (door.category_id) |category| {
-        RoomManager.enterNextRoomWithCategory(category) catch |err| {
-            std.log.err("Failed to enter next room with category {s}: {any}", .{ category, err });
+        RoomManager.enterNextRoomWithCategory(category) catch |transition_error| {
+            std.log.err("Failed to enter next room with category {s}: {any}", .{ category, transition_error });
         };
     } else {
-        RoomManager.enterNextRoom() catch |err| {
-            std.log.err("Failed to enter next room: {any}", .{err});
+        RoomManager.enterNextRoom() catch |transition_error| {
+            std.log.err("Failed to enter next room: {any}", .{transition_error});
         };
     }
 }

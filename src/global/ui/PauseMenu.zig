@@ -216,6 +216,7 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
             .font_size = lm.tou16(@max(20, @round(24 * ui_scale))),
             .letter_spacing = 2,
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
     });
 
@@ -233,6 +234,7 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
             .font_size = lm.tou16(@max(11, @round(12 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 
@@ -275,6 +277,7 @@ fn drawFooter(ui_scale: f32) void {
             .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

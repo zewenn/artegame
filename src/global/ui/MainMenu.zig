@@ -244,18 +244,9 @@ fn drawLogo(ui_scale: f32) void {
     });
 }
 
-fn drawStatsBadge(self: *Self, ui_scale: f32) void {
+fn drawStatsBadge(_: *Self, ui_scale: f32) void {
     const scores = SaveSystem.getScores();
     if (scores.total_runs_played == 0) return;
-
-    const stats_text = if (self.allocator) |allocator|
-        std.fmt.allocPrint(
-            allocator,
-            "HIGH SCORE: {d} XP  |  BEST ROUND: {d}  |  TOTAL KILLS: {d}",
-            .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
-        ) catch "HIGH SCORE: 0 XP"
-    else
-        "HIGH SCORE: 0 XP";
 
     ui.new(.{
         .id = .ID("menu-stats-badge-spacer"),
@@ -271,19 +262,18 @@ fn drawStatsBadge(self: *Self, ui_scale: f32) void {
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = ui.color(16, 20, 28, 220),
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = ui.color(100, 200, 255, 120),
-            .width = .outside(1),
-        },
     })({
-        ui.text(stats_text, .{
-            .color = ui.color(140, 215, 255, 230),
-            .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
-            .letter_spacing = 1,
-            .alignment = .center,
-        });
+        ui.textFmt(
+            "HIGH SCORE: {d} XP | BEST ROUND: {d} | TOTAL KILLS: {d}",
+            .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
+            .{
+                .color = ui.color(238, 230, 234, 255),
+                .font_size = lm.tou16(@max(16, @round(16 * ui_scale))),
+                .letter_spacing = 1,
+                .alignment = .center,
+                .font_id = HUD.boldFontId(),
+            },
+        );
     });
 }
 
@@ -327,15 +317,16 @@ fn drawFooter(ui_scale: f32) void {
         },
     })({
         const footer_text = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick  |  Select: A"
+            "Navigate: D-Pad / L-Stick | Select: A"
         else
-            "Navigate: WASD / Arrows  |  Select: Enter / Click";
+            "Navigate: WASD / Arrows | Select: Enter / Click";
 
         ui.text(footer_text, .{
             .color = ui.color(140, 150, 175, 220),
-            .font_size = lm.tou16(@max(10, @round(12 * ui_scale))),
+            .font_size = lm.tou16(@max(16, @round(16 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

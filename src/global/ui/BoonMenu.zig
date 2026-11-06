@@ -190,6 +190,7 @@ fn renderBoonCostBox(
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@round(14 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -234,15 +235,13 @@ fn boonCard(
             selectBoon(card_index, stats, attack);
         }
 
-        ui.text(
-            boon.rarity.toString(),
-            .{
-                .font_size = lm.tou16(@round(12 * ui_scale)),
-                .letter_spacing = letter_spacing,
-                .alignment = .center,
-                .color = rarityColor(boon.rarity),
-            },
-        );
+        ui.text(boon.rarity.toString(), .{
+            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .letter_spacing = letter_spacing,
+            .alignment = .center,
+            .color = rarityColor(boon.rarity),
+            .font_id = HUD.regularFontId(),
+        });
 
         ui.new(.{
             .id = .IDI("boon-image-", card_index),
@@ -264,6 +263,7 @@ fn boonCard(
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@round(11 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
 
         ui.text(boon.name, .{
@@ -271,12 +271,14 @@ fn boonCard(
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@round(17 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
 
         ui.text(boon.description, .{
             .color = ui.color(210, 215, 225, 255),
             .font_size = lm.tou16(@round(13 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
 
         ui.new(.{
@@ -314,6 +316,7 @@ fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
             .letter_spacing = lm.tou16(@round(2 * ui_scale)),
             .font_size = lm.tou16(@round(12 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -347,15 +350,13 @@ fn dummyBoonCard(
             .init(card_width_pixels, card_height_pixels),
         ) catch .{ .image_data = null },
     })({
-        ui.text(
-            boon.rarity.toString(),
-            .{
-                .font_size = lm.tou16(@round(12 * ui_scale)),
-                .letter_spacing = letter_spacing,
-                .alignment = .center,
-                .color = ui.color(100, 105, 120, 160),
-            },
-        );
+        ui.text(boon.rarity.toString(), .{
+            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .letter_spacing = letter_spacing,
+            .alignment = .center,
+            .color = ui.color(100, 105, 120, 160),
+            .font_id = HUD.regularFontId(),
+        });
 
         ui.new(.{
             .id = .IDI("boon-dummy-image-", card_index),
@@ -377,6 +378,7 @@ fn dummyBoonCard(
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@round(11 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
 
         ui.text(boon.name, .{
@@ -384,12 +386,14 @@ fn dummyBoonCard(
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@round(17 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
 
         ui.text(boon.description, .{
             .color = ui.color(110, 115, 130, 170),
             .font_size = lm.tou16(@round(13 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
 
         ui.new(.{
@@ -504,12 +508,14 @@ fn renderMenuHeader(ui_scale: f32) void {
             .letter_spacing = lm.tou16(@round(3 * ui_scale)),
             .font_size = lm.tou16(@round(22 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
         ui.text(header_subtitle, .{
             .color = ui.color(150, 155, 170, 255),
             .letter_spacing = lm.tou16(@round(1 * ui_scale)),
             .font_size = lm.tou16(@round(12 * ui_scale)),
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -560,7 +566,7 @@ fn renderCardRow(
 }
 
 fn renderCloseButton(ui_scale: f32, close_index: usize) void {
-    const close_label = if (DevicePrompts.isGamepad()) "B  CLOSE" else "ESC  CLOSE";
+    const close_label = "CLOSE";
     const font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
     utility_button.draw(
         close_index,
@@ -587,15 +593,16 @@ fn renderFooter(ui_scale: f32) void {
         .layout = .{ .child_alignment = .{ .x = .center } },
     })({
         const navigation_hint = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick  |  Select: A  |  Close: B"
+            "Navigate: D-Pad / L-Stick | Select: A | Close: B"
         else
-            "Navigate: WASD / Arrows / Click  |  Select: Enter / Click  |  Close: Esc";
+            "Navigate: WASD / Arrows / Click | Select: Enter / Click | Close: Esc";
 
         ui.text(navigation_hint, .{
             .color = ui.color(140, 150, 175, 200),
             .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

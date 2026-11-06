@@ -30,6 +30,9 @@ pub const MENU_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/large_button2.p
 pub const UTILITY_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/small_button1.png";
 pub const UTILITY_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/small_button2.png";
 
+pub const FONT_REGULAR: []const u8 = "ui/fonts/Silkscreen-Regular.ttf";
+pub const FONT_BOLD: []const u8 = "ui/fonts/Silkscreen-Bold.ttf";
+
 pub fn getMenuButtonSprite(is_active: bool) []const u8 {
     return if (is_active) MENU_BUTTON_HOVER_SPRITE else MENU_BUTTON_SPRITE;
 }
@@ -38,9 +41,29 @@ pub fn getUtilityButtonSprite(is_active: bool) []const u8 {
     return if (is_active) UTILITY_BUTTON_HOVER_SPRITE else UTILITY_BUTTON_SPRITE;
 }
 
-pub fn calculateUiScale(win_size: lm.Vector2) f32 {
-    const scale_x = win_size.x / 1280.0;
-    const scale_y = win_size.y / 720.0;
+/// Returns the asset path for the Silkscreen font family (bold or regular weight).
+pub fn getFontPath(is_bold: bool) []const u8 {
+    return if (is_bold) FONT_BOLD else FONT_REGULAR;
+}
+
+/// Returns the active frame font ID for Silkscreen-Regular.
+pub fn regularFontId() u16 {
+    return lm.ui.fontID(FONT_REGULAR);
+}
+
+/// Returns the active frame font ID for Silkscreen-Bold.
+pub fn boldFontId() u16 {
+    return lm.ui.fontID(FONT_BOLD);
+}
+
+/// Returns the active frame font ID for Silkscreen (bold when `is_bold` is true, regular otherwise).
+pub fn getFontId(is_bold: bool) u16 {
+    return lm.ui.fontID(getFontPath(is_bold));
+}
+
+pub fn calculateUiScale(window_dimensions: lm.Vector2) f32 {
+    const scale_x = window_dimensions.x / 1280.0;
+    const scale_y = window_dimensions.y / 720.0;
     return @max(1.0, @floor(@min(scale_x, scale_y)));
 }
 
@@ -57,11 +80,11 @@ player_objectives: ?*Objectives = null,
 player_attack: ?*Attack = null,
 
 arena: ?std.heap.ArenaAllocator = null,
-alloc: ?std.mem.Allocator = null,
+allocator: ?std.mem.Allocator = null,
 
 pub fn Awake(self: *Self) void {
     self.arena = std.heap.ArenaAllocator.init(lm.allocators.scene());
-    self.alloc = self.arena.?.allocator();
+    self.allocator = self.arena.?.allocator();
     GameOverMenu.reset();
 }
 
@@ -85,16 +108,16 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     }
 
     if (GameOverMenu.isShowing()) {
-        GameOverMenu.draw(self.alloc);
+        GameOverMenu.draw(self.allocator);
         return;
     }
 
     window_size = lm.window.size.get();
     scale = @max(1.0, @round(@min(window_size.x, window_size.y) / 540.0));
-    hud_height = scale * 32.0;
-    hud_width = hud_height * 8.0;
 
     ui_scale = calculateUiScale(window_size);
+    hud_height = ui_scale * 4 * 16.0;
+    hud_width = hud_height * 8.0;
 
     round_indicator: {
         const progress = RoomManager.getWaveProgress() orelse break :round_indicator;
@@ -107,14 +130,14 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         const attack = self.player_attack orelse break :player_stats;
         const stats = self.player_stats orelse break :player_stats;
 
-        PlayerStats.draw(stats, attack, self.alloc);
+        PlayerStats.draw(stats, attack, self.allocator);
     }
 
     objectives: {
         const objectives = self.player_objectives orelse break :objectives;
         const tracking = objectives.trackingObjective() orelse break :objectives;
 
-        ObjectiveUI.draw(tracking);
+        ObjectiveUI.draw(tracking, ui_scale);
     }
 
     if (!BoonMenu.isShowing() and !PauseMenu.isShowing()) menus: {
@@ -125,25 +148,23 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             break :menus;
         }
 
-        if (!PauseMenu.isShowing() and !BoonMenu.isShowing() and !GameOverMenu.isShowing()) {
-            if (Interactable.getFocused()) |focused| {
-                const camera = scene.getCameraById("main");
-                InteractionPrompt.draw(camera, focused);
-            }
+        if (Interactable.getFocused()) |focused| {
+            const camera = scene.getCameraById("main");
+            InteractionPrompt.draw(camera, focused);
         }
     }
 
     if (PauseMenu.isShowing()) {
-        PauseMenu.draw(self.alloc);
+        PauseMenu.draw(self.allocator);
     } else if (BoonMenu.slots) |slot_array| {
-        BoonMenu.draw(slot_array, self.player_stats, self.player_attack, self.alloc);
+        BoonMenu.draw(slot_array, self.player_stats, self.player_attack, self.allocator);
     }
 }
 
 pub fn End(self: *Self) void {
     if (self.arena) |*arena| arena.deinit();
     self.arena = null;
-    self.alloc = null;
+    self.allocator = null;
     BoonMenu.hide();
     PauseMenu.hide();
     GameOverMenu.hide();
@@ -154,8 +175,8 @@ pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
 }
 
 fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
-    const room_type = if (RoomManager.get()) |rm| rm.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
-    const room_str = switch (room_type) {
+    const room_type = if (RoomManager.get()) |room_manager| room_manager.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
+    const room_label = switch (room_type) {
         .mini_boss => "  -  Mini-Boss",
         .boss => "  -  Boss",
         .tutorial => "  -  Tutorial",
@@ -163,8 +184,8 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
     };
 
     const font_size = lm.tou16(@max(10, @round(10 * scale)));
-    const pad_y = lm.tou16(@round(6 * ui_scale));
-    const pad_x = lm.tou16(@round(16 * ui_scale));
+    const padding_y_pixels = lm.tou16(@round(6 * ui_scale));
+    const padding_x_pixels = lm.tou16(@round(16 * ui_scale));
 
     lm.ui.new(.{
         .id = .ID("hud-round-indicator"),
@@ -182,13 +203,14 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
             .child_gap = lm.tou16(@round(2 * ui_scale)),
-            .padding = .axes(pad_y, pad_x),
+            .padding = .axes(padding_y_pixels, padding_x_pixels),
         },
     })({
-        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_str, progress.killed, progress.total }, .{
+        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_label, progress.killed, progress.total }, .{
             .color = lm.ui.color(255, 235, 170, 255),
             .font_size = font_size,
             .letter_spacing = 1,
+            .font_id = regularFontId(),
         });
     });
 }
@@ -214,4 +236,9 @@ test "UI button sprites idle and hover variants" {
     try std.testing.expectEqualStrings("ui/HUD/buttons/large_button2.png", getMenuButtonSprite(true));
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button1.png", getUtilityButtonSprite(false));
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button2.png", getUtilityButtonSprite(true));
+}
+
+test "UI font path selection regular and bold variants" {
+    try std.testing.expectEqualStrings("ui/fonts/Silkscreen-Regular.ttf", getFontPath(false));
+    try std.testing.expectEqualStrings("ui/fonts/Silkscreen-Bold.ttf", getFontPath(true));
 }
