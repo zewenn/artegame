@@ -20,9 +20,11 @@ pub const PauseMenu = ui.PauseMenu;
 pub const GameOverMenu = ui.GameOverMenu;
 pub const BossBar = ui.BossBar;
 
-pub const MENU_BUTTON_BASE_HEIGHT: f32 = 48.0;
+pub const BASE_UI_SCALE: f32 = 2.0;
+
+pub const MENU_BUTTON_BASE_HEIGHT: f32 = 12.0;
 pub const MENU_BUTTON_BASE_WIDTH: f32 = MENU_BUTTON_BASE_HEIGHT * 6.0;
-pub const UTILITY_BUTTON_BASE_H: f32 = 24.0;
+pub const UTILITY_BUTTON_BASE_H: f32 = 6.0;
 pub const UTILITY_BUTTON_BASE_W: f32 = UTILITY_BUTTON_BASE_H * 4.0;
 
 pub const MENU_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/large_button1.png";
@@ -64,16 +66,16 @@ pub fn getFontId(is_bold: bool) u16 {
 pub fn calculateUiScale(window_dimensions: lm.Vector2) f32 {
     const scale_x = window_dimensions.x / 1280.0;
     const scale_y = window_dimensions.y / 720.0;
-    return @max(1.0, @floor(@min(scale_x, scale_y)));
+    const resolution_tier = @max(0.0, @floor(@min(scale_x, scale_y)));
+    return BASE_UI_SCALE + (2.0 * resolution_tier);
 }
 
 const Self = @This();
 
 pub var window_size: lm.Vector2 = .init(1280, 720);
-pub var scale: f32 = 1.0;
 pub var hud_height: f32 = 64.0;
 pub var hud_width: f32 = 512.0;
-pub var ui_scale: f32 = 1.0;
+pub var ui_scale: f32 = 4.0;
 
 player_stats: ?*Stats = null,
 player_objectives: ?*Objectives = null,
@@ -113,10 +115,8 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     }
 
     window_size = lm.window.size.get();
-    scale = @max(1.0, @round(@min(window_size.x, window_size.y) / 540.0));
-
     ui_scale = calculateUiScale(window_size);
-    hud_height = ui_scale * 4 * 16.0;
+    hud_height = ui_scale * 16.0;
     hud_width = hud_height * 8.0;
 
     round_indicator: {
@@ -183,9 +183,9 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
         .normal => "",
     };
 
-    const font_size = lm.tou16(@max(10, @round(10 * scale)));
-    const padding_y_pixels = lm.tou16(@round(6 * ui_scale));
-    const padding_x_pixels = lm.tou16(@round(16 * ui_scale));
+    const font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
+    const padding_y_pixels = lm.tou16(@round(1.5 * ui_scale));
+    const padding_x_pixels = lm.tou16(@round(4.0 * ui_scale));
 
     lm.ui.new(.{
         .id = .ID("hud-round-indicator"),
@@ -195,14 +195,14 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
                 .element = .center_top,
                 .parent = .center_top,
             },
-            .offset = .{ .x = 0, .y = 16 * scale },
+            .offset = .{ .x = 0, .y = 4.0 * ui_scale },
         },
         .background_color = lm.ui.color(18, 20, 26, 210),
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(2 * ui_scale)),
+            .child_gap = lm.tou16(@round(0.5 * ui_scale)),
             .padding = .axes(padding_y_pixels, padding_x_pixels),
         },
     })({
@@ -216,19 +216,19 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
 }
 
 test "HUD.calculateUiScale integer scaling" {
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
 
-    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
+    try std.testing.expectEqual(@as(f32, 6.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
 
-    try std.testing.expectEqual(@as(f32, 3.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
+    try std.testing.expectEqual(@as(f32, 8.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
 
-    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
+    try std.testing.expectEqual(@as(f32, 6.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 800, .y = 600 }));
+    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 800, .y = 600 }));
 }
 
 test "UI button sprites idle and hover variants" {

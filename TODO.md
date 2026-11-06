@@ -110,6 +110,23 @@
 
 ## Done
 
+### [66#UIS] Rework UI scaling with 2px base scale, unbaked 1x dimensions, and recalculated font sizes
+
+  - tags: [ui, hud, scaling, fonts, menus, refactor]
+  - priority: high
+  - workload: Normal
+  - steps:
+      - [x] Update calculateUiScale, button base constants, hud_height, and unit tests in HUD.zig, menu_button.zig, and utility_button.zig
+      - [x] Unbake 4x base dimensions and recalculate font sizes in PlayerStats.zig, BossBar.zig, and ObjectiveUI.zig
+      - [x] Unbake 4x base dimensions and recalculate font sizes in InteractionPrompt.zig, PromptBadge.zig, and Door.zig
+      - [x] Unbake 4x base dimensions and recalculate font sizes in BoonMenu.zig and MainMenu.zig
+      - [x] Unbake 4x base dimensions and recalculate font sizes in PauseMenu.zig, GameOverMenu.zig, and OptionsMenu.zig
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that UI scaling rework works as expected
+    ```md
+    Reworks global UI scaling in HUD.zig to use a 2px base scale plus 2 * floor(min(window_x / 1280, window_y / 720)) (<720p => 2, 720p/1080p => 4, 1440p => 6, 2160p => 8), unbakes all hardcoded 4x base multipliers across HUD, prompts, and menus, and recalculates all font scaling multipliers.
+    ```
+
 ### [64#UIB] Refactor OptionsMenu and BoonMenu to use shared utility_button
 
   - tags: [ui, menus, buttons, options, boons, refactor]

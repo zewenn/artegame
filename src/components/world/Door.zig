@@ -73,6 +73,8 @@ pub fn Update(self: *Self) !void {
     const overhead_world_position = door_position.add(.init(0, -68.0));
     const screen_position = camera.worldToScreenPos(overhead_world_position);
 
+    const ui_scale = HUD.ui_scale;
+    const icon_size_pixels = @round(5.0 * ui_scale);
     const badge_id = @as(u32, @intCast(self.door_index));
     const accent_title_color = ui.color(238, 230, 234, 255);
 
@@ -86,26 +88,29 @@ pub fn Update(self: *Self) !void {
                 .parent = .left_top,
             },
         },
-        .corner_radius = .all(lm.tou16(4 * HUD.ui_scale)),
+        .corner_radius = .all(lm.tou16(@round(1.0 * ui_scale))),
         .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
-            .child_gap = 6,
-            .padding = .axes(4, 8),
+            .child_gap = lm.tou16(@round(1.5 * ui_scale)),
+            .padding = .axes(
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(2.0 * ui_scale)),
+            ),
         },
     })({
         ui.new(.{
             .id = .IDI("door-badge-icon-", badge_id),
-            .image = ui.image(self.reward_icon, .init(20, 20)) catch .{ .image_data = null },
+            .image = ui.image(self.reward_icon, .init(icon_size_pixels, icon_size_pixels)) catch .{ .image_data = null },
             .layout = .{
-                .sizing = .{ .w = .fixed(20), .h = .fixed(20) },
+                .sizing = .{ .w = .fixed(icon_size_pixels), .h = .fixed(icon_size_pixels) },
             },
         })({});
 
         ui.text(self.reward_title, .{
             .color = accent_title_color,
-            .font_size = 13,
+            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .letter_spacing = 1,
             .font_id = HUD.boldFontId(),
         });

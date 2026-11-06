@@ -29,7 +29,7 @@ pub fn draw(
     );
 
     const sprite_path = HUD.getMenuButtonSprite(is_selected);
-    const font_size = lm.tou16(@max(18, @round(18 * ui_scale)));
+    const font_size = lm.tou16(@max(9, @round(4.5 * ui_scale)));
 
     clay.UI()(.{
         .id = button_id,
@@ -70,7 +70,7 @@ fn drawButtonLabel(
     font_size: u16,
     letter_spacing: u16,
 ) void {
-    const bottom_padding_pixels: u16 = if (is_selected) 0 else 8 * lm.tou16(ui_scale);
+    const bottom_padding_pixels: u16 = if (is_selected) 0 else 2 * lm.tou16(ui_scale);
     const text_color = if (is_selected) ui.color(255, 255, 255, 255) else ui.color(238, 230, 234, 255);
     const font_id = HUD.getFontId(is_selected);
 

@@ -117,12 +117,12 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
 }
 
 fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
-    const card_width_pixels = @min(window_size.x - 32, @round(420 * ui_scale));
-    const card_padding_pixels = lm.tou16(@round(24 * ui_scale));
-    const card_gap_pixels = lm.tou16(@round(16 * ui_scale));
-    const title_font_size = lm.tou16(@max(20, @round(24 * ui_scale)));
-    const subtitle_font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const card_width_pixels = @min(window_size.x - 32, @round(105.0 * ui_scale));
+    const card_padding_pixels = lm.tou16(@round(6.0 * ui_scale));
+    const card_gap_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const title_font_size = lm.tou16(@max(12, @round(6.0 * ui_scale)));
+    const subtitle_font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
 
     ui.new(.{
         .id = .ID("gameover-card"),
@@ -134,7 +134,7 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .padding = .all(card_padding_pixels),
         },
         .background_color = ui.color(16, 12, 16, 252),
-        .corner_radius = .all(14 * ui_scale),
+        .corner_radius = .all(3.5 * ui_scale),
         .border = .{
             .color = ui.color(190, 45, 55, 230),
             .width = .outside(2),
@@ -145,12 +145,12 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .layout = .{
                 .direction = .top_to_bottom,
                 .child_alignment = .{ .x = .center },
-                .child_gap = lm.tou16(@round(4 * ui_scale)),
+                .child_gap = lm.tou16(@round(1.0 * ui_scale)),
             },
         })({
             ui.text("GAME OVER", .{
                 .color = ui.color(240, 70, 75, 255),
-                .letter_spacing = lm.tou16(@round(3 * ui_scale)),
+                .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
                 .font_size = title_font_size,
                 .alignment = .center,
                 .font_id = HUD.boldFontId(),
@@ -170,9 +170,9 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
 }
 
 fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allocator) void {
-    const box_padding_pixels = lm.tou16(@round(14 * ui_scale));
-    const box_gap_pixels = lm.tou16(@round(8 * ui_scale));
-    const row_height_pixels = @round(24 * ui_scale);
+    const box_padding_pixels = lm.tou16(@round(3.5 * ui_scale));
+    const box_gap_pixels = lm.tou16(@round(2.0 * ui_scale));
+    const row_height_pixels = @round(6.0 * ui_scale);
 
     const rooms_text = if (allocator) |active_allocator|
         std.fmt.allocPrint(active_allocator, "{d}", .{run_stats.rooms_cleared}) catch "0"
@@ -203,7 +203,7 @@ fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Alloca
             .child_gap = box_gap_pixels,
         },
         .background_color = ui.color(24, 18, 24, 200),
-        .corner_radius = .all(8 * ui_scale),
+        .corner_radius = .all(2.0 * ui_scale),
         .border = .{
             .color = ui.color(60, 48, 60, 180),
             .width = .outside(1),
@@ -223,8 +223,8 @@ fn drawStatRow(
     row_height_pixels: f32,
     ui_scale: f32,
 ) void {
-    const font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(1 * ui_scale)));
+    const font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale)));
 
     ui.new(.{
         .id = .ID(label),
@@ -277,7 +277,7 @@ fn drawActionButtons(button_max_width_pixels: f32, ui_scale: f32) void {
 
     const button_width_pixels = @min(button_max_width_pixels, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
     const button_height_pixels = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
-    const gap_pixels = lm.tou16(@round(10 * ui_scale));
+    const gap_pixels = lm.tou16(@round(2.5 * ui_scale));
 
     ui.new(.{
         .id = .ID("gameover-buttons-col"),
@@ -293,7 +293,7 @@ fn drawActionButtons(button_max_width_pixels: f32, ui_scale: f32) void {
 
         ui.new(.{
             .id = .ID("gameover-footer-spacer"),
-            .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+            .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
         })({});
 
         ui.new(.{
@@ -307,7 +307,7 @@ fn drawActionButtons(button_max_width_pixels: f32, ui_scale: f32) void {
 
             ui.text(footer_text, .{
                 .color = ui.color(140, 150, 175, 200),
-                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+                .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
                 .letter_spacing = 1,
                 .alignment = .center,
                 .font_id = HUD.regularFontId(),
@@ -337,8 +337,8 @@ fn drawButton(
 ) void {
     const is_disabled = (index == 0 and !canRestart());
     const is_button_active = isButtonActive(index);
-    const font_size = lm.tou16(@max(13, @round(15 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const font_size = lm.tou16(@max(7, @round(3.75 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
 
     clay.UI()(.{
         .id = .IDI("gameover-btn-", @intCast(index)),

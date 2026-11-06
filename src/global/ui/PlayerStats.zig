@@ -51,9 +51,9 @@ fn drawSpellKeyBadge(
     badge_padding_x_pixels: u16,
     key_font_size_pixels: u16,
 ) void {
-    const corner_radius_pixels: f32 = if (is_gamepad) 6.0 * HUD.scale else 3.0 * HUD.scale;
+    const corner_radius_pixels: f32 = if (is_gamepad) 1.5 * HUD.ui_scale else 0.75 * HUD.ui_scale;
     const horizontal_padding_pixels: u16 = if (is_gamepad)
-        lm.tou16(@max(3, @round(4.0 * HUD.scale)))
+        lm.tou16(@max(2, @round(1.0 * HUD.ui_scale)))
     else
         badge_padding_x_pixels;
 
@@ -113,7 +113,7 @@ fn drawSpellCooldownBadge(
         ui.new(.{
             .id = .IDI("spell-cooldown-badge-", slot_index),
             .background_color = ui.color(16, 18, 24, 230),
-            .corner_radius = .all(3.0 * HUD.scale),
+            .corner_radius = .all(0.75 * HUD.ui_scale),
             .layout = .{
                 .padding = .axes(badge_padding_y_pixels, badge_padding_x_pixels),
                 .child_alignment = .{ .x = .center, .y = .center },
@@ -135,10 +135,10 @@ fn drawPopulatedSpellSlot(
     slot_size_pixels: f32,
     allocator: ?std.mem.Allocator,
 ) void {
-    const badge_padding_y_pixels = lm.tou16(@max(1, @round(1.0 * HUD.scale)));
-    const badge_padding_x_pixels = lm.tou16(@max(2, @round(3.0 * HUD.scale)));
-    const font_size_pixels = lm.tou16(@max(9, @round(10.0 * HUD.scale)));
-    const key_font_size_pixels = lm.tou16(@max(8, @round(9.0 * HUD.scale)));
+    const badge_padding_y_pixels = lm.tou16(@max(1, @round(0.25 * HUD.ui_scale)));
+    const badge_padding_x_pixels = lm.tou16(@max(1, @round(0.75 * HUD.ui_scale)));
+    const font_size_pixels = lm.tou16(@max(5, @round(2.5 * HUD.ui_scale)));
+    const key_font_size_pixels = lm.tou16(@max(4, @round(2.25 * HUD.ui_scale)));
 
     const prompt = DevicePrompts.getActionPrompt(if (slot_index == 0) .spell_0 else .spell_1);
     const is_gamepad = DevicePrompts.isGamepad();
@@ -155,7 +155,7 @@ fn drawPopulatedSpellSlot(
                 .w = .fixed(slot_size_pixels),
             },
             .direction = .top_to_bottom,
-            .padding = .all(lm.tou16(@max(2, @round(2.0 * HUD.scale)))),
+            .padding = .all(lm.tou16(@max(1, @round(0.5 * HUD.ui_scale)))),
         },
     })({
         drawSpellKeyBadge(
@@ -226,13 +226,13 @@ fn experienceCounter(experience: usize, allocator: ?std.mem.Allocator) void {
                 .element = .right_bottom,
                 .parent = .right_bottom,
             },
-            .offset = .{ .x = -16, .y = -1 * HUD.hud_height / 2 - 0.5 * counter_size_pixels },
+            .offset = .{ .x = -4.0 * HUD.ui_scale, .y = -1 * HUD.hud_height / 2 - 0.5 * counter_size_pixels },
         },
-        .corner_radius = .all(lm.tou16(4 * HUD.ui_scale)),
+        .corner_radius = .all(lm.tou16(@round(1.0 * HUD.ui_scale))),
         .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
-            .padding = .axes(4, 8),
-            .child_gap = lm.tou16(8),
+            .padding = .axes(lm.tou16(@round(1.0 * HUD.ui_scale)), lm.tou16(@round(2.0 * HUD.ui_scale))),
+            .child_gap = lm.tou16(@round(2.0 * HUD.ui_scale)),
             .direction = .left_to_right,
         },
     })({
@@ -256,9 +256,9 @@ fn experienceCounter(experience: usize, allocator: ?std.mem.Allocator) void {
             "0";
 
         ui.text(experience_text, .{
-            .line_height = font_size_pixels - 2,
+            .line_height = font_size_pixels - lm.tou16(@max(1, @round(0.5 * HUD.ui_scale))),
             .font_size = font_size_pixels,
-            .letter_spacing = 2,
+            .letter_spacing = lm.tou16(@max(1, @round(0.5 * HUD.ui_scale))),
             .color = ui.color(255, 255, 255, 255),
             .font_id = HUD.boldFontId(),
         });
@@ -268,9 +268,9 @@ fn experienceCounter(experience: usize, allocator: ?std.mem.Allocator) void {
 pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void {
     experienceCounter(stats.current.experience, allocator);
 
-    const bar_overlay_width = 124 * 4 * HUD.ui_scale;
-    const health_bar_overlay_height = 7 * 4 * HUD.ui_scale;
-    const stamina_bar_overlay_height = 6 * 4 * HUD.ui_scale;
+    const bar_overlay_width_pixels = 124.0 * HUD.ui_scale;
+    const health_bar_overlay_height_pixels = 7.0 * HUD.ui_scale;
+    const stamina_bar_overlay_height_pixels = 6.0 * HUD.ui_scale;
 
     ui.new(.{
         .id = .ID("player-hud"),
@@ -280,7 +280,7 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
             .offset = .{ .x = 0, .y = -1 * HUD.hud_height / 2 },
         },
         .layout = .{
-            .child_gap = lm.tou16(4 * 2 * HUD.ui_scale),
+            .child_gap = lm.tou16(@round(2.0 * HUD.ui_scale)),
             .direction = .left_to_right,
         },
     })({
@@ -292,12 +292,12 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                     .element = .center_bottom,
                     .parent = .center_bottom,
                 },
-                .offset = .{ .x = 0, .y = -7 * 4 * HUD.ui_scale },
+                .offset = .{ .x = 0, .y = -7.0 * HUD.ui_scale },
             },
             .layout = .{
-                .sizing = .{ .w = .fixed(bar_overlay_width), .h = .fixed(health_bar_overlay_height) },
+                .sizing = .{ .w = .fixed(bar_overlay_width_pixels), .h = .fixed(health_bar_overlay_height_pixels) },
             },
-            .image = ui.image("ui/hud/health_bar_overlay.png", .init(bar_overlay_width, health_bar_overlay_height)) catch .{ .image_data = null },
+            .image = ui.image("ui/hud/health_bar_overlay.png", .init(bar_overlay_width_pixels, health_bar_overlay_height_pixels)) catch .{ .image_data = null },
         })({});
 
         ui.new(.{
@@ -308,12 +308,12 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                     .element = .center_bottom,
                     .parent = .center_bottom,
                 },
-                .offset = .{ .x = 0, .y = -2 * 4 * HUD.ui_scale },
+                .offset = .{ .x = 0, .y = -2.0 * HUD.ui_scale },
             },
             .layout = .{
-                .sizing = .{ .w = .fixed(bar_overlay_width), .h = .fixed(stamina_bar_overlay_height) },
+                .sizing = .{ .w = .fixed(bar_overlay_width_pixels), .h = .fixed(stamina_bar_overlay_height_pixels) },
             },
-            .image = ui.image("ui/hud/stamina_bar_overlay.png", .init(bar_overlay_width, stamina_bar_overlay_height)) catch .{ .image_data = null },
+            .image = ui.image("ui/hud/stamina_bar_overlay.png", .init(bar_overlay_width_pixels, stamina_bar_overlay_height_pixels)) catch .{ .image_data = null },
         })({});
 
         spellShower(attack.equipped_spells[0], 0, allocator);
@@ -322,7 +322,7 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
             .layout = .{
                 .sizing = .{ .h = .fixed(HUD.hud_height), .w = .fixed(HUD.hud_width) },
                 .direction = .top_to_bottom,
-                .padding = .axes(lm.tou16(HUD.ui_scale * 8), lm.tou16(HUD.ui_scale * 8)),
+                .padding = .axes(lm.tou16(@round(2.0 * HUD.ui_scale)), lm.tou16(@round(2.0 * HUD.ui_scale))),
             },
             .background_color = ui.color(50, 50, 50, 255),
             .image = ui.image("ui/hud/background.png", .init(HUD.hud_width, HUD.hud_height)) catch .{ .image_data = null },
@@ -330,7 +330,7 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
             ui.new(.{
                 .id = .IDI("player-hud-padding-", 0),
                 .layout = .{
-                    .sizing = .{ .w = .percent(1), .h = .fixed(4 * HUD.ui_scale) },
+                    .sizing = .{ .w = .percent(1), .h = .fixed(1.0 * HUD.ui_scale) },
                 },
             })({});
 
@@ -340,13 +340,13 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 stats.max.health,
                 .init(55, 51, 52, 255),
                 .fromInt(0xb25266ff),
-                6 * 4 * HUD.ui_scale,
+                6.0 * HUD.ui_scale,
             );
 
             ui.new(.{
                 .id = .IDI("player-hud-padding-", 1),
                 .layout = .{
-                    .sizing = .{ .w = .percent(1), .h = .fixed(4 * HUD.ui_scale) },
+                    .sizing = .{ .w = .percent(1), .h = .fixed(1.0 * HUD.ui_scale) },
                 },
             })({});
 
@@ -356,13 +356,13 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 stats.max.stamina,
                 .init(55, 51, 52, 255),
                 .fromInt(0xc090a9ff),
-                3 * 4 * HUD.ui_scale,
+                3.0 * HUD.ui_scale,
             );
 
             ui.new(.{
                 .id = .IDI("player-hud-padding-", 2),
                 .layout = .{
-                    .sizing = .{ .w = .percent(1), .h = .fixed(4 * HUD.ui_scale) },
+                    .sizing = .{ .w = .percent(1), .h = .fixed(1.0 * HUD.ui_scale) },
                 },
             })({});
         });

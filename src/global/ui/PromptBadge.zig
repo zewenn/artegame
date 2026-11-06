@@ -30,10 +30,10 @@ pub fn drawCustomBadge(
     is_controller: bool,
     ui_scale: f32,
 ) void {
-    const corner_radius_pixels = if (is_controller) 8 * ui_scale else 4 * ui_scale;
-    const padding_y_pixels = lm.tou16(@max(1, @round(2 * ui_scale)));
-    const padding_x_pixels = lm.tou16(@max(3, @round(6 * ui_scale)));
-    const font_size_pixels = lm.tou16(@max(9, @round(11 * ui_scale)));
+    const corner_radius_pixels = if (is_controller) 2.0 * ui_scale else 1.0 * ui_scale;
+    const padding_y_pixels = lm.tou16(@max(1, @round(0.5 * ui_scale)));
+    const padding_x_pixels = lm.tou16(@max(2, @round(1.5 * ui_scale)));
+    const font_size_pixels = lm.tou16(@max(5, @round(2.75 * ui_scale)));
 
     ui.new(.{
         .id = .IDI(id_prefix, 0),
@@ -66,12 +66,12 @@ pub fn drawInlinePrompt(
     ui_scale: f32,
 ) void {
     const prompt = DevicePrompts.getActionPrompt(action);
-    const corner_radius_pixels = if (prompt.is_controller_button) 8 * ui_scale else 4 * ui_scale;
-    const padding_y_pixels = lm.tou16(@max(1, @round(2 * ui_scale)));
-    const padding_x_pixels = lm.tou16(@max(3, @round(5 * ui_scale)));
-    const badge_font_size_pixels = lm.tou16(@max(9, @round(11 * ui_scale)));
-    const text_font_size_pixels = lm.tou16(@max(10, @round(12 * ui_scale)));
-    const gap_pixels = lm.tou16(@max(2, @round(4 * ui_scale)));
+    const corner_radius_pixels = if (prompt.is_controller_button) 2.0 * ui_scale else 1.0 * ui_scale;
+    const padding_y_pixels = lm.tou16(@max(1, @round(0.5 * ui_scale)));
+    const padding_x_pixels = lm.tou16(@max(2, @round(1.25 * ui_scale)));
+    const badge_font_size_pixels = lm.tou16(@max(5, @round(2.75 * ui_scale)));
+    const text_font_size_pixels = lm.tou16(@max(6, @round(3.0 * ui_scale)));
+    const gap_pixels = lm.tou16(@max(1, @round(1.0 * ui_scale)));
 
     ui.new(.{
         .id = .IDI(id_prefix, @intCast(index)),

@@ -171,7 +171,7 @@ fn drawRootContainer(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center, .y = .center },
-            .padding = .all(lm.tou16(@round(24 * ui_scale))),
+            .padding = .all(lm.tou16(@round(6.0 * ui_scale))),
         },
         .background_color = ui.color(10, 12, 16, 255),
     })({
@@ -198,9 +198,9 @@ fn drawOptionsScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
 fn drawMainScreen(self: *Self, ui_scale: f32) void {
     drawLogo(ui_scale);
     self.drawStatsBadge(ui_scale);
-    drawSpacer("menu-main-spacer", @round(24 * ui_scale));
+    drawSpacer("menu-main-spacer", @round(6.0 * ui_scale));
     self.drawButtonList(ui_scale);
-    drawSpacer("menu-footer-spacer", @round(24 * ui_scale));
+    drawSpacer("menu-footer-spacer", @round(6.0 * ui_scale));
     drawFooter(ui_scale);
 }
 
@@ -214,8 +214,8 @@ fn drawSpacer(comptime id_name: []const u8, height_pixels: f32) void {
 }
 
 fn drawLogo(ui_scale: f32) void {
-    const logo_base_height_pixels: f32 = 240;
-    const logo_width_pixels = @round((logo_base_height_pixels * 3) * ui_scale);
+    const logo_base_height_pixels: f32 = 60.0;
+    const logo_width_pixels = @round((logo_base_height_pixels * 3.0) * ui_scale);
     const logo_height_pixels = @round(logo_base_height_pixels * ui_scale);
 
     ui.new(.{
@@ -250,15 +250,15 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
 
     ui.new(.{
         .id = .ID("menu-stats-badge-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(2.0 * ui_scale)), .w = .fixed(1) } },
     })({});
 
     ui.new(.{
         .id = .ID("menu-stats-badge"),
         .layout = .{
             .padding = .axes(
-                lm.tou16(@round(3 * ui_scale)),
-                lm.tou16(@round(14 * ui_scale)),
+                lm.tou16(@round(0.75 * ui_scale)),
+                lm.tou16(@round(3.5 * ui_scale)),
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
@@ -268,7 +268,7 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
             .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
             .{
                 .color = ui.color(238, 230, 234, 255),
-                .font_size = lm.tou16(@max(16, @round(16 * ui_scale))),
+                .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
                 .letter_spacing = 1,
                 .alignment = .center,
                 .font_id = HUD.boldFontId(),
@@ -278,9 +278,9 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
 }
 
 fn drawButtonList(self: *Self, ui_scale: f32) void {
-    const button_gap_pixels = lm.tou16(@round(14 * ui_scale));
-    const font_size = lm.tou16(@max(18, @round(18 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(2, @round(1 * ui_scale)));
+    const button_gap_pixels = lm.tou16(@round(3.5 * ui_scale));
+    const font_size = lm.tou16(@max(9, @round(4.5 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale)));
 
     ui.new(.{
         .id = .ID("menu-button-list"),
@@ -323,7 +323,7 @@ fn drawFooter(ui_scale: f32) void {
 
         ui.text(footer_text, .{
             .color = ui.color(140, 150, 175, 220),
-            .font_size = lm.tou16(@max(16, @round(16 * ui_scale))),
+            .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
             .font_id = HUD.regularFontId(),

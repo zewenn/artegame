@@ -77,10 +77,10 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
         break :should_exit false;
     } else handleInput();
 
-    const panel_width_pixels = @min(window_size.x - 48, @round(680 * ui_scale));
-    const panel_height_pixels = @min(window_size.y - 48, @round(520 * ui_scale));
-    const panel_padding_pixels = lm.tou16(@round(20 * ui_scale));
-    const title_font_size = lm.tou16(@max(18, @round(20 * ui_scale)));
+    const panel_width_pixels = @min(window_size.x - 48, @round(170.0 * ui_scale));
+    const panel_height_pixels = @min(window_size.y - 48, @round(130.0 * ui_scale));
+    const panel_padding_pixels = lm.tou16(@round(5.0 * ui_scale));
+    const title_font_size = lm.tou16(@max(10, @round(5.0 * ui_scale)));
 
     ui.new(.{
         .id = .ID("shared-options-panel"),
@@ -91,11 +91,11 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(14 * ui_scale)),
+            .child_gap = lm.tou16(@round(3.5 * ui_scale)),
             .padding = .all(panel_padding_pixels),
         },
         .background_color = ui.color(16, 18, 25, 250),
-        .corner_radius = .all(12 * ui_scale),
+        .corner_radius = .all(3.0 * ui_scale),
         .border = .{
             .color = ui.color(55, 62, 80, 200),
             .width = .outside(1),
@@ -142,7 +142,7 @@ fn drawTitle(title_font_size: u16) void {
 }
 
 fn drawOptionsTabs(ui_scale: f32) void {
-    const tab_font_size = lm.tou16(@max(11, @round(13 * ui_scale)));
+    const tab_font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
     const is_gamepad = DevicePrompts.isGamepad();
     const previous_hint = if (is_gamepad) "LB" else "Q";
     const next_hint = if (is_gamepad) "RB" else "E";
@@ -151,7 +151,7 @@ fn drawOptionsTabs(ui_scale: f32) void {
         .id = .ID("opt-tabs-bar"),
         .layout = .{
             .direction = .left_to_right,
-            .child_gap = lm.tou16(@round(8 * ui_scale)),
+            .child_gap = lm.tou16(@round(2.0 * ui_scale)),
             .child_alignment = .{ .y = .center },
         },
     })({
@@ -202,13 +202,13 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
         .id = .ID(identifier_string),
         .layout = .{
             .padding = .axes(
-                lm.tou16(@max(2, @round(3 * ui_scale))),
-                lm.tou16(@max(4, @round(6 * ui_scale))),
+                lm.tou16(@max(1, @round(0.75 * ui_scale))),
+                lm.tou16(@max(2, @round(1.5 * ui_scale))),
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
         .background_color = if (is_gamepad) ui.color(55, 60, 75, 200) else ui.color(35, 40, 52, 200),
-        .corner_radius = .all(if (is_gamepad) 8 * ui_scale else 4 * ui_scale),
+        .corner_radius = .all(if (is_gamepad) 2.0 * ui_scale else 1.0 * ui_scale),
         .border = .{
             .color = if (is_gamepad) ui.color(120, 130, 150, 180) else ui.color(70, 80, 100, 180),
             .width = .outside(1),
@@ -216,7 +216,7 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
     })({
         ui.text(hint, .{
             .color = ui.color(190, 200, 220, 230),
-            .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
+            .font_size = lm.tou16(@max(5, @round(2.5 * ui_scale))),
             .letter_spacing = 1,
             .font_id = HUD.boldFontId(),
         });
@@ -224,15 +224,15 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
 }
 
 fn drawAudioTab(panel_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allocator) void {
-    const content_width_pixels = panel_width_pixels - @round(48 * ui_scale);
-    const row_height_pixels = @round(42 * ui_scale);
+    const content_width_pixels = panel_width_pixels - @round(12.0 * ui_scale);
+    const row_height_pixels = @round(10.5 * ui_scale);
 
     ui.new(.{
         .id = .ID("opt-audio-content"),
         .layout = .{
             .sizing = .{ .w = .fixed(content_width_pixels) },
             .direction = .top_to_bottom,
-            .child_gap = lm.tou16(@round(8 * ui_scale)),
+            .child_gap = lm.tou16(@round(2.0 * ui_scale)),
             .child_alignment = .{ .x = .center },
         },
     })({
@@ -256,9 +256,9 @@ fn drawVolumeRow(
     const is_selected = (selected_index == index);
     const percentage = @as(u32, @intFromFloat(@round(value * 100.0)));
     const button_size_pixels = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
-    const bar_total_width_pixels = @round(160 * ui_scale);
-    const bar_height_pixels = @round(10 * ui_scale);
-    const gap_width_pixels = @round(10 * ui_scale);
+    const bar_total_width_pixels = @round(40.0 * ui_scale);
+    const bar_height_pixels = @round(2.5 * ui_scale);
+    const gap_width_pixels = @round(2.5 * ui_scale);
 
     const percentage_text = if (allocator) |current_allocator|
         std.fmt.allocPrint(current_allocator, "{d}%", .{percentage}) catch "0%"
@@ -275,15 +275,15 @@ fn drawVolumeRow(
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
             .padding = .axes(
-                lm.tou16(@round(4 * ui_scale)),
-                lm.tou16(@round(16 * ui_scale)),
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
             ui.hex(0x2a1e23ff)
         else
             ui.hex(0x0c0c0cff),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(240, 200, 100, 200)
@@ -307,11 +307,11 @@ fn drawVolumeRow(
 fn drawVolumeLabel(index: usize, label: []const u8, is_selected: bool, ui_scale: f32) void {
     ui.new(.{
         .id = .IDI("opt-vol-label-", @intCast(index)),
-        .layout = .{ .sizing = .{ .w = .fixed(@round(180 * ui_scale)) } },
+        .layout = .{ .sizing = .{ .w = .fixed(@round(45.0 * ui_scale)) } },
     })({
         ui.text(label, .{
             .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
-            .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .letter_spacing = 1,
             .font_id = HUD.regularFontId(),
         });
@@ -343,7 +343,7 @@ fn drawVolumeStepButton(
         }
         ui.text(symbol, .{
             .color = ui.color(255, 255, 255, 255),
-            .font_size = lm.tou16(@max(14, @round(16 * ui_scale))),
+            .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
         });
@@ -374,7 +374,7 @@ fn drawVolumeProgressBar(
             .direction = .left_to_right,
         },
         .background_color = ui.color(24, 28, 38, 255),
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
     })({
         drawVolumeBarFill(index, bar_filled_width_pixels, is_selected, ui_scale);
     });
@@ -399,7 +399,7 @@ fn drawVolumeBarFill(
         .id = .IDI("opt-vol-fill-", @intCast(index)),
         .layout = .{ .sizing = .{ .w = .fixed(filled_width_pixels), .h = .percent(1) } },
         .background_color = fill_color,
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
     })({});
 }
 
@@ -412,13 +412,13 @@ fn drawVolumePercentage(
     ui.new(.{
         .id = .IDI("opt-vol-pct-", @intCast(index)),
         .layout = .{
-            .sizing = .{ .w = .fixed(@round(56 * ui_scale)) },
+            .sizing = .{ .w = .fixed(@round(14.0 * ui_scale)) },
             .child_alignment = .{ .x = .right, .y = .center },
         },
     })({
         ui.text(percentage_text, .{
             .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(180, 185, 200, 255),
-            .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .right,
             .font_id = HUD.regularFontId(),
         });
@@ -439,15 +439,15 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
             .padding = .axes(
-                lm.tou16(@round(4 * ui_scale)),
-                lm.tou16(@round(16 * ui_scale)),
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
             ui.color(28, 33, 46, 220)
         else
             ui.color(20, 23, 31, 160),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(240, 200, 100, 200)
@@ -462,18 +462,18 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
 
         ui.new(.{
             .id = .ID("opt-mute-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(180 * ui_scale)) } },
+            .layout = .{ .sizing = .{ .w = .fixed(@round(45.0 * ui_scale)) } },
         })({
             ui.text("Mute All Audio", .{
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
-                .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
             });
         });
 
         const mute_caption = if (is_muted) "MUTED" else "UNMUTED";
-        const badge_font_size = lm.tou16(@max(9, @round(10 * ui_scale)));
+        const badge_font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
         utility_button.draw(index, mute_caption, &selected_index, activateMuteButton, badge_font_size, 1);
     });
 }
@@ -483,15 +483,15 @@ fn activateMuteButton(_: usize) void {
 }
 
 fn drawDisplayTab(panel_width_pixels: f32, ui_scale: f32) void {
-    const content_width_pixels = panel_width_pixels - @round(48 * ui_scale);
-    const row_height_pixels = @round(44 * ui_scale);
+    const content_width_pixels = panel_width_pixels - @round(12.0 * ui_scale);
+    const row_height_pixels = @round(11.0 * ui_scale);
 
     ui.new(.{
         .id = .ID("opt-display-content"),
         .layout = .{
             .sizing = .{ .w = .fixed(content_width_pixels) },
             .direction = .top_to_bottom,
-            .child_gap = lm.tou16(@round(10 * ui_scale)),
+            .child_gap = lm.tou16(@round(2.5 * ui_scale)),
             .child_alignment = .{ .x = .center },
         },
     })({
@@ -513,15 +513,15 @@ fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
             .padding = .axes(
-                lm.tou16(@round(4 * ui_scale)),
-                lm.tou16(@round(16 * ui_scale)),
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
             ui.color(28, 33, 46, 220)
         else
             ui.color(20, 23, 31, 160),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(240, 200, 100, 200)
@@ -536,18 +536,18 @@ fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale
 
         ui.new(.{
             .id = .ID("opt-fullscreen-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(220 * ui_scale)) } },
+            .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
         })({
             ui.text("Display Mode", .{
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
-                .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
             });
         });
 
         const fullscreen_caption = if (is_fullscreen) "FULLSCREEN" else "WINDOWED";
-        const badge_font_size = lm.tou16(@max(9, @round(10 * ui_scale)));
+        const badge_font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
         utility_button.draw(0, fullscreen_caption, &selected_index, activateFullscreenButton, badge_font_size, 1);
     });
 }
@@ -557,10 +557,10 @@ fn activateFullscreenButton(_: usize) void {
 }
 
 fn drawControlsTab(panel_width_pixels: f32, ui_scale: f32) void {
-    const content_width_pixels = panel_width_pixels - @round(48 * ui_scale);
-    const header_font_size = lm.tou16(@max(11, @round(12 * ui_scale)));
-    const row_font_size = lm.tou16(@max(10, @round(12 * ui_scale)));
-    const row_height_pixels = @round(36 * ui_scale);
+    const content_width_pixels = panel_width_pixels - @round(12.0 * ui_scale);
+    const header_font_size = lm.tou16(@max(6, @round(3.0 * ui_scale)));
+    const row_font_size = lm.tou16(@max(6, @round(3.0 * ui_scale)));
+    const row_height_pixels = @round(9.0 * ui_scale);
     const is_gamepad = DevicePrompts.isGamepad();
     const active_scheme = ControlScheme.getControlScheme();
     const is_keyboard_only = (active_scheme == .keyboard_only);
@@ -582,7 +582,7 @@ fn drawControlsTab(panel_width_pixels: f32, ui_scale: f32) void {
         .layout = .{
             .sizing = .{ .w = .fixed(content_width_pixels) },
             .direction = .top_to_bottom,
-            .child_gap = lm.tou16(@round(3 * ui_scale)),
+            .child_gap = lm.tou16(@round(0.75 * ui_scale)),
         },
     })({
         drawControlSchemeRow(content_width_pixels, row_height_pixels, ui_scale);
@@ -608,15 +608,15 @@ fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_sc
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
             .padding = .axes(
-                lm.tou16(@round(4 * ui_scale)),
-                lm.tou16(@round(16 * ui_scale)),
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
             ui.color(28, 33, 46, 220)
         else
             ui.color(20, 23, 31, 160),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
                 ui.color(240, 200, 100, 200)
@@ -631,17 +631,17 @@ fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_sc
 
         ui.new(.{
             .id = .ID("opt-scheme-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(220 * ui_scale)) } },
+            .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
         })({
             ui.text("Control Scheme", .{
                 .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
-                .font_size = lm.tou16(@max(12, @round(13 * ui_scale))),
+                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
             });
         });
 
-        const badge_font_size = lm.tou16(@max(8, @round(8 * ui_scale)));
+        const badge_font_size = lm.tou16(@max(4, @round(2.0 * ui_scale)));
         utility_button.draw(0, active_scheme.displayName(), &selected_index, activateControlSchemeButton, badge_font_size, 0);
     });
 }
@@ -658,22 +658,22 @@ fn drawControlsTableHeader(content_width_pixels: f32, header_font_size: u16, ui_
     ui.new(.{
         .id = .ID("opt-ctrl-header"),
         .layout = .{
-            .sizing = .{ .w = .fixed(content_width_pixels), .h = .fixed(@round(22 * ui_scale)) },
+            .sizing = .{ .w = .fixed(content_width_pixels), .h = .fixed(@round(5.5 * ui_scale)) },
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
-            .padding = .axes(0, lm.tou16(@round(8 * ui_scale))),
+            .padding = .axes(0, lm.tou16(@round(2.0 * ui_scale))),
         },
         .background_color = ui.color(25, 30, 42, 220),
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
     })({
-        drawControlsHeaderCell("opt-table-header-1", @round(160 * ui_scale), "ACTION", ui.color(240, 200, 100, 255), header_font_size);
+        drawControlsHeaderCell("opt-table-header-1", @round(40.0 * ui_scale), "ACTION", ui.color(240, 200, 100, 255), header_font_size);
 
         const keyboard_and_mouse_header = if (!is_gamepad)
             (if (is_keyboard_only) "KEYBOARD ONLY (ACTIVE)" else "KEYBOARD & MOUSE (ACTIVE)")
         else
             active_scheme.displayName();
         const keyboard_color = if (!is_gamepad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200);
-        drawControlsHeaderCell("opt-table-header-2", @round(190 * ui_scale), keyboard_and_mouse_header, keyboard_color, header_font_size);
+        drawControlsHeaderCell("opt-table-header-2", @round(47.5 * ui_scale), keyboard_and_mouse_header, keyboard_color, header_font_size);
 
         const gamepad_header = if (is_gamepad) "CONTROLLER (ACTIVE)" else "CONTROLLER";
         const gamepad_color = if (is_gamepad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200);
@@ -734,17 +734,17 @@ fn drawControlBindingRow(
     ui.new(.{
         .id = .IDI("opt-control-row-", @intCast(binding_index)),
         .layout = .{
-            .sizing = .{ .w = .fixed(content_width_pixels), .h = .fixed(@round(20 * ui_scale)) },
+            .sizing = .{ .w = .fixed(content_width_pixels), .h = .fixed(@round(5.0 * ui_scale)) },
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
-            .padding = .axes(0, lm.tou16(@round(8 * ui_scale))),
+            .padding = .axes(0, lm.tou16(@round(2.0 * ui_scale))),
         },
         .background_color = background,
     })({
-        drawBindingCell("opt-cell-action-", binding_index, @round(160 * ui_scale), binding.action, ui.color(225, 230, 240, 255), row_font_size);
+        drawBindingCell("opt-cell-action-", binding_index, @round(40.0 * ui_scale), binding.action, ui.color(225, 230, 240, 255), row_font_size);
 
         const keyboard_color = if (!is_gamepad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180);
-        drawBindingCell("opt-cell-kbm-", binding_index, @round(190 * ui_scale), binding.keyboard_and_mouse, keyboard_color, row_font_size);
+        drawBindingCell("opt-cell-kbm-", binding_index, @round(47.5 * ui_scale), binding.keyboard_and_mouse, keyboard_color, row_font_size);
 
         const gamepad_color = if (is_gamepad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180);
         drawBindingGrowCell("opt-cell-pad-", binding_index, binding.gamepad, gamepad_color, row_font_size);
@@ -793,7 +793,7 @@ fn drawBindingGrowCell(
 fn drawBackButton(ui_scale: f32) void {
     const back_index = getBackIndex();
     const back_label = if (DevicePrompts.isGamepad()) "BACK" else "BACK";
-    const font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
+    const font_size = lm.tou16(@max(5, @round(2.75 * ui_scale)));
     utility_button.draw(back_index, back_label, &selected_index, activateBackButton, font_size, 1);
 }
 

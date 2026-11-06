@@ -30,37 +30,37 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
                 .parent = .left_top,
             },
         },
-        .corner_radius = .all(lm.tou16(4 * ui_scale)),
+        .corner_radius = .all(lm.tou16(@round(1.0 * ui_scale))),
         .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
-            .child_gap = lm.tou16(@round(6 * ui_scale)),
+            .child_gap = lm.tou16(@round(1.5 * ui_scale)),
             .padding = .axes(
-                lm.tou16(@round(4 * ui_scale)),
-                lm.tou16(@round(8 * ui_scale)),
+                lm.tou16(@round(1.0 * ui_scale)),
+                lm.tou16(@round(2.0 * ui_scale)),
             ),
         },
     })({
         ui.new(.{
             .id = .ID("interaction-prompt-key-badge"),
             .background_color = prompt.badge_background_color,
-            .corner_radius = .all(if (is_gamepad) 8 * ui_scale else 4 * ui_scale),
+            .corner_radius = .all(if (is_gamepad) 2.0 * ui_scale else 1.0 * ui_scale),
             .border = .{
                 .color = prompt.badge_border_color,
                 .width = .outside(1),
             },
             .layout = .{
                 .padding = .axes(
-                    lm.tou16(@round(2 * ui_scale)),
-                    lm.tou16(@round(if (is_gamepad) 7 * ui_scale else 6 * ui_scale)),
+                    lm.tou16(@round(0.5 * ui_scale)),
+                    lm.tou16(@round(if (is_gamepad) 1.75 * ui_scale else 1.5 * ui_scale)),
                 ),
                 .child_alignment = .{ .x = .center, .y = .center },
             },
         })({
             ui.text(prompt.label, .{
                 .color = prompt.text_color,
-                .font_size = lm.tou16(@round(13 * ui_scale)),
+                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.boldFontId(),
             });
@@ -71,7 +71,7 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
         })({
             ui.text(interactable.action_text, .{
                 .color = ui.color(230, 235, 245, 255),
-                .font_size = lm.tou16(@round(13 * ui_scale)),
+                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
             });

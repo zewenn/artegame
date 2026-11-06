@@ -10,18 +10,18 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
         .id = .ID("objective-container"),
         .floating = .{
             .attach_to = .to_root,
-            .offset = .{ .x = -16, .y = HUD.window_size.y * 0.075 },
+            .offset = .{ .x = -4.0 * ui_scale, .y = HUD.window_size.y * 0.075 },
             .attach_points = .{
                 .element = .right_top,
                 .parent = .right_top,
             },
         },
-        .corner_radius = .all(lm.tou16(4 * ui_scale)),
+        .corner_radius = .all(lm.tou16(@round(1.0 * ui_scale))),
         .background_color = ui.color(23, 21, 22, 196),
         .layout = .{
             .direction = .top_to_bottom,
-            .child_gap = 5,
-            .padding = .all(10),
+            .child_gap = lm.tou16(@round(1.25 * ui_scale)),
+            .padding = .all(lm.tou16(@round(2.5 * ui_scale))),
         },
     })({
         ui.new(.{
@@ -29,7 +29,7 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
         })({
             ui.text(tracking.name, .{
                 .color = ui.color(255, 255, 255, 255),
-                .font_size = 32,
+                .font_size = lm.tou16(@max(12, @round(8.0 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.boldFontId(),
             });
@@ -39,7 +39,7 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
         })({
             ui.text(tracking.description, .{
                 .color = ui.color(255, 255, 255, 255),
-                .font_size = 16,
+                .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
             });

@@ -17,7 +17,6 @@ pub const BoonSlot = BoonPool.BoonSlot;
 
 pub const BASE_CARD_WIDTH_PIXELS: f32 = 72.0;
 pub const BASE_CARD_HEIGHT_PIXELS: f32 = 112.0;
-pub const CARD_SCALE_MULTIPLIER: f32 = 4.0;
 pub const CARD_ASPECT_RATIO: f32 = 9.0 / 14.0;
 
 pub const BOON_CARD_SPRITE: []const u8 = "ui/hud/boon_card.png";
@@ -33,11 +32,11 @@ pub fn getBoonCardSprite(is_active: bool) []const u8 {
 }
 
 pub fn calculateCardWidthPixels(ui_scale: f32) f32 {
-    return @round(BASE_CARD_WIDTH_PIXELS * CARD_SCALE_MULTIPLIER * ui_scale);
+    return @round(BASE_CARD_WIDTH_PIXELS * ui_scale);
 }
 
 pub fn calculateCardHeightPixels(ui_scale: f32) f32 {
-    return @round(BASE_CARD_HEIGHT_PIXELS * CARD_SCALE_MULTIPLIER * ui_scale);
+    return @round(BASE_CARD_HEIGHT_PIXELS * ui_scale);
 }
 
 pub fn findFirstAvailableIndex(slot_array: []const BoonSlot) usize {
@@ -148,21 +147,21 @@ fn renderBoonCostBox(
     letter_spacing: u16,
     allocator: ?std.mem.Allocator,
 ) void {
-    const cost_box_padding_x_pixels = lm.tou16(@round(12 * ui_scale));
-    const cost_box_padding_y_pixels = lm.tou16(@round(5 * ui_scale));
-    const cost_image_size_pixels = @round(18 * ui_scale);
+    const cost_box_padding_x_pixels = lm.tou16(@round(3.0 * ui_scale));
+    const cost_box_padding_y_pixels = lm.tou16(@round(1.25 * ui_scale));
+    const cost_image_size_pixels = @round(4.5 * ui_scale);
 
     ui.new(.{
         .id = .IDI("boon-cost-box-", card_index),
         .background_color = ui.color(20, 22, 28, 220),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = ui.color(55, 60, 75, 200),
             .width = .outside(1),
         },
         .layout = .{
             .padding = .axes(cost_box_padding_y_pixels, cost_box_padding_x_pixels),
-            .child_gap = lm.tou16(@round(6 * ui_scale)),
+            .child_gap = lm.tou16(@round(1.5 * ui_scale)),
             .child_alignment = .{ .y = .center },
             .direction = .left_to_right,
         },
@@ -188,7 +187,7 @@ fn renderBoonCostBox(
         ui.text(price_text, .{
             .color = ui.color(255, 255, 255, 255),
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@round(14 * ui_scale)),
+            .font_size = lm.tou16(@max(7, @round(3.5 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -205,10 +204,10 @@ fn boonCard(
     allocator: ?std.mem.Allocator,
 ) void {
     const ui_scale = HUD.ui_scale;
-    const card_padding_pixels = lm.tou16(@round(16 * ui_scale));
-    const card_content_gap_pixels = lm.tou16(@round(6 * ui_scale));
-    const icon_size_pixels = @round(96 * ui_scale);
-    const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
+    const card_padding_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const card_content_gap_pixels = lm.tou16(@round(1.5 * ui_scale));
+    const icon_size_pixels = @round(24.0 * ui_scale);
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
     const is_focused = (selected_index == card_index);
 
     lm.deps.clay.UI()(.{
@@ -236,7 +235,7 @@ fn boonCard(
         }
 
         ui.text(boon.rarity.toString(), .{
-            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .letter_spacing = letter_spacing,
             .alignment = .center,
             .color = rarityColor(boon.rarity),
@@ -261,7 +260,7 @@ fn boonCard(
         ui.text(boon.boon_type.toString(), .{
             .color = ui.color(150, 155, 170, 255),
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@round(11 * ui_scale)),
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -269,14 +268,14 @@ fn boonCard(
         ui.text(boon.name, .{
             .color = ui.color(255, 255, 255, 255),
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@round(17 * ui_scale)),
+            .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
         });
 
         ui.text(boon.description, .{
             .color = ui.color(210, 215, 225, 255),
-            .font_size = lm.tou16(@round(13 * ui_scale)),
+            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -295,13 +294,13 @@ fn boonCard(
 }
 
 fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
-    const badge_padding_x_pixels = lm.tou16(@round(14 * ui_scale));
-    const badge_padding_y_pixels = lm.tou16(@round(6 * ui_scale));
+    const badge_padding_x_pixels = lm.tou16(@round(3.5 * ui_scale));
+    const badge_padding_y_pixels = lm.tou16(@round(1.5 * ui_scale));
 
     ui.new(.{
         .id = .IDI("boon-dummy-badge-", card_index),
         .background_color = ui.color(24, 27, 35, 230),
-        .corner_radius = .all(6 * ui_scale),
+        .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = ui.color(60, 68, 85, 180),
             .width = .outside(1),
@@ -313,8 +312,8 @@ fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
     })({
         ui.text("PURCHASED", .{
             .color = ui.color(160, 165, 180, 255),
-            .letter_spacing = lm.tou16(@round(2 * ui_scale)),
-            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale))),
+            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -328,10 +327,10 @@ fn dummyBoonCard(
     card_height_pixels: f32,
 ) void {
     const ui_scale = HUD.ui_scale;
-    const card_padding_pixels = lm.tou16(@round(16 * ui_scale));
-    const card_content_gap_pixels = lm.tou16(@round(6 * ui_scale));
-    const icon_size_pixels = @round(96 * ui_scale);
-    const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
+    const card_padding_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const card_content_gap_pixels = lm.tou16(@round(1.5 * ui_scale));
+    const icon_size_pixels = @round(24.0 * ui_scale);
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
 
     lm.deps.clay.UI()(.{
         .id = .IDI("boon-dummy-card-", card_index),
@@ -351,7 +350,7 @@ fn dummyBoonCard(
         ) catch .{ .image_data = null },
     })({
         ui.text(boon.rarity.toString(), .{
-            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .letter_spacing = letter_spacing,
             .alignment = .center,
             .color = ui.color(100, 105, 120, 160),
@@ -376,7 +375,7 @@ fn dummyBoonCard(
         ui.text(boon.boon_type.toString(), .{
             .color = ui.color(90, 95, 110, 160),
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@round(11 * ui_scale)),
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -384,14 +383,14 @@ fn dummyBoonCard(
         ui.text(boon.name, .{
             .color = ui.color(140, 145, 160, 200),
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@round(17 * ui_scale)),
+            .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
         });
 
         ui.text(boon.description, .{
             .color = ui.color(110, 115, 130, 170),
-            .font_size = lm.tou16(@round(13 * ui_scale)),
+            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -495,7 +494,7 @@ fn renderMenuHeader(ui_scale: f32) void {
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(4 * ui_scale)),
+            .child_gap = lm.tou16(@round(1.0 * ui_scale)),
         },
     })({
         const room_category = RoomManager.getRoomCategory();
@@ -505,15 +504,15 @@ fn renderMenuHeader(ui_scale: f32) void {
 
         ui.text(header_title, .{
             .color = ui.color(255, 215, 100, 255),
-            .letter_spacing = lm.tou16(@round(3 * ui_scale)),
-            .font_size = lm.tou16(@round(22 * ui_scale)),
+            .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
+            .font_size = lm.tou16(@max(11, @round(5.5 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
         });
         ui.text(header_subtitle, .{
             .color = ui.color(150, 155, 170, 255),
-            .letter_spacing = lm.tou16(@round(1 * ui_scale)),
-            .font_size = lm.tou16(@round(12 * ui_scale)),
+            .letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale))),
+            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
         });
@@ -567,7 +566,7 @@ fn renderCardRow(
 
 fn renderCloseButton(ui_scale: f32, close_index: usize) void {
     const close_label = "CLOSE";
-    const font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
+    const font_size = lm.tou16(@max(5, @round(2.75 * ui_scale)));
     utility_button.draw(
         close_index,
         close_label,
@@ -585,7 +584,7 @@ fn activateCloseButton(_: usize) void {
 fn renderFooter(ui_scale: f32) void {
     lm.deps.clay.UI()(.{
         .id = .ID("boon-footer-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(2.0 * ui_scale)), .w = .fixed(1) } },
     })({});
 
     lm.deps.clay.UI()(.{
@@ -599,7 +598,7 @@ fn renderFooter(ui_scale: f32) void {
 
         ui.text(navigation_hint, .{
             .color = ui.color(140, 150, 175, 200),
-            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
             .font_id = HUD.regularFontId(),
@@ -623,10 +622,10 @@ pub fn draw(
     const card_width_pixels = calculateCardWidthPixels(ui_scale);
     const card_height_pixels = calculateCardHeightPixels(ui_scale);
 
-    const card_gap_pixels = lm.tou16(@round(16 * ui_scale));
-    const container_padding_x_pixels = lm.tou16(@round(24 * ui_scale));
-    const container_padding_y_pixels = lm.tou16(@round(20 * ui_scale));
-    const container_gap_pixels = lm.tou16(@round(14 * ui_scale));
+    const card_gap_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const container_padding_x_pixels = lm.tou16(@round(6.0 * ui_scale));
+    const container_padding_y_pixels = lm.tou16(@round(5.0 * ui_scale));
+    const container_gap_pixels = lm.tou16(@round(3.5 * ui_scale));
 
     const card_count_float: f32 = @floatFromInt(slot_array.len);
     const total_cards_width_pixels = (card_count_float * card_width_pixels) + (@max(0.0, card_count_float - 1.0) * @as(f32, @floatFromInt(card_gap_pixels)));
@@ -653,7 +652,7 @@ pub fn draw(
             .padding = .axes(container_padding_y_pixels, container_padding_x_pixels),
         },
         .background_color = ui.color(18, 20, 26, 235),
-        .corner_radius = .all(14 * ui_scale),
+        .corner_radius = .all(3.5 * ui_scale),
         .border = .{
             .color = ui.color(55, 60, 75, 180),
             .width = .outside(1),
@@ -740,14 +739,22 @@ test "BoonMenu show and hide lifecycle" {
     try std.testing.expect(!isShowing());
 }
 
-test "BoonMenu card dimensions maintain fixed 9:14 aspect ratio and 288x448 at scale 1" {
-    const scale: f32 = 1.0;
-    const width_pixels = calculateCardWidthPixels(scale);
-    const height_pixels = calculateCardHeightPixels(scale);
+test "BoonMenu card dimensions maintain fixed 9:14 aspect ratio and scale proportionally" {
+    const scale_two: f32 = 2.0;
+    const width_scale_two = calculateCardWidthPixels(scale_two);
+    const height_scale_two = calculateCardHeightPixels(scale_two);
 
-    try std.testing.expectEqual(@as(f32, 288.0), width_pixels);
-    try std.testing.expectEqual(@as(f32, 448.0), height_pixels);
-    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_pixels / height_pixels, 0.0001);
+    try std.testing.expectEqual(@as(f32, 144.0), width_scale_two);
+    try std.testing.expectEqual(@as(f32, 224.0), height_scale_two);
+    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_scale_two / height_scale_two, 0.0001);
+
+    const scale_four: f32 = 4.0;
+    const width_scale_four = calculateCardWidthPixels(scale_four);
+    const height_scale_four = calculateCardHeightPixels(scale_four);
+
+    try std.testing.expectEqual(@as(f32, 288.0), width_scale_four);
+    try std.testing.expectEqual(@as(f32, 448.0), height_scale_four);
+    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_scale_four / height_scale_four, 0.0001);
 }
 
 test "BoonMenu getBoonCardSprite selects regular and hovered sprites" {
