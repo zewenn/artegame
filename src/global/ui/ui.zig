@@ -10,3 +10,4 @@ pub const PromptBadge = @import("PromptBadge.zig");
 pub const BossBar = @import("BossBar.zig");
 pub const menu_button = @import("buttons/menu_button.zig");
 pub const utility_button = @import("buttons/utility_button.zig");
+pub const color_scheme = @import("color_scheme.zig");

@@ -5,6 +5,7 @@ const ui = lm.ui;
 const Interactable = @import("../../components/interaction/Interactable.zig");
 const HUD = @import("../HUD.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
     const camera = maybe_camera orelse return;
@@ -30,10 +31,10 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
                 .parent = .left_top,
             },
         },
-        .background_color = ui.color(20, 24, 32, 235),
+        .background_color = color_scheme.prompt_background,
         .corner_radius = .all(6 * ui_scale),
         .border = .{
-            .color = ui.color(80, 160, 255, 220),
+            .color = color_scheme.prompt_border,
             .width = .outside(1),
         },
         .layout = .{
@@ -73,7 +74,7 @@ pub fn draw(maybe_camera: ?*lm.Camera, interactable: *Interactable) void {
             .id = .ID("interaction-prompt-action-text"),
         })({
             ui.text(interactable.action_text, .{
-                .color = ui.color(230, 235, 245, 255),
+                .color = color_scheme.text_primary,
                 .font_size = lm.tou16(@round(13 * ui_scale)),
                 .letter_spacing = 1,
             });

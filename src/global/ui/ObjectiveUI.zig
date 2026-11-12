@@ -4,6 +4,7 @@ const ui = lm.ui;
 
 const Objectives = @import("../../components/player/Objectives.zig");
 const HUD = @import("../HUD.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub fn draw(tracking: Objectives.Objective) void {
     ui.new(.{
@@ -16,7 +17,7 @@ pub fn draw(tracking: Objectives.Objective) void {
                 .parent = .right_top,
             },
         },
-        .background_color = ui.color(50, 50, 50, 128),
+        .background_color = color_scheme.hud_translucent_background,
         .layout = .{
             .direction = .top_to_bottom,
             .child_gap = 5,
@@ -27,7 +28,7 @@ pub fn draw(tracking: Objectives.Objective) void {
             .id = .ID("name"),
         })({
             ui.text(tracking.name, .{
-                .color = ui.color(255, 255, 255, 255),
+                .color = color_scheme.text_bright,
                 .font_size = 32,
                 .letter_spacing = 1,
             });
@@ -36,7 +37,7 @@ pub fn draw(tracking: Objectives.Objective) void {
             .id = .ID("desc"),
         })({
             ui.text(tracking.description, .{
-                .color = ui.color(255, 255, 255, 255),
+                .color = color_scheme.text_bright,
                 .font_size = 16,
                 .letter_spacing = 1,
             });

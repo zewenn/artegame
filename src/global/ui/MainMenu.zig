@@ -10,6 +10,7 @@ const RoomManager = @import("../RoomManager.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 const menu_button = @import("buttons/menu_button.zig");
+const color_scheme = @import("color_scheme.zig");
 
 const Self = @This();
 
@@ -173,7 +174,7 @@ fn drawRootContainer(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             .child_alignment = .{ .x = .center, .y = .center },
             .padding = .all(lm.tou16(@round(24 * ui_scale))),
         },
-        .background_color = ui.color(10, 12, 16, 255),
+        .background_color = color_scheme.screen_background,
     })({
         self.drawActiveScreen(ui_scale, window_size);
     });
@@ -271,15 +272,15 @@ fn drawStatsBadge(self: *Self, ui_scale: f32) void {
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = ui.color(16, 20, 28, 220),
+        .background_color = color_scheme.stats_badge_background,
         .corner_radius = .all(6 * ui_scale),
         .border = .{
-            .color = ui.color(100, 200, 255, 120),
+            .color = color_scheme.accent_cyan_border,
             .width = .outside(1),
         },
     })({
         ui.text(stats_text, .{
-            .color = ui.color(140, 215, 255, 230),
+            .color = color_scheme.accent_cyan_text,
             .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
@@ -332,7 +333,7 @@ fn drawFooter(ui_scale: f32) void {
             "Navigate: WASD / Arrows  |  Select: Enter / Click";
 
         ui.text(footer_text, .{
-            .color = ui.color(140, 150, 175, 220),
+            .color = color_scheme.text_footer,
             .font_size = lm.tou16(@max(10, @round(12 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,

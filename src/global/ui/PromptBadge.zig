@@ -3,6 +3,8 @@ const lm = @import("loom");
 const ui = lm.ui;
 
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const color_scheme = @import("color_scheme.zig");
+
 pub const PromptAction = DevicePrompts.PromptAction;
 pub const ActionPrompt = DevicePrompts.ActionPrompt;
 pub const UiColor = DevicePrompts.UiColor;
@@ -29,27 +31,27 @@ pub fn drawCustomBadge(
     is_controller: bool,
     ui_scale: f32,
 ) void {
-    const corner_radius = if (is_controller) 8 * ui_scale else 4 * ui_scale;
-    const padding_y = lm.tou16(@max(1, @round(2 * ui_scale)));
-    const padding_x = lm.tou16(@max(3, @round(6 * ui_scale)));
-    const font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
+    const corner_radius_pixels = if (is_controller) 8 * ui_scale else 4 * ui_scale;
+    const padding_y_pixels = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const padding_x_pixels = lm.tou16(@max(3, @round(6 * ui_scale)));
+    const font_size_pixels = lm.tou16(@max(9, @round(11 * ui_scale)));
 
     ui.new(.{
         .id = .IDI(id_prefix, 0),
         .background_color = background_color,
-        .corner_radius = .all(corner_radius),
+        .corner_radius = .all(corner_radius_pixels),
         .border = .{
             .color = border_color,
             .width = .outside(1),
         },
         .layout = .{
-            .padding = .axes(padding_y, padding_x),
+            .padding = .axes(padding_y_pixels, padding_x_pixels),
             .child_alignment = .{ .x = .center, .y = .center },
         },
     })({
         ui.text(label, .{
             .color = text_color,
-            .font_size = font_size,
+            .font_size = font_size_pixels,
             .letter_spacing = 1,
             .alignment = .center,
         });
@@ -64,11 +66,11 @@ pub fn drawInlinePrompt(
     ui_scale: f32,
 ) void {
     const prompt = DevicePrompts.getActionPrompt(action);
-    const corner_radius = if (prompt.is_controller_button) 8 * ui_scale else 4 * ui_scale;
-    const padding_y = lm.tou16(@max(1, @round(2 * ui_scale)));
-    const padding_x = lm.tou16(@max(3, @round(5 * ui_scale)));
-    const badge_font_size = lm.tou16(@max(9, @round(11 * ui_scale)));
-    const text_font_size = lm.tou16(@max(10, @round(12 * ui_scale)));
+    const corner_radius_pixels = if (prompt.is_controller_button) 8 * ui_scale else 4 * ui_scale;
+    const padding_y_pixels = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const padding_x_pixels = lm.tou16(@max(3, @round(5 * ui_scale)));
+    const badge_font_size_pixels = lm.tou16(@max(9, @round(11 * ui_scale)));
+    const text_font_size_pixels = lm.tou16(@max(10, @round(12 * ui_scale)));
     const gap_pixels = lm.tou16(@max(2, @round(4 * ui_scale)));
 
     ui.new(.{
@@ -82,26 +84,26 @@ pub fn drawInlinePrompt(
         ui.new(.{
             .id = .IDI("badge-inner-", @intCast(index)),
             .background_color = prompt.badge_background_color,
-            .corner_radius = .all(corner_radius),
+            .corner_radius = .all(corner_radius_pixels),
             .border = .{
                 .color = prompt.badge_border_color,
                 .width = .outside(1),
             },
             .layout = .{
-                .padding = .axes(padding_y, padding_x),
+                .padding = .axes(padding_y_pixels, padding_x_pixels),
                 .child_alignment = .{ .x = .center, .y = .center },
             },
         })({
             ui.text(prompt.label, .{
                 .color = prompt.text_color,
-                .font_size = badge_font_size,
+                .font_size = badge_font_size_pixels,
                 .letter_spacing = 1,
             });
         });
 
         ui.text(description, .{
-            .color = ui.color(180, 190, 205, 230),
-            .font_size = text_font_size,
+            .color = color_scheme.text_secondary,
+            .font_size = text_font_size_pixels,
             .letter_spacing = 1,
         });
     });

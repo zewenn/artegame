@@ -8,24 +8,26 @@ const RoomManager = @import("../RoomManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub const RESTART_LOCKOUT_DURATION_SECONDS: f32 = 1.5;
 
 pub var is_showing: bool = false;
 pub var run_stats: RoomManager.RunStats = .{};
 pub var selected_index: usize = 0;
-pub var prev_selected_index: usize = 0;
+pub var previous_selected_index: usize = 0;
 pub var restart_lockout_timer_seconds: f32 = 0.0;
 var just_opened: bool = false;
 var last_mouse_position: lm.Vector2 = .init(-1, -1);
 var mouse_moved: bool = false;
 
+/// Displays the game over screen with the provided run statistics and records the run end.
 pub fn show(stats: RoomManager.RunStats) void {
     if (is_showing) return;
     is_showing = true;
     run_stats = stats;
     selected_index = 0;
-    prev_selected_index = 0;
+    previous_selected_index = 0;
     just_opened = true;
     restart_lockout_timer_seconds = RESTART_LOCKOUT_DURATION_SECONDS;
     last_mouse_position = lm.mouse.getPosition();
@@ -37,6 +39,7 @@ pub fn show(stats: RoomManager.RunStats) void {
     }
 }
 
+/// Hides the game over screen and resumes game time.
 pub fn hide() void {
     if (!is_showing) return;
     is_showing = false;
@@ -45,36 +48,42 @@ pub fn hide() void {
     lm.time.proceed();
 }
 
+/// Resets all game over state, timers, and selections back to default.
 pub fn reset() void {
     is_showing = false;
     just_opened = false;
     selected_index = 0;
-    prev_selected_index = 0;
+    previous_selected_index = 0;
     restart_lockout_timer_seconds = 0.0;
     last_mouse_position = .init(-1, -1);
     mouse_moved = false;
 }
 
+/// Advances the restart lockout timer by delta_seconds.
 pub fn update(delta_seconds: f32) void {
     if (restart_lockout_timer_seconds > 0.0) {
         restart_lockout_timer_seconds = @max(0.0, restart_lockout_timer_seconds - delta_seconds);
     }
 }
 
+/// Returns true if the restart lockout duration has elapsed.
 pub fn canRestart() bool {
     return restart_lockout_timer_seconds <= 0.0;
 }
 
+/// Returns true if the button at index is active and selectable.
 pub fn isButtonActive(index: usize) bool {
     const is_disabled = (index == 0 and !canRestart());
     return !is_disabled and (selected_index == index);
 }
 
+/// Returns true if the game over menu is currently visible.
 pub fn isShowing() bool {
     return is_showing;
 }
 
-pub fn draw(alloc: ?std.mem.Allocator) void {
+/// Renders the game over backdrop, summary card, stats, and action buttons.
+pub fn draw(allocator: ?std.mem.Allocator) void {
     if (!is_showing) return;
 
     const window_size = lm.window.size.get();
@@ -105,21 +114,21 @@ pub fn draw(alloc: ?std.mem.Allocator) void {
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = ui.color(8, 4, 6, 225),
+        .background_color = color_scheme.backdrop_danger,
     })({
-        drawCard(ui_scale, window_size, alloc);
+        drawCard(ui_scale, window_size, allocator);
     });
 
-    if (selected_index != prev_selected_index) {
+    if (selected_index != previous_selected_index) {
         AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
-        prev_selected_index = selected_index;
+        previous_selected_index = selected_index;
     }
 }
 
-fn drawCard(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) void {
-    const card_w = @min(window_size.x - 32, @round(420 * ui_scale));
-    const card_padding = lm.tou16(@round(24 * ui_scale));
-    const card_gap = lm.tou16(@round(16 * ui_scale));
+fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
+    const card_width_pixels = @min(window_size.x - 32, @round(420 * ui_scale));
+    const card_padding_pixels = lm.tou16(@round(24 * ui_scale));
+    const card_gap_pixels = lm.tou16(@round(16 * ui_scale));
     const title_font_size = lm.tou16(@max(20, @round(24 * ui_scale)));
     const subtitle_font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
     const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
@@ -127,91 +136,95 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, alloc: ?std.mem.Allocator) v
     ui.new(.{
         .id = .ID("gameover-card"),
         .layout = .{
-            .sizing = .{ .w = .fixed(card_w) },
+            .sizing = .{ .w = .fixed(card_width_pixels) },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = card_gap,
-            .padding = .all(card_padding),
+            .child_gap = card_gap_pixels,
+            .padding = .all(card_padding_pixels),
         },
-        .background_color = ui.color(16, 12, 16, 252),
+        .background_color = color_scheme.panel_danger_background,
         .corner_radius = .all(14 * ui_scale),
         .border = .{
-            .color = ui.color(190, 45, 55, 230),
+            .color = color_scheme.accent_crimson_border,
             .width = .outside(2),
         },
     })({
-        ui.new(.{
-            .id = .ID("gameover-header"),
-            .layout = .{
-                .direction = .top_to_bottom,
-                .child_alignment = .{ .x = .center },
-                .child_gap = lm.tou16(@round(4 * ui_scale)),
-            },
-        })({
-            ui.text("GAME OVER", .{
-                .color = ui.color(240, 70, 75, 255),
-                .letter_spacing = lm.tou16(@round(3 * ui_scale)),
-                .font_size = title_font_size,
-                .alignment = .center,
-            });
-            ui.text("You have fallen in battle", .{
-                .color = ui.color(180, 165, 175, 255),
-                .letter_spacing = letter_spacing,
-                .font_size = subtitle_font_size,
-                .alignment = .center,
-            });
-        });
+        drawHeader(title_font_size, subtitle_font_size, letter_spacing, ui_scale);
 
-        drawStatsBox(card_w - @as(f32, @floatFromInt(card_padding * 2)), ui_scale, alloc);
-
-        drawActionButtons(card_w - @as(f32, @floatFromInt(card_padding * 2)), ui_scale);
+        const content_width_pixels = card_width_pixels - @as(f32, @floatFromInt(card_padding_pixels * 2));
+        drawStatsBox(content_width_pixels, ui_scale, allocator);
+        drawActionButtons(content_width_pixels, ui_scale);
     });
 }
 
-fn drawStatsBox(box_w: f32, ui_scale: f32, alloc: ?std.mem.Allocator) void {
-    const box_padding = lm.tou16(@round(14 * ui_scale));
-    const box_gap = lm.tou16(@round(8 * ui_scale));
-    const row_h = @round(24 * ui_scale);
+fn drawHeader(title_font_size: u16, subtitle_font_size: u16, letter_spacing: u16, ui_scale: f32) void {
+    ui.new(.{
+        .id = .ID("gameover-header"),
+        .layout = .{
+            .direction = .top_to_bottom,
+            .child_alignment = .{ .x = .center },
+            .child_gap = lm.tou16(@round(4 * ui_scale)),
+        },
+    })({
+        ui.text("GAME OVER", .{
+            .color = color_scheme.accent_crimson,
+            .letter_spacing = lm.tou16(@round(3 * ui_scale)),
+            .font_size = title_font_size,
+            .alignment = .center,
+        });
+        ui.text("You have fallen in battle", .{
+            .color = color_scheme.text_danger_subtitle,
+            .letter_spacing = letter_spacing,
+            .font_size = subtitle_font_size,
+            .alignment = .center,
+        });
+    });
+}
 
-    const rooms_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d}", .{run_stats.rooms_cleared}) catch "0"
+fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allocator) void {
+    const box_padding_pixels = lm.tou16(@round(14 * ui_scale));
+    const box_gap_pixels = lm.tou16(@round(8 * ui_scale));
+    const row_height_pixels = @round(24 * ui_scale);
+
+    const rooms_string = if (allocator) |active_allocator|
+        std.fmt.allocPrint(active_allocator, "{d}", .{run_stats.rooms_cleared}) catch "0"
     else
         "0";
 
-    const enemies_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d}", .{run_stats.enemies_defeated}) catch "0"
+    const enemies_string = if (allocator) |active_allocator|
+        std.fmt.allocPrint(active_allocator, "{d}", .{run_stats.enemies_defeated}) catch "0"
     else
         "0";
 
-    const xp_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d} XP", .{run_stats.experience_collected}) catch "0 XP"
+    const experience_string = if (allocator) |active_allocator|
+        std.fmt.allocPrint(active_allocator, "{d} XP", .{run_stats.experience_collected}) catch "0 XP"
     else
         "0 XP";
 
-    const high_score_str = if (alloc) |a|
-        std.fmt.allocPrint(a, "{d} XP", .{SaveSystem.getScores().high_score}) catch "0 XP"
+    const high_score_string = if (allocator) |active_allocator|
+        std.fmt.allocPrint(active_allocator, "{d} XP", .{SaveSystem.getScores().high_score}) catch "0 XP"
     else
         "0 XP";
 
     ui.new(.{
         .id = .ID("gameover-stats-box"),
         .layout = .{
-            .sizing = .{ .w = .fixed(box_w) },
+            .sizing = .{ .w = .fixed(box_width_pixels) },
             .direction = .top_to_bottom,
-            .padding = .all(box_padding),
-            .child_gap = box_gap,
+            .padding = .all(box_padding_pixels),
+            .child_gap = box_gap_pixels,
         },
-        .background_color = ui.color(24, 18, 24, 200),
+        .background_color = color_scheme.surface_danger_inset,
         .corner_radius = .all(8 * ui_scale),
         .border = .{
-            .color = ui.color(60, 48, 60, 180),
+            .color = color_scheme.border_danger_subtle,
             .width = .outside(1),
         },
     })({
-        drawStatRow("ROOMS CLEARED", rooms_str, ui.color(240, 205, 110, 255), box_w, row_h, ui_scale);
-        drawStatRow("ENEMIES DEFEATED", enemies_str, ui.color(235, 90, 95, 255), box_w, row_h, ui_scale);
-        drawStatRow("EXPERIENCE", xp_str, ui.color(100, 200, 255, 255), box_w, row_h, ui_scale);
-        drawStatRow("HIGH SCORE", high_score_str, ui.color(180, 230, 140, 255), box_w, row_h, ui_scale);
+        drawStatRow("ROOMS CLEARED", rooms_string, color_scheme.accent_gold, box_width_pixels, row_height_pixels, ui_scale);
+        drawStatRow("ENEMIES DEFEATED", enemies_string, color_scheme.accent_crimson_stat, box_width_pixels, row_height_pixels, ui_scale);
+        drawStatRow("EXPERIENCE", experience_string, color_scheme.accent_cyan, box_width_pixels, row_height_pixels, ui_scale);
+        drawStatRow("HIGH SCORE", high_score_string, color_scheme.accent_green, box_width_pixels, row_height_pixels, ui_scale);
     });
 }
 
@@ -219,24 +232,24 @@ fn drawStatRow(
     label: []const u8,
     value: []const u8,
     value_color: lm.deps.clay.Color,
-    row_w: f32,
-    row_h: f32,
+    row_width_pixels: f32,
+    row_height_pixels: f32,
     ui_scale: f32,
 ) void {
-    _ = row_w;
+    _ = row_width_pixels;
     const font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
     const letter_spacing = lm.tou16(@max(1, @round(1 * ui_scale)));
 
     ui.new(.{
         .id = .ID(label),
         .layout = .{
-            .sizing = .{ .w = .grow, .h = .fixed(row_h) },
+            .sizing = .{ .w = .grow, .h = .fixed(row_height_pixels) },
             .direction = .left_to_right,
             .child_alignment = .{ .y = .center },
         },
     })({
         ui.text(label, .{
-            .color = ui.color(160, 150, 160, 255),
+            .color = color_scheme.text_danger_muted,
             .letter_spacing = letter_spacing,
             .font_size = font_size,
         });
@@ -271,55 +284,69 @@ fn updateHoverSelection() void {
     }
 }
 
-fn drawActionButtons(button_max_width: f32, ui_scale: f32) void {
+fn drawActionButtons(button_maximum_width_pixels: f32, ui_scale: f32) void {
     updateHoverSelection();
 
-    const button_width = @min(button_max_width, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
-    const button_height = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
+    const button_width_pixels = @min(button_maximum_width_pixels, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
+    const button_height_pixels = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
     const gap_pixels = lm.tou16(@round(10 * ui_scale));
 
     ui.new(.{
         .id = .ID("gameover-buttons-col"),
         .layout = .{
-            .sizing = .{ .w = .fixed(button_width) },
+            .sizing = .{ .w = .fixed(button_width_pixels) },
             .direction = .top_to_bottom,
             .child_gap = gap_pixels,
             .child_alignment = .{ .x = .center },
         },
     })({
-        drawButton(0, "RESTART", true, button_width, button_height, ui_scale);
-        drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, button_width, button_height, ui_scale);
+        drawButton(0, "RESTART", true, button_width_pixels, button_height_pixels, ui_scale);
+        drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, button_width_pixels, button_height_pixels, ui_scale);
+        drawFooter(ui_scale);
+    });
+}
 
-        ui.new(.{
-            .id = .ID("gameover-footer-spacer"),
-            .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
-        })({});
+fn drawFooter(ui_scale: f32) void {
+    ui.new(.{
+        .id = .ID("gameover-footer-spacer"),
+        .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+    })({});
 
-        ui.new(.{
-            .id = .ID("gameover-footer-container"),
-            .layout = .{ .child_alignment = .{ .x = .center } },
-        })({
-            const footer_text = if (DevicePrompts.isGamepad())
-                "Navigate: D-Pad / L-Stick  |  Select: A"
-            else
-                "Navigate: WASD / Arrows  |  Select: Enter / Click";
+    ui.new(.{
+        .id = .ID("gameover-footer-container"),
+        .layout = .{ .child_alignment = .{ .x = .center } },
+    })({
+        const footer_text = if (DevicePrompts.isGamepad())
+            "Navigate: D-Pad / L-Stick  |  Select: A"
+        else
+            "Navigate: WASD / Arrows  |  Select: Enter / Click";
 
-            ui.text(footer_text, .{
-                .color = ui.color(140, 150, 175, 200),
-                .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
-                .letter_spacing = 1,
-                .alignment = .center,
-            });
+        ui.text(footer_text, .{
+            .color = color_scheme.text_footer,
+            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .letter_spacing = 1,
+            .alignment = .center,
         });
     });
+}
+
+fn handleButtonHover(index: usize, is_disabled: bool) void {
+    if (!clay.hovered()) return;
+    if (mouse_moved) {
+        selected_index = index;
+    }
+    if (lm.mouse.getButtonDown(.left) and !is_disabled) {
+        selected_index = index;
+        activateAction(index);
+    }
 }
 
 fn drawButton(
     index: usize,
     caption: []const u8,
     is_primary: bool,
-    button_width: f32,
-    button_height: f32,
+    button_width_pixels: f32,
+    button_height_pixels: f32,
     ui_scale: f32,
 ) void {
     const is_disabled = (index == 0 and !canRestart());
@@ -331,31 +358,23 @@ fn drawButton(
         .id = .IDI("gameover-btn-", @intCast(index)),
         .layout = .{
             .sizing = .{
-                .w = .fixed(button_width),
-                .h = .fixed(button_height),
+                .w = .fixed(button_width_pixels),
+                .h = .fixed(button_height_pixels),
             },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .image = ui.image(HUD.getMenuButtonSprite(is_button_active), .init(button_width, button_height)) catch .{ .image_data = null },
+        .image = ui.image(HUD.getMenuButtonSprite(is_button_active), .init(button_width_pixels, button_height_pixels)) catch .{ .image_data = null },
     })({
-        if (clay.hovered()) {
-            if (mouse_moved) {
-                selected_index = index;
-            }
-            if (lm.mouse.getButtonDown(.left) and !is_disabled) {
-                selected_index = index;
-                activateAction(index);
-            }
-        }
+        handleButtonHover(index, is_disabled);
 
         const text_color = if (is_disabled)
-            ui.color(120, 105, 115, 200)
+            color_scheme.button_text_disabled
         else if (is_button_active)
-            ui.color(255, 255, 255, 255)
+            color_scheme.button_text_selected
         else if (is_primary)
-            ui.color(240, 200, 205, 255)
+            color_scheme.button_text_primary_idle
         else
-            ui.color(190, 180, 200, 255);
+            color_scheme.button_text_secondary_idle;
 
         ui.text(caption, .{
             .color = text_color,
@@ -368,26 +387,26 @@ fn drawButton(
 
 fn handleInput() void {
     DevicePrompts.update();
-    var nav_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
-    var nav_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
+    var navigate_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
+    var navigate_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
     var select_pressed = lm.keyboard.getKeyDown(.enter);
 
     if (lm.gamepad.isAvailable(0)) {
-        nav_up = nav_up or lm.gamepad.getButtonDown(0, .left_face_up);
-        nav_down = nav_down or lm.gamepad.getButtonDown(0, .left_face_down);
+        navigate_up = navigate_up or lm.gamepad.getButtonDown(0, .left_face_up);
+        navigate_down = navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
         select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
 
-        const stick = lm.gamepad.getStickVector(0, .left, 0.25);
-        if (stick.y < -0.5) nav_up = true;
-        if (stick.y > 0.5) nav_down = true;
+        const stick_vector = lm.gamepad.getStickVector(0, .left, 0.25);
+        if (stick_vector.y < -0.5) navigate_up = true;
+        if (stick_vector.y > 0.5) navigate_down = true;
     }
 
-    const max_index: usize = 1;
-    if (nav_up) {
-        if (selected_index == 0) selected_index = max_index else selected_index -= 1;
+    const maximum_index: usize = 1;
+    if (navigate_up) {
+        if (selected_index == 0) selected_index = maximum_index else selected_index -= 1;
     }
-    if (nav_down) {
-        if (selected_index >= max_index) selected_index = 0 else selected_index += 1;
+    if (navigate_down) {
+        if (selected_index >= maximum_index) selected_index = 0 else selected_index += 1;
     }
     if (select_pressed) {
         if (selected_index != 0 or canRestart()) {
@@ -398,42 +417,43 @@ fn handleInput() void {
 
 fn activateAction(index: usize) void {
     switch (index) {
-        0 => {
-            if (!canRestart()) return;
-            if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
-                SaveSystem.clearRun();
-            }
-            hide();
-            AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
-            lm.loadScene("demo_map") catch |err| {
-                std.log.err("Failed to restart demo_map scene: {any}", .{err});
-            };
-        },
-        1 => {
-            if (RoomManager.isPlaytestMode()) {
-                RoomManager.endPlaytest();
-                hide();
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-                lm.loadScene("map_editor") catch |err| {
-                    std.log.err("Failed to return to map_editor scene: {any}", .{err});
-                };
-            } else if (RoomManager.isPracticeTutorialMode()) {
-                RoomManager.endPracticeTutorial();
-                hide();
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-                lm.loadScene("main_menu") catch |err| {
-                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
-                };
-            } else {
-                hide();
-                AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-                lm.loadScene("main_menu") catch |err| {
-                    std.log.err("Failed to return to main_menu scene: {any}", .{err});
-                };
-            }
-        },
+        0 => restartRun(),
+        1 => exitRun(),
         else => {},
     }
+}
+
+fn restartRun() void {
+    if (!canRestart()) return;
+    if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
+        SaveSystem.clearRun();
+    }
+    hide();
+    AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.8, 0.05);
+    lm.loadScene("demo_map") catch |load_error| {
+        std.log.err("Failed to restart demo_map scene: {any}", .{load_error});
+    };
+}
+
+fn exitRun() void {
+    if (RoomManager.isPlaytestMode()) {
+        RoomManager.endPlaytest();
+        hide();
+        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+        lm.loadScene("map_editor") catch |load_error| {
+            std.log.err("Failed to return to map_editor scene: {any}", .{load_error});
+        };
+        return;
+    }
+
+    if (RoomManager.isPracticeTutorialMode()) {
+        RoomManager.endPracticeTutorial();
+    }
+    hide();
+    AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
+    lm.loadScene("main_menu") catch |load_error| {
+        std.log.err("Failed to return to main_menu scene: {any}", .{load_error});
+    };
 }
 
 test "GameOverMenu show and hide lifecycle" {

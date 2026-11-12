@@ -8,6 +8,7 @@ const HUD = @import("../HUD.zig");
 const GameOverMenu = @import("GameOverMenu.zig");
 const PauseMenu = @import("PauseMenu.zig");
 const BoonMenu = @import("BoonMenu.zig");
+const color_scheme = @import("color_scheme.zig");
 
 const Self = @This();
 
@@ -60,8 +61,8 @@ pub const BossRank = enum {
 
     pub fn getAccentColor(self: BossRank) lm.Color {
         return switch (self) {
-            .mini_boss => lm.Color{ .r = 240, .g = 195, .b = 80, .a = 255 },
-            .boss => lm.Color{ .r = 255, .g = 85, .b = 95, .a = 255 },
+            .mini_boss => color_scheme.boss_mini_accent_rgba,
+            .boss => color_scheme.boss_main_accent_rgba,
         };
     }
 };
@@ -171,7 +172,7 @@ fn renderTitleText(self: *const Self, ui_scale: f32) void {
         .id = .IDI("boss-hud-title-container-", self.ui_id),
     })({
         ui.text(self.boss_name, .{
-            .color = ui.color(255, 240, 245, 255),
+            .color = color_scheme.boss_title_text,
             .font_size = title_font_size_pixels,
             .letter_spacing = 1,
         });
@@ -184,10 +185,10 @@ fn renderRankBadge(self: *const Self, ui_scale: f32) void {
 
     ui.new(.{
         .id = .IDI("boss-hud-rank-badge-", self.ui_id),
-        .background_color = ui.color(18, 16, 22, 220),
+        .background_color = color_scheme.boss_rank_badge_background,
         .corner_radius = .all(4.0 * ui_scale),
         .border = .{
-            .color = ui.color(accent_color.r, accent_color.g, accent_color.b, 200),
+            .color = color_scheme.fromRgbaWithAlpha(accent_color, 200),
             .width = .outside(1),
         },
         .layout = .{
@@ -195,7 +196,7 @@ fn renderRankBadge(self: *const Self, ui_scale: f32) void {
         },
     })({
         ui.text(self.rank.getTitle(), .{
-            .color = ui.color(accent_color.r, accent_color.g, accent_color.b, 255),
+            .color = color_scheme.fromRgbaWithAlpha(accent_color, 255),
             .font_size = rank_font_size_pixels,
             .letter_spacing = 1,
         });
@@ -212,10 +213,10 @@ fn renderHealthBarTrough(
 
     ui.new(.{
         .id = .IDI("boss-health-trough-", self.ui_id),
-        .background_color = ui.color(20, 14, 18, 240),
+        .background_color = color_scheme.boss_trough_background,
         .corner_radius = .all(3.0 * ui_scale),
         .border = .{
-            .color = ui.color(accent_color.r, accent_color.g, accent_color.b, 160),
+            .color = color_scheme.fromRgbaWithAlpha(accent_color, 160),
             .width = .outside(1),
         },
         .layout = .{
@@ -246,7 +247,7 @@ fn renderDamageLagFill(
             .pointer_capture_mode = .passthrough,
             .z_index = 1,
         },
-        .background_color = ui.color(235, 155, 45, 220),
+        .background_color = color_scheme.boss_damage_lag_fill,
         .corner_radius = .all(3.0 * ui_scale),
         .layout = .{
             .sizing = .{ .w = .fixed(total_bar_width_pixels * lag_ratio), .h = .fixed(total_bar_height_pixels) },
@@ -270,7 +271,7 @@ fn renderCurrentHealthFill(
             .pointer_capture_mode = .passthrough,
             .z_index = 2,
         },
-        .background_color = ui.color(225, 28, 48, 255),
+        .background_color = color_scheme.boss_health_fill,
         .corner_radius = .all(3.0 * ui_scale),
         .layout = .{
             .sizing = .{ .w = .fixed(total_bar_width_pixels * health_ratio), .h = .fixed(total_bar_height_pixels) },
@@ -300,7 +301,7 @@ fn renderPhaseDividers(
                 .pointer_capture_mode = .passthrough,
                 .z_index = 3,
             },
-            .background_color = ui.color(40, 16, 22, 180),
+            .background_color = color_scheme.boss_phase_divider,
             .layout = .{
                 .sizing = .{ .w = .fixed(divider_width_pixels), .h = .fixed(total_bar_height_pixels) },
             },
@@ -333,7 +334,7 @@ fn renderHealthText(
         },
     })({
         ui.textFmt("{d} / {d} ({d}%)", .{ rounded_current_health, rounded_max_health, health_percentage }, .{
-            .color = ui.color(255, 255, 255, 255),
+            .color = color_scheme.text_bright,
             .font_size = font_size_pixels,
             .letter_spacing = 1,
         });

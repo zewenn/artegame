@@ -12,6 +12,7 @@ const MusicManager = @import("audio/MusicManager.zig");
 const DevicePrompts = @import("input/DevicePrompts.zig");
 
 pub const ui = @import("ui/ui.zig");
+pub const color_scheme = ui.color_scheme;
 pub const PlayerStats = ui.PlayerStats;
 pub const ObjectiveUI = ui.ObjectiveUI;
 pub const BoonMenu = ui.BoonMenu;
@@ -38,9 +39,9 @@ pub fn getUtilityButtonSprite(is_active: bool) []const u8 {
     return if (is_active) UTILITY_BUTTON_HOVER_SPRITE else UTILITY_BUTTON_SPRITE;
 }
 
-pub fn calculateUiScale(win_size: lm.Vector2) f32 {
-    const scale_x = win_size.x / 1280.0;
-    const scale_y = win_size.y / 720.0;
+pub fn calculateUiScale(window_dimensions: lm.Vector2) f32 {
+    const scale_x = window_dimensions.x / 1280.0;
+    const scale_y = window_dimensions.y / 720.0;
     return @max(1.0, @floor(@min(scale_x, scale_y)));
 }
 
@@ -57,11 +58,11 @@ player_objectives: ?*Objectives = null,
 player_attack: ?*Attack = null,
 
 arena: ?std.heap.ArenaAllocator = null,
-alloc: ?std.mem.Allocator = null,
+allocator: ?std.mem.Allocator = null,
 
 pub fn Awake(self: *Self) void {
     self.arena = std.heap.ArenaAllocator.init(lm.allocators.scene());
-    self.alloc = self.arena.?.allocator();
+    self.allocator = self.arena.?.allocator();
     GameOverMenu.reset();
 }
 
@@ -85,7 +86,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     }
 
     if (GameOverMenu.isShowing()) {
-        GameOverMenu.draw(self.alloc);
+        GameOverMenu.draw(self.allocator);
         return;
     }
 
@@ -107,7 +108,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         const attack = self.player_attack orelse break :player_stats;
         const stats = self.player_stats orelse break :player_stats;
 
-        PlayerStats.draw(stats, attack, self.alloc);
+        PlayerStats.draw(stats, attack, self.allocator);
     }
 
     objectives: {
@@ -134,16 +135,16 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     }
 
     if (PauseMenu.isShowing()) {
-        PauseMenu.draw(self.alloc);
+        PauseMenu.draw(self.allocator);
     } else if (BoonMenu.slots) |slot_array| {
-        BoonMenu.draw(slot_array, self.player_stats, self.player_attack, self.alloc);
+        BoonMenu.draw(slot_array, self.player_stats, self.player_attack, self.allocator);
     }
 }
 
 pub fn End(self: *Self) void {
     if (self.arena) |*arena| arena.deinit();
     self.arena = null;
-    self.alloc = null;
+    self.allocator = null;
     BoonMenu.hide();
     PauseMenu.hide();
     GameOverMenu.hide();
@@ -154,8 +155,8 @@ pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
 }
 
 fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
-    const room_type = if (RoomManager.get()) |rm| rm.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
-    const room_str = switch (room_type) {
+    const room_type = if (RoomManager.get()) |room_manager| room_manager.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
+    const room_suffix_text = switch (room_type) {
         .mini_boss => "  -  Mini-Boss",
         .boss => "  -  Boss",
         .tutorial => "  -  Tutorial",
@@ -163,8 +164,8 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
     };
 
     const font_size = lm.tou16(@max(10, @round(10 * scale)));
-    const pad_y = lm.tou16(@round(6 * ui_scale));
-    const pad_x = lm.tou16(@round(16 * ui_scale));
+    const padding_y_pixels = lm.tou16(@round(6 * ui_scale));
+    const padding_x_pixels = lm.tou16(@round(16 * ui_scale));
 
     lm.ui.new(.{
         .id = .ID("hud-round-indicator"),
@@ -176,17 +177,17 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
             },
             .offset = .{ .x = 0, .y = 16 * scale },
         },
-        .background_color = lm.ui.color(18, 20, 26, 210),
+        .background_color = color_scheme.hud_overlay_background,
         .corner_radius = .all(4 * ui_scale),
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
             .child_gap = lm.tou16(@round(2 * ui_scale)),
-            .padding = .axes(pad_y, pad_x),
+            .padding = .axes(padding_y_pixels, padding_x_pixels),
         },
     })({
-        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_str, progress.killed, progress.total }, .{
-            .color = lm.ui.color(255, 235, 170, 255),
+        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_suffix_text, progress.killed, progress.total }, .{
+            .color = color_scheme.text_highlight_gold,
             .font_size = font_size,
             .letter_spacing = 1,
         });
