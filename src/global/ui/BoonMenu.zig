@@ -198,7 +198,7 @@ fn boonCard(
     allocator: ?std.mem.Allocator,
 ) void {
     const ui_scale = HUD.ui_scale;
-    const card_padding_pixels = lm.tou16(@round(16 * ui_scale));
+    const card_padding_pixels = lm.tou16(@round(24 * ui_scale));
     const card_content_gap_pixels = lm.tou16(@round(6 * ui_scale));
     const icon_size_pixels = @round(96 * ui_scale);
     const letter_spacing = lm.tou16(@max(2, @round(2 * ui_scale)));
@@ -228,15 +228,43 @@ fn boonCard(
             selectBoon(card_index, stats, attack);
         }
 
-        ui.text(
-            boon.rarity.toString(),
-            .{
-                .font_size = lm.tou16(@round(12 * ui_scale)),
-                .letter_spacing = letter_spacing,
-                .alignment = .center,
-                .color = rarityColor(boon.rarity),
+        const rarity_font_size = 16 * HUD.ui_scale;
+
+        ui.new(.{
+            .id = .IDI("boon-rarity-", card_index),
+            .background_color = ui.color(14, 12, 12, 64),
+            .corner_radius = .all(4 * HUD.ui_scale),
+            .layout = .{
+                .direction = .left_to_right,
+                .child_gap = lm.tou16(4 * HUD.ui_scale),
+                .padding = .all(lm.tou16(4 * HUD.ui_scale)),
             },
-        );
+        })({
+            ui.new(.{
+                .id = .IDI("boon-rarity-image-", card_index),
+                .layout = .{
+                    .sizing = .{
+                        .h = .fixed(rarity_font_size),
+                        .w = .fixed(rarity_font_size),
+                    },
+                },
+                .image = ui.image(
+                    boon.rarity.spritePath(),
+                    .init(rarity_font_size, rarity_font_size),
+                ) catch .{ .image_data = null },
+            })({});
+
+            ui.text(
+                boon.rarity.toString(),
+                .{
+                    .font_size = lm.tou16(@round(rarity_font_size)),
+                    .letter_spacing = letter_spacing,
+                    .alignment = .center,
+                    .color = rarityColor(boon.rarity),
+                    .font_id = ui.fontID("ui/fonts/Silkscreen-Regular.ttf"),
+                },
+            );
+        });
 
         ui.new(.{
             .id = .IDI("boon-image-", card_index),

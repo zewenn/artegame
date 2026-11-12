@@ -47,6 +47,12 @@ pub const Rarity = enum {
             .cosmic => "Cosmic",
         };
     }
+
+    pub fn spritePath(self: Rarity) []const u8 {
+        return switch (self) {
+            inline else => |tag| "ui/hud/boon_tiers/" ++ @tagName(tag) ++ ".png",
+        };
+    }
 };
 
 id: []const u8,
