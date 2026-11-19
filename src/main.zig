@@ -8,7 +8,7 @@ pub fn main() !void {
         .window = .{
             .title = "AMRAP",
             .resizable = true,
-            .restore_state = true,
+            .restore_state = false,
             .size = .init(1280, 720),
             .clear_color = lm.Color.init(14, 12, 12, 255),
             .exit_key = .null,
