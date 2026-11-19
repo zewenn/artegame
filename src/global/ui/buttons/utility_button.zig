@@ -4,6 +4,7 @@ const ui = lm.ui;
 const clay = lm.deps.clay;
 
 const HUD = @import("../../HUD.zig");
+const color_scheme = @import("../color_scheme.zig");
 
 pub const ActionFn = *const fn (index: usize) void;
 
@@ -72,7 +73,7 @@ fn drawButtonLabel(
 ) void {
     const bottom_padding_pixels: u16 = if (is_selected) 0 else 1 * lm.tou16(ui_scale);
     const top_padding_pixels: u16 = if (!is_selected) 0 else lm.tou16(@round(0.5 * ui_scale));
-    const text_color = if (is_selected) ui.color(255, 255, 255, 255) else ui.color(238, 230, 234, 255);
+    const text_color = if (is_selected) color_scheme.button_text_selected else color_scheme.button_text_idle;
     const font_id = HUD.getFontId(is_selected);
 
     ui.new(.{

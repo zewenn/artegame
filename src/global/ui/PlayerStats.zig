@@ -6,20 +6,21 @@ const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const HUD = @import("../HUD.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const color_scheme = @import("color_scheme.zig");
 
 const Spell = @import("../../components/Weapons/Spell.zig");
 
 fn progressBar(
     bar_index: u32,
     current_value: f32,
-    max_value: f32,
+    maximum_value: f32,
     background_color: lm.Color,
     fill_color: lm.Color,
     height_pixels: f32,
 ) void {
     ui.new(.{
         .id = .IDI("progress-bar-", bar_index),
-        .background_color = ui.color(background_color.r, background_color.g, background_color.b, background_color.a),
+        .background_color = color_scheme.fromRgbaWithAlpha(background_color, background_color.a),
         .layout = .{
             .sizing = .{ .h = .fixed(height_pixels), .w = .percent(1) },
         },
@@ -27,9 +28,9 @@ fn progressBar(
         if (@round(current_value) != 0)
             ui.new(.{
                 .id = .IDI("progress-bar-inner-", bar_index),
-                .background_color = ui.color(fill_color.r, fill_color.g, fill_color.b, fill_color.a),
+                .background_color = color_scheme.fromRgbaWithAlpha(fill_color, fill_color.a),
                 .layout = .{
-                    .sizing = .{ .h = .percent(1), .w = .percent(current_value / max_value) },
+                    .sizing = .{ .h = .percent(1), .w = .percent(current_value / maximum_value) },
                 },
             })({});
     });
@@ -112,7 +113,7 @@ fn drawSpellCooldownBadge(
 
         ui.new(.{
             .id = .IDI("spell-cooldown-badge-", slot_index),
-            .background_color = ui.color(16, 18, 24, 230),
+            .background_color = color_scheme.hud_badge_background,
             .corner_radius = .all(0.75 * HUD.ui_scale),
             .layout = .{
                 .padding = .axes(badge_padding_y_pixels, badge_padding_x_pixels),
@@ -120,7 +121,7 @@ fn drawSpellCooldownBadge(
             },
         })({
             ui.text(cooldown_text, .{
-                .color = ui.color(255, 255, 255, 255),
+                .color = color_scheme.text_bright,
                 .font_size = font_size_pixels,
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
@@ -229,7 +230,7 @@ fn experienceCounter(experience: usize, allocator: ?std.mem.Allocator) void {
             .offset = .{ .x = -4.0 * HUD.ui_scale, .y = -1 * HUD.hud_height / 2 - 0.5 * counter_size_pixels },
         },
         .corner_radius = .all(lm.tou16(@round(1.0 * HUD.ui_scale))),
-        .background_color = ui.color(23, 21, 22, 196),
+        .background_color = color_scheme.hud_translucent_background,
         .layout = .{
             .padding = .axes(lm.tou16(@round(1.0 * HUD.ui_scale)), lm.tou16(@round(2.0 * HUD.ui_scale))),
             .child_gap = lm.tou16(@round(2.0 * HUD.ui_scale)),
@@ -259,7 +260,7 @@ fn experienceCounter(experience: usize, allocator: ?std.mem.Allocator) void {
             .line_height = font_size_pixels - lm.tou16(@max(1, @round(0.5 * HUD.ui_scale))),
             .font_size = font_size_pixels,
             .letter_spacing = lm.tou16(@max(1, @round(0.5 * HUD.ui_scale))),
-            .color = ui.color(255, 255, 255, 255),
+            .color = color_scheme.text_bright,
             .font_id = HUD.boldFontId(),
         });
     });
@@ -324,7 +325,7 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 .direction = .top_to_bottom,
                 .padding = .axes(lm.tou16(@round(2.0 * HUD.ui_scale)), lm.tou16(@round(2.0 * HUD.ui_scale))),
             },
-            .background_color = ui.color(50, 50, 50, 255),
+            .background_color = color_scheme.hud_bar_trough,
             .image = ui.image("ui/hud/background.png", .init(HUD.hud_width, HUD.hud_height)) catch .{ .image_data = null },
         })({
             ui.new(.{
@@ -338,8 +339,8 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 0,
                 stats.current.health,
                 stats.max.health,
-                .init(55, 51, 52, 255),
-                .fromInt(0xb25266ff),
+                color_scheme.hud_bar_trough_rgba,
+                color_scheme.hud_health_fill_rgba,
                 6.0 * HUD.ui_scale,
             );
 
@@ -354,8 +355,8 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 1,
                 stats.current.stamina,
                 stats.max.stamina,
-                .init(55, 51, 52, 255),
-                .fromInt(0xc090a9ff),
+                color_scheme.hud_bar_trough_rgba,
+                color_scheme.hud_stamina_fill_rgba,
                 3.0 * HUD.ui_scale,
             );
 

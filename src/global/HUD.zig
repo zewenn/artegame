@@ -12,6 +12,7 @@ const MusicManager = @import("audio/MusicManager.zig");
 const DevicePrompts = @import("input/DevicePrompts.zig");
 
 pub const ui = @import("ui/ui.zig");
+pub const color_scheme = ui.color_scheme;
 pub const PlayerStats = ui.PlayerStats;
 pub const ObjectiveUI = ui.ObjectiveUI;
 pub const BoonMenu = ui.BoonMenu;
@@ -197,7 +198,7 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
             },
             .offset = .{ .x = 0, .y = 4.0 * ui_scale },
         },
-        .background_color = lm.ui.color(18, 20, 26, 210),
+        .background_color = color_scheme.hud_overlay_background,
         .corner_radius = .all(1.0 * ui_scale),
         .layout = .{
             .direction = .top_to_bottom,
@@ -207,7 +208,7 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
         },
     })({
         lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_label, progress.killed, progress.total }, .{
-            .color = lm.ui.color(255, 235, 170, 255),
+            .color = color_scheme.text_highlight_gold,
             .font_size = font_size,
             .letter_spacing = 1,
             .font_id = regularFontId(),

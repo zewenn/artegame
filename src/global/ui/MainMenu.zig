@@ -10,6 +10,7 @@ const RoomManager = @import("../RoomManager.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 const menu_button = @import("buttons/menu_button.zig");
+const color_scheme = @import("color_scheme.zig");
 
 const Self = @This();
 
@@ -173,7 +174,7 @@ fn drawRootContainer(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             .child_alignment = .{ .x = .center, .y = .center },
             .padding = .all(lm.tou16(@round(6.0 * ui_scale))),
         },
-        .background_color = ui.color(10, 12, 16, 255),
+        .background_color = color_scheme.screen_background,
     })({
         self.drawActiveScreen(ui_scale, window_size);
     });
@@ -267,7 +268,7 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
             "HIGH SCORE: {d} XP | BEST ROUND: {d} | TOTAL KILLS: {d}",
             .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
             .{
-                .color = ui.color(238, 230, 234, 255),
+                .color = color_scheme.stats_badge_text,
                 .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
                 .letter_spacing = 1,
                 .alignment = .center,
@@ -322,7 +323,7 @@ fn drawFooter(ui_scale: f32) void {
             "Navigate: WASD / Arrows | Select: Enter / Click";
 
         ui.text(footer_text, .{
-            .color = ui.color(140, 150, 175, 220),
+            .color = color_scheme.text_footer,
             .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,

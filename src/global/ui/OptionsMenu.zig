@@ -9,6 +9,7 @@ const DevicePrompts = @import("../input/DevicePrompts.zig");
 const ControlScheme = @import("../input/ControlScheme.zig");
 const HUD = @import("../HUD.zig");
 const utility_button = @import("buttons/utility_button.zig");
+const color_scheme = @import("color_scheme.zig");
 
 /// Tabs available in the options menu.
 pub const OptionsTab = enum {
@@ -94,10 +95,10 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .child_gap = lm.tou16(@round(3.5 * ui_scale)),
             .padding = .all(panel_padding_pixels),
         },
-        .background_color = ui.color(16, 18, 25, 250),
+        .background_color = color_scheme.panel_background,
         .corner_radius = .all(3.0 * ui_scale),
         .border = .{
-            .color = ui.color(55, 62, 80, 200),
+            .color = color_scheme.panel_border,
             .width = .outside(1),
         },
     })({
@@ -132,7 +133,7 @@ fn drawTitle(title_font_size: u16) void {
         .layout = .{ .child_alignment = .{ .x = .center } },
     })({
         ui.text("SETTINGS & OPTIONS", .{
-            .color = ui.color(240, 200, 100, 255),
+            .color = color_scheme.accent_gold,
             .font_size = title_font_size,
             .letter_spacing = 2,
             .alignment = .center,
@@ -207,15 +208,15 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (is_gamepad) ui.color(55, 60, 75, 200) else ui.color(35, 40, 52, 200),
+        .background_color = if (is_gamepad) color_scheme.badge_gamepad_background else color_scheme.badge_keyboard_background,
         .corner_radius = .all(if (is_gamepad) 2.0 * ui_scale else 1.0 * ui_scale),
         .border = .{
-            .color = if (is_gamepad) ui.color(120, 130, 150, 180) else ui.color(70, 80, 100, 180),
+            .color = if (is_gamepad) color_scheme.badge_gamepad_border else color_scheme.badge_keyboard_border,
             .width = .outside(1),
         },
     })({
         ui.text(hint, .{
-            .color = ui.color(190, 200, 220, 230),
+            .color = color_scheme.badge_text,
             .font_size = lm.tou16(@max(5, @round(2.5 * ui_scale))),
             .letter_spacing = 1,
             .font_id = HUD.boldFontId(),
@@ -280,15 +281,15 @@ fn drawVolumeRow(
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
-            ui.hex(0x2a1e23ff)
+            color_scheme.row_selected_warm_background
         else
-            ui.hex(0x0c0c0cff),
+            color_scheme.row_dark_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 200)
+                color_scheme.accent_gold_border
             else
-                ui.color(40, 46, 60, 120),
+                color_scheme.row_idle_border,
             .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
         },
     })({
@@ -310,7 +311,7 @@ fn drawVolumeLabel(index: usize, label: []const u8, is_selected: bool, ui_scale:
         .layout = .{ .sizing = .{ .w = .fixed(@round(45.0 * ui_scale)) } },
     })({
         ui.text(label, .{
-            .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
+            .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
             .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .letter_spacing = 1,
             .font_id = HUD.regularFontId(),
@@ -335,14 +336,14 @@ fn drawVolumeStepButton(
             .sizing = .{ .w = .fixed(button_size_pixels), .h = .fixed(button_size_pixels) },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (clay.hovered() or is_hovered) ui.color(50, 58, 78, 255) else ui.color(30, 35, 48, 220),
+        .background_color = if (clay.hovered() or is_hovered) color_scheme.step_button_hovered_background else color_scheme.step_button_idle_background,
     })({
         if ((clay.hovered() or is_hovered) and lm.mouse.getButtonDown(.left)) {
             selected_index = index;
             adjustVolume(kind, delta);
         }
         ui.text(symbol, .{
-            .color = ui.color(255, 255, 255, 255),
+            .color = color_scheme.text_bright,
             .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
@@ -373,7 +374,7 @@ fn drawVolumeProgressBar(
             .sizing = .{ .w = .fixed(bar_total_width_pixels), .h = .fixed(bar_height_pixels) },
             .direction = .left_to_right,
         },
-        .background_color = ui.color(24, 28, 38, 255),
+        .background_color = color_scheme.progress_trough_background,
         .corner_radius = .all(1.0 * ui_scale),
     })({
         drawVolumeBarFill(index, bar_filled_width_pixels, is_selected, ui_scale);
@@ -389,11 +390,11 @@ fn drawVolumeBarFill(
     if (filled_width_pixels <= 0.5) return;
 
     const fill_color = if (AudioManager.mute)
-        ui.color(140, 60, 60, 220)
+        color_scheme.progress_fill_muted
     else if (is_selected)
-        ui.color(240, 200, 100, 255)
+        color_scheme.accent_gold
     else
-        ui.color(70, 140, 230, 255);
+        color_scheme.progress_fill_active;
 
     ui.new(.{
         .id = .IDI("opt-vol-fill-", @intCast(index)),
@@ -417,7 +418,7 @@ fn drawVolumePercentage(
         },
     })({
         ui.text(percentage_text, .{
-            .color = if (is_selected) ui.color(240, 200, 100, 255) else ui.color(180, 185, 200, 255),
+            .color = if (is_selected) color_scheme.accent_gold else color_scheme.text_secondary,
             .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .right,
             .font_id = HUD.regularFontId(),
@@ -444,15 +445,15 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
-            ui.color(28, 33, 46, 220)
+            color_scheme.row_selected_background
         else
-            ui.color(20, 23, 31, 160),
+            color_scheme.row_idle_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 200)
+                color_scheme.accent_gold_border
             else
-                ui.color(40, 46, 60, 120),
+                color_scheme.row_idle_border,
             .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
         },
     })({
@@ -465,7 +466,7 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
             .layout = .{ .sizing = .{ .w = .fixed(@round(45.0 * ui_scale)) } },
         })({
             ui.text("Mute All Audio", .{
-                .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
+                .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
                 .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
@@ -518,15 +519,15 @@ fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
-            ui.color(28, 33, 46, 220)
+            color_scheme.row_selected_background
         else
-            ui.color(20, 23, 31, 160),
+            color_scheme.row_idle_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 200)
+                color_scheme.accent_gold_border
             else
-                ui.color(40, 46, 60, 120),
+                color_scheme.row_idle_border,
             .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
         },
     })({
@@ -539,7 +540,7 @@ fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale
             .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
         })({
             ui.text("Display Mode", .{
-                .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
+                .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
                 .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
@@ -613,15 +614,15 @@ fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_sc
             ),
         },
         .background_color = if (clay.hovered() or is_selected)
-            ui.color(28, 33, 46, 220)
+            color_scheme.row_selected_background
         else
-            ui.color(20, 23, 31, 160),
+            color_scheme.row_idle_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
             .color = if (clay.hovered() or is_selected)
-                ui.color(240, 200, 100, 200)
+                color_scheme.accent_gold_border
             else
-                ui.color(40, 46, 60, 120),
+                color_scheme.row_idle_border,
             .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
         },
     })({
@@ -634,7 +635,7 @@ fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_sc
             .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
         })({
             ui.text("Control Scheme", .{
-                .color = if (is_selected) ui.color(255, 235, 170, 255) else ui.color(220, 225, 235, 255),
+                .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
                 .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
@@ -663,20 +664,20 @@ fn drawControlsTableHeader(content_width_pixels: f32, header_font_size: u16, ui_
             .child_alignment = .{ .y = .center },
             .padding = .axes(0, lm.tou16(@round(2.0 * ui_scale))),
         },
-        .background_color = ui.color(25, 30, 42, 220),
+        .background_color = color_scheme.table_header_background,
         .corner_radius = .all(1.0 * ui_scale),
     })({
-        drawControlsHeaderCell("opt-table-header-1", @round(40.0 * ui_scale), "ACTION", ui.color(240, 200, 100, 255), header_font_size);
+        drawControlsHeaderCell("opt-table-header-1", @round(40.0 * ui_scale), "ACTION", color_scheme.accent_gold, header_font_size);
 
         const keyboard_and_mouse_header = if (!is_gamepad)
             (if (is_keyboard_only) "KEYBOARD ONLY (ACTIVE)" else "KEYBOARD & MOUSE (ACTIVE)")
         else
             active_scheme.displayName();
-        const keyboard_color = if (!is_gamepad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200);
+        const keyboard_color = if (!is_gamepad) color_scheme.text_active_device else color_scheme.text_muted;
         drawControlsHeaderCell("opt-table-header-2", @round(47.5 * ui_scale), keyboard_and_mouse_header, keyboard_color, header_font_size);
 
         const gamepad_header = if (is_gamepad) "CONTROLLER (ACTIVE)" else "CONTROLLER";
-        const gamepad_color = if (is_gamepad) ui.color(255, 235, 140, 255) else ui.color(150, 160, 180, 200);
+        const gamepad_color = if (is_gamepad) color_scheme.text_active_device else color_scheme.text_muted;
         drawControlsHeaderGrowCell("opt-table-header-3", gamepad_header, gamepad_color, header_font_size);
     });
 }
@@ -729,7 +730,7 @@ fn drawControlBindingRow(
     ui_scale: f32,
 ) void {
     const is_even = (binding_index % 2 == 0);
-    const background = if (is_even) ui.color(18, 21, 28, 180) else ui.color(14, 16, 22, 180);
+    const background = if (is_even) color_scheme.table_row_even_background else color_scheme.table_row_odd_background;
 
     ui.new(.{
         .id = .IDI("opt-control-row-", @intCast(binding_index)),
@@ -741,12 +742,12 @@ fn drawControlBindingRow(
         },
         .background_color = background,
     })({
-        drawBindingCell("opt-cell-action-", binding_index, @round(40.0 * ui_scale), binding.action, ui.color(225, 230, 240, 255), row_font_size);
+        drawBindingCell("opt-cell-action-", binding_index, @round(40.0 * ui_scale), binding.action, color_scheme.text_primary, row_font_size);
 
-        const keyboard_color = if (!is_gamepad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180);
+        const keyboard_color = if (!is_gamepad) color_scheme.text_active_binding else color_scheme.text_dim;
         drawBindingCell("opt-cell-kbm-", binding_index, @round(47.5 * ui_scale), binding.keyboard_and_mouse, keyboard_color, row_font_size);
 
-        const gamepad_color = if (is_gamepad) ui.color(240, 245, 255, 255) else ui.color(140, 150, 170, 180);
+        const gamepad_color = if (is_gamepad) color_scheme.text_active_binding else color_scheme.text_dim;
         drawBindingGrowCell("opt-cell-pad-", binding_index, binding.gamepad, gamepad_color, row_font_size);
     });
 }

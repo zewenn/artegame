@@ -94,6 +94,22 @@
 
 ## Done
 
+### [67#UIB] Create unified color_scheme in src/global/ui and update UI references
+
+  - tags: [ui, colors, palette, refactor]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Create src/global/ui/color_scheme.zig with unified semantic UI color palette, export in ui.zig, and register tests in main.zig
+      - [x] Update OptionsMenu.zig, MainMenu.zig, and PauseMenu.zig to use color_scheme
+      - [x] Update BoonMenu.zig, GameOverMenu.zig, menu_button.zig, and utility_button.zig to use color_scheme
+      - [x] Update HUD.zig, PlayerStats.zig, ObjectiveUI.zig, InteractionPrompt.zig, PromptBadge.zig, and BossBar.zig to use color_scheme
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that unified UI color_scheme works as expected
+    ```md
+    Centralizes all UI colors into a unified src/global/ui/color_scheme.zig namespace struct and replaces scattered inline ui.color(...) literals across all UI modules with semantic color constants.
+    ```
+
 ### [66#UIS] Rework UI scaling with 2px base scale, unbaked 1x dimensions, and recalculated font sizes
 
   - tags: [ui, hud, scaling, fonts, menus, refactor]

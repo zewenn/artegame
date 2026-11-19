@@ -4,6 +4,8 @@ const ui = lm.ui;
 
 const HUD = @import("../HUD.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
+const color_scheme = @import("color_scheme.zig");
+
 pub const PromptAction = DevicePrompts.PromptAction;
 pub const ActionPrompt = DevicePrompts.ActionPrompt;
 pub const UiColor = DevicePrompts.UiColor;
@@ -103,7 +105,7 @@ pub fn drawInlinePrompt(
         });
 
         ui.text(description, .{
-            .color = ui.color(180, 190, 205, 230),
+            .color = color_scheme.text_secondary,
             .font_size = text_font_size_pixels,
             .letter_spacing = 1,
             .font_id = HUD.regularFontId(),

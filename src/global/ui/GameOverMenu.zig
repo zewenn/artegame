@@ -8,6 +8,7 @@ const RoomManager = @import("../RoomManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub const RESTART_LOCKOUT_DURATION_SECONDS: f32 = 1.5;
 
@@ -20,6 +21,7 @@ var just_opened: bool = false;
 var last_mouse_position: lm.Vector2 = .init(-1, -1);
 var mouse_moved: bool = false;
 
+/// Displays the game over screen with the provided run statistics and records the run end.
 pub fn show(stats: RoomManager.RunStats) void {
     if (is_showing) return;
     is_showing = true;
@@ -37,6 +39,7 @@ pub fn show(stats: RoomManager.RunStats) void {
     }
 }
 
+/// Hides the game over screen and resumes game time.
 pub fn hide() void {
     if (!is_showing) return;
     is_showing = false;
@@ -45,6 +48,7 @@ pub fn hide() void {
     lm.time.proceed();
 }
 
+/// Resets all game over state, timers, and selections back to default.
 pub fn reset() void {
     is_showing = false;
     just_opened = false;
@@ -55,25 +59,30 @@ pub fn reset() void {
     mouse_moved = false;
 }
 
+/// Advances the restart lockout timer by delta_seconds.
 pub fn update(delta_seconds: f32) void {
     if (restart_lockout_timer_seconds > 0.0) {
         restart_lockout_timer_seconds = @max(0.0, restart_lockout_timer_seconds - delta_seconds);
     }
 }
 
+/// Returns true if the restart lockout duration has elapsed.
 pub fn canRestart() bool {
     return restart_lockout_timer_seconds <= 0.0;
 }
 
+/// Returns true if the button at index is active and selectable.
 pub fn isButtonActive(index: usize) bool {
     const is_disabled = (index == 0 and !canRestart());
     return !is_disabled and (selected_index == index);
 }
 
+/// Returns true if the game over menu is currently visible.
 pub fn isShowing() bool {
     return is_showing;
 }
 
+/// Renders the game over backdrop, summary card, stats, and action buttons.
 pub fn draw(allocator: ?std.mem.Allocator) void {
     if (!is_showing) return;
 
@@ -105,7 +114,7 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = ui.color(8, 4, 6, 225),
+        .background_color = color_scheme.backdrop_danger,
     })({
         drawCard(ui_scale, window_size, allocator);
     });
@@ -133,39 +142,44 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .child_gap = card_gap_pixels,
             .padding = .all(card_padding_pixels),
         },
-        .background_color = ui.color(16, 12, 16, 252),
+        .background_color = color_scheme.panel_danger_background,
         .corner_radius = .all(3.5 * ui_scale),
         .border = .{
-            .color = ui.color(190, 45, 55, 230),
+            .color = color_scheme.accent_crimson_border,
             .width = .outside(2),
         },
     })({
-        ui.new(.{
-            .id = .ID("gameover-header"),
-            .layout = .{
-                .direction = .top_to_bottom,
-                .child_alignment = .{ .x = .center },
-                .child_gap = lm.tou16(@round(1.0 * ui_scale)),
-            },
-        })({
-            ui.text("GAME OVER", .{
-                .color = ui.color(240, 70, 75, 255),
-                .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
-                .font_size = title_font_size,
-                .alignment = .center,
-                .font_id = HUD.boldFontId(),
-            });
-            ui.text("You have fallen in battle", .{
-                .color = ui.color(180, 165, 175, 255),
-                .letter_spacing = letter_spacing,
-                .font_size = subtitle_font_size,
-                .alignment = .center,
-                .font_id = HUD.regularFontId(),
-            });
-        });
+        drawHeader(title_font_size, subtitle_font_size, letter_spacing, ui_scale);
 
-        drawStatsBox(card_width_pixels - @as(f32, @floatFromInt(card_padding_pixels * 2)), ui_scale, allocator);
-        drawActionButtons(card_width_pixels - @as(f32, @floatFromInt(card_padding_pixels * 2)), ui_scale);
+        const content_width_pixels = card_width_pixels - @as(f32, @floatFromInt(card_padding_pixels * 2));
+        drawStatsBox(content_width_pixels, ui_scale, allocator);
+        drawActionButtons(content_width_pixels, ui_scale);
+    });
+}
+
+fn drawHeader(title_font_size: u16, subtitle_font_size: u16, letter_spacing: u16, ui_scale: f32) void {
+    ui.new(.{
+        .id = .ID("gameover-header"),
+        .layout = .{
+            .direction = .top_to_bottom,
+            .child_alignment = .{ .x = .center },
+            .child_gap = lm.tou16(@round(1.0 * ui_scale)),
+        },
+    })({
+        ui.text("GAME OVER", .{
+            .color = color_scheme.accent_crimson,
+            .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
+            .font_size = title_font_size,
+            .alignment = .center,
+            .font_id = HUD.boldFontId(),
+        });
+        ui.text("You have fallen in battle", .{
+            .color = color_scheme.text_danger_subtitle,
+            .letter_spacing = letter_spacing,
+            .font_size = subtitle_font_size,
+            .alignment = .center,
+            .font_id = HUD.regularFontId(),
+        });
     });
 }
 
@@ -202,17 +216,17 @@ fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Alloca
             .padding = .all(box_padding_pixels),
             .child_gap = box_gap_pixels,
         },
-        .background_color = ui.color(24, 18, 24, 200),
+        .background_color = color_scheme.surface_danger_inset,
         .corner_radius = .all(2.0 * ui_scale),
         .border = .{
-            .color = ui.color(60, 48, 60, 180),
+            .color = color_scheme.border_danger_subtle,
             .width = .outside(1),
         },
     })({
-        drawStatRow("ROOMS CLEARED", rooms_text, ui.color(240, 205, 110, 255), row_height_pixels, ui_scale);
-        drawStatRow("ENEMIES DEFEATED", enemies_text, ui.color(235, 90, 95, 255), row_height_pixels, ui_scale);
-        drawStatRow("EXPERIENCE", experience_text, ui.color(100, 200, 255, 255), row_height_pixels, ui_scale);
-        drawStatRow("HIGH SCORE", high_score_text, ui.color(180, 230, 140, 255), row_height_pixels, ui_scale);
+        drawStatRow("ROOMS CLEARED", rooms_text, color_scheme.accent_gold, row_height_pixels, ui_scale);
+        drawStatRow("ENEMIES DEFEATED", enemies_text, color_scheme.accent_crimson_stat, row_height_pixels, ui_scale);
+        drawStatRow("EXPERIENCE", experience_text, color_scheme.accent_cyan, row_height_pixels, ui_scale);
+        drawStatRow("HIGH SCORE", high_score_text, color_scheme.accent_green, row_height_pixels, ui_scale);
     });
 }
 
@@ -235,7 +249,7 @@ fn drawStatRow(
         },
     })({
         ui.text(label, .{
-            .color = ui.color(160, 150, 160, 255),
+            .color = color_scheme.text_danger_muted,
             .letter_spacing = letter_spacing,
             .font_size = font_size,
             .font_id = HUD.regularFontId(),
@@ -272,10 +286,10 @@ fn updateHoverSelection() void {
     }
 }
 
-fn drawActionButtons(button_max_width_pixels: f32, ui_scale: f32) void {
+fn drawActionButtons(button_maximum_width_pixels: f32, ui_scale: f32) void {
     updateHoverSelection();
 
-    const button_width_pixels = @min(button_max_width_pixels, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
+    const button_width_pixels = @min(button_maximum_width_pixels, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
     const button_height_pixels = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
     const gap_pixels = lm.tou16(@round(2.5 * ui_scale));
 
@@ -290,28 +304,31 @@ fn drawActionButtons(button_max_width_pixels: f32, ui_scale: f32) void {
     })({
         drawButton(0, "RESTART", true, button_width_pixels, button_height_pixels, ui_scale);
         drawButton(1, if (RoomManager.isPlaytestMode()) "MAP EDITOR" else "MAIN MENU", false, button_width_pixels, button_height_pixels, ui_scale);
+        drawFooter(ui_scale);
+    });
+}
 
-        ui.new(.{
-            .id = .ID("gameover-footer-spacer"),
-            .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
-        })({});
+fn drawFooter(ui_scale: f32) void {
+    ui.new(.{
+        .id = .ID("gameover-footer-spacer"),
+        .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
+    })({});
 
-        ui.new(.{
-            .id = .ID("gameover-footer-container"),
-            .layout = .{ .child_alignment = .{ .x = .center } },
-        })({
-            const footer_text = if (DevicePrompts.isGamepad())
-                "Navigate: D-Pad / L-Stick  |  Select: A"
-            else
-                "Navigate: WASD / Arrows  |  Select: Enter / Click";
+    ui.new(.{
+        .id = .ID("gameover-footer-container"),
+        .layout = .{ .child_alignment = .{ .x = .center } },
+    })({
+        const footer_text = if (DevicePrompts.isGamepad())
+            "Navigate: D-Pad / L-Stick  |  Select: A"
+        else
+            "Navigate: WASD / Arrows  |  Select: Enter / Click";
 
-            ui.text(footer_text, .{
-                .color = ui.color(140, 150, 175, 200),
-                .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
-                .letter_spacing = 1,
-                .alignment = .center,
-                .font_id = HUD.regularFontId(),
-            });
+        ui.text(footer_text, .{
+            .color = color_scheme.text_footer,
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
+            .letter_spacing = 1,
+            .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
@@ -354,13 +371,13 @@ fn drawButton(
         handleButtonInteraction(index, is_disabled);
 
         const text_color = if (is_disabled)
-            ui.color(120, 105, 115, 200)
+            color_scheme.button_text_disabled
         else if (is_button_active)
-            ui.color(255, 255, 255, 255)
+            color_scheme.button_text_selected
         else if (is_primary)
-            ui.color(240, 200, 205, 255)
+            color_scheme.button_text_primary_idle
         else
-            ui.color(190, 180, 200, 255);
+            color_scheme.button_text_secondary_idle;
 
         ui.text(caption, .{
             .color = text_color,
@@ -383,9 +400,9 @@ fn handleInput() void {
         navigate_down = navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
         select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
 
-        const stick = lm.gamepad.getStickVector(0, .left, 0.25);
-        if (stick.y < -0.5) navigate_up = true;
-        if (stick.y > 0.5) navigate_down = true;
+        const stick_vector = lm.gamepad.getStickVector(0, .left, 0.25);
+        if (stick_vector.y < -0.5) navigate_up = true;
+        if (stick_vector.y > 0.5) navigate_down = true;
     }
 
     const maximum_index: usize = 1;
@@ -404,13 +421,13 @@ fn handleInput() void {
 
 fn activateAction(index: usize) void {
     switch (index) {
-        0 => restartGame(),
-        1 => returnToMenuOrEditor(),
+        0 => restartRun(),
+        1 => exitRun(),
         else => {},
     }
 }
 
-fn restartGame() void {
+fn restartRun() void {
     if (!canRestart()) return;
     if (!RoomManager.isPlaytestMode() and !RoomManager.isPracticeTutorialMode()) {
         SaveSystem.clearRun();
@@ -422,7 +439,7 @@ fn restartGame() void {
     };
 }
 
-fn returnToMenuOrEditor() void {
+fn exitRun() void {
     if (RoomManager.isPlaytestMode()) {
         RoomManager.endPlaytest();
         hide();
@@ -435,14 +452,7 @@ fn returnToMenuOrEditor() void {
 
     if (RoomManager.isPracticeTutorialMode()) {
         RoomManager.endPracticeTutorial();
-        hide();
-        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-        lm.loadScene("main_menu") catch |load_error| {
-            std.log.err("Failed to return to main_menu scene: {any}", .{load_error});
-        };
-        return;
     }
-
     hide();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
     lm.loadScene("main_menu") catch |load_error| {

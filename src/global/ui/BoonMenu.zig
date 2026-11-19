@@ -12,6 +12,7 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const utility_button = @import("buttons/utility_button.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
@@ -130,14 +131,7 @@ fn selectBoon(slot_index: usize, maybe_stats: ?*Stats, maybe_attack: ?*Attack) v
 }
 
 fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
-    return switch (rarity) {
-        .normal => ui.color(180, 190, 200, 255),
-        .rare => ui.color(65, 160, 255, 255),
-        .epic => ui.color(180, 85, 255, 255),
-        .legendary => ui.color(255, 195, 45, 255),
-        .mythic => ui.color(255, 60, 100, 255),
-        .cosmic => ui.color(45, 240, 225, 255),
-    };
+    return color_scheme.rarityColor(rarity);
 }
 
 fn renderBoonCostBox(
@@ -153,10 +147,10 @@ fn renderBoonCostBox(
 
     ui.new(.{
         .id = .IDI("boon-cost-box-", card_index),
-        .background_color = ui.color(20, 22, 28, 220),
+        .background_color = color_scheme.surface_elevated,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
-            .color = ui.color(55, 60, 75, 200),
+            .color = color_scheme.panel_border,
             .width = .outside(1),
         },
         .layout = .{
@@ -185,7 +179,7 @@ fn renderBoonCostBox(
             ) catch .{ .image_data = null },
         })({});
         ui.text(price_text, .{
-            .color = ui.color(255, 255, 255, 255),
+            .color = color_scheme.text_bright,
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@max(7, @round(3.5 * ui_scale))),
             .alignment = .center,
@@ -258,7 +252,7 @@ fn boonCard(
         })({});
 
         ui.text(boon.boon_type.toString(), .{
-            .color = ui.color(150, 155, 170, 255),
+            .color = color_scheme.text_subtle,
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .alignment = .center,
@@ -266,7 +260,7 @@ fn boonCard(
         });
 
         ui.text(boon.name, .{
-            .color = ui.color(255, 255, 255, 255),
+            .color = color_scheme.text_bright,
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
             .alignment = .center,
@@ -274,7 +268,7 @@ fn boonCard(
         });
 
         ui.text(boon.description, .{
-            .color = ui.color(210, 215, 225, 255),
+            .color = color_scheme.text_body,
             .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
@@ -299,10 +293,10 @@ fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
 
     ui.new(.{
         .id = .IDI("boon-dummy-badge-", card_index),
-        .background_color = ui.color(24, 27, 35, 230),
+        .background_color = color_scheme.badge_purchased_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
-            .color = ui.color(60, 68, 85, 180),
+            .color = color_scheme.badge_purchased_border,
             .width = .outside(1),
         },
         .layout = .{
@@ -311,7 +305,7 @@ fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
         },
     })({
         ui.text("PURCHASED", .{
-            .color = ui.color(160, 165, 180, 255),
+            .color = color_scheme.badge_purchased_text,
             .letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale))),
             .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .alignment = .center,
@@ -353,7 +347,7 @@ fn dummyBoonCard(
             .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .letter_spacing = letter_spacing,
             .alignment = .center,
-            .color = ui.color(100, 105, 120, 160),
+            .color = color_scheme.text_disabled_muted,
             .font_id = HUD.regularFontId(),
         });
 
@@ -373,7 +367,7 @@ fn dummyBoonCard(
         })({});
 
         ui.text(boon.boon_type.toString(), .{
-            .color = ui.color(90, 95, 110, 160),
+            .color = color_scheme.text_disabled_subtle,
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .alignment = .center,
@@ -381,7 +375,7 @@ fn dummyBoonCard(
         });
 
         ui.text(boon.name, .{
-            .color = ui.color(140, 145, 160, 200),
+            .color = color_scheme.text_disabled_title,
             .letter_spacing = letter_spacing,
             .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
             .alignment = .center,
@@ -389,7 +383,7 @@ fn dummyBoonCard(
         });
 
         ui.text(boon.description, .{
-            .color = ui.color(110, 115, 130, 170),
+            .color = color_scheme.text_disabled_body,
             .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.regularFontId(),
@@ -503,14 +497,14 @@ fn renderMenuHeader(ui_scale: f32) void {
         const header_subtitle = if (maybe_category) |category| category.description else "Select an upgrade to enhance your abilities";
 
         ui.text(header_title, .{
-            .color = ui.color(255, 215, 100, 255),
+            .color = color_scheme.accent_gold_bright,
             .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
             .font_size = lm.tou16(@max(11, @round(5.5 * ui_scale))),
             .alignment = .center,
             .font_id = HUD.boldFontId(),
         });
         ui.text(header_subtitle, .{
-            .color = ui.color(150, 155, 170, 255),
+            .color = color_scheme.text_subtle,
             .letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale))),
             .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .alignment = .center,
@@ -597,7 +591,7 @@ fn renderFooter(ui_scale: f32) void {
             "Navigate: WASD / Arrows / Click | Select: Enter / Click | Close: Esc";
 
         ui.text(navigation_hint, .{
-            .color = ui.color(140, 150, 175, 200),
+            .color = color_scheme.text_footer,
             .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
@@ -651,10 +645,10 @@ pub fn draw(
             .child_gap = container_gap_pixels,
             .padding = .axes(container_padding_y_pixels, container_padding_x_pixels),
         },
-        .background_color = ui.color(18, 20, 26, 235),
+        .background_color = color_scheme.panel_translucent_background,
         .corner_radius = .all(3.5 * ui_scale),
         .border = .{
-            .color = ui.color(55, 60, 75, 180),
+            .color = color_scheme.panel_subtle_border,
             .width = .outside(1),
         },
     })({

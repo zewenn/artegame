@@ -9,6 +9,7 @@ const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const HUD = @import("../HUD.zig");
 const menu_button = @import("buttons/menu_button.zig");
+const color_scheme = @import("color_scheme.zig");
 
 /// Visual screens displayed within the pause menu overlay.
 pub const View = enum {
@@ -120,7 +121,7 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = ui.color(6, 8, 12, 195),
+        .background_color = color_scheme.backdrop_overlay,
     })({
         drawCurrentView(ui_scale, window_size, allocator);
     });
@@ -164,10 +165,10 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Al
             .child_gap = lm.tou16(@round(3.5 * ui_scale)),
             .padding = .all(card_padding_pixels),
         },
-        .background_color = ui.color(16, 18, 25, 250),
+        .background_color = color_scheme.panel_background,
         .corner_radius = .all(3.0 * ui_scale),
         .border = .{
-            .color = ui.color(240, 200, 100, 180),
+            .color = color_scheme.accent_gold_border,
             .width = .outside(1),
         },
     })({
@@ -212,7 +213,7 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
         },
     })({
         ui.text("GAME PAUSED", .{
-            .color = ui.color(240, 200, 100, 255),
+            .color = color_scheme.accent_gold,
             .font_size = lm.tou16(@max(12, @round(6.0 * ui_scale))),
             .letter_spacing = 2,
             .alignment = .center,
@@ -226,11 +227,11 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
             .child_alignment = .{ .x = .center },
             .padding = .axes(lm.tou16(@round(0.5 * ui_scale)), lm.tou16(@round(2.5 * ui_scale))),
         },
-        .background_color = ui.color(24, 28, 38, 180),
+        .background_color = color_scheme.status_pill_background,
         .corner_radius = .all(1.0 * ui_scale),
     })({
         ui.text(status_text, .{
-            .color = ui.color(180, 190, 210, 240),
+            .color = color_scheme.text_secondary,
             .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
@@ -273,7 +274,7 @@ fn drawFooter(ui_scale: f32) void {
             "Navigate: WASD / Arrows  |  Select: Enter  |  Resume: Esc";
 
         ui.text(footer_text, .{
-            .color = ui.color(140, 150, 175, 200),
+            .color = color_scheme.text_footer,
             .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,

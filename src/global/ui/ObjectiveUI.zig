@@ -4,6 +4,7 @@ const ui = lm.ui;
 
 const Objectives = @import("../../components/player/Objectives.zig");
 const HUD = @import("../HUD.zig");
+const color_scheme = @import("color_scheme.zig");
 
 pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
     ui.new(.{
@@ -17,7 +18,7 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
             },
         },
         .corner_radius = .all(lm.tou16(@round(1.0 * ui_scale))),
-        .background_color = ui.color(23, 21, 22, 196),
+        .background_color = color_scheme.hud_translucent_background,
         .layout = .{
             .direction = .top_to_bottom,
             .child_gap = lm.tou16(@round(1.25 * ui_scale)),
@@ -28,7 +29,7 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
             .id = .ID("name"),
         })({
             ui.text(tracking.name, .{
-                .color = ui.color(255, 255, 255, 255),
+                .color = color_scheme.text_bright,
                 .font_size = lm.tou16(@max(12, @round(8.0 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.boldFontId(),
@@ -38,7 +39,7 @@ pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
             .id = .ID("desc"),
         })({
             ui.text(tracking.description, .{
-                .color = ui.color(255, 255, 255, 255),
+                .color = color_scheme.text_bright,
                 .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
                 .letter_spacing = 1,
                 .font_id = HUD.regularFontId(),
