@@ -157,11 +157,13 @@ fn updateDistanceDrain(
 fn updateProximitySlow(self: *Self, player_stats: *Stats, distance_pixels: f32) void {
     const config = self.proximity_slow orelse return;
 
-    if (distance_pixels >= config.threshold_distance_pixels) if (self.is_player_slow_applied) {
+    if (distance_pixels >= config.threshold_distance_pixels) {
+        if (!self.is_player_slow_applied) return;
+
         player_stats.removeEffect(.{ .id = "proximity_aura_slow" });
         self.is_player_slow_applied = false;
         return;
-    };
+    }
 
     if (self.is_player_slow_applied) return;
 

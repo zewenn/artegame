@@ -8,7 +8,7 @@ pub fn main() !void {
         .window = .{
             .title = "AMRAP",
             .resizable = true,
-            .restore_state = true,
+            .restore_state = false,
             .size = .init(1280, 720),
             .clear_color = lm.Color.init(14, 12, 12, 255),
             .exit_key = .null,
@@ -70,6 +70,8 @@ pub fn main() !void {
 }
 
 test {
+    _ = @import("global/HUD.zig");
+    _ = @import("global/ui/PlayerStats.zig");
     _ = @import("global/ui/MainMenu.zig");
     _ = @import("global/ui/PauseMenu.zig");
     _ = @import("global/ui/OptionsMenu.zig");

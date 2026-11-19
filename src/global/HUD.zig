@@ -21,15 +21,20 @@ pub const PauseMenu = ui.PauseMenu;
 pub const GameOverMenu = ui.GameOverMenu;
 pub const BossBar = ui.BossBar;
 
-pub const MENU_BUTTON_BASE_HEIGHT: f32 = 48.0;
+pub const BASE_UI_SCALE: f32 = 2.0;
+
+pub const MENU_BUTTON_BASE_HEIGHT: f32 = 12.0;
 pub const MENU_BUTTON_BASE_WIDTH: f32 = MENU_BUTTON_BASE_HEIGHT * 6.0;
-pub const UTILITY_BUTTON_BASE_H: f32 = 24.0;
+pub const UTILITY_BUTTON_BASE_H: f32 = 6.0;
 pub const UTILITY_BUTTON_BASE_W: f32 = UTILITY_BUTTON_BASE_H * 4.0;
 
 pub const MENU_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/large_button1.png";
 pub const MENU_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/large_button2.png";
 pub const UTILITY_BUTTON_SPRITE: []const u8 = "ui/HUD/buttons/small_button1.png";
 pub const UTILITY_BUTTON_HOVER_SPRITE: []const u8 = "ui/HUD/buttons/small_button2.png";
+
+pub const FONT_REGULAR: []const u8 = "ui/fonts/Silkscreen-Regular.ttf";
+pub const FONT_BOLD: []const u8 = "ui/fonts/Silkscreen-Bold.ttf";
 
 pub fn getMenuButtonSprite(is_active: bool) []const u8 {
     return if (is_active) MENU_BUTTON_HOVER_SPRITE else MENU_BUTTON_SPRITE;
@@ -39,19 +44,39 @@ pub fn getUtilityButtonSprite(is_active: bool) []const u8 {
     return if (is_active) UTILITY_BUTTON_HOVER_SPRITE else UTILITY_BUTTON_SPRITE;
 }
 
+/// Returns the asset path for the Silkscreen font family (bold or regular weight).
+pub fn getFontPath(is_bold: bool) []const u8 {
+    return if (is_bold) FONT_BOLD else FONT_REGULAR;
+}
+
+/// Returns the active frame font ID for Silkscreen-Regular.
+pub fn regularFontId() u16 {
+    return lm.ui.fontID(FONT_REGULAR);
+}
+
+/// Returns the active frame font ID for Silkscreen-Bold.
+pub fn boldFontId() u16 {
+    return lm.ui.fontID(FONT_BOLD);
+}
+
+/// Returns the active frame font ID for Silkscreen (bold when `is_bold` is true, regular otherwise).
+pub fn getFontId(is_bold: bool) u16 {
+    return lm.ui.fontID(getFontPath(is_bold));
+}
+
 pub fn calculateUiScale(window_dimensions: lm.Vector2) f32 {
     const scale_x = window_dimensions.x / 1280.0;
     const scale_y = window_dimensions.y / 720.0;
-    return @max(1.0, @floor(@min(scale_x, scale_y)));
+    const resolution_tier = @max(0.0, @floor(@min(scale_x, scale_y)));
+    return BASE_UI_SCALE + (2.0 * resolution_tier);
 }
 
 const Self = @This();
 
 pub var window_size: lm.Vector2 = .init(1280, 720);
-pub var scale: f32 = 1.0;
 pub var hud_height: f32 = 64.0;
 pub var hud_width: f32 = 512.0;
-pub var ui_scale: f32 = 1.0;
+pub var ui_scale: f32 = 4.0;
 
 player_stats: ?*Stats = null,
 player_objectives: ?*Objectives = null,
@@ -91,11 +116,9 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
     }
 
     window_size = lm.window.size.get();
-    scale = @max(1.0, @round(@min(window_size.x, window_size.y) / 540.0));
-    hud_height = scale * 32.0;
-    hud_width = hud_height * 8.0;
-
     ui_scale = calculateUiScale(window_size);
+    hud_height = ui_scale * 16.0;
+    hud_width = hud_height * 8.0;
 
     round_indicator: {
         const progress = RoomManager.getWaveProgress() orelse break :round_indicator;
@@ -115,7 +138,7 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
         const objectives = self.player_objectives orelse break :objectives;
         const tracking = objectives.trackingObjective() orelse break :objectives;
 
-        ObjectiveUI.draw(tracking);
+        ObjectiveUI.draw(tracking, ui_scale);
     }
 
     if (!BoonMenu.isShowing() and !PauseMenu.isShowing()) menus: {
@@ -126,11 +149,9 @@ pub fn Update(self: *Self, scene: *lm.Scene) !void {
             break :menus;
         }
 
-        if (!PauseMenu.isShowing() and !BoonMenu.isShowing() and !GameOverMenu.isShowing()) {
-            if (Interactable.getFocused()) |focused| {
-                const camera = scene.getCameraById("main");
-                InteractionPrompt.draw(camera, focused);
-            }
+        if (Interactable.getFocused()) |focused| {
+            const camera = scene.getCameraById("main");
+            InteractionPrompt.draw(camera, focused);
         }
     }
 
@@ -156,16 +177,16 @@ pub fn showBoons(slots: []const BoonMenu.BoonSlot) void {
 
 fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
     const room_type = if (RoomManager.get()) |room_manager| room_manager.getRoomType() else RoomManager.RoomType.fromRoomNumber(progress.round);
-    const room_suffix_text = switch (room_type) {
+    const room_label = switch (room_type) {
         .mini_boss => "  -  Mini-Boss",
         .boss => "  -  Boss",
         .tutorial => "  -  Tutorial",
         .normal => "",
     };
 
-    const font_size = lm.tou16(@max(10, @round(10 * scale)));
-    const padding_y_pixels = lm.tou16(@round(6 * ui_scale));
-    const padding_x_pixels = lm.tou16(@round(16 * ui_scale));
+    const font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
+    const padding_y_pixels = lm.tou16(@round(1.5 * ui_scale));
+    const padding_x_pixels = lm.tou16(@round(4.0 * ui_scale));
 
     lm.ui.new(.{
         .id = .ID("hud-round-indicator"),
@@ -175,39 +196,40 @@ fn drawRoundIndicator(progress: RoundSpawner.WaveProgress) void {
                 .element = .center_top,
                 .parent = .center_top,
             },
-            .offset = .{ .x = 0, .y = 16 * scale },
+            .offset = .{ .x = 0, .y = 4.0 * ui_scale },
         },
         .background_color = color_scheme.hud_overlay_background,
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(2 * ui_scale)),
+            .child_gap = lm.tou16(@round(0.5 * ui_scale)),
             .padding = .axes(padding_y_pixels, padding_x_pixels),
         },
     })({
-        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_suffix_text, progress.killed, progress.total }, .{
+        lm.ui.textFmt("Room {d}{s}  -  {d} / {d}", .{ progress.round, room_label, progress.killed, progress.total }, .{
             .color = color_scheme.text_highlight_gold,
             .font_size = font_size,
             .letter_spacing = 1,
+            .font_id = regularFontId(),
         });
     });
 }
 
 test "HUD.calculateUiScale integer scaling" {
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 1280, .y = 720 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 1920, .y = 1080 }));
 
-    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
+    try std.testing.expectEqual(@as(f32, 6.0), calculateUiScale(.{ .x = 2560, .y = 1440 }));
 
-    try std.testing.expectEqual(@as(f32, 3.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
+    try std.testing.expectEqual(@as(f32, 8.0), calculateUiScale(.{ .x = 3840, .y = 2160 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
+    try std.testing.expectEqual(@as(f32, 4.0), calculateUiScale(.{ .x = 2560, .y = 1080 }));
 
-    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
+    try std.testing.expectEqual(@as(f32, 6.0), calculateUiScale(.{ .x = 3440, .y = 1440 }));
 
-    try std.testing.expectEqual(@as(f32, 1.0), calculateUiScale(.{ .x = 800, .y = 600 }));
+    try std.testing.expectEqual(@as(f32, 2.0), calculateUiScale(.{ .x = 800, .y = 600 }));
 }
 
 test "UI button sprites idle and hover variants" {
@@ -215,4 +237,9 @@ test "UI button sprites idle and hover variants" {
     try std.testing.expectEqualStrings("ui/HUD/buttons/large_button2.png", getMenuButtonSprite(true));
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button1.png", getUtilityButtonSprite(false));
     try std.testing.expectEqualStrings("ui/HUD/buttons/small_button2.png", getUtilityButtonSprite(true));
+}
+
+test "UI font path selection regular and bold variants" {
+    try std.testing.expectEqualStrings("ui/fonts/Silkscreen-Regular.ttf", getFontPath(false));
+    try std.testing.expectEqualStrings("ui/fonts/Silkscreen-Bold.ttf", getFontPath(true));
 }

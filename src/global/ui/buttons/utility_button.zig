@@ -30,7 +30,7 @@ pub fn draw(
     );
 
     const sprite_path = HUD.getUtilityButtonSprite(is_selected);
-    const font_size = lm.tou16(@max(13, @round(13 * ui_scale)));
+    const font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
 
     clay.UI()(.{
         .id = button_id,
@@ -71,10 +71,10 @@ fn drawButtonLabel(
     font_size: u16,
     letter_spacing: u16,
 ) void {
-    const bottom_padding_pixels: u16 = if (is_selected) 0 else 4 * lm.tou16(ui_scale);
-    const top_padding_pixels: u16 = if (!is_selected) 0 else 2 * lm.tou16(ui_scale);
+    const bottom_padding_pixels: u16 = if (is_selected) 0 else 1 * lm.tou16(ui_scale);
+    const top_padding_pixels: u16 = if (!is_selected) 0 else lm.tou16(@round(0.5 * ui_scale));
     const text_color = if (is_selected) color_scheme.button_text_selected else color_scheme.button_text_idle;
-    const font_id = if (is_selected) ui.fontID("ui/fonts/Silkscreen-Bold.ttf") else ui.fontID("ui/fonts/Silkscreen-Regular.ttf");
+    const font_id = HUD.getFontId(is_selected);
 
     ui.new(.{
         .id = .IDI("utility-btn-text-container-", @intCast(index)),

@@ -6,22 +6,23 @@ const Objectives = @import("../../components/player/Objectives.zig");
 const HUD = @import("../HUD.zig");
 const color_scheme = @import("color_scheme.zig");
 
-pub fn draw(tracking: Objectives.Objective) void {
+pub fn draw(tracking: Objectives.Objective, ui_scale: f32) void {
     ui.new(.{
         .id = .ID("objective-container"),
         .floating = .{
             .attach_to = .to_root,
-            .offset = .{ .x = 0, .y = HUD.window_size.y * 0.3 },
+            .offset = .{ .x = -4.0 * ui_scale, .y = HUD.window_size.y * 0.075 },
             .attach_points = .{
                 .element = .right_top,
                 .parent = .right_top,
             },
         },
+        .corner_radius = .all(lm.tou16(@round(1.0 * ui_scale))),
         .background_color = color_scheme.hud_translucent_background,
         .layout = .{
             .direction = .top_to_bottom,
-            .child_gap = 5,
-            .padding = .all(10),
+            .child_gap = lm.tou16(@round(1.25 * ui_scale)),
+            .padding = .all(lm.tou16(@round(2.5 * ui_scale))),
         },
     })({
         ui.new(.{
@@ -29,8 +30,9 @@ pub fn draw(tracking: Objectives.Objective) void {
         })({
             ui.text(tracking.name, .{
                 .color = color_scheme.text_bright,
-                .font_size = 32,
+                .font_size = lm.tou16(@max(12, @round(8.0 * ui_scale))),
                 .letter_spacing = 1,
+                .font_id = HUD.boldFontId(),
             });
         });
         ui.new(.{
@@ -38,8 +40,9 @@ pub fn draw(tracking: Objectives.Objective) void {
         })({
             ui.text(tracking.description, .{
                 .color = color_scheme.text_bright,
-                .font_size = 16,
+                .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
                 .letter_spacing = 1,
+                .font_id = HUD.regularFontId(),
             });
         });
     });

@@ -31,7 +31,7 @@ pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
         Interactable{
             .action_text = "Enter Next Room",
             .interaction_radius = 110.0,
-            .prompt_offset = .init(0, -64.0),
+            .prompt_offset = .init(0, 64.0),
             .can_interact = canInteractWithDoor,
             .on_interact = Door.onDoorInteract,
         },

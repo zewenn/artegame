@@ -172,7 +172,7 @@ fn drawRootContainer(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center, .y = .center },
-            .padding = .all(lm.tou16(@round(24 * ui_scale))),
+            .padding = .all(lm.tou16(@round(6.0 * ui_scale))),
         },
         .background_color = color_scheme.screen_background,
     })({
@@ -199,9 +199,9 @@ fn drawOptionsScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
 fn drawMainScreen(self: *Self, ui_scale: f32) void {
     drawLogo(ui_scale);
     self.drawStatsBadge(ui_scale);
-    drawSpacer("menu-main-spacer", @round(24 * ui_scale));
+    drawSpacer("menu-main-spacer", @round(6.0 * ui_scale));
     self.drawButtonList(ui_scale);
-    drawSpacer("menu-footer-spacer", @round(24 * ui_scale));
+    drawSpacer("menu-footer-spacer", @round(6.0 * ui_scale));
     drawFooter(ui_scale);
 }
 
@@ -215,8 +215,8 @@ fn drawSpacer(comptime id_name: []const u8, height_pixels: f32) void {
 }
 
 fn drawLogo(ui_scale: f32) void {
-    const logo_base_height_pixels: f32 = 240;
-    const logo_width_pixels = @round((logo_base_height_pixels * 3) * ui_scale);
+    const logo_base_height_pixels: f32 = 60.0;
+    const logo_width_pixels = @round((logo_base_height_pixels * 3.0) * ui_scale);
     const logo_height_pixels = @round(logo_base_height_pixels * ui_scale);
 
     ui.new(.{
@@ -245,53 +245,43 @@ fn drawLogo(ui_scale: f32) void {
     });
 }
 
-fn drawStatsBadge(self: *Self, ui_scale: f32) void {
+fn drawStatsBadge(_: *Self, ui_scale: f32) void {
     const scores = SaveSystem.getScores();
     if (scores.total_runs_played == 0) return;
 
-    const stats_text = if (self.allocator) |allocator|
-        std.fmt.allocPrint(
-            allocator,
-            "HIGH SCORE: {d} XP  |  BEST ROUND: {d}  |  TOTAL KILLS: {d}",
-            .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
-        ) catch "HIGH SCORE: 0 XP"
-    else
-        "HIGH SCORE: 0 XP";
-
     ui.new(.{
         .id = .ID("menu-stats-badge-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(8 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(2.0 * ui_scale)), .w = .fixed(1) } },
     })({});
 
     ui.new(.{
         .id = .ID("menu-stats-badge"),
         .layout = .{
             .padding = .axes(
-                lm.tou16(@round(3 * ui_scale)),
-                lm.tou16(@round(14 * ui_scale)),
+                lm.tou16(@round(0.75 * ui_scale)),
+                lm.tou16(@round(3.5 * ui_scale)),
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = color_scheme.stats_badge_background,
-        .corner_radius = .all(6 * ui_scale),
-        .border = .{
-            .color = color_scheme.accent_cyan_border,
-            .width = .outside(1),
-        },
     })({
-        ui.text(stats_text, .{
-            .color = color_scheme.accent_cyan_text,
-            .font_size = lm.tou16(@max(9, @round(10 * ui_scale))),
-            .letter_spacing = 1,
-            .alignment = .center,
-        });
+        ui.textFmt(
+            "HIGH SCORE: {d} XP | BEST ROUND: {d} | TOTAL KILLS: {d}",
+            .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
+            .{
+                .color = color_scheme.stats_badge_text,
+                .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
+                .letter_spacing = 1,
+                .alignment = .center,
+                .font_id = HUD.boldFontId(),
+            },
+        );
     });
 }
 
 fn drawButtonList(self: *Self, ui_scale: f32) void {
-    const button_gap_pixels = lm.tou16(@round(14 * ui_scale));
-    const font_size = lm.tou16(@max(18, @round(18 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(2, @round(1 * ui_scale)));
+    const button_gap_pixels = lm.tou16(@round(3.5 * ui_scale));
+    const font_size = lm.tou16(@max(9, @round(4.5 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale)));
 
     ui.new(.{
         .id = .ID("menu-button-list"),
@@ -328,15 +318,16 @@ fn drawFooter(ui_scale: f32) void {
         },
     })({
         const footer_text = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick  |  Select: A"
+            "Navigate: D-Pad / L-Stick | Select: A"
         else
-            "Navigate: WASD / Arrows  |  Select: Enter / Click";
+            "Navigate: WASD / Arrows | Select: Enter / Click";
 
         ui.text(footer_text, .{
             .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(10, @round(12 * ui_scale))),
+            .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

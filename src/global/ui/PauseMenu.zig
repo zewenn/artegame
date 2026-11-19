@@ -148,10 +148,10 @@ fn drawOptionsView(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.A
 }
 
 fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
-    const card_width_pixels = @min(window_size.x - 32, @round(380 * ui_scale));
-    const card_padding_pixels = lm.tou16(@round(24 * ui_scale));
-    const font_size = lm.tou16(@max(13, @round(15 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const card_width_pixels = @min(window_size.x - 32, @round(95.0 * ui_scale));
+    const card_padding_pixels = lm.tou16(@round(6.0 * ui_scale));
+    const font_size = lm.tou16(@max(7, @round(3.75 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
     const status_text = resolveStatusText(allocator);
 
     ui.new(.{
@@ -162,11 +162,11 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Al
             },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(14 * ui_scale)),
+            .child_gap = lm.tou16(@round(3.5 * ui_scale)),
             .padding = .all(card_padding_pixels),
         },
         .background_color = color_scheme.panel_background,
-        .corner_radius = .all(12 * ui_scale),
+        .corner_radius = .all(3.0 * ui_scale),
         .border = .{
             .color = color_scheme.accent_gold_border,
             .width = .outside(1),
@@ -214,9 +214,10 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
     })({
         ui.text("GAME PAUSED", .{
             .color = color_scheme.accent_gold,
-            .font_size = lm.tou16(@max(20, @round(24 * ui_scale))),
+            .font_size = lm.tou16(@max(12, @round(6.0 * ui_scale))),
             .letter_spacing = 2,
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
     });
 
@@ -224,22 +225,23 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
         .id = .ID("pause-status-wrap"),
         .layout = .{
             .child_alignment = .{ .x = .center },
-            .padding = .axes(lm.tou16(@round(2 * ui_scale)), lm.tou16(@round(10 * ui_scale))),
+            .padding = .axes(lm.tou16(@round(0.5 * ui_scale)), lm.tou16(@round(2.5 * ui_scale))),
         },
         .background_color = color_scheme.status_pill_background,
-        .corner_radius = .all(4 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
     })({
         ui.text(status_text, .{
             .color = color_scheme.text_secondary,
-            .font_size = lm.tou16(@max(11, @round(12 * ui_scale))),
+            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 
     ui.new(.{
         .id = .ID("pause-root-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(10 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(2.5 * ui_scale)), .w = .fixed(1) } },
     })({});
 }
 
@@ -259,7 +261,7 @@ fn drawPauseButtons(font_size: u16, letter_spacing: u16) void {
 fn drawFooter(ui_scale: f32) void {
     ui.new(.{
         .id = .ID("pause-footer-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
     })({});
 
     ui.new(.{
@@ -273,9 +275,10 @@ fn drawFooter(ui_scale: f32) void {
 
         ui.text(footer_text, .{
             .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

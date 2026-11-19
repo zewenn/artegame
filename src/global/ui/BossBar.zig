@@ -41,7 +41,7 @@ pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     self.stepHealthInterpolation(stats, lm.time.deltaTime());
     if (!shouldRender()) return;
-    self.render(HUD.ui_scale, HUD.scale);
+    self.render(HUD.ui_scale);
 }
 
 pub fn End(self: *Self) void {
@@ -70,18 +70,18 @@ pub const BossRank = enum {
 const MAX_BOSS_BARS: usize = 16;
 var id_pool: [MAX_BOSS_BARS]bool = @splat(false);
 
-const BASE_BAR_WIDTH_PIXELS: f32 = 512.0;
-const BASE_BAR_HEIGHT_PIXELS: f32 = 16.0;
-const BASE_OVERLAY_WIDTH_PIXELS: f32 = 528.0;
-const BASE_OVERLAY_HEIGHT_PIXELS: f32 = 28.0;
-const BASE_OVERLAY_OFFSET_X_PIXELS: f32 = -8.0;
-const BASE_OVERLAY_OFFSET_Y_PIXELS: f32 = -6.0;
+const BASE_BAR_WIDTH_PIXELS: f32 = 128.0;
+const BASE_BAR_HEIGHT_PIXELS: f32 = 4.0;
+const BASE_OVERLAY_WIDTH_PIXELS: f32 = 132.0;
+const BASE_OVERLAY_HEIGHT_PIXELS: f32 = 7.0;
+const BASE_OVERLAY_OFFSET_X_PIXELS: f32 = -2.0;
+const BASE_OVERLAY_OFFSET_Y_PIXELS: f32 = -1.5;
 
 const DAMAGE_LAG_DELAY_SECONDS: f32 = 0.1;
 const HEALTH_LERP_RATE_PER_SECOND: f32 = 50.0;
 const DAMAGE_LAG_LERP_RATE_PER_SECOND: f32 = 4.0;
-const BASE_TOP_OFFSET_PIXELS: f32 = 68.0;
-const STACK_VERTICAL_STRIDE_PIXELS: f32 = 52.0;
+const BASE_TOP_OFFSET_PIXELS: f32 = 17.0;
+const STACK_VERTICAL_STRIDE_PIXELS: f32 = 13.0;
 
 pub fn shouldRender() bool {
     if (GameOverMenu.isShowing()) return false;
@@ -118,11 +118,11 @@ pub fn stepHealthInterpolation(self: *Self, stats: *const Stats, delta_seconds: 
     }
 }
 
-pub fn render(self: *const Self, ui_scale: f32, hud_scale: f32) void {
+pub fn render(self: *const Self, ui_scale: f32) void {
     const total_bar_width_pixels = BASE_BAR_WIDTH_PIXELS * ui_scale;
     const total_bar_height_pixels = BASE_BAR_HEIGHT_PIXELS * ui_scale;
-    const container_width_pixels = total_bar_width_pixels + (16.0 * ui_scale);
-    const top_offset_pixels = (BASE_TOP_OFFSET_PIXELS * hud_scale) + (@as(f32, @floatFromInt(self.ui_id)) * STACK_VERTICAL_STRIDE_PIXELS * ui_scale);
+    const container_width_pixels = total_bar_width_pixels + (4.0 * ui_scale);
+    const top_offset_pixels = (BASE_TOP_OFFSET_PIXELS * ui_scale) + (@as(f32, @floatFromInt(self.ui_id)) * STACK_VERTICAL_STRIDE_PIXELS * ui_scale);
 
     ui.new(.{
         .id = .IDI("boss-hud-container-", self.ui_id),
@@ -137,7 +137,7 @@ pub fn render(self: *const Self, ui_scale: f32, hud_scale: f32) void {
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(4.0 * ui_scale)),
+            .child_gap = lm.tou16(@round(1.0 * ui_scale)),
             .sizing = .{ .w = .fixed(container_width_pixels), .h = .fit },
         },
     })({
@@ -153,7 +153,7 @@ fn renderHeader(self: *const Self, ui_scale: f32) void {
             .direction = .left_to_right,
             .sizing = .{ .w = .percent(1) },
             .child_alignment = .{ .y = .center },
-            .padding = .axes(0, lm.tou16(@round(2.0 * ui_scale))),
+            .padding = .axes(0, lm.tou16(@round(0.5 * ui_scale))),
         },
     })({
         self.renderTitleText(ui_scale);
@@ -166,7 +166,7 @@ fn renderHeader(self: *const Self, ui_scale: f32) void {
 }
 
 fn renderTitleText(self: *const Self, ui_scale: f32) void {
-    const title_font_size_pixels = lm.tou16(@max(13, @round(15.0 * ui_scale)));
+    const title_font_size_pixels = lm.tou16(@max(7, @round(3.75 * ui_scale)));
 
     ui.new(.{
         .id = .IDI("boss-hud-title-container-", self.ui_id),
@@ -175,30 +175,32 @@ fn renderTitleText(self: *const Self, ui_scale: f32) void {
             .color = color_scheme.boss_title_text,
             .font_size = title_font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
 
 fn renderRankBadge(self: *const Self, ui_scale: f32) void {
-    const rank_font_size_pixels = lm.tou16(@max(9, @round(11.0 * ui_scale)));
+    const rank_font_size_pixels = lm.tou16(@max(5, @round(2.75 * ui_scale)));
     const accent_color = self.rank.getAccentColor();
 
     ui.new(.{
         .id = .IDI("boss-hud-rank-badge-", self.ui_id),
         .background_color = color_scheme.boss_rank_badge_background,
-        .corner_radius = .all(4.0 * ui_scale),
+        .corner_radius = .all(1.0 * ui_scale),
         .border = .{
             .color = color_scheme.fromRgbaWithAlpha(accent_color, 200),
             .width = .outside(1),
         },
         .layout = .{
-            .padding = .axes(lm.tou16(@round(2.0 * ui_scale)), lm.tou16(@round(6.0 * ui_scale))),
+            .padding = .axes(lm.tou16(@round(0.5 * ui_scale)), lm.tou16(@round(1.5 * ui_scale))),
         },
     })({
         ui.text(self.rank.getTitle(), .{
             .color = color_scheme.fromRgbaWithAlpha(accent_color, 255),
             .font_size = rank_font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -214,7 +216,7 @@ fn renderHealthBarTrough(
     ui.new(.{
         .id = .IDI("boss-health-trough-", self.ui_id),
         .background_color = color_scheme.boss_trough_background,
-        .corner_radius = .all(3.0 * ui_scale),
+        .corner_radius = .all(0.75 * ui_scale),
         .border = .{
             .color = color_scheme.fromRgbaWithAlpha(accent_color, 160),
             .width = .outside(1),
@@ -248,7 +250,7 @@ fn renderDamageLagFill(
             .z_index = 1,
         },
         .background_color = color_scheme.boss_damage_lag_fill,
-        .corner_radius = .all(3.0 * ui_scale),
+        .corner_radius = .all(0.75 * ui_scale),
         .layout = .{
             .sizing = .{ .w = .fixed(total_bar_width_pixels * lag_ratio), .h = .fixed(total_bar_height_pixels) },
         },
@@ -272,7 +274,7 @@ fn renderCurrentHealthFill(
             .z_index = 2,
         },
         .background_color = color_scheme.boss_health_fill,
-        .corner_radius = .all(3.0 * ui_scale),
+        .corner_radius = .all(0.75 * ui_scale),
         .layout = .{
             .sizing = .{ .w = .fixed(total_bar_width_pixels * health_ratio), .h = .fixed(total_bar_height_pixels) },
         },
@@ -285,7 +287,7 @@ fn renderPhaseDividers(
     total_bar_height_pixels: f32,
     ui_scale: f32,
 ) void {
-    const divider_width_pixels = @max(1.0, @round(1.0 * ui_scale));
+    const divider_width_pixels = @max(1.0, @round(0.25 * ui_scale));
     const fractions = [_]f32{ 0.25, 0.50, 0.75 };
 
     for (fractions, 0..) |fraction, divider_index| {
@@ -318,7 +320,7 @@ fn renderHealthText(
     const rounded_current_health: u32 = @intFromFloat(@max(0.0, self.display_health));
     const rounded_max_health: u32 = @intFromFloat(@max(1.0, self.max_health));
     const health_percentage: u32 = @intFromFloat(std.math.clamp(self.display_health / self.max_health * 100.0, 0.0, 100.0));
-    const font_size_pixels = lm.tou16(@max(9, @round(10.0 * ui_scale)));
+    const font_size_pixels = lm.tou16(@max(5, @round(2.5 * ui_scale)));
 
     ui.new(.{
         .id = .IDI("boss-health-text-container-", self.ui_id),
@@ -337,6 +339,7 @@ fn renderHealthText(
             .color = color_scheme.text_bright,
             .font_size = font_size_pixels,
             .letter_spacing = 1,
+            .font_id = HUD.regularFontId(),
         });
     });
 }

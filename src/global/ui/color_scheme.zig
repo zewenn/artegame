@@ -29,6 +29,8 @@ pub const surface_danger_inset: clay.Color = ui.color(24, 18, 24, 200);
 pub const status_pill_background: clay.Color = ui.color(24, 28, 38, 180);
 /// Main menu high score badge background color.
 pub const stats_badge_background: clay.Color = ui.color(16, 20, 28, 220);
+/// Main menu high score stats text color.
+pub const stats_badge_text: clay.Color = ui.color(238, 230, 234, 255);
 
 /// Highlighted/selected interactive row background color.
 pub const row_selected_background: clay.Color = ui.color(28, 33, 46, 220);
@@ -129,6 +131,8 @@ pub const badge_gamepad_border: clay.Color = ui.color(120, 130, 150, 180);
 pub const badge_keyboard_border: clay.Color = ui.color(70, 80, 100, 180);
 /// Hint badge label text color.
 pub const badge_text: clay.Color = ui.color(190, 200, 220, 230);
+/// Boon rarity badge background color.
+pub const badge_rarity_background: clay.Color = ui.color(14, 12, 12, 64);
 /// Purchased boon badge background color.
 pub const badge_purchased_background: clay.Color = ui.color(24, 27, 35, 230);
 /// Purchased boon badge border color.
@@ -147,17 +151,17 @@ pub const hud_overlay_background: clay.Color = ui.color(18, 20, 26, 210);
 /// HUD spell cooldown badge background color.
 pub const hud_badge_background: clay.Color = ui.color(16, 18, 24, 230);
 /// Translucent HUD panel background for XP and objectives.
-pub const hud_translucent_background: clay.Color = ui.color(50, 50, 50, 128);
+pub const hud_translucent_background: clay.Color = ui.color(23, 21, 22, 196);
 /// HUD player bar container background color.
 pub const hud_bar_trough: clay.Color = ui.color(50, 50, 50, 255);
 /// HUD player bar trough RGBA color.
-pub const hud_bar_trough_rgba: lm.Color = .init(50, 50, 50, 255);
+pub const hud_bar_trough_rgba: lm.Color = .init(55, 51, 52, 255);
 /// HUD player health bar fill RGBA color.
-pub const hud_health_fill_rgba: lm.Color = .init(220, 20, 120, 255);
+pub const hud_health_fill_rgba: lm.Color = .init(178, 82, 102, 255);
 /// HUD player stamina bar fill RGBA color.
-pub const hud_stamina_fill_rgba: lm.Color = .init(220, 220, 220, 255);
+pub const hud_stamina_fill_rgba: lm.Color = .init(192, 144, 169, 255);
 /// World interaction prompt background color.
-pub const prompt_background: clay.Color = ui.color(20, 24, 32, 235);
+pub const prompt_background: clay.Color = ui.color(23, 21, 22, 196);
 /// World interaction prompt border color.
 pub const prompt_border: clay.Color = ui.color(80, 160, 255, 220);
 

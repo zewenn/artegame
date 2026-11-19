@@ -126,12 +126,12 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
 }
 
 fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
-    const card_width_pixels = @min(window_size.x - 32, @round(420 * ui_scale));
-    const card_padding_pixels = lm.tou16(@round(24 * ui_scale));
-    const card_gap_pixels = lm.tou16(@round(16 * ui_scale));
-    const title_font_size = lm.tou16(@max(20, @round(24 * ui_scale)));
-    const subtitle_font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const card_width_pixels = @min(window_size.x - 32, @round(105.0 * ui_scale));
+    const card_padding_pixels = lm.tou16(@round(6.0 * ui_scale));
+    const card_gap_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const title_font_size = lm.tou16(@max(12, @round(6.0 * ui_scale)));
+    const subtitle_font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
 
     ui.new(.{
         .id = .ID("gameover-card"),
@@ -143,7 +143,7 @@ fn drawCard(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .padding = .all(card_padding_pixels),
         },
         .background_color = color_scheme.panel_danger_background,
-        .corner_radius = .all(14 * ui_scale),
+        .corner_radius = .all(3.5 * ui_scale),
         .border = .{
             .color = color_scheme.accent_crimson_border,
             .width = .outside(2),
@@ -163,45 +163,47 @@ fn drawHeader(title_font_size: u16, subtitle_font_size: u16, letter_spacing: u16
         .layout = .{
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
-            .child_gap = lm.tou16(@round(4 * ui_scale)),
+            .child_gap = lm.tou16(@round(1.0 * ui_scale)),
         },
     })({
         ui.text("GAME OVER", .{
             .color = color_scheme.accent_crimson,
-            .letter_spacing = lm.tou16(@round(3 * ui_scale)),
+            .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
             .font_size = title_font_size,
             .alignment = .center,
+            .font_id = HUD.boldFontId(),
         });
         ui.text("You have fallen in battle", .{
             .color = color_scheme.text_danger_subtitle,
             .letter_spacing = letter_spacing,
             .font_size = subtitle_font_size,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
 
 fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allocator) void {
-    const box_padding_pixels = lm.tou16(@round(14 * ui_scale));
-    const box_gap_pixels = lm.tou16(@round(8 * ui_scale));
-    const row_height_pixels = @round(24 * ui_scale);
+    const box_padding_pixels = lm.tou16(@round(3.5 * ui_scale));
+    const box_gap_pixels = lm.tou16(@round(2.0 * ui_scale));
+    const row_height_pixels = @round(6.0 * ui_scale);
 
-    const rooms_string = if (allocator) |active_allocator|
+    const rooms_text = if (allocator) |active_allocator|
         std.fmt.allocPrint(active_allocator, "{d}", .{run_stats.rooms_cleared}) catch "0"
     else
         "0";
 
-    const enemies_string = if (allocator) |active_allocator|
+    const enemies_text = if (allocator) |active_allocator|
         std.fmt.allocPrint(active_allocator, "{d}", .{run_stats.enemies_defeated}) catch "0"
     else
         "0";
 
-    const experience_string = if (allocator) |active_allocator|
+    const experience_text = if (allocator) |active_allocator|
         std.fmt.allocPrint(active_allocator, "{d} XP", .{run_stats.experience_collected}) catch "0 XP"
     else
         "0 XP";
 
-    const high_score_string = if (allocator) |active_allocator|
+    const high_score_text = if (allocator) |active_allocator|
         std.fmt.allocPrint(active_allocator, "{d} XP", .{SaveSystem.getScores().high_score}) catch "0 XP"
     else
         "0 XP";
@@ -215,16 +217,16 @@ fn drawStatsBox(box_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Alloca
             .child_gap = box_gap_pixels,
         },
         .background_color = color_scheme.surface_danger_inset,
-        .corner_radius = .all(8 * ui_scale),
+        .corner_radius = .all(2.0 * ui_scale),
         .border = .{
             .color = color_scheme.border_danger_subtle,
             .width = .outside(1),
         },
     })({
-        drawStatRow("ROOMS CLEARED", rooms_string, color_scheme.accent_gold, box_width_pixels, row_height_pixels, ui_scale);
-        drawStatRow("ENEMIES DEFEATED", enemies_string, color_scheme.accent_crimson_stat, box_width_pixels, row_height_pixels, ui_scale);
-        drawStatRow("EXPERIENCE", experience_string, color_scheme.accent_cyan, box_width_pixels, row_height_pixels, ui_scale);
-        drawStatRow("HIGH SCORE", high_score_string, color_scheme.accent_green, box_width_pixels, row_height_pixels, ui_scale);
+        drawStatRow("ROOMS CLEARED", rooms_text, color_scheme.accent_gold, row_height_pixels, ui_scale);
+        drawStatRow("ENEMIES DEFEATED", enemies_text, color_scheme.accent_crimson_stat, row_height_pixels, ui_scale);
+        drawStatRow("EXPERIENCE", experience_text, color_scheme.accent_cyan, row_height_pixels, ui_scale);
+        drawStatRow("HIGH SCORE", high_score_text, color_scheme.accent_green, row_height_pixels, ui_scale);
     });
 }
 
@@ -232,13 +234,11 @@ fn drawStatRow(
     label: []const u8,
     value: []const u8,
     value_color: lm.deps.clay.Color,
-    row_width_pixels: f32,
     row_height_pixels: f32,
     ui_scale: f32,
 ) void {
-    _ = row_width_pixels;
-    const font_size = lm.tou16(@max(12, @round(13 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(1 * ui_scale)));
+    const font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale)));
 
     ui.new(.{
         .id = .ID(label),
@@ -252,6 +252,7 @@ fn drawStatRow(
             .color = color_scheme.text_danger_muted,
             .letter_spacing = letter_spacing,
             .font_size = font_size,
+            .font_id = HUD.regularFontId(),
         });
 
         ui.new(.{
@@ -263,6 +264,7 @@ fn drawStatRow(
             .color = value_color,
             .letter_spacing = letter_spacing,
             .font_size = font_size,
+            .font_id = HUD.boldFontId(),
         });
     });
 }
@@ -289,7 +291,7 @@ fn drawActionButtons(button_maximum_width_pixels: f32, ui_scale: f32) void {
 
     const button_width_pixels = @min(button_maximum_width_pixels, @round(HUD.MENU_BUTTON_BASE_WIDTH * ui_scale));
     const button_height_pixels = @round(HUD.MENU_BUTTON_BASE_HEIGHT * ui_scale);
-    const gap_pixels = lm.tou16(@round(10 * ui_scale));
+    const gap_pixels = lm.tou16(@round(2.5 * ui_scale));
 
     ui.new(.{
         .id = .ID("gameover-buttons-col"),
@@ -309,7 +311,7 @@ fn drawActionButtons(button_maximum_width_pixels: f32, ui_scale: f32) void {
 fn drawFooter(ui_scale: f32) void {
     ui.new(.{
         .id = .ID("gameover-footer-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(14 * ui_scale)), .w = .fixed(1) } },
+        .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
     })({});
 
     ui.new(.{
@@ -323,14 +325,15 @@ fn drawFooter(ui_scale: f32) void {
 
         ui.text(footer_text, .{
             .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(9, @round(11 * ui_scale))),
+            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
             .letter_spacing = 1,
             .alignment = .center,
+            .font_id = HUD.regularFontId(),
         });
     });
 }
 
-fn handleButtonHover(index: usize, is_disabled: bool) void {
+fn handleButtonInteraction(index: usize, is_disabled: bool) void {
     if (!clay.hovered()) return;
     if (mouse_moved) {
         selected_index = index;
@@ -351,8 +354,8 @@ fn drawButton(
 ) void {
     const is_disabled = (index == 0 and !canRestart());
     const is_button_active = isButtonActive(index);
-    const font_size = lm.tou16(@max(13, @round(15 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(2 * ui_scale)));
+    const font_size = lm.tou16(@max(7, @round(3.75 * ui_scale)));
+    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
 
     clay.UI()(.{
         .id = .IDI("gameover-btn-", @intCast(index)),
@@ -365,7 +368,7 @@ fn drawButton(
         },
         .image = ui.image(HUD.getMenuButtonSprite(is_button_active), .init(button_width_pixels, button_height_pixels)) catch .{ .image_data = null },
     })({
-        handleButtonHover(index, is_disabled);
+        handleButtonInteraction(index, is_disabled);
 
         const text_color = if (is_disabled)
             color_scheme.button_text_disabled
@@ -381,6 +384,7 @@ fn drawButton(
             .font_size = font_size,
             .letter_spacing = letter_spacing,
             .alignment = .center,
+            .font_id = HUD.getFontId(is_button_active),
         });
     });
 }
