@@ -344,24 +344,17 @@ pub fn draw(stats: *Stats, attack: *Attack, allocator: ?std.mem.Allocator) void 
                 6.0 * HUD.ui_scale,
             );
 
-            ui.new(.{
-                .id = .IDI("player-hud-padding-", 1),
-                .layout = .{
-                    .sizing = .{ .w = .percent(1), .h = .fixed(1.0 * HUD.ui_scale) },
-                },
-            })({});
-
             progressBar(
                 1,
                 stats.current.stamina,
                 stats.max.stamina,
                 color_scheme.hud_bar_trough_rgba,
                 color_scheme.hud_stamina_fill_rgba,
-                3.0 * HUD.ui_scale,
+                4.0 * HUD.ui_scale,
             );
 
             ui.new(.{
-                .id = .IDI("player-hud-padding-", 2),
+                .id = .IDI("player-hud-padding-", 1),
                 .layout = .{
                     .sizing = .{ .w = .percent(1), .h = .fixed(1.0 * HUD.ui_scale) },
                 },
