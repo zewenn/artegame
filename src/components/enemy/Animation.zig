@@ -13,30 +13,14 @@ pub const Facing = enum {
 };
 
 stats: ?*Stats = null,
-transform: ?*lm.Transform = null,
 animator: ?*lm.Animator = null,
 attack: ?*Attack = null,
 movement: ?*Movement = null,
 
 facing: Facing = .left,
-current_anim: ?[]const u8 = null,
-
-pub fn getAnimationDuration(animator: *lm.Animator, name: []const u8) f32 {
-    for (animator.animations.items()) |anim| {
-        if (std.mem.eql(u8, anim.name, name)) {
-            return lm.tof32(anim.length);
-        }
-    }
-    return 0;
-}
-
-pub fn playSafe(animator: *lm.Animator, name: []const u8) void {
-    animator.play(name) catch {};
-}
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
-    self.transform = try entity.pullComponent(lm.Transform);
     self.animator = try entity.pullComponent(lm.Animator);
     self.attack = entity.getComponent(Attack);
     self.movement = entity.getComponent(Movement);
@@ -48,66 +32,63 @@ pub fn Update(self: *Self) !void {
     const stats: *Stats = try lm.ensureComponent(self.stats);
     const animator: *lm.Animator = try lm.ensureComponent(self.animator);
 
-    if (stats.isStunned() or stats.isSleeping() or stats.isStasis()) {
-        animator.stop("walk-left");
-        animator.stop("walk-right");
-        animator.stop("idle-left");
-        animator.stop("idle-right");
-
+    if (stats.isStunned() or stats.isStasis() or stats.isWeakened()) {
+        stopMovementAnimations(animator);
         playSafe(animator, "stunned");
         return;
     }
 
-    if_winding_anim_is_playing: {
-        const attack = self.attack orelse break :if_winding_anim_is_playing;
-        if (attack.action_state == .idle) break :if_winding_anim_is_playing;
-
-        animator.stop("walk-left");
-        animator.stop("walk-right");
-        animator.stop("idle-left");
-        animator.stop("idle-right");
-        return;
+    if (self.attack) |attack| {
+        if (attack.isActing()) {
+            stopMovementAnimations(animator);
+            return;
+        }
     }
 
     const movement = self.movement orelse return;
     const is_moving = movement.move_vector.length() > 0.05;
 
-    if (!is_moving) {
-        animator.stop("walk-left");
-        animator.stop("walk-right");
-
-        switch (self.facing) {
-            .left => {
-                animator.stop("idle-right");
-                playSafe(animator, "idle-left");
-            },
-            .right => {
-                animator.stop("idle-left");
-                playSafe(animator, "idle-right");
-            },
-        }
-
+    if (is_moving) {
+        self.facing = if (movement.move_vector.x < -0.05) .left else .right;
+        playLocomotionAnimation(animator, "walk", self.facing);
         return;
     }
 
-    self.facing = switch (movement.move_vector.x < -0.05) {
-        true => .left,
-        false => .right,
+    playLocomotionAnimation(animator, "idle", self.facing);
+}
+
+pub fn getAnimationDuration(animator: *lm.Animator, name: []const u8) f32 {
+    for (animator.animations.items()) |animation| {
+        if (std.mem.eql(u8, animation.name, name)) {
+            return lm.tof32(animation.length);
+        }
+    }
+    return 0;
+}
+
+pub fn playSafe(animator: *lm.Animator, name: []const u8) void {
+    animator.play(name) catch {};
+}
+
+fn stopMovementAnimations(animator: *lm.Animator) void {
+    animator.stop("walk-left");
+    animator.stop("walk-right");
+    animator.stop("idle-left");
+    animator.stop("idle-right");
+}
+
+fn playLocomotionAnimation(animator: *lm.Animator, comptime action_prefix: []const u8, facing: Facing) void {
+    const target_animation = switch (facing) {
+        .left => action_prefix ++ "-left",
+        .right => action_prefix ++ "-right",
     };
 
-    if (self.facing == .left) {
-        animator.stop("walk-right");
-        animator.stop("idle-left");
-        animator.stop("idle-right");
-
-        playSafe(animator, "walk-left");
-    } else {
-        animator.stop("walk-left");
-        animator.stop("idle-left");
-        animator.stop("idle-right");
-
-        playSafe(animator, "walk-right");
+    inline for ([_][]const u8{ "walk-left", "walk-right", "idle-left", "idle-right" }) |animation_name| {
+        if (!std.mem.eql(u8, animation_name, target_animation)) {
+            animator.stop(animation_name);
+        }
     }
+    playSafe(animator, target_animation);
 }
 
 pub const melee_animations = [_]lm.Animation{

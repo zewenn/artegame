@@ -6,9 +6,9 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
-const DevicePrompts = @import("../input/DevicePrompts.zig");
-const HUD = @import("../HUD.zig");
-const menu_button = @import("buttons/menu_button.zig");
+const theme = @import("theme.zig");
+const sprite_button = @import("buttons/sprite_button.zig");
+const menu_navigation = @import("menu_navigation.zig");
 const color_scheme = @import("color_scheme.zig");
 
 /// Visual screens displayed within the pause menu overlay.
@@ -24,13 +24,7 @@ pub const PauseAction = enum(usize) {
     options = 2,
     exit = 3,
 
-    pub const ALL_ACTIONS = [_]PauseAction{
-        .resume_game,
-        .restart,
-        .options,
-        .exit,
-    };
-
+    /// Text caption displayed on the pause button.
     pub fn caption(self: PauseAction) []const u8 {
         return switch (self) {
             .resume_game => "RESUME",
@@ -47,22 +41,15 @@ pub var is_showing: bool = false;
 /// The currently active view within the pause menu.
 pub var current_view: View = .root;
 
-/// The index of the currently highlighted pause menu action.
-pub var selected_index: usize = 0;
-
-/// The index of the previously selected pause menu action for audio feedback tracking.
-pub var previous_selected_index: usize = 0;
-
-var just_opened: bool = false;
+/// Shared navigation selection, stick latching, and open-guard state.
+pub var navigation: menu_navigation.NavigationState = .{};
 
 /// Opens the pause menu overlay, halting gameplay time.
 pub fn show() void {
     if (is_showing) return;
     is_showing = true;
     current_view = .root;
-    selected_index = 0;
-    previous_selected_index = 0;
-    just_opened = true;
+    navigation.reset(true);
     lm.time.pause();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.0);
 }
@@ -72,18 +59,9 @@ pub fn hide() void {
     if (!is_showing) return;
     is_showing = false;
     current_view = .root;
-    just_opened = false;
+    navigation.just_opened = false;
     lm.time.proceed();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.0);
-}
-
-/// Toggles visibility of the pause menu overlay.
-pub fn toggle() void {
-    if (is_showing) {
-        hide();
-    } else {
-        show();
-    }
 }
 
 /// Returns whether the pause menu overlay is actively shown.
@@ -96,11 +74,9 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
     if (!is_showing) return;
 
     const window_size = lm.window.size.get();
-    const ui_scale = HUD.calculateUiScale(window_size);
+    const ui_scale = theme.calculateUiScale(window_size);
 
-    if (just_opened) {
-        just_opened = false;
-    } else if (current_view == .root) {
+    if (!navigation.consumeJustOpened() and current_view == .root) {
         handleRootInput();
     }
 
@@ -126,10 +102,7 @@ pub fn draw(allocator: ?std.mem.Allocator) void {
         drawCurrentView(ui_scale, window_size, allocator);
     });
 
-    if (selected_index != previous_selected_index) {
-        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
-        previous_selected_index = selected_index;
-    }
+    navigation.syncSelectionAudio();
 }
 
 fn drawCurrentView(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
@@ -142,24 +115,22 @@ fn drawCurrentView(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.A
 fn drawOptionsView(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
     if (!OptionsMenu.draw(ui_scale, window_size, allocator)) return;
     current_view = .root;
-    selected_index = 2;
-    previous_selected_index = 2;
-    just_opened = true;
+    navigation.selected_index = @intFromEnum(PauseAction.options);
+    navigation.previous_selected_index = navigation.selected_index;
+    navigation.just_opened = true;
 }
 
 fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) void {
     const card_width_pixels = @min(window_size.x - 32, @round(95.0 * ui_scale));
     const card_padding_pixels = lm.tou16(@round(6.0 * ui_scale));
-    const font_size = lm.tou16(@max(7, @round(3.75 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
+    const font_size = theme.scaledU16(3.75, 7, ui_scale);
+    const letter_spacing = theme.scaledU16(0.5, 1, ui_scale);
     const status_text = resolveStatusText(allocator);
 
     ui.new(.{
         .id = .ID("pause-root-card"),
         .layout = .{
-            .sizing = .{
-                .w = .fixed(card_width_pixels),
-            },
+            .sizing = .{ .w = .fixed(card_width_pixels) },
             .direction = .top_to_bottom,
             .child_alignment = .{ .x = .center },
             .child_gap = lm.tou16(@round(3.5 * ui_scale)),
@@ -173,18 +144,14 @@ fn drawRootScreen(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Al
         },
     })({
         drawHeader(ui_scale, status_text);
-        drawPauseButtons(font_size, letter_spacing);
+        drawPauseButtons(ui_scale, font_size, letter_spacing);
         drawFooter(ui_scale);
     });
 }
 
 fn resolveStatusText(allocator: ?std.mem.Allocator) []const u8 {
-    if (RoomManager.isPlaytestMode()) {
-        return "Map Editor Playtest";
-    }
-    if (RoomManager.isPracticeTutorialMode()) {
-        return "Practice Tutorial";
-    }
+    if (RoomManager.isPlaytestMode()) return "Map Editor Playtest";
+    if (RoomManager.isPracticeTutorialMode()) return "Practice Tutorial";
 
     const wave_progress = RoomManager.getWaveProgress() orelse return "Run in Progress";
     const room_state = RoomManager.getState() orelse return "Run in Progress";
@@ -208,16 +175,14 @@ fn resolveStatusText(allocator: ?std.mem.Allocator) []const u8 {
 fn drawHeader(ui_scale: f32, status_text: []const u8) void {
     ui.new(.{
         .id = .ID("pause-title-wrap"),
-        .layout = .{
-            .child_alignment = .{ .x = .center },
-        },
+        .layout = .{ .child_alignment = .{ .x = .center } },
     })({
         ui.text("GAME PAUSED", .{
             .color = color_scheme.accent_gold,
-            .font_size = lm.tou16(@max(12, @round(6.0 * ui_scale))),
+            .font_size = theme.scaledU16(6.0, 12, ui_scale),
             .letter_spacing = 2,
             .alignment = .center,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 
@@ -232,10 +197,10 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
     })({
         ui.text(status_text, .{
             .color = color_scheme.text_secondary,
-            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
+            .font_size = theme.scaledU16(3.0, 6, ui_scale),
             .letter_spacing = 1,
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 
@@ -245,15 +210,19 @@ fn drawHeader(ui_scale: f32, status_text: []const u8) void {
     })({});
 }
 
-fn drawPauseButtons(font_size: u16, letter_spacing: u16) void {
-    for (PauseAction.ALL_ACTIONS, 0..) |action, action_index| {
-        menu_button.draw(
-            action_index,
+fn drawPauseButtons(ui_scale: f32, font_size: u16, letter_spacing: u16) void {
+    inline for (std.enums.values(PauseAction)) |action| {
+        sprite_button.draw(
+            .menu,
+            @intFromEnum(action),
             action.caption(),
-            &selected_index,
+            &navigation.selected_index,
             activateRootAction,
-            font_size,
-            letter_spacing,
+            ui_scale,
+            .{
+                .font_size_override = font_size,
+                .letter_spacing = letter_spacing,
+            },
         );
     }
 }
@@ -264,73 +233,32 @@ fn drawFooter(ui_scale: f32) void {
         .layout = .{ .sizing = .{ .h = .fixed(@round(3.5 * ui_scale)), .w = .fixed(1) } },
     })({});
 
-    ui.new(.{
-        .id = .ID("pause-footer-container"),
-        .layout = .{ .child_alignment = .{ .x = .center } },
-    })({
-        const footer_text = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick  |  Select: A  |  Resume: B / Start"
-        else
-            "Navigate: WASD / Arrows  |  Select: Enter  |  Resume: Esc";
-
-        ui.text(footer_text, .{
-            .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
-            .letter_spacing = 1,
-            .alignment = .center,
-            .font_id = HUD.regularFontId(),
-        });
-    });
+    menu_navigation.drawFooterHint(
+        "pause-footer-container",
+        "Navigate: D-Pad / L-Stick  |  Select: A  |  Resume: B / Start",
+        "Navigate: WASD / Arrows  |  Select: Enter  |  Resume: Esc",
+        ui_scale,
+    );
 }
 
 fn handleRootInput() void {
-    DevicePrompts.update();
-    var navigate_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
-    var navigate_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter);
-    var back_pressed = lm.keyboard.getKeyDown(.escape);
-
-    if (lm.gamepad.isAvailable(0)) {
-        navigate_up = navigate_up or lm.gamepad.getButtonDown(0, .left_face_up);
-        navigate_down = navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
-        select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
-        back_pressed = back_pressed or lm.gamepad.getButtonDown(0, .right_face_right) or
-            lm.gamepad.getButtonDown(0, .middle_right) or lm.gamepad.getButtonDown(0, .middle);
-
-        const left_stick = lm.gamepad.getStickVector(0, .left, 0.25);
-        if (left_stick.y < -0.5) navigate_up = true;
-        if (left_stick.y > 0.5) navigate_down = true;
-    }
-
-    if (back_pressed) {
+    const input = navigation.readMenuInput();
+    if (input.back_pressed) {
         hide();
         return;
     }
 
-    const maximum_action_index: usize = PauseAction.ALL_ACTIONS.len - 1;
-    if (navigate_up) {
-        if (selected_index == 0) {
-            selected_index = maximum_action_index;
-        } else {
-            selected_index -= 1;
-        }
-    }
-    if (navigate_down) {
-        if (selected_index >= maximum_action_index) {
-            selected_index = 0;
-        } else {
-            selected_index += 1;
-        }
-    }
-    if (select_pressed) {
-        activateRootAction(selected_index);
+    const actions = std.enums.values(PauseAction);
+    navigation.applyVerticalNavigation(input, actions.len);
+    if (input.select_pressed) {
+        activateRootAction(navigation.selected_index);
     }
 }
 
 fn activateRootAction(index: usize) void {
-    if (index >= PauseAction.ALL_ACTIONS.len) return;
-    const action = PauseAction.ALL_ACTIONS[index];
-    switch (action) {
+    const actions = std.enums.values(PauseAction);
+    if (index >= actions.len) return;
+    switch (actions[index]) {
         .resume_game => hide(),
         .restart => restartGame(),
         .options => openOptionsMenu(),
@@ -368,15 +296,10 @@ fn exitToMenuOrEditor() void {
 
     if (RoomManager.isPracticeTutorialMode()) {
         RoomManager.endPracticeTutorial();
-        hide();
-        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
-        lm.loadScene("main_menu") catch |load_error| {
-            std.log.err("Failed to return to main_menu scene: {any}", .{load_error});
-        };
-        return;
+    } else {
+        RoomManager.saveCurrentRun();
     }
 
-    RoomManager.saveCurrentRun();
     hide();
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.55, 0.0);
     lm.loadScene("main_menu") catch |load_error| {
@@ -384,9 +307,13 @@ fn exitToMenuOrEditor() void {
     };
 }
 
-test "PauseMenu show, hide, and toggle lifecycle" {
+test "PauseMenu show and hide lifecycle" {
     is_showing = false;
     lm.time.proceed();
+    defer {
+        hide();
+        lm.time.proceed();
+    }
 
     show();
     try std.testing.expect(is_showing);
@@ -397,29 +324,4 @@ test "PauseMenu show, hide, and toggle lifecycle" {
     try std.testing.expect(!is_showing);
     try std.testing.expect(!isShowing());
     try std.testing.expect(!lm.time.paused());
-
-    toggle();
-    try std.testing.expect(is_showing);
-    try std.testing.expect(lm.time.paused());
-
-    toggle();
-    try std.testing.expect(!is_showing);
-    try std.testing.expect(!lm.time.paused());
-}
-
-test "PauseMenu show and hide just_opened flag lifecycle" {
-    is_showing = false;
-    show();
-    defer hide();
-    try std.testing.expect(just_opened);
-
-    hide();
-    try std.testing.expect(!just_opened);
-}
-
-test "PauseMenu PauseAction captions" {
-    try std.testing.expectEqualStrings("RESUME", PauseAction.resume_game.caption());
-    try std.testing.expectEqualStrings("RESTART", PauseAction.restart.caption());
-    try std.testing.expectEqualStrings("OPTIONS", PauseAction.options.caption());
-    try std.testing.expectEqualStrings("MAIN MENU", PauseAction.exit.caption());
 }

@@ -2,14 +2,22 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../../components/Stats.zig");
+const Effect = @import("../../components/effects/Effect.zig");
 const StatusOverlays = @import("../../components/effects/StatusOverlays.zig");
 const Dashing = @import("../../components/Dashing.zig");
 const Enemy = @import("../../components/enemy/export.zig");
 const Ability = Enemy.Ability;
 const ProjectileProfile = Enemy.Ability.ProjectileProfile;
-const KnightMechanics = Enemy.KnightMechanics;
 const projectiles = @import("../Projectile.zig");
+const RoomManager = @import("../../global/RoomManager.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
+
+const KNIGHT_HEAL_CHANNEL_DURATION_SECONDS: f32 = 4.0;
+const KNIGHT_HEAL_BASE_RATE_PERCENT_PER_SECOND: f32 = 0.05;
+const KNIGHT_HEAL_ROUND_SCALING_PER_SECOND: f32 = 0.005;
+const KNIGHT_WEAKEN_DURATION_SECONDS: f32 = 3.5;
+const KNIGHT_WEAKEN_DEFENSE_MULTIPLIER: f32 = 0.5;
+const KNIGHT_WEAKEN_RECOVERY_DEFENSE_BONUS: f32 = 15.0;
 
 var knight_enemy_count: u32 = 0;
 
@@ -136,6 +144,65 @@ fn knightBeheadingOnHit(hit: projectiles.HitInfo) void {
     }
 }
 
+/// Calculates Knight's heal channel percentage per second scaled by round number.
+pub fn calculateHealRatePercentPerSecond(round: u32) f32 {
+    return KNIGHT_HEAL_BASE_RATE_PERCENT_PER_SECOND + (@as(f32, @floatFromInt(round)) * KNIGHT_HEAL_ROUND_SCALING_PER_SECOND);
+}
+
+/// Applies one tick of percentage-based healing to stats.
+pub fn applyHealChannelTick(stats: *Stats, heal_rate_percent_per_second: f32, delta_seconds: f32) void {
+    const heal_amount = stats.max.health * heal_rate_percent_per_second * delta_seconds;
+    stats.current.health = @min(stats.max.health, stats.current.health + heal_amount);
+}
+
+fn knightHealChannelOnTick(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "knight_heal_channel" }) orelse return;
+    applyHealChannelTick(stats, effect.value, lm.time.deltaTime());
+}
+
+/// Applies Knight's visual-less regen heal channel effect for the specified duration and round.
+pub fn applyKnightHealChannelEffect(enemy_stats: *Stats, duration_seconds: f32, round: u32) void {
+    enemy_stats.addEffect(.{
+        .id = "knight_heal_channel",
+        .effect_type = .regen,
+        .duration = duration_seconds,
+        .value = calculateHealRatePercentPerSecond(round),
+        .on_tick = knightHealChannelOnTick,
+        .visual = .{},
+    });
+}
+
+fn knightWeakenOnEnable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "knight_weaken" }) orelse return;
+    const armour_reduction = stats.base.armour * KNIGHT_WEAKEN_DEFENSE_MULTIPLIER;
+    const magic_resist_reduction = stats.base.magic_resist * KNIGHT_WEAKEN_DEFENSE_MULTIPLIER;
+
+    effect.value = armour_reduction;
+    effect.secondary_value = magic_resist_reduction;
+
+    stats.current.armour = @max(0.0, stats.current.armour - armour_reduction);
+    stats.current.magic_resist = @max(0.0, stats.current.magic_resist - magic_resist_reduction);
+}
+
+fn knightWeakenOnDisable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "knight_weaken" }) orelse return;
+    stats.base.armour += KNIGHT_WEAKEN_RECOVERY_DEFENSE_BONUS;
+    stats.base.magic_resist += KNIGHT_WEAKEN_RECOVERY_DEFENSE_BONUS;
+    stats.current.armour += effect.value + KNIGHT_WEAKEN_RECOVERY_DEFENSE_BONUS;
+    stats.current.magic_resist += effect.secondary_value + KNIGHT_WEAKEN_RECOVERY_DEFENSE_BONUS;
+}
+
+/// Applies Knight's weaken effect, halving defenses while active and granting +15 permanent defense on recovery.
+pub fn applyKnightWeakenEffect(enemy_stats: *Stats, duration_seconds: f32) void {
+    enemy_stats.addEffect(.{
+        .id = "knight_weaken",
+        .effect_type = .weaken,
+        .duration = duration_seconds,
+        .on_enable = knightWeakenOnEnable,
+        .on_disable = knightWeakenOnDisable,
+    });
+}
+
 fn knightCastWeaken(
     enemy_entity: *lm.Entity,
     enemy_transform: *lm.Transform,
@@ -143,14 +210,18 @@ fn knightCastWeaken(
     player_transform: *lm.Transform,
     player_stats: ?*Stats,
 ) anyerror!void {
-    _ = enemy_transform;
-    _ = enemy_stats;
-    _ = player_transform;
+    _ = enemy_entity;
     _ = player_stats;
 
-    if (enemy_entity.getComponent(KnightMechanics)) |mechanics| {
-        mechanics.startWeaken(3.5);
-    }
+    applyKnightWeakenEffect(enemy_stats, KNIGHT_WEAKEN_DURATION_SECONDS);
+    SpatialAudio.playSpatialPitched(
+        "audio/sfx/punch.mp3",
+        lm.vec3ToVec2(enemy_transform.position),
+        lm.vec3ToVec2(player_transform.position),
+        800.0,
+        0.70,
+        0.15,
+    );
 }
 
 fn knightCastHealChannel(
@@ -160,14 +231,19 @@ fn knightCastHealChannel(
     player_transform: *lm.Transform,
     player_stats: ?*Stats,
 ) anyerror!void {
-    _ = enemy_transform;
-    _ = enemy_stats;
-    _ = player_transform;
+    _ = enemy_entity;
     _ = player_stats;
 
-    if (enemy_entity.getComponent(KnightMechanics)) |mechanics| {
-        mechanics.startHealChannel(4.0, 1);
-    }
+    const current_round: u32 = if (RoomManager.getWaveProgress()) |wave_progress| wave_progress.round else 1;
+    applyKnightHealChannelEffect(enemy_stats, KNIGHT_HEAL_CHANNEL_DURATION_SECONDS, current_round);
+    SpatialAudio.playSpatialPitched(
+        "audio/sfx/pickup.mp3",
+        lm.vec3ToVec2(enemy_transform.position),
+        lm.vec3ToVec2(player_transform.position),
+        800.0,
+        0.80,
+        0.15,
+    );
 }
 
 pub const knight_abilities = [_]Ability{
@@ -179,6 +255,7 @@ pub const knight_abilities = [_]Ability{
         .cooldown = 999.0,
         .conditions = .{
             .health_below_pct = 0.25,
+            .self_lacks_effect = .{ .id = "knight_heal_channel" },
         },
         .custom_action = knightCastHealChannel,
         .windup_animation = "windup-heal-channel",
@@ -194,6 +271,7 @@ pub const knight_abilities = [_]Ability{
         .cooldown = 22.0,
         .conditions = .{
             .health_below_pct = 0.85,
+            .self_lacks_effect = .{ .effect_type = .weaken },
         },
         .custom_action = knightCastWeaken,
         .windup_animation = "windup-weaken",
@@ -393,7 +471,6 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
                 .room_scaling_factor = 1.0,
             },
         },
-        KnightMechanics{},
 
         Enemy.Movement.init(.pursue),
         Enemy.Attack.init(&knight_abilities, knight_fallback),
@@ -402,4 +479,57 @@ pub fn KnightEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.OverheadUI{ .show_health_bar = false },
         Enemy.BossBar{ .boss_name = "Knight", .rank = .mini_boss },
     });
+}
+
+test "Knight weaken effect lifecycle halves defenses and restores with +15 bonus" {
+    var stats = Stats.initUnstoppable(.enemy, .{
+        .health = 1000.0,
+        .armour = 60.0,
+        .magic_resist = 40.0,
+    });
+    defer stats.deinit();
+
+    try std.testing.expect(!stats.isWeakened());
+    try std.testing.expect(stats.canMove());
+    try std.testing.expectEqual(@as(f32, 60.0), stats.current.armour);
+    try std.testing.expectEqual(@as(f32, 40.0), stats.current.magic_resist);
+
+    applyKnightWeakenEffect(&stats, KNIGHT_WEAKEN_DURATION_SECONDS);
+    try std.testing.expect(stats.isWeakened());
+    try std.testing.expect(!stats.canMove());
+    try std.testing.expectEqual(@as(f32, 30.0), stats.current.armour);
+    try std.testing.expectEqual(@as(f32, 20.0), stats.current.magic_resist);
+
+    stats.tickEffects(KNIGHT_WEAKEN_DURATION_SECONDS);
+    try std.testing.expect(!stats.isWeakened());
+    try std.testing.expect(stats.canMove());
+    try std.testing.expectEqual(@as(f32, 75.0), stats.base.armour);
+    try std.testing.expectEqual(@as(f32, 55.0), stats.base.magic_resist);
+    try std.testing.expectEqual(@as(f32, 75.0), stats.current.armour);
+    try std.testing.expectEqual(@as(f32, 55.0), stats.current.magic_resist);
+}
+
+test "Knight heal channel effect uses visual-less regen, scales rate by round, and expires" {
+    var stats = Stats.initUnstoppable(.enemy, .{
+        .health = 1000.0,
+    });
+    defer stats.deinit();
+
+    stats.current.health = 200.0;
+
+    try std.testing.expectApproxEqAbs(@as(f32, 0.075), calculateHealRatePercentPerSecond(5), 0.0001);
+
+    applyKnightHealChannelEffect(&stats, KNIGHT_HEAL_CHANNEL_DURATION_SECONDS, 5);
+    const regen_effect = stats.getEffect(.{ .id = "knight_heal_channel" }) orelse return error.TestUnexpectedResult;
+    try std.testing.expectEqual(Effect.EffectType.regen, regen_effect.effect_type);
+
+    const visual = regen_effect.visual orelse return error.TestUnexpectedResult;
+    try std.testing.expectEqual(@as(usize, 0), visual.frames.len);
+    try std.testing.expectEqual(@as(?[]const u8, null), visual.icon);
+
+    applyHealChannelTick(&stats, regen_effect.value, 1.0);
+    try std.testing.expectApproxEqAbs(@as(f32, 275.0), stats.current.health, 0.01);
+
+    stats.tickEffects(KNIGHT_HEAL_CHANNEL_DURATION_SECONDS);
+    try std.testing.expect(!stats.hasEffect(.{ .id = "knight_heal_channel" }));
 }

@@ -8,7 +8,7 @@ pub const CanInteractFn = *const fn () bool;
 
 var registry: ?lm.List(*Self) = null;
 var focused_item: ?*Self = null;
-var last_update_time: f32 = -1.0;
+var last_update_time_seconds: f32 = -1.0;
 
 entity: ?*lm.Entity = null,
 transform: ?*lm.Transform = null,
@@ -26,11 +26,6 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.register();
 }
 
-pub fn End(self: *Self) void {
-    self.unregister();
-    self.is_focused = false;
-}
-
 pub fn Update(self: *Self) !void {
     if (lm.time.paused() or !self.isActive()) {
         self.is_focused = false;
@@ -46,9 +41,9 @@ pub fn Update(self: *Self) !void {
         self.is_focused = false;
         return;
     };
-    const player_pos = lm.vec3ToVec2(player_transform.position);
+    const player_position = lm.vec3ToVec2(player_transform.position);
 
-    refreshFocus(player_pos);
+    refreshFocus(player_position);
 
     if (!self.is_focused) return;
     const is_interact_pressed = lm.keyboard.getKeyDown(.f) or
@@ -59,6 +54,11 @@ pub fn Update(self: *Self) !void {
     }
 }
 
+pub fn End(self: *Self) void {
+    self.unregister();
+    self.is_focused = false;
+}
+
 pub fn register(self: *Self) void {
     if (registry == null) {
         registry = lm.List(*Self).init(lm.allocators.generic());
@@ -67,21 +67,21 @@ pub fn register(self: *Self) void {
     for (list.items()) |item| {
         if (item == self) return;
     }
-    list.append(self) catch |err| {
-        std.log.err("Failed to register interactable: {any}", .{err});
+    list.append(self) catch |register_error| {
+        std.log.err("Failed to register interactable: {any}", .{register_error});
     };
 }
 
 pub fn unregister(self: *Self) void {
     const list = &(registry orelse return);
-    for (list.items(), 0..) |item, i| {
-        if (item == self) {
-            _ = list.swapRemove(i);
-            if (focused_item == self) {
-                focused_item = null;
-            }
-            return;
+    for (list.items(), 0..) |item, item_index| {
+        if (item != self) continue;
+
+        _ = list.swapRemove(item_index);
+        if (focused_item == self) {
+            focused_item = null;
         }
+        return;
     }
 }
 
@@ -90,7 +90,7 @@ pub fn clearRegistry() void {
         list.clearRetainingCapacity();
     }
     focused_item = null;
-    last_update_time = -1.0;
+    last_update_time_seconds = -1.0;
 }
 
 pub fn deinitRegistry() void {
@@ -99,7 +99,7 @@ pub fn deinitRegistry() void {
         registry = null;
     }
     focused_item = null;
-    last_update_time = -1.0;
+    last_update_time_seconds = -1.0;
 }
 
 pub fn isActive(self: *const Self) bool {
@@ -116,60 +116,41 @@ pub fn trigger(self: *Self, player: *lm.Entity) void {
     }
 }
 
-fn refreshFocus(player_position: lm.Vector2) void {
-    const current_time = lm.time.appTime();
-    if (current_time == last_update_time) return;
-    last_update_time = current_time;
+fn findClosest(player_position: lm.Vector2, reset_focus: bool) ?*Self {
+    const list = &(registry orelse return null);
+    var closest_item: ?*Self = null;
+    var minimum_distance_squared_pixels: f32 = std.math.floatMax(f32);
 
-    var closest: ?*Self = null;
-    var min_dist_sq: f32 = std.math.floatMax(f32);
-
-    const list = &(registry orelse return);
     for (list.items()) |item| {
-        item.is_focused = false;
+        if (reset_focus) item.is_focused = false;
         if (!item.isActive()) continue;
         const transform = item.transform orelse continue;
 
-        const pos2d = lm.vec3ToVec2(transform.position);
-        const dx = pos2d.x - player_position.x;
-        const dy = pos2d.y - player_position.y;
-        const dist_sq = dx * dx + dy * dy;
-        const radius_sq = item.interaction_radius * item.interaction_radius;
+        const item_position = lm.vec3ToVec2(transform.position);
+        const delta_x_pixels = item_position.x - player_position.x;
+        const delta_y_pixels = item_position.y - player_position.y;
+        const distance_squared_pixels = delta_x_pixels * delta_x_pixels + delta_y_pixels * delta_y_pixels;
+        const interaction_radius_squared_pixels = item.interaction_radius * item.interaction_radius;
 
-        if (dist_sq <= radius_sq and dist_sq < min_dist_sq) {
-            min_dist_sq = dist_sq;
-            closest = item;
+        if (distance_squared_pixels <= interaction_radius_squared_pixels and distance_squared_pixels < minimum_distance_squared_pixels) {
+            minimum_distance_squared_pixels = distance_squared_pixels;
+            closest_item = item;
         }
     }
 
-    if (closest) |item| {
-        item.is_focused = true;
-    }
-    focused_item = closest;
+    return closest_item;
 }
 
-pub fn getClosest(player_position: lm.Vector2) ?*Self {
-    var closest: ?*Self = null;
-    var min_dist_sq: f32 = std.math.floatMax(f32);
+fn refreshFocus(player_position: lm.Vector2) void {
+    const current_time_seconds = lm.time.appTime();
+    if (current_time_seconds == last_update_time_seconds) return;
+    last_update_time_seconds = current_time_seconds;
 
-    const list = &(registry orelse return null);
-    for (list.items()) |item| {
-        if (!item.isActive()) continue;
-        const transform = item.transform orelse continue;
-
-        const pos2d = lm.vec3ToVec2(transform.position);
-        const dx = pos2d.x - player_position.x;
-        const dy = pos2d.y - player_position.y;
-        const dist_sq = dx * dx + dy * dy;
-        const radius_sq = item.interaction_radius * item.interaction_radius;
-
-        if (dist_sq <= radius_sq and dist_sq < min_dist_sq) {
-            min_dist_sq = dist_sq;
-            closest = item;
-        }
+    const closest_item = findClosest(player_position, true);
+    if (closest_item) |item| {
+        item.is_focused = true;
     }
-
-    return closest;
+    focused_item = closest_item;
 }
 
 pub fn getFocused() ?*Self {
@@ -183,47 +164,38 @@ pub fn getFocused() ?*Self {
     return null;
 }
 
-pub fn clearFocus() void {
-    if (registry) |*list| {
-        for (list.items()) |item| {
-            item.is_focused = false;
-        }
-    }
-    focused_item = null;
-}
-
 test "Interactable dynamic registration and squared distance closest selection" {
     clearRegistry();
-    defer clearRegistry();
+    defer deinitRegistry();
 
-    var t1: lm.Transform = .{ .position = .init(100, 100, 0) };
-    var t2: lm.Transform = .{ .position = .init(50, 50, 0) };
+    var first_transform: lm.Transform = .{ .position = .init(100, 100, 0) };
+    var second_transform: lm.Transform = .{ .position = .init(50, 50, 0) };
 
-    var item1: Self = .{
-        .transform = &t1,
+    var first_item: Self = .{
+        .transform = &first_transform,
         .interaction_radius = 80.0,
     };
-    var item2: Self = .{
-        .transform = &t2,
+    var second_item: Self = .{
+        .transform = &second_transform,
         .interaction_radius = 80.0,
     };
 
-    item1.register();
-    item2.register();
+    first_item.register();
+    second_item.register();
     try std.testing.expect(registry != null);
     try std.testing.expectEqual(@as(usize, 2), registry.?.len());
 
-    const closest1 = getClosest(.init(40, 40));
-    try std.testing.expect(closest1 == &item2);
+    const closest_to_second = findClosest(.init(40, 40), false);
+    try std.testing.expect(closest_to_second == &second_item);
 
-    const closest2 = getClosest(.init(90, 90));
-    try std.testing.expect(closest2 == &item1);
+    const closest_to_first = findClosest(.init(90, 90), false);
+    try std.testing.expect(closest_to_first == &first_item);
 
-    const closest_none = getClosest(.init(500, 500));
-    try std.testing.expect(closest_none == null);
+    const closest_out_of_range = findClosest(.init(500, 500), false);
+    try std.testing.expect(closest_out_of_range == null);
 
-    item2.unregister();
+    second_item.unregister();
     try std.testing.expectEqual(@as(usize, 1), registry.?.len());
-    const closest3 = getClosest(.init(40, 40));
-    try std.testing.expect(closest3 == null);
+    const closest_after_unregister = findClosest(.init(40, 40), false);
+    try std.testing.expect(closest_after_unregister == null);
 }

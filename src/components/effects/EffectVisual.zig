@@ -5,20 +5,10 @@ const EffectType = Effect.EffectType;
 
 pub const EffectVisual = struct {
     frames: []const []const u8 = &.{},
-
     frame_duration: f32 = 0.1,
-
     offset: lm.Vector2 = .init(0, 32),
-
     scale: lm.Vector2 = .init(32, 32),
-
-    rotation_speed: f32 = 0,
-
-    tint: lm.Color = lm.Color.white,
-
     icon: ?[]const u8 = null,
-
-    loop: bool = true,
 
     pub fn getFrameIndex(self: EffectVisual, animation_elapsed_seconds: f32) usize {
         if (self.frames.len == 0) return 0;
@@ -26,9 +16,6 @@ pub const EffectVisual = struct {
         if (animation_elapsed_seconds <= 0) return 0;
 
         const total_frames = @as(usize, @intFromFloat(animation_elapsed_seconds / self.frame_duration));
-        if (!self.loop) {
-            return @min(total_frames, self.frames.len - 1);
-        }
         return total_frames % self.frames.len;
     }
 
@@ -37,97 +24,89 @@ pub const EffectVisual = struct {
         const frame_index = self.getFrameIndex(animation_elapsed_seconds);
         return self.frames[frame_index];
     }
-
-    pub fn getRotation(self: EffectVisual, animation_elapsed_seconds: f32) f32 {
-        if (self.rotation_speed == 0) return 0;
-        return @mod(animation_elapsed_seconds * self.rotation_speed, 360.0);
-    }
 };
 
 pub const EffectVisualRegistry = struct {
+    const default_visuals = std.EnumArray(EffectType, ?EffectVisual).init(.{
+        .stun = .{
+            .icon = "ui/icons/stun_icon.png",
+            .frames = &.{
+                "effects/stun/stun_1.png",
+                "effects/stun/stun_2.png",
+                "effects/stun/stun_3.png",
+                "effects/stun/stun_4.png",
+            },
+            .frame_duration = 0.1,
+            .offset = .init(0, 0),
+            .scale = .init(64, 64),
+        },
+        .sleep = .{
+            .frames = &.{"effects/sleep_effect.png"},
+            .frame_duration = 0.2,
+            .offset = .init(0, 0),
+            .scale = .init(64, 64),
+            .icon = "ui/icons/sleep_icon.png",
+        },
+        .root = .{
+            .icon = "ui/icons/root_icon.png",
+            .frames = &.{"effects/root.png"},
+            .frame_duration = 0.2,
+            .offset = .init(0, 0),
+            .scale = .init(64, 64),
+        },
+        .regen = .{
+            .frames = &.{
+                "effects/heal_effect_0.png",
+                "effects/heal_effect_1.png",
+            },
+            .frame_duration = 0.1,
+            .offset = .init(0, 0),
+            .scale = .init(64, 64),
+            .icon = "ui/icons/heal_icon.png",
+        },
+        .haste = .{
+            .icon = "ui/icons/haste_icon.png",
+        },
+        .goliath = .{
+            .icon = "ui/icons/goliath_icon.png",
+        },
+        .slow = .{
+            .frames = &.{
+                "effects/slow/slow_1.png",
+                "effects/slow/slow_2.png",
+            },
+            .icon = "ui/icons/slow_icon.png",
+            .scale = .init(64, 64),
+            .offset = .init(0, 0),
+            .frame_duration = 0.1,
+        },
+        .stasis = .{
+            .icon = "ui/icons/stasis_icon.png",
+            .frames = &.{"effects/stasis.png"},
+            .scale = .init(64, 64),
+            .offset = .init(0, 0),
+        },
+        .bond_of_life = .{
+            .icon = "ui/icons/bond_of_life.png",
+            .frame_duration = 0.2,
+            .frames = &.{
+                "effects/bond_of_life/bond_of_life_1.png",
+                "effects/bond_of_life/bond_of_life_2.png",
+            },
+            .scale = .init(64, 64),
+            .offset = .init(0, 0),
+        },
+        .weaken = null,
+        .custom = null,
+    });
+
     pub fn resolve(effect: Effect) ?EffectVisual {
         if (effect.visual) |visual| return visual;
         return getDefault(effect.effect_type);
     }
 
     pub fn getDefault(effect_type: EffectType) ?EffectVisual {
-        return switch (effect_type) {
-            .stun => EffectVisual{
-                .icon = "ui/icons/stun_icon.png",
-                .frames = &.{
-                    "effects/stun/stun_1.png",
-                    "effects/stun/stun_2.png",
-                    "effects/stun/stun_3.png",
-                    "effects/stun/stun_4.png",
-                },
-                .frame_duration = 0.1,
-                .offset = .init(0, 0),
-                .scale = .init(64, 64),
-            },
-            .sleep => EffectVisual{
-                .frames = &.{
-                    "effects/sleep_effect.png",
-                },
-                .frame_duration = 0.2,
-                .offset = .init(0, 0),
-                .scale = .init(64, 64),
-                .loop = true,
-                .icon = "ui/icons/sleep_icon.png",
-            },
-            .root => EffectVisual{
-                .icon = "ui/icons/root_icon.png",
-                .frames = &.{
-                    "effects/root.png",
-                },
-                .frame_duration = 0.2,
-                .offset = .init(0, 0),
-                .scale = .init(64, 64),
-                .loop = true,
-            },
-            .regen => EffectVisual{
-                .frames = &.{
-                    "effects/heal_effect_0.png",
-                    "effects/heal_effect_1.png",
-                },
-                .frame_duration = 0.1,
-                .offset = .init(0, 0),
-                .scale = .init(64, 64),
-                .icon = "ui/icons/heal_icon.png",
-            },
-            .haste => EffectVisual{
-                .icon = "ui/icons/haste_icon.png",
-            },
-            .goliath => EffectVisual{
-                .icon = "ui/icons/goliath_icon.png",
-            },
-            .slow => EffectVisual{
-                .frames = &.{
-                    "effects/slow/slow_1.png",
-                    "effects/slow/slow_2.png",
-                },
-                .icon = "ui/icons/slow_icon.png",
-                .scale = .init(64, 64),
-                .offset = .init(0, 0),
-                .frame_duration = 0.1,
-            },
-            .stasis => EffectVisual{
-                .icon = "ui/icons/stasis_icon.png",
-                .frames = &.{"effects/stasis.png"},
-                .scale = .init(64, 64),
-                .offset = .init(0, 0),
-            },
-            .bond_of_life => EffectVisual{
-                .icon = "ui/icons/bond_of_life.png",
-                .frame_duration = 0.2,
-                .frames = &.{
-                    "effects/bond_of_life/bond_of_life_1.png",
-                    "effects/bond_of_life/bond_of_life_2.png",
-                },
-                .scale = .init(64, 64),
-                .offset = .init(0, 0),
-            },
-            .custom => null,
-        };
+        return default_visuals.get(effect_type);
     }
 };
 
@@ -135,7 +114,6 @@ test "EffectVisual frame index calculation" {
     const visual = EffectVisual{
         .frames = &.{ "f0.png", "f1.png", "f2.png" },
         .frame_duration = 0.1,
-        .loop = true,
     };
 
     try std.testing.expectEqual(@as(usize, 0), visual.getFrameIndex(0.0));
@@ -145,21 +123,6 @@ test "EffectVisual frame index calculation" {
 
     try std.testing.expectEqual(@as(usize, 0), visual.getFrameIndex(0.30));
     try std.testing.expectEqual(@as(usize, 1), visual.getFrameIndex(0.40));
-}
-
-test "EffectVisual getRotation calculation" {
-    const rotating_visual = EffectVisual{
-        .rotation_speed = 90.0,
-    };
-    try std.testing.expectEqual(@as(f32, 0.0), rotating_visual.getRotation(0.0));
-    try std.testing.expectEqual(@as(f32, 45.0), rotating_visual.getRotation(0.5));
-    try std.testing.expectEqual(@as(f32, 90.0), rotating_visual.getRotation(1.0));
-    try std.testing.expectEqual(@as(f32, 0.0), rotating_visual.getRotation(4.0));
-
-    const static_visual = EffectVisual{
-        .rotation_speed = 0.0,
-    };
-    try std.testing.expectEqual(@as(f32, 0.0), static_visual.getRotation(1.5));
 }
 
 test "EffectVisualRegistry resolve precedence" {
@@ -184,4 +147,22 @@ test "EffectVisualRegistry resolve precedence" {
     try std.testing.expectEqual(@as(usize, 1), resolved_custom.?.frames.len);
     try std.testing.expectEqualStrings("custom_star.png", resolved_custom.?.frames[0]);
     try std.testing.expectEqual(@as(f32, 50), resolved_custom.?.offset.y);
+}
+
+test "EffectVisualRegistry weaken default is null and explicit empty visual suppresses regen default" {
+    const weaken_effect = Effect{
+        .id = "test_weaken",
+        .effect_type = .weaken,
+    };
+    try std.testing.expect(EffectVisualRegistry.resolve(weaken_effect) == null);
+
+    const silent_regen = Effect{
+        .id = "silent_regen",
+        .effect_type = .regen,
+        .visual = .{},
+    };
+    const resolved_silent = EffectVisualRegistry.resolve(silent_regen);
+    try std.testing.expect(resolved_silent != null);
+    try std.testing.expect(resolved_silent.?.getCurrentFrame(0.0) == null);
+    try std.testing.expect(resolved_silent.?.icon == null);
 }

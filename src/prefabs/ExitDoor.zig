@@ -1,19 +1,15 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Interactable = @import("../components/interaction/Interactable.zig");
 const Door = @import("../components/world/Door.zig");
 const RoomManager = @import("../global/RoomManager.zig");
 
-pub const RewardKind = Door.RewardKind;
-pub const DoorConfig = Door.DoorConfig;
-
 pub fn canInteractWithDoor() bool {
     const room_manager = RoomManager.get() orelse return false;
     return room_manager.state == .replenish or room_manager.getRoomType() == .tutorial;
 }
 
-pub fn ExitDoor(position: lm.Vector2, config: DoorConfig) !*lm.Entity {
+pub fn ExitDoor(position: lm.Vector2, config: Door.DoorConfig) !*lm.Entity {
     const door_index_u32 = @as(u32, @intCast(config.door_index));
 
     return try lm.makeEntityI("exit-door", door_index_u32, .{

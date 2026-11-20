@@ -1,6 +1,5 @@
 const std = @import("std");
-const lm = @import("loom");
-const Weapon = @import("../../components/Weapons/Weapon.zig");
+const Weapon = @import("../../components/weapons/Weapon.zig");
 const Stats = @import("../../components/Stats.zig");
 const ControlScheme = @import("../input/ControlScheme.zig").ControlScheme;
 
@@ -17,8 +16,6 @@ pub const AllTimeScores = struct {
     highest_round: u32 = 0,
     total_enemies_killed: u32 = 0,
     total_runs_played: u32 = 0,
-    best_enemies_killed_in_run: u32 = 0,
-    total_experience_earned: usize = 0,
 };
 
 pub const SavedSpell = struct {
@@ -45,43 +42,25 @@ pub const SavedPlayerStats = struct {
     experience: usize = 0,
 
     pub fn fromStats(stats: Stats) SavedPlayerStats {
-        return .{
-            .health = stats.current.health,
+        var saved = SavedPlayerStats{
             .max_health = stats.max.health,
-            .stamina = stats.current.stamina,
             .max_stamina = stats.max.stamina,
-            .movement_speed = stats.current.movement_speed,
-            .dash_time = stats.current.dash_time,
-            .dash_speed_multiplier = stats.current.dash_speed_multiplier,
-            .armour = stats.current.armour,
-            .magic_resist = stats.current.magic_resist,
-            .physical_damage = stats.current.physical_damage,
-            .magic_damage = stats.current.magic_damage,
-            .crit_damage_multiplier = stats.current.crit_damage_multiplier,
-            .crit_chance = stats.current.crit_chance,
-            .attack_speed = stats.current.attack_speed,
-            .aggro_range = stats.current.aggro_range,
-            .experience = stats.current.experience,
         };
+        inline for (@typeInfo(Stats.StatValues).@"struct".field_names) |field_name| {
+            @field(saved, field_name) = @field(stats.current, field_name);
+        }
+        return saved;
     }
 
     pub fn applyToStats(self: SavedPlayerStats, stats: *Stats) void {
-        stats.current.health = self.health;
+        inline for (@typeInfo(Stats.StatValues).@"struct".field_names) |field_name| {
+            const value = @field(self, field_name);
+            @field(stats.current, field_name) = value;
+            @field(stats.base, field_name) = value;
+            @field(stats.max, field_name) = value;
+        }
         stats.max.health = self.max_health;
-        stats.current.stamina = self.stamina;
         stats.max.stamina = self.max_stamina;
-        stats.current.movement_speed = self.movement_speed;
-        stats.current.dash_time = self.dash_time;
-        stats.current.dash_speed_multiplier = self.dash_speed_multiplier;
-        stats.current.armour = self.armour;
-        stats.current.magic_resist = self.magic_resist;
-        stats.current.physical_damage = self.physical_damage;
-        stats.current.magic_damage = self.magic_damage;
-        stats.current.crit_damage_multiplier = self.crit_damage_multiplier;
-        stats.current.crit_chance = self.crit_chance;
-        stats.current.attack_speed = self.attack_speed;
-        stats.current.aggro_range = self.aggro_range;
-        stats.current.experience = self.experience;
     }
 };
 
@@ -146,4 +125,33 @@ test "SaveFile serialization and deserialization roundtrip" {
     try testing.expectEqual(@as(f32, 15.5), parsed.value.current_run.equipped_weapons[0].?.light_attack.projectile_options.damage);
     try testing.expectEqualStrings("Heal", parsed.value.current_run.equipped_spells[0].?.id);
     try testing.expectEqual(@as(u32, 3), parsed.value.current_run.equipped_spells[0].?.level);
+}
+
+test "SavedPlayerStats restores current, base, and max stat values" {
+    var source = Stats.init(.player, .{
+        .health = 100,
+        .movement_speed = 420,
+        .physical_damage = 55,
+    });
+    defer source.deinit();
+
+    source.max.health = 160;
+    source.current.health = 85;
+    source.max.stamina = 140;
+    source.current.stamina = 60;
+
+    const saved = SavedPlayerStats.fromStats(source);
+
+    var restored = Stats.init(.player, .{});
+    defer restored.deinit();
+    saved.applyToStats(&restored);
+
+    try std.testing.expectEqual(@as(f32, 85), restored.current.health);
+    try std.testing.expectEqual(@as(f32, 160), restored.max.health);
+    try std.testing.expectEqual(@as(f32, 60), restored.current.stamina);
+    try std.testing.expectEqual(@as(f32, 140), restored.max.stamina);
+    try std.testing.expectEqual(@as(f32, 420), restored.current.movement_speed);
+    try std.testing.expectEqual(@as(f32, 420), restored.base.movement_speed);
+    try std.testing.expectEqual(@as(f32, 420), restored.max.movement_speed);
+    try std.testing.expectEqual(@as(f32, 55), restored.base.physical_damage);
 }

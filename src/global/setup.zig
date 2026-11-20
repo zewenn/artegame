@@ -1,9 +1,5 @@
-const std = @import("std");
 const lm = @import("loom");
 
-const Player = @import("../prefabs/Player.zig").Player;
-const Projectile = @import("../prefabs/Projectile.zig").Projectile;
-const Background = @import("../prefabs/Background.zig").Background;
 const SaveSystem = @import("save/SaveSystem.zig");
 
 pub fn Awake() !void {

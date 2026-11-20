@@ -2,7 +2,6 @@ const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
-const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const Dashing = @import("../components/Dashing.zig");
 const SpatialAudio = @import("../global/audio/SpatialAudio.zig");
 const ReactiveAura = @import("../components/enemy/ReactiveAura.zig");
@@ -23,13 +22,9 @@ pub const AttackKind = enum {
 
 /// Information passed to projectile hit callbacks.
 pub const HitInfo = struct {
-    projectile: ?*lm.Entity = null,
     target: *lm.Entity,
     caster_uuid: ?u128 = null,
     damage_dealt: f32 = 0,
-    is_crit: bool = false,
-    is_healing: bool = false,
-    options: *Options,
 };
 
 /// Callback signature invoked when a projectile impacts a target entity.
@@ -47,7 +42,7 @@ pub const Options = struct {
     lifetime: f32 = 1,
     speed: f32 = 330,
     size: lm.Vector2 = .init(64, 64),
-    passtrough: bool = false,
+    passthrough: bool = false,
 
     is_crit: bool = false,
     shooter_stats: Stats = .{},
@@ -110,40 +105,6 @@ pub fn emit(options: Options) !void {
     try ProjectileManager.spawn(options);
 }
 
-var projectile_count: u32 = 0;
-
-pub fn Projectile(options: Options) !*lm.Entity {
-    defer projectile_count +%= 1;
-
-    return try lm.makeEntityI("projectile", projectile_count, .{
-        lm.Transform{
-            .rotation = std.math.radiansToDegrees(std.math.atan2(
-                options.target_position.y - options.start_position.y,
-                options.target_position.x - options.start_position.x,
-            )) - 90,
-            .scale = options.size,
-        },
-        lm.Renderer.sprite(options.getProjectileSprite()),
-        lm.RectangleCollider.initConfig(.{
-            .type = .trigger,
-            .transform = .{ .scale = options.size.multiply(lm.Vec2(0.8, 0.8)) },
-            .onCollision = onCollisionDealDamage,
-        }),
-
-        options,
-        Stats{
-            .current = .{
-                .movement_speed = options.speed,
-            },
-        },
-        ProjectileMovement.init(
-            options.start_position,
-            options.target_position,
-            options.lifetime,
-        ),
-    });
-}
-
 /// Evaluates whether a wall collision blocks and destroys the projectile.
 pub fn processWallCollision(options: *Options, wall: Wall) bool {
     if (wall.wall_type.blocksProjectiles()) {
@@ -164,10 +125,6 @@ fn getPlayerListenerPosition(fallback_position: lm.Vector2) lm.Vector2 {
 pub fn playWallHitAudioAtPosition(projectile_position: lm.Vector2) void {
     const listener_position = getPlayerListenerPosition(projectile_position);
     SpatialAudio.playSpatialPitched("audio/sfx/punch.mp3", projectile_position, listener_position, 600.0, 0.3, 0.2);
-}
-
-fn playWallHitAudio(projectile_transform: *const lm.Transform) void {
-    playWallHitAudioAtPosition(lm.vec3ToVec2(projectile_transform.position));
 }
 
 /// Resolves wall collision logic and plays audio if the projectile is destroyed.
@@ -289,7 +246,7 @@ pub fn resolveEntityHit(options: *Options, projectile_position: lm.Vector2, othe
     const other_stats = other.getComponent(Stats) orelse return;
     if (other_stats.team != options.target_team) return;
 
-    if (!options.passtrough) {
+    if (!options.passthrough) {
         if (options.inactive) return;
         options.inactive = true;
     } else {
@@ -317,19 +274,15 @@ pub fn resolveEntityHit(options: *Options, projectile_position: lm.Vector2, othe
 
     if (options.on_hit_callback) |callback| {
         callback(.{
-            .projectile = null,
             .target = other,
             .caster_uuid = options.caster_uuid,
             .damage_dealt = damage_dealt,
-            .is_crit = options.is_crit,
-            .is_healing = options.is_healing,
-            .options = options,
         });
     }
 
     if (other.getComponent(ReactiveAura)) |reactive_aura| {
         if (lm.getEntity(.{ .id = "player" })) |player_entity| {
-            reactive_aura.onHitByAttacker(other, player_entity, damage_dealt);
+            reactive_aura.onHitByAttacker(other, player_entity);
         }
     }
 
@@ -337,7 +290,7 @@ pub fn resolveEntityHit(options: *Options, projectile_position: lm.Vector2, othe
         const hit_position = lm.vec3ToVec2(other_transform.position);
 
         if (other.getComponent(TrainingDummyBehaviour)) |dummy| {
-            dummy.onHit(options.attack_kind, damage_dealt, hit_position);
+            dummy.onHit(options.attack_kind, hit_position);
         }
 
         playHitAudioAtPosition(hit_position, options.is_crit);
@@ -348,30 +301,8 @@ pub fn resolveEntityHit(options: *Options, projectile_position: lm.Vector2, othe
     applyPull(options, other, other_stats);
 }
 
-fn onCollisionDealDamage(self: *lm.Entity, other: *lm.Entity) !void {
-    const options = try self.pullComponent(Options);
-    const transform = self.getComponent(lm.Transform);
-    const projectile_position = if (transform) |target_transform|
-        lm.vec3ToVec2(target_transform.position)
-    else
-        options.start_position;
-
-    if (other.getComponent(Wall)) |wall| {
-        if (resolveWallCollision(options, projectile_position, wall.*)) {
-            lm.removeEntity(.{ .uuid = self.uuid });
-        }
-        return;
-    }
-
-    const was_inactive = options.inactive;
-    resolveEntityHit(options, projectile_position, other);
-    if (!was_inactive and options.inactive) {
-        lm.removeEntity(.{ .uuid = self.uuid });
-    }
-}
-
 test "Projectile Options per-target hit tracking" {
-    var options = Options{ .passtrough = true };
+    var options = Options{ .passthrough = true };
     try std.testing.expectEqual(false, options.hasHit(101));
 
     try std.testing.expect(options.recordHit(101));
@@ -402,12 +333,4 @@ test "Projectile processWallCollision destroys solid walls and ignores low walls
     const royale_result = processWallCollision(&royale_options, royale_wall);
     try std.testing.expectEqual(true, royale_result);
     try std.testing.expectEqual(true, royale_options.inactive);
-}
-
-test "Projectile resolveWallCollision destroys solid walls and marks inactive" {
-    var projectile_options = Options{};
-    const wall = Wall{ .wall_type = .solid };
-    const hit_result = resolveWallCollision(&projectile_options, .init(0, 0), wall);
-    try std.testing.expectEqual(true, hit_result);
-    try std.testing.expectEqual(true, projectile_options.inactive);
 }

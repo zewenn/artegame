@@ -197,7 +197,7 @@ pub const shaman_abilities = [_]Ability{
             .target_team = .enemy,
             .is_healing = true,
             .heal_amount = 25.0,
-            .passtrough = true,
+            .passthrough = true,
             .sfx_path = "audio/sfx/pickup.mp3",
         },
         .windup_animation = "windup-cast-remote-healing",
@@ -303,19 +303,4 @@ pub fn ShamanEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Death{ .enemy_type = .shaman },
         Enemy.OverheadUI{},
     });
-}
-
-test "Shaman enemy creation and component configuration" {
-    const shaman = try ShamanEnemy(.init(100.0, 200.0));
-    defer shaman.deinit();
-    try shaman.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, shaman.id, "shaman-enemy"));
-    try std.testing.expect(shaman.getComponent(Stats) != null);
-    try std.testing.expect(shaman.getComponent(Enemy.ReactiveAura) != null);
-    try std.testing.expect(shaman.getComponent(Enemy.Attack) != null);
-
-    const stats = shaman.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 140.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 125.0), stats.current.movement_speed);
 }

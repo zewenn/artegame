@@ -8,11 +8,11 @@ const Textures = struct {
     middle: []*lm.Texture,
     left: *lm.Texture,
 
-    pub fn load(right: []const u8, left: []const u8, middle: []const []const u8) !Textures {
+    pub fn load(right_path: []const u8, left_path: []const u8, middle_paths: []const []const u8) !Textures {
         var middle_sprites: lm.List(*lm.Texture) = .init(lm.allocators.generic());
         defer middle_sprites.deinit();
 
-        for (middle) |image_path| {
+        for (middle_paths) |image_path| {
             const texture = lm.assets.texture.get(image_path, &.{ 64, 64 }) orelse {
                 std.log.err("Failed to load asset: {s}", .{image_path});
                 continue;
@@ -21,8 +21,8 @@ const Textures = struct {
             try middle_sprites.append(texture);
         }
 
-        const right_texture = lm.assets.texture.get(right, &.{ 64, 64 }) orelse return error.AssetNotFound;
-        const left_texture = lm.assets.texture.get(left, &.{ 64, 64 }) orelse return error.AssetNotFound;
+        const right_texture = lm.assets.texture.get(right_path, &.{ 64, 64 }) orelse return error.AssetNotFound;
+        const left_texture = lm.assets.texture.get(left_path, &.{ 64, 64 }) orelse return error.AssetNotFound;
 
         return Textures{
             .right = right_texture,
@@ -48,8 +48,8 @@ frame_change_time_seconds: f32 = 0.1,
 textures: Textures,
 
 is_active: bool = false,
-anim_start: f32 = 0,
-last_frame_change_time: f32 = 0,
+animation_start_seconds: f32 = 0,
+last_frame_change_seconds: f32 = 0,
 current_frame_index: usize = 0,
 
 pub fn init(
@@ -68,62 +68,47 @@ pub fn deinit(self: *Self) void {
     self.* = undefined;
 }
 
-pub fn startAnim(self: *Self) void {
-    self.anim_start = lm.time.gameTime();
-    self.last_frame_change_time = lm.time.gameTime();
+/// Updates activation state and starts the build/retract transition when toggled.
+pub fn setActive(self: *Self, active: bool) void {
+    if (self.is_active == active) return;
+    self.is_active = active;
+    self.startAnim();
 }
 
-pub fn render(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: f32) !void {
+pub fn startAnim(self: *Self) void {
+    const now_seconds = lm.time.gameTime();
+    self.animation_start_seconds = now_seconds;
+    self.last_frame_change_seconds = now_seconds;
+}
+
+pub fn render(self: *Self, start_position: lm.Vector2, end_position: lm.Vector2, distance_pixels: f32) !void {
     const textures = self.textures;
-    const anim_percent = @min(1, (lm.time.gameTime() - self.anim_start) / self.build_time_seconds);
+    const now_seconds = lm.time.gameTime();
+    const animation_progress = @min(1, (now_seconds - self.animation_start_seconds) / self.build_time_seconds);
 
-    if (anim_percent == 1 and !self.is_active) return;
+    if (animation_progress == 1 and !self.is_active) return;
 
-    const start_vector = if (self.is_active) start else start.lerp(end, anim_percent);
-    const end_vector = if (self.is_active) start.lerp(end, anim_percent) else end;
-
-    const current_distance = if (self.is_active) distance * anim_percent else distance * (1.0 - anim_percent);
+    const start_vector = if (self.is_active) start_position else start_position.lerp(end_position, animation_progress);
+    const end_vector = if (self.is_active) start_position.lerp(end_position, animation_progress) else end_position;
+    const current_distance_pixels = if (self.is_active) distance_pixels * animation_progress else distance_pixels * (1.0 - animation_progress);
 
     const base_vector = lm.Vec2(1, 0);
-    const delta_vector = end.subtract(start);
-    const angle = std.math.radiansToDegrees(base_vector.angle(delta_vector));
+    const delta_vector = end_position.subtract(start_position);
+    const angle_degrees = std.math.radiansToDegrees(base_vector.angle(delta_vector));
 
     const middle_point = start_vector.lerp(end_vector, 0.5);
-    const middle_width = @max(0.0, current_distance - 64.0);
+    const middle_width_pixels = @max(0.0, current_distance_pixels - 64.0);
 
-    if (lm.time.gameTime() - self.last_frame_change_time >= self.frame_change_time_seconds) {
-        self.last_frame_change_time = lm.time.gameTime();
+    if (now_seconds - self.last_frame_change_seconds >= self.frame_change_time_seconds) {
+        self.last_frame_change_seconds = now_seconds;
         self.current_frame_index += 1;
         if (self.current_frame_index >= textures.middle.len) {
             self.current_frame_index = 0;
         }
     }
 
-    try lm.display.addRenderer(.{
-        .renderer = .{ .texture = .{
-            .texture = textures.left.*,
-            .transform = .{
-                .position = .init(start_vector.x, start_vector.y, -100),
-                .rotation = angle,
-            },
-            .tint = lm.Color.white,
-            .fill_color = null,
-        } },
-        .index = -100,
-    });
-
-    try lm.display.addRenderer(.{
-        .renderer = .{ .texture = .{
-            .texture = textures.right.*,
-            .transform = .{
-                .position = .init(end_vector.x, end_vector.y, -100),
-                .rotation = angle,
-            },
-            .tint = lm.Color.white,
-            .fill_color = null,
-        } },
-        .index = -100,
-    });
+    try submitEndpointRenderer(textures.left.*, start_vector, angle_degrees);
+    try submitEndpointRenderer(textures.right.*, end_vector, angle_degrees);
 
     if (textures.middle.len <= self.current_frame_index) return;
 
@@ -133,8 +118,23 @@ pub fn render(self: *Self, start: lm.Vector2, end: lm.Vector2, distance: f32) !v
             .texture = middle_texture.*,
             .transform = .{
                 .position = .init(middle_point.x, middle_point.y, -100),
-                .rotation = angle,
-                .scale = .init(middle_width, 64),
+                .rotation = angle_degrees,
+                .scale = .init(middle_width_pixels, 64),
+            },
+            .tint = lm.Color.white,
+            .fill_color = null,
+        } },
+        .index = -100,
+    });
+}
+
+fn submitEndpointRenderer(texture: lm.Texture, position: lm.Vector2, angle_degrees: f32) !void {
+    try lm.display.addRenderer(.{
+        .renderer = .{ .texture = .{
+            .texture = texture,
+            .transform = .{
+                .position = .init(position.x, position.y, -100),
+                .rotation = angle_degrees,
             },
             .tint = lm.Color.white,
             .fill_color = null,

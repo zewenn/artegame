@@ -5,10 +5,8 @@ const ui = lm.ui;
 const Interactable = @import("../interaction/Interactable.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const AudioManager = @import("../../global/audio/AudioManager.zig");
-const GameOverMenu = @import("../../global/ui/GameOverMenu.zig");
-const PauseMenu = @import("../../global/ui/PauseMenu.zig");
-const BoonMenu = @import("../../global/ui/BoonMenu.zig");
 const HUD = @import("../../global/HUD.zig");
+const theme = @import("../../global/ui/theme.zig");
 
 const Self = @This();
 
@@ -17,6 +15,28 @@ pub const RewardKind = enum {
     mini_boss,
     boss,
 };
+
+const DoorSprites = struct {
+    open: []const u8,
+    closed: []const u8,
+};
+
+const DOOR_SPRITE_ROOT = "items/exit_doors/";
+
+const door_sprites = std.EnumArray(RewardKind, DoorSprites).init(.{
+    .boon_category = .{
+        .open = DOOR_SPRITE_ROOT ++ "normal_open.png",
+        .closed = DOOR_SPRITE_ROOT ++ "normal_closed.png",
+    },
+    .mini_boss = .{
+        .open = DOOR_SPRITE_ROOT ++ "miniboss_open.png",
+        .closed = DOOR_SPRITE_ROOT ++ "miniboss_closed.png",
+    },
+    .boss = .{
+        .open = DOOR_SPRITE_ROOT ++ "boss_open.png",
+        .closed = DOOR_SPRITE_ROOT ++ "boss_closed.png",
+    },
+});
 
 pub const DoorConfig = struct {
     door_index: usize = 0,
@@ -38,7 +58,6 @@ reward_title: []const u8 = "Next Room",
 reward_icon: []const u8 = "ui/icons/empty_icon.png",
 reward_kind: RewardKind = .boon_category,
 is_open: bool = true,
-action_text_buffer: [64]u8 = @splat(0),
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.transform = try entity.pullComponent(lm.Transform);
@@ -57,10 +76,10 @@ pub fn Start(self: *Self) void {
     self.camera = scene.getCameraById("main");
 }
 
-pub fn Update(self: *Self) !void {
+pub fn Update(self: *Self) void {
     const is_tutorial = if (RoomManager.get()) |room_manager| room_manager.getRoomType() == .tutorial else false;
     if (!self.is_open or (!RoomManager.isReplenish() and !is_tutorial)) return;
-    if (PauseMenu.isShowing() or GameOverMenu.isShowing() or BoonMenu.isShowing() or lm.time.paused()) return;
+    if (HUD.isModalOpen() or lm.time.paused()) return;
 
     const transform = self.transform orelse return;
     const camera = self.camera orelse {
@@ -72,7 +91,10 @@ pub fn Update(self: *Self) !void {
     const door_position = lm.vec3ToVec2(transform.position);
     const overhead_world_position = door_position.add(.init(0, -68.0));
     const screen_position = camera.worldToScreenPos(overhead_world_position);
+    self.drawRewardBadge(screen_position);
+}
 
+fn drawRewardBadge(self: *const Self, screen_position: lm.Vector2) void {
     const ui_scale = HUD.ui_scale;
     const icon_size_pixels = @round(5.0 * ui_scale);
     const badge_id = @as(u32, @intCast(self.door_index));
@@ -112,7 +134,7 @@ pub fn Update(self: *Self) !void {
             .color = accent_title_color,
             .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
             .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
@@ -127,22 +149,8 @@ pub fn setOpenState(self: *Self, open: bool) void {
 
 fn applyVisualState(self: *Self) void {
     const renderer = self.renderer orelse return;
-    const path_start = "items/exit_doors/";
-
-    if (self.is_open) {
-        renderer.img_path = switch (self.reward_kind) {
-            .boon_category => path_start ++ "normal_open.png",
-            .mini_boss => path_start ++ "miniboss_open.png",
-            .boss => path_start ++ "boss_open.png",
-        };
-        return;
-    }
-
-    renderer.img_path = switch (self.reward_kind) {
-        .boon_category => path_start ++ "normal_closed.png",
-        .mini_boss => path_start ++ "miniboss_closed.png",
-        .boss => path_start ++ "boss_closed.png",
-    };
+    const sprites = door_sprites.get(self.reward_kind);
+    renderer.img_path = if (self.is_open) sprites.open else sprites.closed;
 }
 
 pub fn onDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
@@ -163,9 +171,10 @@ pub fn onDoorInteract(interactable: *Interactable, player: *lm.Entity) void {
         RoomManager.enterNextRoomWithCategory(category) catch |transition_error| {
             std.log.err("Failed to enter next room with category {s}: {any}", .{ category, transition_error });
         };
-    } else {
-        RoomManager.enterNextRoom() catch |transition_error| {
-            std.log.err("Failed to enter next room: {any}", .{transition_error});
-        };
+        return;
     }
+
+    RoomManager.enterNextRoom() catch |transition_error| {
+        std.log.err("Failed to enter next room: {any}", .{transition_error});
+    };
 }

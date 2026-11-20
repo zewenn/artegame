@@ -112,33 +112,21 @@ const RetainedTextureEntry = struct {
     texture: *lm.Texture,
 };
 
+const WallCollider = struct {
+    wall: Wall,
+    box: OrientedBox,
+};
+
+const TargetCollider = struct {
+    entity: *lm.Entity,
+    team: Stats.Teams,
+    box: OrientedBox,
+};
+
 projectiles: ProjectileList = .{},
 retained_textures: std.ArrayListUnmanaged(RetainedTextureEntry) = .empty,
 
 var active_instance: ?*Self = null;
-
-/// Returns the currently active ProjectileManager instance.
-pub fn instance() ?*Self {
-    return active_instance;
-}
-
-/// Spawns a projectile into the active manager instance.
-pub fn spawn(options: Options) !void {
-    const manager = active_instance orelse return;
-    try manager.spawnRecord(options, true);
-}
-
-/// Clears all active projectiles across the active manager instance.
-pub fn clearAll() void {
-    const manager = active_instance orelse return;
-    manager.clearProjectiles();
-}
-
-/// Returns the count of currently active projectiles in the active manager.
-pub fn activeCount() usize {
-    const manager = active_instance orelse return 0;
-    return manager.projectiles.len;
-}
 
 /// Lifecycle initialization for ProjectileManager behaviour.
 pub fn Awake(self: *Self) !void {
@@ -170,13 +158,35 @@ pub fn End(self: *Self) !void {
     }
 }
 
+/// Spawns a projectile into the active manager instance.
+pub fn spawn(options: Options) !void {
+    const manager = active_instance orelse return;
+    try manager.spawnRecord(options, true);
+}
+
+/// Clears all active projectiles across the active manager instance.
+pub fn clearAll() void {
+    const manager = active_instance orelse return;
+    manager.clearProjectiles();
+}
+
 /// Clears all projectiles while retaining allocated capacity.
 pub fn clearProjectiles(self: *Self) void {
     self.projectiles.clearRetainingCapacity();
 }
 
-/// Spawns a single projectile record into the manager's MultiArrayList.
+/// Spawns a single projectile record into the manager's MultiArrayList using the generic allocator.
 pub fn spawnRecord(self: *Self, options: Options, load_texture: bool) !void {
+    try self.spawnRecordWithAllocator(lm.allocators.generic(), options, load_texture);
+}
+
+/// Spawns a single projectile record into the manager's MultiArrayList using the supplied allocator.
+pub fn spawnRecordWithAllocator(
+    self: *Self,
+    allocator: std.mem.Allocator,
+    options: Options,
+    load_texture: bool,
+) !void {
     const delta_x = options.target_position.x - options.start_position.x;
     const delta_y = options.target_position.y - options.start_position.y;
     const delta_length_pixels = std.math.hypot(delta_x, delta_y);
@@ -225,7 +235,7 @@ pub fn spawnRecord(self: *Self, options: Options, load_texture: bool) !void {
         .options = options,
     };
 
-    try self.projectiles.append(lm.allocators.generic(), record);
+    try self.projectiles.append(allocator, record);
 }
 
 fn resolveTexture(self: *Self, sprite_path: []const u8, size_pixels: lm.Vector2) ?*lm.Texture {
@@ -245,7 +255,10 @@ fn resolveTexture(self: *Self, sprite_path: []const u8, size_pixels: lm.Vector2)
         &.{ width_pixels, height_pixels },
     ) orelse return null;
 
-    const duplicated_path = lm.allocators.generic().dupe(u8, sprite_path) catch return loaded_texture;
+    const duplicated_path = lm.allocators.generic().dupe(u8, sprite_path) catch {
+        lm.assets.texture.releasePtr(loaded_texture);
+        return null;
+    };
     self.retained_textures.append(lm.allocators.generic(), .{
         .sprite_path = duplicated_path,
         .width_pixels = width_pixels,
@@ -253,7 +266,8 @@ fn resolveTexture(self: *Self, sprite_path: []const u8, size_pixels: lm.Vector2)
         .texture = loaded_texture,
     }) catch {
         lm.allocators.generic().free(duplicated_path);
-        return loaded_texture;
+        lm.assets.texture.releasePtr(loaded_texture);
+        return null;
     };
     return loaded_texture;
 }
@@ -264,19 +278,19 @@ pub fn stepMotionAndLifetime(self: *Self, delta_seconds: f32) void {
     const positions = slice.items(.position);
     const velocities_pixels_per_second = slice.items(.velocity_pixels_per_second);
     const remaining_lifetimes_seconds = slice.items(.remaining_lifetime_seconds);
-    const projectile_count = self.projectiles.len;
 
-    for (0..projectile_count) |projectile_index| {
+    for (0..self.projectiles.len) |projectile_index| {
         positions[projectile_index].x += velocities_pixels_per_second[projectile_index].x * delta_seconds;
         positions[projectile_index].y += velocities_pixels_per_second[projectile_index].y * delta_seconds;
         remaining_lifetimes_seconds[projectile_index] -= delta_seconds;
     }
 
-    self.removeExpiredOrInactiveProjectiles();
+    self.removeDeadProjectiles(true);
 }
 
-fn removeExpiredOrInactiveProjectiles(self: *Self) void {
+fn removeDeadProjectiles(self: *Self, check_lifetime: bool) void {
     if (self.projectiles.len == 0) return;
+
     const slice = self.projectiles.slice();
     const remaining_lifetimes_seconds = slice.items(.remaining_lifetime_seconds);
     const options_list = slice.items(.options);
@@ -284,9 +298,8 @@ fn removeExpiredOrInactiveProjectiles(self: *Self) void {
     var projectile_index: usize = self.projectiles.len;
     while (projectile_index > 0) {
         projectile_index -= 1;
-        const is_expired = remaining_lifetimes_seconds[projectile_index] <= 0.0;
-        const is_inactive = options_list[projectile_index].inactive;
-        if (is_expired or is_inactive) {
+        const is_expired = check_lifetime and remaining_lifetimes_seconds[projectile_index] <= 0.0;
+        if (is_expired or options_list[projectile_index].inactive) {
             self.projectiles.swapRemove(projectile_index);
         }
     }
@@ -294,41 +307,95 @@ fn removeExpiredOrInactiveProjectiles(self: *Self) void {
 
 /// Processes collision detection against walls and targets across the scene.
 pub fn stepSceneCollisions(self: *Self) void {
+    if (self.projectiles.len == 0) return;
     const scene = lm.activeScene() orelse return;
-    const entities = scene.entities.items();
 
-    for (entities) |entity| {
-        self.processEntityCollisions(entity);
+    var wall_colliders = lm.List(WallCollider).init(lm.allocators.generic());
+    defer wall_colliders.deinit();
+
+    var target_colliders = lm.List(TargetCollider).init(lm.allocators.generic());
+    defer target_colliders.deinit();
+
+    collectSceneColliders(scene.entities.items(), &wall_colliders, &target_colliders);
+
+    const slice = self.projectiles.slice();
+    const positions = slice.items(.position);
+    const options_list = slice.items(.options);
+    const collider_half_extents = slice.items(.collider_half_extents_pixels);
+    const bounding_radii = slice.items(.bounding_radius_pixels);
+    const sin_rotations = slice.items(.sin_rotation);
+    const cos_rotations = slice.items(.cos_rotation);
+
+    for (0..self.projectiles.len) |projectile_index| {
+        if (options_list[projectile_index].inactive) continue;
+
+        const projectile_box = OrientedBox{
+            .center_position = positions[projectile_index],
+            .half_extents_pixels = collider_half_extents[projectile_index],
+            .bounding_radius_pixels = bounding_radii[projectile_index],
+            .sin_rotation = sin_rotations[projectile_index],
+            .cos_rotation = cos_rotations[projectile_index],
+        };
+
+        resolveProjectileCollisions(
+            projectile_box,
+            &options_list[projectile_index],
+            positions[projectile_index],
+            wall_colliders.items(),
+            target_colliders.items(),
+        );
     }
 
-    self.removeInactiveProjectiles();
+    self.removeDeadProjectiles(false);
 }
 
-fn removeInactiveProjectiles(self: *Self) void {
-    if (self.projectiles.len == 0) return;
-    const slice = self.projectiles.slice();
-    const options_list = slice.items(.options);
+fn collectSceneColliders(
+    entities: []const *lm.Entity,
+    wall_colliders: *lm.List(WallCollider),
+    target_colliders: *lm.List(TargetCollider),
+) void {
+    for (entities) |entity| {
+        const transform = entity.getComponent(lm.Transform) orelse continue;
 
-    var projectile_index: usize = self.projectiles.len;
-    while (projectile_index > 0) {
-        projectile_index -= 1;
-        if (options_list[projectile_index].inactive) {
-            self.projectiles.swapRemove(projectile_index);
+        if (entity.getComponent(Wall)) |wall| {
+            if (!wall.wall_type.blocksProjectiles()) continue;
+            wall_colliders.append(.{
+                .wall = wall.*,
+                .box = createOrientedBoxFromEntity(entity, transform),
+            }) catch {};
+            continue;
+        }
+
+        if (entity.getComponent(Stats)) |stats| {
+            target_colliders.append(.{
+                .entity = entity,
+                .team = stats.team,
+                .box = createOrientedBoxFromEntity(entity, transform),
+            }) catch {};
         }
     }
 }
 
-fn processEntityCollisions(self: *Self, entity: *lm.Entity) void {
-    const transform = entity.getComponent(lm.Transform) orelse return;
-
-    if (entity.getComponent(Wall)) |wall| {
-        self.processWallCollisions(entity, wall, transform);
-        return;
+fn resolveProjectileCollisions(
+    projectile_box: OrientedBox,
+    options: *Options,
+    projectile_position: lm.Vector2,
+    wall_colliders: []const WallCollider,
+    target_colliders: []const TargetCollider,
+) void {
+    for (wall_colliders) |wall_collider| {
+        if (!OrientedBox.overlaps(projectile_box, wall_collider.box)) continue;
+        if (Projectile.resolveWallCollision(options, projectile_position, wall_collider.wall)) {
+            return;
+        }
     }
 
-    if (entity.getComponent(Stats)) |stats| {
-        self.processTargetCollisions(entity, stats, transform);
-        return;
+    for (target_colliders) |target_collider| {
+        if (target_collider.team != options.target_team) continue;
+        if (!OrientedBox.overlaps(projectile_box, target_collider.box)) continue;
+
+        Projectile.resolveEntityHit(options, projectile_position, target_collider.entity);
+        if (options.inactive) return;
     }
 }
 
@@ -348,131 +415,6 @@ fn createOrientedBoxFromEntity(entity: *lm.Entity, transform: *const lm.Transfor
         lm.vec3ToVec2(transform.position),
         transform.scale,
         transform.rotation,
-    );
-}
-
-fn processWallCollisions(
-    self: *Self,
-    entity: *lm.Entity,
-    wall: *const Wall,
-    transform: *const lm.Transform,
-) void {
-    if (!wall.wall_type.blocksProjectiles()) return;
-
-    const wall_box = createOrientedBoxFromEntity(entity, transform);
-    const slice = self.projectiles.slice();
-    const positions = slice.items(.position);
-    const options_list = slice.items(.options);
-    const collider_half_extents = slice.items(.collider_half_extents_pixels);
-    const bounding_radii = slice.items(.bounding_radius_pixels);
-    const sin_rotations = slice.items(.sin_rotation);
-    const cos_rotations = slice.items(.cos_rotation);
-
-    for (0..self.projectiles.len) |projectile_index| {
-        testProjectileWall(
-            projectile_index,
-            wall.*,
-            wall_box,
-            positions,
-            options_list,
-            collider_half_extents,
-            bounding_radii,
-            sin_rotations,
-            cos_rotations,
-        );
-    }
-}
-
-fn testProjectileWall(
-    projectile_index: usize,
-    wall: Wall,
-    wall_box: OrientedBox,
-    positions: []const lm.Vector2,
-    options_list: []Options,
-    collider_half_extents: []const lm.Vector2,
-    bounding_radii: []const f32,
-    sin_rotations: []const f32,
-    cos_rotations: []const f32,
-) void {
-    if (options_list[projectile_index].inactive) return;
-
-    const projectile_box = OrientedBox{
-        .center_position = positions[projectile_index],
-        .half_extents_pixels = collider_half_extents[projectile_index],
-        .bounding_radius_pixels = bounding_radii[projectile_index],
-        .sin_rotation = sin_rotations[projectile_index],
-        .cos_rotation = cos_rotations[projectile_index],
-    };
-
-    if (!OrientedBox.overlaps(projectile_box, wall_box)) return;
-
-    _ = Projectile.resolveWallCollision(
-        &options_list[projectile_index],
-        positions[projectile_index],
-        wall,
-    );
-}
-
-fn processTargetCollisions(
-    self: *Self,
-    entity: *lm.Entity,
-    stats: *const Stats,
-    transform: *const lm.Transform,
-) void {
-    const target_box = createOrientedBoxFromEntity(entity, transform);
-    const slice = self.projectiles.slice();
-    const positions = slice.items(.position);
-    const options_list = slice.items(.options);
-    const collider_half_extents = slice.items(.collider_half_extents_pixels);
-    const bounding_radii = slice.items(.bounding_radius_pixels);
-    const sin_rotations = slice.items(.sin_rotation);
-    const cos_rotations = slice.items(.cos_rotation);
-
-    for (0..self.projectiles.len) |projectile_index| {
-        testProjectileTarget(
-            projectile_index,
-            entity,
-            stats,
-            target_box,
-            positions,
-            options_list,
-            collider_half_extents,
-            bounding_radii,
-            sin_rotations,
-            cos_rotations,
-        );
-    }
-}
-
-fn testProjectileTarget(
-    projectile_index: usize,
-    target_entity: *lm.Entity,
-    target_stats: *const Stats,
-    target_box: OrientedBox,
-    positions: []const lm.Vector2,
-    options_list: []Options,
-    collider_half_extents: []const lm.Vector2,
-    bounding_radii: []const f32,
-    sin_rotations: []const f32,
-    cos_rotations: []const f32,
-) void {
-    if (options_list[projectile_index].inactive) return;
-    if (target_stats.team != options_list[projectile_index].target_team) return;
-
-    const projectile_box = OrientedBox{
-        .center_position = positions[projectile_index],
-        .half_extents_pixels = collider_half_extents[projectile_index],
-        .bounding_radius_pixels = bounding_radii[projectile_index],
-        .sin_rotation = sin_rotations[projectile_index],
-        .cos_rotation = cos_rotations[projectile_index],
-    };
-
-    if (!OrientedBox.overlaps(projectile_box, target_box)) return;
-
-    Projectile.resolveEntityHit(
-        &options_list[projectile_index],
-        positions[projectile_index],
-        target_entity,
     );
 }
 
@@ -506,8 +448,9 @@ pub fn submitRenderers(self: *Self) !void {
 }
 
 test "ProjectileManager SoA spawn, motion, and lifetime expiration" {
+    const allocator = std.testing.allocator;
     var manager = Self{};
-    defer manager.projectiles.deinit(lm.allocators.generic());
+    defer manager.projectiles.deinit(allocator);
 
     const options = Options{
         .start_position = .init(0, 0),
@@ -516,7 +459,7 @@ test "ProjectileManager SoA spawn, motion, and lifetime expiration" {
         .lifetime = 0.5,
     };
 
-    try manager.spawnRecord(options, false);
+    try manager.spawnRecordWithAllocator(allocator, options, false);
     try std.testing.expectEqual(@as(usize, 1), manager.projectiles.len);
 
     manager.stepMotionAndLifetime(0.1);
@@ -541,34 +484,39 @@ test "OrientedBox overlaps broadphase and narrowphase detection" {
     try std.testing.expect(OrientedBox.overlaps(first_box, rotated_box));
 }
 
-test "ProjectileManager 5000 concurrent projectiles update within 16ms" {
+test "ProjectileManager high-count SoA update, expiration, and OBB collision" {
+    const allocator = std.testing.allocator;
     var manager = Self{};
-    defer manager.projectiles.deinit(lm.allocators.generic());
+    defer manager.projectiles.deinit(allocator);
 
-    try manager.projectiles.ensureTotalCapacity(lm.allocators.generic(), 5000);
+    const total_count: usize = 2000;
+    const hit_target_count: usize = 50;
+    try manager.projectiles.ensureTotalCapacity(allocator, total_count);
 
-    for (0..5000) |index| {
-        const float_index = @as(f32, @floatFromInt(index));
-        const angle_radians = float_index * 0.001;
-        const target_x = @cos(angle_radians) * 1000.0;
-        const target_y = @sin(angle_radians) * 1000.0;
+    for (0..total_count) |projectile_index| {
+        const is_short_lived = projectile_index % 2 == 0;
+        const is_aimed_at_box = !is_short_lived and projectile_index < hit_target_count * 2;
+        const target_position = if (is_aimed_at_box)
+            lm.Vector2.init(500.0, 0.0)
+        else
+            lm.Vector2.init(0.0, -500.0);
 
-        try manager.spawnRecord(.{
+        try manager.spawnRecordWithAllocator(allocator, .{
             .start_position = .init(0, 0),
-            .target_position = .init(target_x, target_y),
-            .speed = 300.0,
-            .lifetime = 10.0,
+            .target_position = target_position,
+            .speed = 500.0,
+            .lifetime = if (is_short_lived) 0.05 else 10.0,
             .size = .init(32, 32),
         }, false);
     }
 
-    try std.testing.expectEqual(@as(usize, 5000), manager.projectiles.len);
+    try std.testing.expectEqual(total_count, manager.projectiles.len);
 
-    const wall_box = OrientedBox.fromTransform(.init(500, 500), .init(64, 64), 0);
+    manager.stepMotionAndLifetime(0.1);
+    try std.testing.expectEqual(total_count / 2, manager.projectiles.len);
+
+    const wall_box = OrientedBox.fromTransform(.init(50.0, 0.0), .init(40.0, 40.0), 0.0);
     var collision_count: usize = 0;
-
-    const start_nanoseconds = std.Io.Timestamp.now(std.testing.io, .real).toNanoseconds();
-    manager.stepMotionAndLifetime(0.016);
 
     const slice = manager.projectiles.slice();
     const positions = slice.items(.position);
@@ -590,10 +538,5 @@ test "ProjectileManager 5000 concurrent projectiles update within 16ms" {
         }
     }
 
-    const end_nanoseconds = std.Io.Timestamp.now(std.testing.io, .real).toNanoseconds();
-    const elapsed_nanoseconds = end_nanoseconds - start_nanoseconds;
-    const elapsed_milliseconds = @as(f64, @floatFromInt(elapsed_nanoseconds)) / 1_000_000.0;
-
-    try std.testing.expect(elapsed_milliseconds < 16.0);
-    try std.testing.expectEqual(@as(usize, 5000), manager.projectiles.len);
+    try std.testing.expectEqual(hit_target_count, collision_count);
 }

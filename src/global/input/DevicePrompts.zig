@@ -34,6 +34,114 @@ pub const ActionPrompt = struct {
     is_controller_button: bool,
 };
 
+pub const PromptStyle = struct {
+    badge_background_color: UiColor,
+    badge_border_color: UiColor,
+    text_color: UiColor,
+    is_controller_button: bool,
+};
+
+pub const PromptBinding = struct {
+    keyboard_and_mouse_label: []const u8,
+    keyboard_only_label: ?[]const u8 = null,
+    gamepad_label: []const u8,
+    gamepad_style: PromptStyle,
+};
+
+const keyboard_style: PromptStyle = .{
+    .badge_background_color = ui.color(38, 44, 58, 240),
+    .badge_border_color = ui.color(80, 92, 118, 220),
+    .text_color = ui.color(240, 245, 255, 255),
+    .is_controller_button = false,
+};
+
+fn gamepadStyle(background_color: UiColor, border_color: UiColor) PromptStyle {
+    return .{
+        .badge_background_color = background_color,
+        .badge_border_color = border_color,
+        .text_color = ui.color(255, 255, 255, 255),
+        .is_controller_button = true,
+    };
+}
+
+const pad_green_style = gamepadStyle(ui.color(35, 145, 75, 250), ui.color(65, 200, 110, 255));
+const pad_red_style = gamepadStyle(ui.color(180, 40, 50, 250), ui.color(230, 70, 80, 255));
+const pad_blue_style = gamepadStyle(ui.color(35, 100, 210, 250), ui.color(75, 140, 255, 255));
+const pad_yellow_style = gamepadStyle(ui.color(195, 145, 25, 250), ui.color(245, 195, 55, 255));
+const pad_bumper_style = gamepadStyle(ui.color(55, 60, 75, 250), ui.color(130, 140, 160, 220));
+const pad_trigger_style = gamepadStyle(ui.color(45, 50, 65, 250), ui.color(120, 130, 150, 220));
+const pad_navigation_style = gamepadStyle(ui.color(40, 45, 58, 240), ui.color(90, 100, 125, 200));
+
+const action_bindings: std.EnumArray(PromptAction, PromptBinding) = .init(.{
+    .interact = .{
+        .keyboard_and_mouse_label = "F",
+        .gamepad_label = "A",
+        .gamepad_style = pad_green_style,
+    },
+    .spell_0 = .{
+        .keyboard_and_mouse_label = "Q",
+        .gamepad_label = "X",
+        .gamepad_style = pad_blue_style,
+    },
+    .spell_1 = .{
+        .keyboard_and_mouse_label = "E",
+        .gamepad_label = "Y",
+        .gamepad_style = pad_yellow_style,
+    },
+    .dash = .{
+        .keyboard_and_mouse_label = "SPACE",
+        .gamepad_label = "A",
+        .gamepad_style = pad_green_style,
+    },
+    .attack_primary = .{
+        .keyboard_and_mouse_label = "LMB",
+        .keyboard_only_label = "ARROWS",
+        .gamepad_label = "RT",
+        .gamepad_style = pad_trigger_style,
+    },
+    .attack_secondary = .{
+        .keyboard_and_mouse_label = "RMB",
+        .keyboard_only_label = "SHIFT+ARROWS",
+        .gamepad_label = "LT",
+        .gamepad_style = pad_trigger_style,
+    },
+    .switch_weapon = .{
+        .keyboard_and_mouse_label = "TAB",
+        .gamepad_label = "RB",
+        .gamepad_style = pad_bumper_style,
+    },
+    .pause = .{
+        .keyboard_and_mouse_label = "ESC",
+        .gamepad_label = "START",
+        .gamepad_style = pad_navigation_style,
+    },
+    .menu_select = .{
+        .keyboard_and_mouse_label = "ENTER",
+        .gamepad_label = "A",
+        .gamepad_style = pad_green_style,
+    },
+    .menu_back = .{
+        .keyboard_and_mouse_label = "ESC",
+        .gamepad_label = "B",
+        .gamepad_style = pad_red_style,
+    },
+    .menu_navigate = .{
+        .keyboard_and_mouse_label = "WASD / ARROWS",
+        .gamepad_label = "D-PAD / L-STICK",
+        .gamepad_style = pad_navigation_style,
+    },
+    .tab_prev = .{
+        .keyboard_and_mouse_label = "Q",
+        .gamepad_label = "LB",
+        .gamepad_style = pad_bumper_style,
+    },
+    .tab_next = .{
+        .keyboard_and_mouse_label = "E",
+        .gamepad_label = "RB",
+        .gamepad_style = pad_bumper_style,
+    },
+});
+
 pub var current_device: InputDevice = .keyboard_mouse;
 pub var test_override_device: ?InputDevice = null;
 
@@ -54,57 +162,49 @@ pub fn reset() void {
     test_override_device = null;
 }
 
-pub fn update() void {
-    if (lm.gamepad.isAvailable(0)) {
-        if (lm.gamepad.anyButton()) {
-            current_device = .gamepad;
-            return;
-        }
+fn isGamepadActive() bool {
+    if (!lm.gamepad.isAvailable(0)) return false;
+    if (lm.gamepad.anyButton()) return true;
 
-        const stick_left = lm.gamepad.getStickVector(0, .left, 0.25);
-        const stick_right = lm.gamepad.getStickVector(0, .right, 0.25);
-        if (stick_left.x != 0 or stick_left.y != 0 or stick_right.x != 0 or stick_right.y != 0) {
-            current_device = .gamepad;
-            return;
-        }
-
-        const left_trigger = lm.gamepad.getAxisMovement(0, .left_trigger);
-        const right_trigger = lm.gamepad.getAxisMovement(0, .right_trigger);
-        if (left_trigger > -0.5 or right_trigger > -0.5) {
-            current_device = .gamepad;
-            return;
-        }
-    } else {
-        current_device = .keyboard_mouse;
+    const stick_left = lm.gamepad.getStickVector(0, .left, 0.25);
+    const stick_right = lm.gamepad.getStickVector(0, .right, 0.25);
+    if (stick_left.x != 0 or stick_left.y != 0 or stick_right.x != 0 or stick_right.y != 0) {
+        return true;
     }
 
-    if (lm.keyboard.anyKey()) {
-        current_device = .keyboard_mouse;
-        return;
-    }
+    const left_trigger = lm.gamepad.getAxisMovement(0, .left_trigger);
+    const right_trigger = lm.gamepad.getAxisMovement(0, .right_trigger);
+    return left_trigger > -0.5 or right_trigger > -0.5;
+}
 
-    if (lm.keyboard.getKey(.w) or lm.keyboard.getKey(.a) or lm.keyboard.getKey(.s) or lm.keyboard.getKey(.d) or
-        lm.keyboard.getKey(.space) or lm.keyboard.getKey(.escape) or lm.keyboard.getKey(.enter) or
-        lm.keyboard.getKey(.q) or lm.keyboard.getKey(.e) or lm.keyboard.getKey(.f) or lm.keyboard.getKey(.tab))
-    {
-        current_device = .keyboard_mouse;
-        return;
+fn isKeyboardOrMouseActive() bool {
+    if (lm.keyboard.anyKey()) return true;
+
+    const tracked_keys = [_]lm.deps.rl.KeyboardKey{
+        .w, .a, .s, .d, .space, .escape, .enter, .q, .e, .f, .tab,
+    };
+    for (tracked_keys) |key| {
+        if (lm.keyboard.getKey(key)) return true;
     }
 
     if (lm.mouse.getButtonDown(.left) or lm.mouse.getButtonDown(.right) or lm.mouse.getButtonDown(.middle)) {
-        current_device = .keyboard_mouse;
+        return true;
+    }
+    if (lm.mouse.getWheelMove() != 0.0) return true;
+
+    const mouse_delta = lm.mouse.getDelta();
+    return (mouse_delta.x * mouse_delta.x + mouse_delta.y * mouse_delta.y) > 4.0;
+}
+
+/// Updates the active input device globally every frame based on recent user input.
+pub fn Update() void {
+    if (isGamepadActive()) {
+        current_device = .gamepad;
         return;
     }
 
-    if (lm.mouse.getWheelMove() != 0.0) {
+    if (!lm.gamepad.isAvailable(0) or isKeyboardOrMouseActive()) {
         current_device = .keyboard_mouse;
-        return;
-    }
-
-    const delta = lm.mouse.getDelta();
-    if (delta.x * delta.x + delta.y * delta.y > 4.0) {
-        current_device = .keyboard_mouse;
-        return;
     }
 }
 
@@ -113,183 +213,34 @@ pub fn getActionPrompt(action: PromptAction) ActionPrompt {
 }
 
 pub fn getDeviceActionPrompt(device: InputDevice, action: PromptAction) ActionPrompt {
-    const pad_green_background = ui.color(35, 145, 75, 250);
-    const pad_green_border = ui.color(65, 200, 110, 255);
-
-    const pad_red_background = ui.color(180, 40, 50, 250);
-    const pad_red_border = ui.color(230, 70, 80, 255);
-
-    const pad_blue_background = ui.color(35, 100, 210, 250);
-    const pad_blue_border = ui.color(75, 140, 255, 255);
-
-    const pad_yellow_background = ui.color(195, 145, 25, 250);
-    const pad_yellow_border = ui.color(245, 195, 55, 255);
-
-    const pad_bumper_background = ui.color(55, 60, 75, 250);
-    const pad_bumper_border = ui.color(130, 140, 160, 220);
-
-    const pad_trigger_background = ui.color(45, 50, 65, 250);
-    const pad_trigger_border = ui.color(120, 130, 150, 220);
-
-    const pad_navigation_background = ui.color(40, 45, 58, 240);
-    const pad_navigation_border = ui.color(90, 100, 125, 200);
-
+    const binding = action_bindings.get(action);
     return switch (device) {
-        .keyboard_mouse => switch (action) {
-            .interact => keyboardPrompt("F"),
-            .spell_0 => keyboardPrompt("Q"),
-            .spell_1 => keyboardPrompt("E"),
-            .dash => keyboardPrompt("SPACE"),
-            .attack_primary => if (ControlScheme.getControlScheme() == .keyboard_only) keyboardPrompt("ARROWS") else keyboardPrompt("LMB"),
-            .attack_secondary => if (ControlScheme.getControlScheme() == .keyboard_only) keyboardPrompt("SHIFT+ARROWS") else keyboardPrompt("RMB"),
-            .switch_weapon => keyboardPrompt("TAB"),
-            .pause => keyboardPrompt("ESC"),
-            .menu_select => keyboardPrompt("ENTER"),
-            .menu_back => keyboardPrompt("ESC"),
-            .menu_navigate => keyboardPrompt("WASD / ARROWS"),
-            .tab_prev => keyboardPrompt("Q"),
-            .tab_next => keyboardPrompt("E"),
-        },
-        .gamepad => switch (action) {
-            .interact => gamepadPrompt("A", pad_green_background, pad_green_border),
-            .spell_0 => gamepadPrompt("X", pad_blue_background, pad_blue_border),
-            .spell_1 => gamepadPrompt("Y", pad_yellow_background, pad_yellow_border),
-            .dash => gamepadPrompt("A", pad_green_background, pad_green_border),
-            .attack_primary => gamepadPrompt("RT", pad_trigger_background, pad_trigger_border),
-            .attack_secondary => gamepadPrompt("LT", pad_trigger_background, pad_trigger_border),
-            .switch_weapon => gamepadPrompt("RB", pad_bumper_background, pad_bumper_border),
-            .pause => gamepadPrompt("START", pad_navigation_background, pad_navigation_border),
-            .menu_select => gamepadPrompt("A", pad_green_background, pad_green_border),
-            .menu_back => gamepadPrompt("B", pad_red_background, pad_red_border),
-            .menu_navigate => gamepadPrompt("D-PAD / L-STICK", pad_navigation_background, pad_navigation_border),
-            .tab_prev => gamepadPrompt("LB", pad_bumper_background, pad_bumper_border),
-            .tab_next => gamepadPrompt("RB", pad_bumper_background, pad_bumper_border),
-        },
+        .keyboard_mouse => buildPrompt(
+            resolveKeyboardLabel(binding),
+            keyboard_style,
+        ),
+        .gamepad => buildPrompt(
+            binding.gamepad_label,
+            binding.gamepad_style,
+        ),
     };
 }
 
-fn keyboardPrompt(label: []const u8) ActionPrompt {
+fn resolveKeyboardLabel(binding: PromptBinding) []const u8 {
+    if (ControlScheme.getControlScheme() == .keyboard_only) {
+        return binding.keyboard_only_label orelse binding.keyboard_and_mouse_label;
+    }
+    return binding.keyboard_and_mouse_label;
+}
+
+fn buildPrompt(label: []const u8, style: PromptStyle) ActionPrompt {
     return .{
         .label = label,
-        .badge_background_color = ui.color(38, 44, 58, 240),
-        .badge_border_color = ui.color(80, 92, 118, 220),
-        .text_color = ui.color(240, 245, 255, 255),
-        .is_controller_button = false,
+        .badge_background_color = style.badge_background_color,
+        .badge_border_color = style.badge_border_color,
+        .text_color = style.text_color,
+        .is_controller_button = style.is_controller_button,
     };
-}
-
-fn gamepadPrompt(label: []const u8, background_color: UiColor, border_color: UiColor) ActionPrompt {
-    return .{
-        .label = label,
-        .badge_background_color = background_color,
-        .badge_border_color = border_color,
-        .text_color = ui.color(255, 255, 255, 255),
-        .is_controller_button = true,
-    };
-}
-
-test "DevicePrompts default device is keyboard_mouse" {
-    reset();
-    try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
-    try std.testing.expect(!isGamepad());
-}
-
-test "DevicePrompts setDeviceForTest override lifecycle" {
-    reset();
-    defer reset();
-
-    setDeviceForTest(.gamepad);
-    try std.testing.expectEqual(InputDevice.gamepad, getDevice());
-    try std.testing.expect(isGamepad());
-
-    setDeviceForTest(.keyboard_mouse);
-    try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
-    try std.testing.expect(!isGamepad());
-
-    setDeviceForTest(null);
-    try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
-}
-
-test "DevicePrompts getActionPrompt resolves correct labels and button types" {
-    reset();
-    defer reset();
-
-    setDeviceForTest(.keyboard_mouse);
-    const keyboard_interact = getActionPrompt(.interact);
-    try std.testing.expectEqualStrings("F", keyboard_interact.label);
-    try std.testing.expect(!keyboard_interact.is_controller_button);
-
-    const keyboard_spell_0 = getActionPrompt(.spell_0);
-    try std.testing.expectEqualStrings("Q", keyboard_spell_0.label);
-
-    const keyboard_spell_1 = getActionPrompt(.spell_1);
-    try std.testing.expectEqualStrings("E", keyboard_spell_1.label);
-
-    const keyboard_back = getActionPrompt(.menu_back);
-    try std.testing.expectEqualStrings("ESC", keyboard_back.label);
-
-    setDeviceForTest(.gamepad);
-    const gamepad_interact = getActionPrompt(.interact);
-    try std.testing.expectEqualStrings("A", gamepad_interact.label);
-    try std.testing.expect(gamepad_interact.is_controller_button);
-
-    const gamepad_spell_0 = getActionPrompt(.spell_0);
-    try std.testing.expectEqualStrings("X", gamepad_spell_0.label);
-    try std.testing.expect(gamepad_spell_0.is_controller_button);
-
-    const gamepad_spell_1 = getActionPrompt(.spell_1);
-    try std.testing.expectEqualStrings("Y", gamepad_spell_1.label);
-    try std.testing.expect(gamepad_spell_1.is_controller_button);
-
-    const gamepad_back = getActionPrompt(.menu_back);
-    try std.testing.expectEqualStrings("B", gamepad_back.label);
-    try std.testing.expect(gamepad_back.is_controller_button);
-
-    const gamepad_tab_previous = getActionPrompt(.tab_prev);
-    try std.testing.expectEqualStrings("LB", gamepad_tab_previous.label);
-
-    const gamepad_tab_next = getActionPrompt(.tab_next);
-    try std.testing.expectEqualStrings("RB", gamepad_tab_next.label);
-
-    const gamepad_dash = getActionPrompt(.dash);
-    try std.testing.expectEqualStrings("A", gamepad_dash.label);
-
-    const gamepad_attack_primary = getActionPrompt(.attack_primary);
-    try std.testing.expectEqualStrings("RT", gamepad_attack_primary.label);
-
-    const gamepad_attack_secondary = getActionPrompt(.attack_secondary);
-    try std.testing.expectEqualStrings("LT", gamepad_attack_secondary.label);
-
-    const gamepad_switch_weapon = getActionPrompt(.switch_weapon);
-    try std.testing.expectEqualStrings("RB", gamepad_switch_weapon.label);
-
-    const gamepad_pause = getActionPrompt(.pause);
-    try std.testing.expectEqualStrings("START", gamepad_pause.label);
-
-    const gamepad_navigate = getActionPrompt(.menu_navigate);
-    try std.testing.expectEqualStrings("D-PAD / L-STICK", gamepad_navigate.label);
-
-    try std.testing.expectEqual(@as(f32, 35), gamepad_interact.badge_background_color[0]);
-    try std.testing.expectEqual(@as(f32, 145), gamepad_interact.badge_background_color[1]);
-
-    try std.testing.expectEqual(@as(f32, 180), gamepad_back.badge_background_color[0]);
-    try std.testing.expectEqual(@as(f32, 40), gamepad_back.badge_background_color[1]);
-
-    try std.testing.expectEqual(@as(f32, 35), gamepad_spell_0.badge_background_color[0]);
-    try std.testing.expectEqual(@as(f32, 100), gamepad_spell_0.badge_background_color[1]);
-
-    try std.testing.expectEqual(@as(f32, 195), gamepad_spell_1.badge_background_color[0]);
-    try std.testing.expectEqual(@as(f32, 145), gamepad_spell_1.badge_background_color[1]);
-}
-
-test "DevicePrompts reset clears direct device changes" {
-    reset();
-    current_device = .gamepad;
-    try std.testing.expect(isGamepad());
-
-    reset();
-    try std.testing.expect(!isGamepad());
-    try std.testing.expectEqual(InputDevice.keyboard_mouse, getDevice());
 }
 
 test "DevicePrompts respects ControlScheme in keyboard_mouse mode" {

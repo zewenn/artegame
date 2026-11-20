@@ -19,18 +19,14 @@ state: BondState = .inactive,
 target_uuid: ?u128 = null,
 caster_uuid: ?u128 = null,
 
-target: ?*lm.Entity = null,
 caster: ?*lm.Entity = null,
-
 target_transform: ?*lm.Transform = null,
 caster_transform: ?*lm.Transform = null,
 
 effectiveness_fraction: f32 = 0.10,
-duration_seconds: f32 = 5.0,
 time_remaining_seconds: f32 = 0.0,
 
 tether: ?Tether = null,
-previous_frame_active: bool = false,
 
 pub var instance: Self = .{};
 
@@ -39,14 +35,21 @@ pub fn reset(self: *Self) void {
 
     self.target_uuid = null;
     self.caster_uuid = null;
-    self.target = null;
     self.caster = null;
     self.target_transform = null;
     self.caster_transform = null;
 
     self.effectiveness_fraction = 0.10;
-    self.duration_seconds = 5.0;
     self.time_remaining_seconds = 0.0;
+}
+
+/// Releases loaded tether textures and resets bond state.
+pub fn deinit(self: *Self) void {
+    if (self.tether) |*tether| {
+        tether.deinit();
+        self.tether = null;
+    }
+    self.reset();
 }
 
 pub fn isActive(self: Self) bool {
@@ -70,15 +73,13 @@ pub fn apply(
     self.target_uuid = target_entity.uuid;
 
     self.caster = lm.getEntity(.byUUID(caster_uuid));
-    self.target = target_entity;
-
-    if (self.caster) |caster|
+    if (self.caster) |caster| {
         self.caster_transform = caster.getComponent(lm.Transform);
+    }
 
     self.target_transform = target_entity.getComponent(lm.Transform);
 
     self.effectiveness_fraction = effectiveness;
-    self.duration_seconds = duration_seconds;
     self.time_remaining_seconds = duration_seconds;
 
     target_stats.addEffect(.{
@@ -105,30 +106,25 @@ pub fn popOnHit(
     const target_entity = lm.getEntity(.{ .uuid = target_uuid }) orelse return false;
     const target_stats = target_entity.getComponent(Stats) orelse return false;
 
-    var maybe_caster_entity: ?*lm.Entity = null;
-    var maybe_caster_stats: ?*Stats = null;
-    if (self.caster_uuid) |cuuid| {
-        if (lm.getEntity(.{ .uuid = cuuid })) |caster_entity| {
-            maybe_caster_entity = caster_entity;
-            maybe_caster_stats = caster_entity.getComponent(Stats);
-        }
-    }
+    const maybe_caster_entity = if (self.caster_uuid) |caster_uuid|
+        lm.getEntity(.{ .uuid = caster_uuid })
+    else
+        null;
 
     const true_damage = target_stats.max.health * self.effectiveness_fraction;
     target_stats.current.health = @max(0.0, target_stats.current.health - true_damage);
 
-    if (maybe_caster_stats) |caster_stats| {
-        caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + true_damage);
-    }
-
-    if (stun_target_duration_seconds) |stun_duration| {
-        target_stats.applyStun(stun_duration);
-    }
-
     if (maybe_caster_entity) |caster_entity| {
+        if (caster_entity.getComponent(Stats)) |caster_stats| {
+            caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + true_damage);
+        }
         if (caster_entity.getComponent(Attack)) |attack| {
             attack.cancelCurrentAction();
         }
+    }
+
+    if (stun_target_duration_seconds) |stun_duration_seconds| {
+        target_stats.applyStun(stun_duration_seconds);
     }
 
     target_stats.removeEffect(.{ .effect_type = .bond_of_life });
@@ -145,35 +141,36 @@ pub fn popOnHit(
 pub fn expireOnMiss(self: *Self) bool {
     if (!self.isActive()) return false;
 
-    const target_stats = if (self.target_uuid) |target_uuid| ts: {
-        if (lm.getEntity(.{ .uuid = target_uuid })) |target_entity| {
-            break :ts target_entity.getComponent(Stats);
-        }
-        break :ts null;
-    } else null;
-
-    const true_damage = if (target_stats) |ts|
-        ts.max.health * self.effectiveness_fraction
+    const maybe_target_stats = self.getTargetStats();
+    const true_damage = if (maybe_target_stats) |target_stats|
+        target_stats.max.health * self.effectiveness_fraction
     else
         20.0;
 
-    if (self.caster_uuid) |caster_uuid| {
-        if (lm.getEntity(.{ .uuid = caster_uuid })) |caster_entity| {
-            if (caster_entity.getComponent(Stats)) |caster_stats| {
-                caster_stats.current.health = @max(0.0, caster_stats.current.health - true_damage);
-            }
-        }
-    }
+    self.applyCasterRecoil(true_damage);
 
-    if (target_stats) |ts| {
-        ts.removeEffect(.{ .effect_type = .bond_of_life });
+    if (maybe_target_stats) |target_stats| {
+        target_stats.removeEffect(.{ .effect_type = .bond_of_life });
     }
 
     self.state = .expired;
     return true;
 }
 
-pub fn update(self: *Self, delta_time_seconds: f32) !void {
+fn getTargetStats(self: *const Self) ?*Stats {
+    const target_uuid = self.target_uuid orelse return null;
+    const target_entity = lm.getEntity(.{ .uuid = target_uuid }) orelse return null;
+    return target_entity.getComponent(Stats);
+}
+
+fn applyCasterRecoil(self: *const Self, true_damage: f32) void {
+    const caster_uuid = self.caster_uuid orelse return;
+    const caster_entity = lm.getEntity(.{ .uuid = caster_uuid }) orelse return;
+    const caster_stats = caster_entity.getComponent(Stats) orelse return;
+    caster_stats.current.health = @max(0.0, caster_stats.current.health - true_damage);
+}
+
+pub fn update(self: *Self, delta_seconds: f32) !void {
     if (self.tether == null) {
         self.tether = .init(
             try .load(
@@ -190,35 +187,33 @@ pub fn update(self: *Self, delta_time_seconds: f32) !void {
         );
     }
 
-    if (self.tether) |*tether| tether: {
-        const caster_uuid = self.caster_uuid orelse break :tether;
-        const target_uuid = self.target_uuid orelse break :tether;
-
-        if (!lm.activeScene().?.isEntityAliveUuid(target_uuid) or
-            !lm.activeScene().?.isEntityAliveUuid(caster_uuid)) break :tether;
-
-        const caster_transform = self.caster_transform orelse break :tether;
-        const target_transform = self.target_transform orelse break :tether;
-
-        const caster_position = lm.vec3ToVec2(caster_transform.position);
-        const target_position = lm.vec3ToVec2(target_transform.position);
-
-        const distance = caster_position.distance(target_position);
-
-        self.previous_frame_active = tether.is_active;
-        tether.is_active = self.isActive();
-        if (self.previous_frame_active != tether.is_active)
-            tether.startAnim();
-
-        try tether.render(caster_position, target_position, distance);
-    }
+    try self.renderTetherIfLinked();
 
     if (!self.isActive()) return;
 
-    self.time_remaining_seconds -= delta_time_seconds;
+    self.time_remaining_seconds -= delta_seconds;
     if (self.time_remaining_seconds <= 0.0) {
         _ = self.expireOnMiss();
     }
+}
+
+fn renderTetherIfLinked(self: *Self) !void {
+    const tether = &(self.tether orelse return);
+    const caster_uuid = self.caster_uuid orelse return;
+    const target_uuid = self.target_uuid orelse return;
+    const scene = lm.activeScene() orelse return;
+
+    if (!scene.isEntityAliveUuid(target_uuid) or !scene.isEntityAliveUuid(caster_uuid)) return;
+
+    const caster_transform = self.caster_transform orelse return;
+    const target_transform = self.target_transform orelse return;
+
+    const caster_position = lm.vec3ToVec2(caster_transform.position);
+    const target_position = lm.vec3ToVec2(target_transform.position);
+    const distance_pixels = caster_position.distance(target_position);
+
+    tether.setActive(self.isActive());
+    try tether.render(caster_position, target_position, distance_pixels);
 }
 
 test "BondOfLife apply activates the bond and rejects a second application" {

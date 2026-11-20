@@ -9,7 +9,7 @@ const EffectVisualRegistry = @import("EffectVisual.zig").EffectVisualRegistry;
 
 const Self = @This();
 
-pub const CachedTexture = struct {
+const CachedTexture = struct {
     path: []const u8,
     scale: lm.Vector2,
     texture: *lm.Texture,
@@ -45,7 +45,7 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
             rendered_effect_types.insert(effect.effect_type);
         }
 
-        self.renderEffectOverlay(base_transform, effect, visual, current_frame_path, layer_index);
+        self.renderEffectOverlay(base_transform, visual, current_frame_path, layer_index);
         layer_index += 1;
     }
 
@@ -53,26 +53,22 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
 }
 
 pub fn End(self: *Self) void {
-    if (self.textures) |*texture_list| {
-        for (texture_list.items()) |cached_texture| {
-            lm.assets.texture.release(cached_texture.path, &.{ lm.toi32(cached_texture.scale.x), lm.toi32(cached_texture.scale.y) });
-        }
-        texture_list.deinit();
-        self.textures = null;
+    const texture_list = &(self.textures orelse return);
+    for (texture_list.items()) |cached_texture| {
+        lm.assets.texture.release(cached_texture.path, &.{ lm.toi32(cached_texture.scale.x), lm.toi32(cached_texture.scale.y) });
     }
+    texture_list.deinit();
+    self.textures = null;
 }
 
 fn renderEffectOverlay(
     self: *Self,
     base_transform: *lm.Transform,
-    effect: Effect,
     visual: EffectVisual,
     frame_path: []const u8,
     layer_index: usize,
 ) void {
     const texture = self.getOrLoadTexture(frame_path, visual.scale) orelse return;
-    const rotation = visual.getRotation(effect.anim_time);
-
     const layer_z_offset = 1.0 + @as(f32, @floatFromInt(layer_index));
     const overlay_position = base_transform.position
         .add(lm.vec2ToVec3(visual.offset))
@@ -83,17 +79,17 @@ fn renderEffectOverlay(
             .texture = texture.*,
             .transform = lm.Transform{
                 .position = overlay_position,
-                .rotation = rotation,
+                .rotation = 0,
                 .scale = visual.scale,
             },
-            .tint = visual.tint,
+            .tint = lm.Color.white,
             .fill_color = null,
         } },
         .index = lm.toisize(overlay_position.z),
     }) catch return;
 }
 
-pub fn getOrLoadTexture(self: *Self, path: []const u8, scale: lm.Vector2) ?*lm.Texture {
+fn getOrLoadTexture(self: *Self, path: []const u8, scale: lm.Vector2) ?*lm.Texture {
     const texture_list = &(self.textures orelse return null);
     for (texture_list.items()) |cached_texture| {
         const is_same_path = std.mem.eql(u8, cached_texture.path, path);
@@ -144,7 +140,7 @@ fn isTextureUsedByVisual(cached_texture: CachedTexture, visual: EffectVisual) bo
     return false;
 }
 
-pub fn isTextureUsedByEffects(cached_texture: CachedTexture, active_effects: []const Effect) bool {
+fn isTextureUsedByEffects(cached_texture: CachedTexture, active_effects: []const Effect) bool {
     for (active_effects) |effect| {
         const visual = EffectVisualRegistry.resolve(effect) orelse continue;
         if (isTextureUsedByVisual(cached_texture, visual)) {

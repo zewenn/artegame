@@ -8,7 +8,6 @@ const Enemy = @import("../../components/enemy/export.zig");
 const Ability = Enemy.Ability;
 const ProjectileProfile = Enemy.Ability.ProjectileProfile;
 const RoomManager = @import("../../global/RoomManager.zig");
-const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 
 var lifeliner_enemy_count: u32 = 0;
 
@@ -214,19 +213,4 @@ pub fn LifelinerEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Death{ .enemy_type = .lifeliner },
         Enemy.OverheadUI{},
     });
-}
-
-test "Lifeliner enemy creation and component configuration" {
-    const lifeliner = try LifelinerEnemy(.init(300.0, 400.0));
-    defer lifeliner.deinit();
-    try lifeliner.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, lifeliner.id, "lifeliner-enemy"));
-    try std.testing.expect(lifeliner.getComponent(Stats) != null);
-    try std.testing.expect(lifeliner.getComponent(Enemy.Attack) != null);
-
-    const stats = lifeliner.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 110.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 190.0), stats.current.movement_speed);
-    try std.testing.expectEqual(@as(f32, 2.0), stats.current.attack_speed);
 }

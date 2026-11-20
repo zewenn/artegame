@@ -3,8 +3,20 @@ const lm = @import("loom");
 
 pub const Effect = @import("effects/Effect.zig");
 pub const EffectType = Effect.EffectType;
-pub const EffectCallback = Effect.EffectCallback;
 pub const EffectTarget = Effect.EffectTarget;
+
+const movement_blocking_effects = std.EnumSet(EffectType).initMany(&.{
+    .stun,
+    .root,
+    .sleep,
+    .stasis,
+    .weaken,
+});
+
+const unstoppable_immune_effects = std.EnumSet(EffectType).initMany(&.{
+    .stun,
+    .root,
+});
 
 pub const StatValues = struct {
     health: f32 = 100,
@@ -56,7 +68,7 @@ current: StatValues = .{},
 effects: ?lm.List(Effect) = null,
 
 /// Unstoppable entities ignore roots and stuns. Scripted mechanics can still
-/// impose them through `addSelfImposedEffect` / `applySelfImposedStun`.
+/// impose them through `addSelfImposedEffect`.
 is_unstoppable: bool = false,
 
 pub fn Awake(self: *Self) void {
@@ -98,21 +110,24 @@ pub fn deinit(self: *Self) void {
     self.End();
 }
 
-pub fn getEffectsList(self: *Self) *lm.List(Effect) {
+fn getEffectsList(self: *Self) *lm.List(Effect) {
     if (self.effects == null) {
         self.effects = lm.List(Effect).init(lm.allocators.scene());
     }
     return &self.effects.?;
 }
 
+fn matchesTarget(effect: Effect, target: EffectTarget) bool {
+    return switch (target) {
+        .id => |id| std.mem.eql(u8, effect.id, id),
+        .effect_type => |effect_type| effect.effect_type == effect_type,
+    };
+}
+
 pub fn hasEffect(self: Self, target: EffectTarget) bool {
     const effects = self.effects orelse return false;
     for (effects.items()) |effect| {
-        const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, effect.id, id),
-            .effect_type => |effect_type| effect.effect_type == effect_type,
-        };
-        if (matches) return true;
+        if (matchesTarget(effect, target)) return true;
     }
     return false;
 }
@@ -120,11 +135,7 @@ pub fn hasEffect(self: Self, target: EffectTarget) bool {
 pub fn getEffect(self: *Self, target: EffectTarget) ?*Effect {
     const effects = &(self.effects orelse return null);
     for (effects.items()) |*effect| {
-        const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, effect.id, id),
-            .effect_type => |effect_type| effect.effect_type == effect_type,
-        };
-        if (matches) return effect;
+        if (matchesTarget(effect.*, target)) return effect;
     }
     return null;
 }
@@ -135,10 +146,6 @@ pub fn isStunned(self: Self) bool {
 
 pub fn isRooted(self: Self) bool {
     return self.hasEffect(.{ .effect_type = .root });
-}
-
-pub fn isSlowed(self: Self) bool {
-    return self.hasEffect(.{ .effect_type = .slow });
 }
 
 pub fn isSleeping(self: Self) bool {
@@ -157,13 +164,22 @@ pub fn isBondOfLifeActive(self: Self) bool {
     return self.hasEffect(.{ .effect_type = .bond_of_life });
 }
 
+/// Returns true when the entity is weakened (immobilized and unable to start new abilities).
+pub fn isWeakened(self: Self) bool {
+    return self.hasEffect(.{ .effect_type = .weaken });
+}
+
 pub fn canMove(self: Self) bool {
-    return !self.isStunned() and !self.isRooted() and !self.isSleeping() and !self.isStasis();
+    const effects = self.effects orelse return true;
+    for (effects.items()) |effect| {
+        if (movement_blocking_effects.contains(effect.effect_type)) return false;
+    }
+    return true;
 }
 
 pub fn isImmuneTo(self: Self, effect_type: EffectType) bool {
     if (!self.is_unstoppable) return false;
-    return effect_type == .stun or effect_type == .root;
+    return unstoppable_immune_effects.contains(effect_type);
 }
 
 /// Adds an effect unless the entity is immune to its type (see `is_unstoppable`).
@@ -174,7 +190,7 @@ pub fn addEffect(self: *Self, effect: Effect) void {
 
 /// Refreshes an existing active effect with incoming properties while preventing
 /// shorter refreshed durations from shortening remaining time or overwriting visuals.
-pub fn refreshExistingEffect(existing_effect: *Effect, incoming_effect: Effect) void {
+fn refreshExistingEffect(existing_effect: *Effect, incoming_effect: Effect) void {
     const candidate_duration_seconds = @max(incoming_effect.time_remaining, incoming_effect.duration);
     const refreshed_remaining_seconds = @max(existing_effect.time_remaining, candidate_duration_seconds);
 
@@ -186,11 +202,10 @@ pub fn refreshExistingEffect(existing_effect: *Effect, incoming_effect: Effect) 
     }
     existing_effect.on_tick = incoming_effect.on_tick;
 
-    if (incoming_effect.visual) |incoming_visual| {
-        const has_visual_content = incoming_visual.frames.len > 0 or incoming_visual.icon != null;
-        if (has_visual_content) {
-            existing_effect.visual = incoming_visual;
-        }
+    const incoming_visual = incoming_effect.visual orelse return;
+    const has_visual_content = incoming_visual.frames.len > 0 or incoming_visual.icon != null;
+    if (has_visual_content) {
+        existing_effect.visual = incoming_visual;
     }
 }
 
@@ -211,8 +226,8 @@ pub fn addSelfImposedEffect(self: *Self, effect: Effect) void {
         }
     }
 
-    effects.append(new_effect) catch |err| {
-        std.log.err("Failed to append effect '{s}': {s}", .{ new_effect.id, @errorName(err) });
+    effects.append(new_effect) catch |append_error| {
+        std.log.err("Failed to append effect '{s}': {s}", .{ new_effect.id, @errorName(append_error) });
         return;
     };
 
@@ -222,7 +237,7 @@ pub fn addSelfImposedEffect(self: *Self, effect: Effect) void {
     }
 }
 
-pub fn removeEffectAtIndex(self: *Self, index: usize) void {
+fn removeEffectAtIndex(self: *Self, index: usize) void {
     const effects = &(self.effects orelse return);
     if (index >= effects.len()) return;
 
@@ -237,22 +252,11 @@ pub fn removeEffect(self: *Self, target: EffectTarget) void {
     const effects = &(self.effects orelse return);
     var effect_index: usize = 0;
     while (effect_index < effects.len()) {
-        const matches = switch (target) {
-            .id => |id| std.mem.eql(u8, effects.items()[effect_index].id, id),
-            .effect_type => |effect_type| effects.items()[effect_index].effect_type == effect_type,
-        };
-        if (matches) {
+        if (matchesTarget(effects.items()[effect_index], target)) {
             self.removeEffectAtIndex(effect_index);
         } else {
             effect_index += 1;
         }
-    }
-}
-
-pub fn clearEffects(self: *Self) void {
-    const effects = &(self.effects orelse return);
-    while (effects.len() > 0) {
-        self.removeEffectAtIndex(effects.len() - 1);
     }
 }
 
@@ -264,16 +268,17 @@ pub fn applySlow(self: *Self, strength: f32, duration_seconds: f32) void {
         .value = strength,
         .on_enable = struct {
             pub fn onEnable(stats: *Self) void {
-                if (stats.getEffect(.{ .id = "slow" })) |effect| {
-                    stats.current.movement_speed = @max(10, stats.current.movement_speed - effect.value);
-                }
+                const effect = stats.getEffect(.{ .id = "slow" }) orelse return;
+                const previous_speed = stats.current.movement_speed;
+                const clamped_speed = @max(10.0, previous_speed - effect.value);
+                effect.secondary_value = previous_speed - clamped_speed;
+                stats.current.movement_speed = clamped_speed;
             }
         }.onEnable,
         .on_disable = struct {
             pub fn onDisable(stats: *Self) void {
-                if (stats.getEffect(.{ .id = "slow" })) |effect| {
-                    stats.current.movement_speed += effect.value;
-                }
+                const effect = stats.getEffect(.{ .id = "slow" }) orelse return;
+                stats.current.movement_speed += effect.secondary_value;
             }
         }.onDisable,
     });
@@ -291,24 +296,6 @@ pub fn applyStun(self: *Self, duration_seconds: f32) void {
     self.addEffect(.{
         .id = "stun",
         .effect_type = .stun,
-        .duration = duration_seconds,
-    });
-}
-
-/// Stuns the entity even if it is unstoppable. See `addSelfImposedEffect`.
-pub fn applySelfImposedStun(self: *Self, duration_seconds: f32) void {
-    self.addSelfImposedEffect(.{
-        .id = "stun",
-        .effect_type = .stun,
-        .duration = duration_seconds,
-    });
-}
-
-/// Stuns the entity even if it is unstoppable. See `addSelfImposedEffect`.
-pub fn applySelfImposedRoot(self: *Self, duration_seconds: f32) void {
-    self.addSelfImposedEffect(.{
-        .id = "root",
-        .effect_type = .root,
         .duration = duration_seconds,
     });
 }
@@ -342,8 +329,9 @@ pub fn tickEffects(self: *Self, delta_seconds: f32) void {
         const effect = &(effects.items()[index]);
         effect.anim_time += delta_seconds;
 
-        if (effect.on_tick) |tick|
+        if (effect.on_tick) |tick| {
             @call(.auto, tick, .{self});
+        }
 
         if (effect.duration <= 0) continue;
 
@@ -361,7 +349,7 @@ pub fn calculateDamage(self: Self, defender: Self, damage_type: DamageType, is_c
     } * if (is_crit) self.current.crit_damage_multiplier else 1;
 }
 
-pub fn defenseToDamageReductionPercent(defense: f32) f32 {
+fn defenseToDamageReductionPercent(defense: f32) f32 {
     const clamped_defense = @max(0.0, defense);
     const reduction = 0.3 * std.math.log10(clamped_defense + 1);
     return std.math.clamp(reduction, 0.0, 0.90);
@@ -404,20 +392,32 @@ test "Stats effect lifecycle with on_enable and on_disable callbacks using lm.Li
     try std.testing.expectEqual(@as(f32, 20), stats.current.physical_damage);
 }
 
-test "Stats slow directly modifies movement_speed and restores on disable" {
+test "Stats slow directly modifies movement_speed and restores exact delta on disable" {
     var stats = Self.init(.player, .{
         .movement_speed = 300,
     });
     defer stats.deinit();
 
     stats.applySlow(50, 3.0);
-    try std.testing.expect(stats.isSlowed());
     try std.testing.expect(stats.hasEffect(.{ .effect_type = .slow }));
     try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
 
     stats.tickEffects(3.0);
-    try std.testing.expect(!stats.isSlowed());
+    try std.testing.expect(!stats.hasEffect(.{ .effect_type = .slow }));
     try std.testing.expectEqual(@as(f32, 300), stats.current.movement_speed);
+}
+
+test "Stats clamped slow restores original movement_speed without inflating speed" {
+    var stats = Self.init(.enemy, .{
+        .movement_speed = 30,
+    });
+    defer stats.deinit();
+
+    stats.applySlow(50, 2.0);
+    try std.testing.expectEqual(@as(f32, 10), stats.current.movement_speed);
+
+    stats.tickEffects(2.0);
+    try std.testing.expectEqual(@as(f32, 30), stats.current.movement_speed);
 }
 
 test "Stats crowd control flags and canMove query" {
@@ -464,7 +464,7 @@ test "Unstoppable stats ignore roots and stuns but accept other effects" {
     try std.testing.expect(stats.canMove());
 
     stats.applySlow(50, 2.0);
-    try std.testing.expect(stats.isSlowed());
+    try std.testing.expect(stats.hasEffect(.{ .effect_type = .slow }));
     try std.testing.expectEqual(@as(f32, 250), stats.current.movement_speed);
 }
 
@@ -472,7 +472,11 @@ test "Unstoppable stats still accept self-imposed stuns" {
     var stats = Self.initUnstoppable(.enemy, .{});
     defer stats.deinit();
 
-    stats.applySelfImposedStun(1.0);
+    stats.addSelfImposedEffect(.{
+        .id = "stun",
+        .effect_type = .stun,
+        .duration = 1.0,
+    });
     try std.testing.expect(stats.isStunned());
     try std.testing.expect(!stats.canMove());
 
@@ -495,7 +499,7 @@ test "Stats re-applying effect refreshes duration without double-stacking stats"
 
     stats.tickEffects(4.0);
     try std.testing.expectEqual(@as(f32, 300), stats.current.movement_speed);
-    try std.testing.expect(!stats.isSlowed());
+    try std.testing.expect(!stats.hasEffect(.{ .effect_type = .slow }));
 }
 
 test "Stats removeEffect with target union (by ID and by Type)" {
@@ -551,8 +555,8 @@ test "defenseToDamageReductionPercent clamping against negative and extreme valu
     try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(-1.0));
     try std.testing.expectEqual(@as(f32, 0.0), defenseToDamageReductionPercent(0.0));
 
-    const red10 = defenseToDamageReductionPercent(10.0);
-    try std.testing.expect(red10 > 0.0 and red10 < 0.90);
+    const reduction_at_ten = defenseToDamageReductionPercent(10.0);
+    try std.testing.expect(reduction_at_ten > 0.0 and reduction_at_ten < 0.90);
 
     try std.testing.expectEqual(@as(f32, 0.90), defenseToDamageReductionPercent(100000.0));
 }
@@ -590,7 +594,6 @@ test "Stats indefinite stasis lifecycle and explicit removal" {
     try std.testing.expect(stats.isInvulnerable());
     try std.testing.expect(!stats.canMove());
 
-    // Indefinite stasis does not expire from ticking time
     stats.tickEffects(100.0);
     try std.testing.expect(stats.isStasis());
     try std.testing.expect(stats.isInvulnerable());
@@ -637,4 +640,28 @@ test "Stats refreshExistingEffect preserves longer remaining time and updates du
 
     try std.testing.expectEqual(@as(f32, 6.0), existing_effect.time_remaining);
     try std.testing.expectEqual(@as(f32, 6.0), existing_effect.duration);
+}
+
+test "Stats isWeakened disables canMove and clears on expiration" {
+    var stats = Self.initUnstoppable(.enemy, .{});
+    defer stats.deinit();
+
+    try std.testing.expect(!stats.isWeakened());
+    try std.testing.expect(stats.canMove());
+
+    stats.addEffect(.{
+        .id = "weaken",
+        .effect_type = .weaken,
+        .duration = 2.0,
+    });
+    try std.testing.expect(stats.isWeakened());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(stats.isWeakened());
+    try std.testing.expect(!stats.canMove());
+
+    stats.tickEffects(1.0);
+    try std.testing.expect(!stats.isWeakened());
+    try std.testing.expect(stats.canMove());
 }

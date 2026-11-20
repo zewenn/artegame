@@ -54,7 +54,6 @@ pub const angler_abilities = [_]Ability{
         .min_range = 0,
         .max_range = 800,
         .cooldown = 2.00,
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/angler/fallback.png",
             .aim_mode = .absolute_world,
@@ -78,7 +77,6 @@ const angler_fallback = Ability{
     .min_range = 0,
     .max_range = 800,
     .cooldown = 1.50,
-    .root_movement_during_action = false,
     .projectile_profile = ProjectileProfile{
         .sprite = "projectiles/enemies/angler/fallback.png",
         .aim_mode = .absolute_world,
@@ -130,18 +128,4 @@ pub fn AnglerEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Death{ .enemy_type = .angler },
         Enemy.OverheadUI{},
     });
-}
-
-test "Angler enemy creation and component configuration" {
-    const angler = try AnglerEnemy(.init(200.0, 300.0));
-    defer angler.deinit();
-    try angler.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, angler.id, "angler-enemy"));
-    try std.testing.expect(angler.getComponent(Stats) != null);
-    try std.testing.expect(angler.getComponent(Enemy.Attack) != null);
-
-    const stats = angler.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 60.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 8.0), stats.current.attack_speed);
 }

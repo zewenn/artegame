@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
@@ -27,7 +26,6 @@ pub const ProximitySlowConfig = struct {
     slow_strength: f32 = 60.0,
 };
 
-is_active: bool = true,
 parabolic_defense: ?ParabolicDefenseConfig = null,
 distance_drain: ?DistanceDrainConfig = null,
 proximity_slow: ?ProximitySlowConfig = null,
@@ -37,30 +35,31 @@ is_player_slow_applied: bool = false,
 
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
-
 tether: ?Tether = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
-    self.tether = .init(
-        try .load(
-            "effects/drain/right.png",
-            "effects/drain/left.png",
-            &.{
-                "effects/drain/middle_1.png",
-                "effects/drain/middle_2.png",
-                "effects/drain/middle_3.png",
-                "effects/drain/middle_4.png",
-            },
-        ),
-        .{},
-    );
+
+    if (self.distance_drain != null) {
+        self.tether = .init(
+            try .load(
+                "effects/drain/right.png",
+                "effects/drain/left.png",
+                &.{
+                    "effects/drain/middle_1.png",
+                    "effects/drain/middle_2.png",
+                    "effects/drain/middle_3.png",
+                    "effects/drain/middle_4.png",
+                },
+            ),
+            .{},
+        );
+    }
 }
 
 pub fn Update(self: *Self) !void {
     if (lm.time.paused()) return;
-    if (!self.is_active) return;
 
     const stats = self.stats orelse return;
     const transform = self.transform orelse return;
@@ -73,15 +72,17 @@ pub fn Update(self: *Self) !void {
     const caster_position = lm.vec3ToVec2(transform.position);
     const player_position = lm.vec3ToVec2(player_transform.position);
     const distance_pixels = caster_position.distance(player_position);
-
-    const delta_time_seconds = lm.time.deltaTime();
+    const delta_seconds = lm.time.deltaTime();
 
     self.updateParabolicDefense(stats, distance_pixels);
-    self.updateDistanceDrain(stats, player_stats, distance_pixels, delta_time_seconds);
+    self.updateDistanceDrain(stats, player_stats, distance_pixels, delta_seconds);
     self.updateProximitySlow(player_stats, distance_pixels);
 
-    if (self.tether) |*tether|
-        try tether.render(caster_position, player_position, distance_pixels);
+    if (self.distance_drain != null) {
+        if (self.tether) |*tether| {
+            try tether.render(caster_position, player_position, distance_pixels);
+        }
+    }
 }
 
 pub fn End(self: *Self) void {
@@ -98,10 +99,10 @@ pub fn End(self: *Self) void {
 
     if (!self.is_player_slow_applied) return;
 
-    if (lm.getEntity(.{ .id = "player" })) |player| remove_effect: {
-        const player_stats = player.getComponent(Stats) orelse break :remove_effect;
-
-        player_stats.removeEffect(.{ .id = "proximity_aura_slow" });
+    if (lm.getEntity(.{ .id = "player" })) |player| {
+        if (player.getComponent(Stats)) |player_stats| {
+            player_stats.removeEffect(.{ .id = "proximity_aura_slow" });
+        }
     }
 
     self.is_player_slow_applied = false;
@@ -127,7 +128,7 @@ fn updateDistanceDrain(
     caster_stats: *Stats,
     player_stats: *Stats,
     distance_pixels: f32,
-    delta_time_seconds: f32,
+    delta_seconds: f32,
 ) void {
     const config = self.distance_drain orelse return;
     const damage_per_second = calculateDrainRate(
@@ -140,18 +141,24 @@ fn updateDistanceDrain(
     );
 
     if (self.tether) |*tether| {
-        const previous_state = tether.is_active;
-        tether.is_active = damage_per_second > 0;
-
-        if (previous_state != tether.is_active)
-            tether.startAnim();
+        tether.setActive(damage_per_second > 0);
     }
 
     if (damage_per_second <= 0.0) return;
 
-    const drain_amount = damage_per_second * delta_time_seconds;
+    const drain_amount = damage_per_second * delta_seconds;
     player_stats.current.health = @max(config.health_cap, player_stats.current.health - drain_amount);
     caster_stats.current.health = @min(caster_stats.max.health, caster_stats.current.health + drain_amount * config.heal_percentage);
+}
+
+fn proximitySlowOnEnable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "proximity_aura_slow" }) orelse return;
+    stats.current.movement_speed = @max(10.0, stats.current.movement_speed - effect.value);
+}
+
+fn proximitySlowOnDisable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "proximity_aura_slow" }) orelse return;
+    stats.current.movement_speed += effect.value;
 }
 
 fn updateProximitySlow(self: *Self, player_stats: *Stats, distance_pixels: f32) void {
@@ -172,56 +179,44 @@ fn updateProximitySlow(self: *Self, player_stats: *Stats, distance_pixels: f32) 
         .effect_type = .slow,
         .duration = 0.0,
         .value = config.slow_strength,
-        .on_enable = struct {
-            pub fn onEnable(s: *Stats) void {
-                if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
-                    s.current.movement_speed = @max(10.0, s.current.movement_speed - effect.value);
-                }
-            }
-        }.onEnable,
-        .on_disable = struct {
-            pub fn onDisable(s: *Stats) void {
-                if (s.getEffect(.{ .id = "proximity_aura_slow" })) |effect| {
-                    s.current.movement_speed += effect.value;
-                }
-            }
-        }.onDisable,
+        .on_enable = proximitySlowOnEnable,
+        .on_disable = proximitySlowOnDisable,
     });
     self.is_player_slow_applied = true;
 }
 
 pub fn calculateParabolicBonus(
-    inner_distance: f32,
-    outer_distance: f32,
+    inner_distance_pixels: f32,
+    outer_distance_pixels: f32,
     max_bonus: f32,
-    current_distance: f32,
+    current_distance_pixels: f32,
 ) f32 {
-    if (current_distance <= inner_distance) return 0.0;
-    if (current_distance >= outer_distance) return max_bonus;
+    if (current_distance_pixels <= inner_distance_pixels) return 0.0;
+    if (current_distance_pixels >= outer_distance_pixels) return max_bonus;
 
-    const span = outer_distance - inner_distance;
-    if (span <= 0.001) return max_bonus;
+    const span_pixels = outer_distance_pixels - inner_distance_pixels;
+    if (span_pixels <= 0.001) return max_bonus;
 
-    const normalized_t = (current_distance - inner_distance) / span;
-    return max_bonus * (normalized_t * normalized_t);
+    const normalized_progress = (current_distance_pixels - inner_distance_pixels) / span_pixels;
+    return max_bonus * (normalized_progress * normalized_progress);
 }
 
 pub fn calculateDrainRate(
-    inner_distance: f32,
-    outer_distance: f32,
-    min_rate: f32,
-    max_rate: f32,
+    inner_distance_pixels: f32,
+    outer_distance_pixels: f32,
+    min_rate_per_second: f32,
+    max_rate_per_second: f32,
     room_scaling: f32,
-    current_distance: f32,
+    current_distance_pixels: f32,
 ) f32 {
-    if (current_distance <= inner_distance) return 0.0;
+    if (current_distance_pixels <= inner_distance_pixels) return 0.0;
 
-    const span = outer_distance - inner_distance;
-    if (span <= 0.001) return max_rate * room_scaling;
+    const span_pixels = outer_distance_pixels - inner_distance_pixels;
+    if (span_pixels <= 0.001) return max_rate_per_second * room_scaling;
 
-    const clamped_distance = @min(outer_distance, current_distance);
-    const normalized_t = (clamped_distance - inner_distance) / span;
-    const base_rate = min_rate + (max_rate - min_rate) * normalized_t;
+    const clamped_distance_pixels = @min(outer_distance_pixels, current_distance_pixels);
+    const normalized_progress = (clamped_distance_pixels - inner_distance_pixels) / span_pixels;
+    const base_rate = min_rate_per_second + (max_rate_per_second - min_rate_per_second) * normalized_progress;
 
     return base_rate * room_scaling;
 }

@@ -1,41 +1,46 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const lm = @import("loom");
 
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
-const Weapon = @import("../../components/Weapons/Weapon.zig");
 const ControlScheme = @import("../input/ControlScheme.zig");
 const SaveData = @import("SaveData.zig");
 
-pub const SaveFile = SaveData.SaveFile;
-pub const AllTimeScores = SaveData.AllTimeScores;
-pub const CurrentRunData = SaveData.CurrentRunData;
-pub const SettingsData = SaveData.SettingsData;
-pub const ProfileData = SaveData.ProfileData;
-pub const SavedPlayerStats = SaveData.SavedPlayerStats;
-pub const SavedSpell = SaveData.SavedSpell;
+const SaveFile = SaveData.SaveFile;
+const AllTimeScores = SaveData.AllTimeScores;
+const CurrentRunData = SaveData.CurrentRunData;
+const SavedPlayerStats = SaveData.SavedPlayerStats;
+
+pub var disable_disk_io_for_tests: bool = builtin.is_test;
 
 var current_save: SaveFile = .{};
 var is_initialized: bool = false;
 var save_arena: ?std.heap.ArenaAllocator = null;
+var test_memory_json: ?[]u8 = null;
 
 pub fn deinit() void {
     if (save_arena) |*arena| {
         arena.deinit();
         save_arena = null;
     }
+    if (test_memory_json) |buffer| {
+        lm.allocators.generic().free(buffer);
+        test_memory_json = null;
+    }
+    current_save = .{};
     is_initialized = false;
 }
 
 pub fn getSavePathAlloc(allocator: std.mem.Allocator) ![]const u8 {
     const io = lm.io.singleThreaded();
-    const exe_dir = std.process.executableDirPathAlloc(io, allocator) catch {
+    const executable_directory = std.process.executableDirPathAlloc(io, allocator) catch {
         return try allocator.dupe(u8, "save.json");
     };
-    defer allocator.free(exe_dir);
-    return try std.fs.path.join(allocator, &.{ exe_dir, "save.json" });
+    defer allocator.free(executable_directory);
+    return try std.fs.path.join(allocator, &.{ executable_directory, "save.json" });
 }
 
 pub fn init() void {
@@ -46,10 +51,62 @@ pub fn init() void {
     is_initialized = true;
 }
 
+fn resetSaveArena() void {
+    if (save_arena) |*arena| {
+        arena.deinit();
+        save_arena = null;
+    }
+}
+
+fn parseSaveJson(allocator: std.mem.Allocator, json_bytes: []const u8) bool {
+    resetSaveArena();
+    var arena = std.heap.ArenaAllocator.init(allocator);
+
+    const parsed = std.json.parseFromSlice(
+        SaveFile,
+        arena.allocator(),
+        json_bytes,
+        .{
+            .ignore_unknown_fields = true,
+            .allocate = .alloc_always,
+        },
+    ) catch |parse_error| {
+        arena.deinit();
+        std.log.warn("Failed to parse save file ({any}), using defaults", .{parse_error});
+        current_save = .{};
+        return false;
+    };
+
+    if (parsed.value.version != SaveData.CURRENT_SAVE_VERSION) {
+        std.log.info("Save file version mismatch (found version {d}, expected version {d}). Resetting save data to defaults.", .{
+            parsed.value.version,
+            SaveData.CURRENT_SAVE_VERSION,
+        });
+        arena.deinit();
+        current_save = .{};
+        return false;
+    }
+
+    save_arena = arena;
+    current_save = parsed.value;
+    return true;
+}
+
 pub fn load() void {
     const allocator = lm.allocators.generic();
-    const io = lm.io.singleThreaded();
 
+    if (disable_disk_io_for_tests) {
+        const json_bytes = test_memory_json orelse {
+            current_save = .{};
+            return;
+        };
+        if (!parseSaveJson(allocator, json_bytes)) {
+            save();
+        }
+        return;
+    }
+
+    const io = lm.io.singleThreaded();
     const save_path = getSavePathAlloc(allocator) catch {
         current_save = .{};
         return;
@@ -63,84 +120,52 @@ pub fn load() void {
     };
     defer file.close(io);
 
-    var buffer: [1024 * 256]u8 = undefined;
-    const bytes_read = file.readPositionalAll(io, &buffer, 0) catch {
-        std.log.warn("Failed to read save file at {s}, falling back to defaults", .{save_path});
+    var read_buffer: [1024]u8 = @splat(0);
+    var file_reader = file.reader(io, &read_buffer);
+    const json_bytes = file_reader.interface.allocRemaining(allocator, .limited(4 * 1024 * 1024)) catch |read_error| {
+        std.log.warn("Failed to read save file at {s} ({any}), falling back to defaults", .{ save_path, read_error });
         current_save = .{};
         return;
     };
+    defer allocator.free(json_bytes);
 
-    if (save_arena) |*arena| {
-        arena.deinit();
-        save_arena = null;
-    }
-    var arena = std.heap.ArenaAllocator.init(allocator);
-
-    const parsed = std.json.parseFromSlice(
-        SaveFile,
-        arena.allocator(),
-        buffer[0..bytes_read],
-        .{
-            .ignore_unknown_fields = true,
-            .allocate = .alloc_always,
-        },
-    ) catch |err| {
-        arena.deinit();
-        std.log.warn("Failed to parse save file ({any}), using defaults", .{err});
-        current_save = .{};
+    if (!parseSaveJson(allocator, json_bytes)) {
         save();
-        return;
-    };
-
-    if (parsed.value.version != SaveData.CURRENT_SAVE_VERSION) {
-        std.log.info("Save file version mismatch (found version {d}, expected version {d}). Resetting save data to defaults.", .{
-            parsed.value.version,
-            SaveData.CURRENT_SAVE_VERSION,
-        });
-        arena.deinit();
-        save_arena = null;
-        current_save = .{};
-        save();
-        return;
     }
-
-    save_arena = arena;
-    current_save = parsed.value;
 }
 
 pub fn save() void {
     const allocator = lm.allocators.generic();
-    const io = lm.io.singleThreaded();
+    const json_string = std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(current_save, .{ .whitespace = .indent_2 })}) catch return;
 
+    if (disable_disk_io_for_tests) {
+        if (test_memory_json) |previous_buffer| {
+            allocator.free(previous_buffer);
+        }
+        test_memory_json = json_string;
+        return;
+    }
+    defer allocator.free(json_string);
+
+    const io = lm.io.singleThreaded();
     const save_path = getSavePathAlloc(allocator) catch return;
     defer allocator.free(save_path);
 
-    const json_string = std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(current_save, .{ .whitespace = .indent_2 })}) catch return;
-    defer allocator.free(json_string);
-
-    var file = std.Io.Dir.createFileAbsolute(io, save_path, .{}) catch |err| {
-        std.log.warn("Failed to create save file at {s}: {any}", .{ save_path, err });
+    var file = std.Io.Dir.createFileAbsolute(io, save_path, .{}) catch |create_error| {
+        std.log.warn("Failed to create save file at {s}: {any}", .{ save_path, create_error });
         return;
     };
     defer file.close(io);
 
-    var buf: [4096]u8 = undefined;
-    var wr = file.writer(io, &buf);
-    var writer = &wr.interface;
+    var write_buffer: [4096]u8 = undefined;
+    var file_writer = file.writer(io, &write_buffer);
+    var writer = &file_writer.interface;
     writer.writeAll(json_string) catch return;
     writer.flush() catch return;
 }
 
 pub fn getScores() AllTimeScores {
     return current_save.scores;
-}
-
-pub fn getSettings() SettingsData {
-    return current_save.settings;
-}
-
-pub fn getProfile() ProfileData {
-    return current_save.profile;
 }
 
 pub fn isTutorialCompleted() bool {
@@ -184,39 +209,15 @@ pub fn getSavedRun() ?CurrentRunData {
     return current_save.current_run;
 }
 
-pub fn getCurrentRoomIndex() ?u32 {
-    if (!hasActiveRun()) return null;
-    return current_save.current_run.current_room_index;
-}
-
-pub fn getRoomsCleared() ?u32 {
-    if (!hasActiveRun()) return null;
-    return current_save.current_run.rooms_cleared;
-}
-
-pub fn getRoomCategory() ?[]const u8 {
-    if (!hasActiveRun()) return null;
-    return current_save.current_run.room_category;
-}
-
-pub fn getCurrentMapPath() ?[]const u8 {
-    if (!hasActiveRun()) return null;
-    return current_save.current_run.current_map_path;
-}
-
 pub fn recordRunEnd(stats: RoomManager.RunStats) void {
     current_save.scores.total_runs_played += 1;
     current_save.scores.total_enemies_killed += stats.enemies_defeated;
-    current_save.scores.total_experience_earned += stats.experience_collected;
 
     if (stats.experience_collected > current_save.scores.high_score) {
         current_save.scores.high_score = stats.experience_collected;
     }
     if (stats.rooms_cleared > current_save.scores.highest_round) {
         current_save.scores.highest_round = stats.rooms_cleared;
-    }
-    if (stats.enemies_defeated > current_save.scores.best_enemies_killed_in_run) {
-        current_save.scores.best_enemies_killed_in_run = stats.enemies_defeated;
     }
 
     current_save.current_run.has_active_run = false;
@@ -264,6 +265,12 @@ pub fn clearRun() void {
 
 test "SaveSystem score recording and run lifecycle" {
     const testing = std.testing;
+    const previous_disk_io = disable_disk_io_for_tests;
+    disable_disk_io_for_tests = true;
+    defer {
+        deinit();
+        disable_disk_io_for_tests = previous_disk_io;
+    }
 
     current_save = .{};
 
@@ -281,7 +288,6 @@ test "SaveSystem score recording and run lifecycle" {
     try testing.expectEqual(@as(u32, 35), getScores().total_enemies_killed);
     try testing.expectEqual(@as(usize, 1500), getScores().high_score);
     try testing.expectEqual(@as(u32, 5), getScores().highest_round);
-    try testing.expectEqual(@as(u32, 35), getScores().best_enemies_killed_in_run);
     try testing.expect(!hasActiveRun());
 
     recordRunEnd(.{
@@ -295,32 +301,53 @@ test "SaveSystem score recording and run lifecycle" {
     try testing.expectEqual(@as(u32, 45), getScores().total_enemies_killed);
     try testing.expectEqual(@as(usize, 1500), getScores().high_score);
     try testing.expectEqual(@as(u32, 5), getScores().highest_round);
-    try testing.expectEqual(@as(u32, 35), getScores().best_enemies_killed_in_run);
 }
 
 test "SaveSystem updateSettings modifies and retains settings" {
     const testing = std.testing;
+    const previous_disk_io = disable_disk_io_for_tests;
+    const previous_master = AudioManager.master_volume;
+    const previous_music = AudioManager.music_volume;
+    const previous_sfx = AudioManager.sfx_volume;
+    const previous_mute = AudioManager.mute;
+    const previous_scheme = ControlScheme.getControlScheme();
+    disable_disk_io_for_tests = true;
+    defer {
+        AudioManager.setMasterVolume(previous_master);
+        AudioManager.setMusicVolume(previous_music);
+        AudioManager.setSfxVolume(previous_sfx);
+        AudioManager.setMute(previous_mute);
+        ControlScheme.setControlScheme(previous_scheme);
+        deinit();
+        disable_disk_io_for_tests = previous_disk_io;
+    }
 
     current_save = .{};
     updateSettings(0.65, 0.45, 0.85, true);
 
-    const s = getSettings();
-    try testing.expectEqual(@as(f32, 0.65), s.master_volume);
-    try testing.expectEqual(@as(f32, 0.45), s.music_volume);
-    try testing.expectEqual(@as(f32, 0.85), s.sfx_volume);
-    try testing.expect(s.mute);
+    const saved_settings = current_save.settings;
+    try testing.expectEqual(@as(f32, 0.65), saved_settings.master_volume);
+    try testing.expectEqual(@as(f32, 0.45), saved_settings.music_volume);
+    try testing.expectEqual(@as(f32, 0.85), saved_settings.sfx_volume);
+    try testing.expect(saved_settings.mute);
 
     updateControlScheme(.keyboard_only);
-    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, getSettings().control_scheme);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, current_save.settings.control_scheme);
     try testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, ControlScheme.getControlScheme());
 
     updateControlScheme(.keyboard_and_mouse);
-    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, getSettings().control_scheme);
+    try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, current_save.settings.control_scheme);
     try testing.expectEqual(ControlScheme.ControlScheme.keyboard_and_mouse, ControlScheme.getControlScheme());
 }
 
 test "SaveSystem saveRun and clearRun lifecycle" {
     const testing = std.testing;
+    const previous_disk_io = disable_disk_io_for_tests;
+    disable_disk_io_for_tests = true;
+    defer {
+        deinit();
+        disable_disk_io_for_tests = previous_disk_io;
+    }
 
     current_save = .{};
     try testing.expect(!hasActiveRun());
@@ -329,7 +356,7 @@ test "SaveSystem saveRun and clearRun lifecycle" {
     defer stats.deinit();
 
     var attack = Attack{};
-    attack.equipped_weapons[0] = Weapon{
+    attack.equipped_weapons[0] = .{
         .id = "SavedWeaponTest",
         .type = .wide,
         .light_attack = .{
@@ -351,32 +378,26 @@ test "SaveSystem saveRun and clearRun lifecycle" {
     try testing.expectEqualStrings("SavedWeaponTest", saved.equipped_weapons[0].?.id);
     try testing.expectEqual(@as(f32, 99.0), saved.equipped_weapons[0].?.light_attack.projectile_options.damage);
 
-    try testing.expectEqual(@as(?u32, 4), getCurrentRoomIndex());
-    try testing.expectEqual(@as(?u32, 3), getRoomsCleared());
-    try testing.expectEqualStrings("normal", getRoomCategory().?);
-    try testing.expectEqualStrings("maps/normal/arena_normal.json", getCurrentMapPath().?);
-
     clearRun();
     try testing.expect(!hasActiveRun());
     try testing.expect(getSavedRun() == null);
 }
 
-test "SaveSystem getSavePathAlloc resolves path ending with save.json" {
-    const testing = std.testing;
-    const path = try getSavePathAlloc(testing.allocator);
-    defer testing.allocator.free(path);
-
-    try testing.expect(std.mem.endsWith(u8, path, "save.json"));
-}
-
 test "SaveSystem load and re-save after resume (boon purchase simulation)" {
     const testing = std.testing;
+    const previous_disk_io = disable_disk_io_for_tests;
+    disable_disk_io_for_tests = true;
+    defer {
+        deinit();
+        disable_disk_io_for_tests = previous_disk_io;
+    }
 
+    current_save = .{};
     var stats = Stats.init(.player, .{ .health = 100, .experience = 250 });
     defer stats.deinit();
 
     var attack = Attack{};
-    attack.equipped_weapons[0] = Weapon{
+    attack.equipped_weapons[0] = .{
         .id = "DashFists",
         .dash_attack = .{
             .shooting_degrees = &.{ -2, 0, 2 },

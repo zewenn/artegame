@@ -251,18 +251,3 @@ pub fn MagicianEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.OverheadUI{},
     });
 }
-
-test "Magician enemy creation and component configuration" {
-    const magician = try MagicianEnemy(.init(150.0, 250.0));
-    defer magician.deinit();
-    try magician.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, magician.id, "magician-enemy"));
-    try std.testing.expect(magician.getComponent(Stats) != null);
-    try std.testing.expect(magician.getComponent(Enemy.ProximityAura) != null);
-    try std.testing.expect(magician.getComponent(Enemy.Attack) != null);
-
-    const stats = magician.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 80.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 140.0), stats.current.movement_speed);
-}

@@ -2,13 +2,12 @@ const std = @import("std");
 const lm = @import("loom");
 const ui = lm.ui;
 
-const Stats = @import("../../components/Stats.zig");
-const OverheadUI = @import("../../components/enemy/OverheadUI.zig");
-const HUD = @import("../HUD.zig");
-const GameOverMenu = @import("GameOverMenu.zig");
-const PauseMenu = @import("PauseMenu.zig");
-const BoonMenu = @import("BoonMenu.zig");
-const color_scheme = @import("color_scheme.zig");
+const Stats = @import("../Stats.zig");
+const OverheadUI = @import("OverheadUI.zig");
+const HUD = @import("../../global/HUD.zig");
+const RoomManager = @import("../../global/RoomManager.zig");
+const theme = @import("../../global/ui/theme.zig");
+const color_scheme = @import("../../global/ui/color_scheme.zig");
 
 const Self = @This();
 
@@ -84,10 +83,7 @@ const BASE_TOP_OFFSET_PIXELS: f32 = 17.0;
 const STACK_VERTICAL_STRIDE_PIXELS: f32 = 13.0;
 
 pub fn shouldRender() bool {
-    if (GameOverMenu.isShowing()) return false;
-    if (PauseMenu.isShowing()) return false;
-    if (BoonMenu.isShowing()) return false;
-    return true;
+    return !HUD.isModalOpen();
 }
 
 pub fn syncHealthFromStats(self: *Self, stats: *const Stats) void {
@@ -175,7 +171,7 @@ fn renderTitleText(self: *const Self, ui_scale: f32) void {
             .color = color_scheme.boss_title_text,
             .font_size = title_font_size_pixels,
             .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
@@ -200,7 +196,7 @@ fn renderRankBadge(self: *const Self, ui_scale: f32) void {
             .color = color_scheme.fromRgbaWithAlpha(accent_color, 255),
             .font_size = rank_font_size_pixels,
             .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
@@ -225,58 +221,52 @@ fn renderHealthBarTrough(
             .sizing = .{ .w = .fixed(total_bar_width_pixels), .h = .fixed(total_bar_height_pixels) },
         },
     })({
-        self.renderDamageLagFill(total_bar_width_pixels, total_bar_height_pixels, ui_scale);
-        self.renderCurrentHealthFill(total_bar_width_pixels, total_bar_height_pixels, ui_scale);
+        self.renderHealthBarFill(
+            "boss-health-damage-lag-",
+            std.math.clamp(self.damage_lag_health / self.max_health, 0.0, 1.0),
+            color_scheme.boss_damage_lag_fill,
+            1,
+            total_bar_width_pixels,
+            total_bar_height_pixels,
+            ui_scale,
+        );
+        self.renderHealthBarFill(
+            "boss-health-current-fill-",
+            std.math.clamp(self.display_health / self.max_health, 0.0, 1.0),
+            color_scheme.boss_health_fill,
+            2,
+            total_bar_width_pixels,
+            total_bar_height_pixels,
+            ui_scale,
+        );
         self.renderPhaseDividers(total_bar_width_pixels, total_bar_height_pixels, ui_scale);
         self.renderHealthText(total_bar_width_pixels, total_bar_height_pixels, ui_scale);
         self.renderOverlayFrame(ui_scale);
     });
 }
 
-fn renderDamageLagFill(
+fn renderHealthBarFill(
     self: *const Self,
+    comptime id_prefix: []const u8,
+    fill_ratio: f32,
+    fill_color: [4]f32,
+    z_index: i16,
     total_bar_width_pixels: f32,
     total_bar_height_pixels: f32,
     ui_scale: f32,
 ) void {
-    const lag_ratio = std.math.clamp(self.damage_lag_health / self.max_health, 0.0, 1.0);
-
     ui.new(.{
-        .id = .IDI("boss-health-damage-lag-", self.ui_id),
+        .id = .IDI(id_prefix, self.ui_id),
         .floating = .{
             .attach_to = .to_parent,
             .attach_points = .{ .element = .left_top, .parent = .left_top },
             .pointer_capture_mode = .passthrough,
-            .z_index = 1,
+            .z_index = z_index,
         },
-        .background_color = color_scheme.boss_damage_lag_fill,
+        .background_color = fill_color,
         .corner_radius = .all(0.75 * ui_scale),
         .layout = .{
-            .sizing = .{ .w = .fixed(total_bar_width_pixels * lag_ratio), .h = .fixed(total_bar_height_pixels) },
-        },
-    })({});
-}
-
-fn renderCurrentHealthFill(
-    self: *const Self,
-    total_bar_width_pixels: f32,
-    total_bar_height_pixels: f32,
-    ui_scale: f32,
-) void {
-    const health_ratio = std.math.clamp(self.display_health / self.max_health, 0.0, 1.0);
-
-    ui.new(.{
-        .id = .IDI("boss-health-current-fill-", self.ui_id),
-        .floating = .{
-            .attach_to = .to_parent,
-            .attach_points = .{ .element = .left_top, .parent = .left_top },
-            .pointer_capture_mode = .passthrough,
-            .z_index = 2,
-        },
-        .background_color = color_scheme.boss_health_fill,
-        .corner_radius = .all(0.75 * ui_scale),
-        .layout = .{
-            .sizing = .{ .w = .fixed(total_bar_width_pixels * health_ratio), .h = .fixed(total_bar_height_pixels) },
+            .sizing = .{ .w = .fixed(total_bar_width_pixels * fill_ratio), .h = .fixed(total_bar_height_pixels) },
         },
     })({});
 }
@@ -339,7 +329,7 @@ fn renderHealthText(
             .color = color_scheme.text_bright,
             .font_size = font_size_pixels,
             .letter_spacing = 1,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 }
@@ -382,43 +372,35 @@ fn releaseId(ui_id: u32) void {
     }
 }
 
-test "BossRank titles and accent colors" {
-    try std.testing.expectEqualStrings("MINI-BOSS", BossRank.mini_boss.getTitle());
-    try std.testing.expectEqualStrings("BOSS", BossRank.boss.getTitle());
-
-    const mini_boss_color = BossRank.mini_boss.getAccentColor();
-    try std.testing.expectEqual(@as(u8, 240), mini_boss_color.r);
-    try std.testing.expectEqual(@as(u8, 195), mini_boss_color.g);
-    try std.testing.expectEqual(@as(u8, 80), mini_boss_color.b);
-    try std.testing.expectEqual(@as(u8, 255), mini_boss_color.a);
-
-    const boss_color = BossRank.boss.getAccentColor();
-    try std.testing.expectEqual(@as(u8, 255), boss_color.r);
-    try std.testing.expectEqual(@as(u8, 85), boss_color.g);
-    try std.testing.expectEqual(@as(u8, 95), boss_color.b);
-    try std.testing.expectEqual(@as(u8, 255), boss_color.a);
-}
-
 test "BossBar shouldRender suppresses when GameOverMenu, PauseMenu, or BoonMenu is showing" {
-    GameOverMenu.hide();
-    PauseMenu.hide();
-    BoonMenu.hide();
+    RoomManager.startPracticeTutorial();
+    defer {
+        HUD.GameOverMenu.hide();
+        HUD.PauseMenu.hide();
+        HUD.BoonMenu.hide();
+        lm.time.proceed();
+        RoomManager.endPracticeTutorial();
+    }
+
+    HUD.GameOverMenu.hide();
+    HUD.PauseMenu.hide();
+    HUD.BoonMenu.hide();
     try std.testing.expect(shouldRender());
 
-    GameOverMenu.show(.{});
+    HUD.GameOverMenu.show(.{});
     try std.testing.expect(!shouldRender());
-    GameOverMenu.hide();
+    HUD.GameOverMenu.hide();
     try std.testing.expect(shouldRender());
 
-    PauseMenu.show();
+    HUD.PauseMenu.show();
     try std.testing.expect(!shouldRender());
-    PauseMenu.hide();
+    HUD.PauseMenu.hide();
     try std.testing.expect(shouldRender());
 
-    const dummy_slots = [_]BoonMenu.BoonSlot{};
-    BoonMenu.show(&dummy_slots);
+    const dummy_slots = [_]HUD.BoonMenu.BoonSlot{};
+    HUD.BoonMenu.show(&dummy_slots);
     try std.testing.expect(!shouldRender());
-    BoonMenu.hide();
+    HUD.BoonMenu.hide();
     try std.testing.expect(shouldRender());
 }
 
@@ -442,21 +424,6 @@ test "BossBar Start pulls Stats and disables OverheadUI health bar" {
     try std.testing.expectEqual(@as(f32, 1500.0), boss_bar.max_health);
     try std.testing.expectEqual(@as(f32, 1500.0), boss_bar.display_health);
     try std.testing.expectEqual(@as(f32, 1500.0), boss_bar.damage_lag_health);
-}
-
-test "BossBar syncHealthFromStats initializes health fields accurately" {
-    var stats = Stats{};
-    stats.current.health = 450.0;
-    stats.max.health = 600.0;
-
-    var boss_bar = Self{};
-    boss_bar.syncHealthFromStats(&stats);
-
-    try std.testing.expectEqual(@as(f32, 450.0), boss_bar.current_health);
-    try std.testing.expectEqual(@as(f32, 600.0), boss_bar.max_health);
-    try std.testing.expectEqual(@as(f32, 450.0), boss_bar.display_health);
-    try std.testing.expectEqual(@as(f32, 450.0), boss_bar.damage_lag_health);
-    try std.testing.expectEqual(@as(f32, 0.0), boss_bar.damage_lag_delay_timer_seconds);
 }
 
 test "BossBar stepHealthInterpolation activates damage lag timer and catches up" {

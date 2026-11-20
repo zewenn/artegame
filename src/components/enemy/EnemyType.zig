@@ -2,8 +2,9 @@ const std = @import("std");
 const lm = @import("loom");
 const rl = lm.deps.rl;
 const prefabs = @import("../../prefabs/prefabs.zig");
-const BossBar = @import("../../global/ui/BossBar.zig");
+const BossBar = @import("BossBar.zig");
 
+/// Enumerates all spawnable enemy archetypes and category wildcards.
 pub const EnemyType = enum {
     pub const NormalWaveRule = struct {
         unlock_round: u32,
@@ -16,9 +17,22 @@ pub const EnemyType = enum {
         budget_share_percentage: u32,
     };
 
-    pub const NormalWaveRole = union(enum) {
-        specialist: NormalWaveRule,
-        filler: NormalFillerRule,
+    pub const OrbDropRange = struct {
+        min_count: u8,
+        max_count: u8,
+    };
+
+    const SpawnFn = *const fn (lm.Vector2) anyerror!*lm.Entity;
+
+    const EnemySpec = struct {
+        spawn_fn: ?SpawnFn = null,
+        boss_rank: ?BossBar.BossRank = null,
+        cost: u32,
+        normal_wave_rule: ?NormalWaveRule = null,
+        normal_filler_rule: ?NormalFillerRule = null,
+        orb_drop_range: OrbDropRange,
+        base_editor_color: [3]u8,
+        display_name_override: ?[]const u8 = null,
     };
 
     pub const normal_enemies = makeListByBossRank(null);
@@ -26,10 +40,8 @@ pub const EnemyType = enum {
     pub const boss_enemies = makeListByBossRank(.boss);
 
     pub const normal_filler_enemies = [_]EnemyType{ .ranged, .melee };
-    pub const excluded_normal_enemies = [_]EnemyType{.dummy};
     pub const normal_specialist_enemies = getSpecialistEnemies();
 
-    dummy,
     melee,
     ranged,
     elite,
@@ -45,172 +57,222 @@ pub const EnemyType = enum {
     king,
     queen,
 
-    pub fn spawn(self: @This(), position: lm.Vector2) !*lm.Entity {
-        return switch (self) {
-            .dummy => try prefabs.enemies.Dummy(position),
-            .melee => try prefabs.enemies.Melee(position),
-            .ranged => try prefabs.enemies.Ranged(position),
-            .elite => try prefabs.enemies.Elite(position),
-            .shaman => try prefabs.enemies.Shaman(position),
-            .magician => try prefabs.enemies.Magician(position),
-            .lifeliner => try prefabs.enemies.Lifeliner(position),
-            .angler => try prefabs.enemies.Angler(position),
-            .tank => try prefabs.enemies.Tank(position),
-            .knight => try prefabs.enemies.Knight(position),
-            .bishop => try prefabs.enemies.Bishop(position),
-            .mini_boss => try spawn(self.takeFromCategoryNotSelf(mini_boss_enemies), position),
-            .boss => try spawn(self.takeFromCategoryNotSelf(boss_enemies), position),
-            .king => try prefabs.enemies.King(position),
-            .queen => try prefabs.enemies.Queen(position),
+    const specs = std.EnumArray(EnemyType, EnemySpec).init(.{
+        .melee = .{
+            .spawn_fn = prefabs.enemies.Melee,
+            .cost = 1,
+            .normal_filler_rule = .{ .unlock_round = 1, .budget_share_percentage = 100 },
+            .orb_drop_range = .{ .min_count = 1, .max_count = 3 },
+            .base_editor_color = .{ 220, 50, 50 },
+        },
+        .ranged = .{
+            .spawn_fn = prefabs.enemies.Ranged,
+            .cost = 2,
+            .normal_filler_rule = .{ .unlock_round = 2, .budget_share_percentage = 35 },
+            .orb_drop_range = .{ .min_count = 1, .max_count = 3 },
+            .base_editor_color = .{ 225, 175, 40 },
+        },
+        .elite = .{
+            .spawn_fn = prefabs.enemies.Elite,
+            .cost = 5,
+            .normal_wave_rule = .{ .unlock_round = 3, .round_divisor = 2, .max_count = 16 },
+            .orb_drop_range = .{ .min_count = 3, .max_count = 6 },
+            .base_editor_color = .{ 165, 65, 225 },
+        },
+        .shaman = .{
+            .spawn_fn = prefabs.enemies.Shaman,
+            .cost = 3,
+            .normal_wave_rule = .{ .unlock_round = 3, .round_divisor = 4, .max_count = 4 },
+            .orb_drop_range = .{ .min_count = 2, .max_count = 4 },
+            .base_editor_color = .{ 45, 200, 105 },
+        },
+        .magician = .{
+            .spawn_fn = prefabs.enemies.Magician,
+            .cost = 3,
+            .normal_wave_rule = .{ .unlock_round = 4, .round_divisor = 4, .max_count = 4 },
+            .orb_drop_range = .{ .min_count = 2, .max_count = 4 },
+            .base_editor_color = .{ 55, 125, 235 },
+        },
+        .lifeliner = .{
+            .spawn_fn = prefabs.enemies.Lifeliner,
+            .cost = 4,
+            .normal_wave_rule = .{ .unlock_round = 4, .round_divisor = 5, .max_count = 3 },
+            .orb_drop_range = .{ .min_count = 2, .max_count = 4 },
+            .base_editor_color = .{ 225, 95, 150 },
+        },
+        .angler = .{
+            .spawn_fn = prefabs.enemies.Angler,
+            .cost = 2,
+            .normal_wave_rule = .{ .unlock_round = 2, .round_divisor = 2, .max_count = 8 },
+            .orb_drop_range = .{ .min_count = 1, .max_count = 3 },
+            .base_editor_color = .{ 35, 205, 205 },
+        },
+        .tank = .{
+            .spawn_fn = prefabs.enemies.Tank,
+            .cost = 4,
+            .normal_wave_rule = .{ .unlock_round = 3, .round_divisor = 3, .max_count = 6 },
+            .orb_drop_range = .{ .min_count = 2, .max_count = 4 },
+            .base_editor_color = .{ 135, 145, 165 },
+        },
+        .knight = .{
+            .spawn_fn = prefabs.enemies.Knight,
+            .boss_rank = .mini_boss,
+            .cost = 20,
+            .orb_drop_range = .{ .min_count = 8, .max_count = 12 },
+            .base_editor_color = .{ 210, 160, 30 },
+        },
+        .bishop = .{
+            .spawn_fn = prefabs.enemies.Bishop,
+            .boss_rank = .mini_boss,
+            .cost = 20,
+            .orb_drop_range = .{ .min_count = 8, .max_count = 12 },
+            .base_editor_color = .{ 160, 70, 215 },
+        },
+        .mini_boss = .{
+            .boss_rank = .mini_boss,
+            .cost = 20,
+            .orb_drop_range = .{ .min_count = 8, .max_count = 12 },
+            .base_editor_color = .{ 230, 165, 35 },
+        },
+        .boss = .{
+            .boss_rank = .boss,
+            .cost = 100,
+            .orb_drop_range = .{ .min_count = 25, .max_count = 35 },
+            .base_editor_color = .{ 190, 20, 50 },
+        },
+        .king = .{
+            .spawn_fn = prefabs.enemies.King,
+            .boss_rank = .boss,
+            .cost = 100,
+            .orb_drop_range = .{ .min_count = 25, .max_count = 35 },
+            .base_editor_color = .{ 230, 175, 25 },
+            .display_name_override = "The King",
+        },
+        .queen = .{
+            .spawn_fn = prefabs.enemies.Queen,
+            .boss_rank = .boss,
+            .cost = 100,
+            .orb_drop_range = .{ .min_count = 25, .max_count = 35 },
+            .base_editor_color = .{ 215, 50, 195 },
+            .display_name_override = "The Queen",
+        },
+    });
+
+    /// Spawns an enemy entity at the given world position, resolving category wildcards uniformly.
+    pub fn spawn(self: EnemyType, position: lm.Vector2) !*lm.Entity {
+        const resolved_type = switch (self) {
+            .mini_boss => self.takeFromCategoryNotSelf(mini_boss_enemies),
+            .boss => self.takeFromCategoryNotSelf(boss_enemies),
+            else => self,
         };
+        const spawn_fn = specs.get(resolved_type).spawn_fn orelse return error.MissingSpawnFunction;
+        return try spawn_fn(position);
     }
 
+    /// Returns the boss rank for mini-boss and boss archetypes, or null for normal enemies.
     pub inline fn bossRank(self: EnemyType) ?BossBar.BossRank {
-        return switch (self) {
-            .knight, .bishop, .mini_boss => .mini_boss,
-            .king, .queen, .boss => .boss,
-            else => null,
-        };
+        return specs.get(self).boss_rank;
     }
 
+    /// Returns the wave budget cost of this enemy type.
     pub fn cost(self: EnemyType) u32 {
-        return switch (self) {
-            .dummy => 0,
-            .melee => 1,
-            .ranged => 2,
-            .angler => 2,
-            .shaman => 3,
-            .magician => 3,
-            .lifeliner => 4,
-            .tank => 4,
-            .elite => 5,
-            .knight => 20,
-            .bishop => 20,
-            .mini_boss => 20,
-            .boss, .king, .queen => 100,
-        };
+        return specs.get(self).cost;
     }
 
+    /// Returns the specialist wave scaling rule, if this enemy is a normal-wave specialist.
     pub fn normalWaveRule(self: EnemyType) ?NormalWaveRule {
-        return switch (self) {
-            .elite => .{ .unlock_round = 3, .round_divisor = 2, .max_count = 16 },
-            .tank => .{ .unlock_round = 3, .round_divisor = 3, .max_count = 6 },
-            .shaman => .{ .unlock_round = 3, .round_divisor = 4, .max_count = 4 },
-            .magician => .{ .unlock_round = 4, .round_divisor = 4, .max_count = 4 },
-            .lifeliner => .{ .unlock_round = 4, .round_divisor = 5, .max_count = 3 },
-            .angler => .{ .unlock_round = 2, .round_divisor = 2, .max_count = 8 },
-            else => null,
-        };
+        return specs.get(self).normal_wave_rule;
     }
 
+    /// Returns the filler wave rule, if this enemy is a normal-wave filler.
     pub fn normalFillerRule(self: EnemyType) ?NormalFillerRule {
-        return switch (self) {
-            .ranged => .{ .unlock_round = 2, .budget_share_percentage = 35 },
-            .melee => .{ .unlock_round = 1, .budget_share_percentage = 100 },
-            else => null,
-        };
+        return specs.get(self).normal_filler_rule;
     }
 
-    pub fn normalWaveRole(self: EnemyType) ?NormalWaveRole {
-        if (self.normalWaveRule()) |rule| {
-            return .{ .specialist = rule };
-        }
-        if (self.normalFillerRule()) |rule| {
-            return .{ .filler = rule };
-        }
-        return null;
+    /// Returns the inclusive experience orb drop count range on defeat.
+    pub fn orbDropRange(self: EnemyType) OrbDropRange {
+        return specs.get(self).orb_drop_range;
     }
 
+    /// Returns the human-readable display name for this enemy type.
     pub fn displayName(self: EnemyType) []const u8 {
         return switch (self) {
-            .dummy => "Dummy",
-            .melee => "Melee",
-            .ranged => "Ranged",
-            .elite => "Elite",
-            .shaman => "Shaman",
-            .magician => "Magician",
-            .lifeliner => "Lifeliner",
-            .angler => "Angler",
-            .tank => "Tank",
-            .knight => "Knight",
-            .bishop => "Bishop",
-            .mini_boss => "Mini-Boss",
-            .boss => "Boss",
-            .king => "The King",
-            .queen => "The Queen",
+            inline else => |enemy_tag| comptime comptimeDisplayName(enemy_tag),
         };
     }
 
+    /// Returns the uppercase null-terminated editor label for an optional enemy type.
     pub fn label(self: ?EnemyType) [:0]const u8 {
         const enemy_type = self orelse return "ALL";
         return switch (enemy_type) {
-            .dummy => "DUMMY",
-            .melee => "MELEE",
-            .ranged => "RANGED",
-            .elite => "ELITE",
-            .shaman => "SHAMAN",
-            .magician => "MAGICIAN",
-            .lifeliner => "LIFELINER",
-            .angler => "ANGLER",
-            .tank => "TANK",
-            .knight => "KNIGHT",
-            .bishop => "BISHOP",
-            .mini_boss => "MINI-BOSS",
-            .boss => "BOSS",
-            .king => "KING",
-            .queen => "QUEEN",
+            inline else => |enemy_tag| comptime comptimeLabel(enemy_tag),
         };
     }
 
+    /// Returns the translucent editor fill color derived from the archetype base color.
     pub fn editorFillColor(self: ?EnemyType) rl.Color {
         const enemy_type = self orelse return rl.Color{ .r = 230, .g = 40, .b = 40, .a = 60 };
-        return switch (enemy_type) {
-            .dummy => rl.Color{ .r = 150, .g = 150, .b = 150, .a = 60 },
-            .melee => rl.Color{ .r = 220, .g = 50, .b = 50, .a = 60 },
-            .ranged => rl.Color{ .r = 240, .g = 185, .b = 40, .a = 60 },
-            .elite => rl.Color{ .r = 170, .g = 60, .b = 230, .a = 60 },
-            .shaman => rl.Color{ .r = 40, .g = 200, .b = 100, .a = 60 },
-            .magician => rl.Color{ .r = 50, .g = 120, .b = 240, .a = 60 },
-            .lifeliner => rl.Color{ .r = 235, .g = 90, .b = 150, .a = 60 },
-            .angler => rl.Color{ .r = 30, .g = 210, .b = 210, .a = 60 },
-            .tank => rl.Color{ .r = 130, .g = 140, .b = 160, .a = 60 },
-            .knight => rl.Color{ .r = 215, .g = 165, .b = 35, .a = 60 },
-            .bishop => rl.Color{ .r = 155, .g = 70, .b = 220, .a = 60 },
-            .mini_boss => rl.Color{ .r = 245, .g = 170, .b = 30, .a = 60 },
-            .boss => rl.Color{ .r = 180, .g = 20, .b = 50, .a = 60 },
-            .king => rl.Color{ .r = 240, .g = 180, .b = 30, .a = 60 },
-            .queen => rl.Color{ .r = 210, .g = 50, .b = 190, .a = 60 },
+        const base = specs.get(enemy_type).base_editor_color;
+        return rl.Color{ .r = base[0], .g = base[1], .b = base[2], .a = 60 };
+    }
+
+    /// Returns the brighter editor outline color derived from the archetype base color.
+    pub fn editorOutlineColor(self: ?EnemyType) rl.Color {
+        const enemy_type = self orelse return rl.Color{ .r = 255, .g = 80, .b = 80, .a = 220 };
+        const base = specs.get(enemy_type).base_editor_color;
+        return rl.Color{
+            .r = @min(255, @as(u16, base[0]) + 35),
+            .g = @min(255, @as(u16, base[1]) + 35),
+            .b = @min(255, @as(u16, base[2]) + 35),
+            .a = 220,
         };
     }
 
-    pub fn editorOutlineColor(self: ?EnemyType) rl.Color {
-        const enemy_type = self orelse return rl.Color{ .r = 255, .g = 80, .b = 80, .a = 220 };
-        return switch (enemy_type) {
-            .dummy => rl.Color{ .r = 200, .g = 200, .b = 200, .a = 220 },
-            .melee => rl.Color{ .r = 255, .g = 90, .b = 90, .a = 220 },
-            .ranged => rl.Color{ .r = 255, .g = 210, .b = 80, .a = 220 },
-            .elite => rl.Color{ .r = 200, .g = 100, .b = 255, .a = 220 },
-            .shaman => rl.Color{ .r = 80, .g = 240, .b = 140, .a = 220 },
-            .magician => rl.Color{ .r = 90, .g = 160, .b = 255, .a = 220 },
-            .lifeliner => rl.Color{ .r = 255, .g = 130, .b = 180, .a = 220 },
-            .angler => rl.Color{ .r = 70, .g = 240, .b = 240, .a = 220 },
-            .tank => rl.Color{ .r = 170, .g = 180, .b = 200, .a = 220 },
-            .knight => rl.Color{ .r = 245, .g = 195, .b = 60, .a = 220 },
-            .bishop => rl.Color{ .r = 195, .g = 105, .b = 250, .a = 220 },
-            .mini_boss => rl.Color{ .r = 255, .g = 200, .b = 70, .a = 220 },
-            .boss => rl.Color{ .r = 230, .g = 50, .b = 80, .a = 220 },
-            .king => rl.Color{ .r = 255, .g = 210, .b = 50, .a = 220 },
-            .queen => rl.Color{ .r = 255, .g = 80, .b = 230, .a = 220 },
-        };
+    fn comptimeLabel(comptime enemy_type: EnemyType) [:0]const u8 {
+        const raw_name = @tagName(enemy_type);
+        comptime var buffer: [raw_name.len:0]u8 = undefined;
+        inline for (raw_name, 0..) |character, character_index| {
+            buffer[character_index] = if (character == '_') '-' else std.ascii.toUpper(character);
+        }
+        buffer[raw_name.len] = 0;
+        const result = buffer;
+        return &result;
+    }
+
+    fn comptimeDisplayName(comptime enemy_type: EnemyType) []const u8 {
+        if (specs.get(enemy_type).display_name_override) |override_name| {
+            return override_name;
+        }
+        const raw_name = @tagName(enemy_type);
+        comptime var buffer: [raw_name.len]u8 = undefined;
+        comptime var capitalize_next = true;
+        inline for (raw_name, 0..) |character, character_index| {
+            if (character == '_') {
+                buffer[character_index] = '-';
+                capitalize_next = true;
+            } else {
+                buffer[character_index] = if (capitalize_next) std.ascii.toUpper(character) else character;
+                capitalize_next = false;
+            }
+        }
+        const result = buffer;
+        return &result;
     }
 
     fn takeFromCategoryNotSelf(self: EnemyType, category: []const EnemyType) EnemyType {
-        for (category, 0..) |enemy_type, index| {
-            if (enemy_type != self) continue;
-
-            return category[if (index > 0) index - 1 else index + 1];
+        var candidate_count: usize = 0;
+        for (category) |enemy_type| {
+            if (enemy_type != self) candidate_count += 1;
         }
-        return category[lm.random.intRangeAtMost(usize, 0, category.len - 1)];
+        if (candidate_count == 0) return self;
+
+        var selected_offset = lm.random.intRangeLessThan(usize, 0, candidate_count);
+        for (category) |enemy_type| {
+            if (enemy_type == self) continue;
+            if (selected_offset == 0) return enemy_type;
+            selected_offset -= 1;
+        }
+        return self;
     }
 
     fn makeListByBossRank(comptime for_rank: ?BossBar.BossRank) []const EnemyType {
@@ -230,19 +292,7 @@ pub const EnemyType = enum {
     fn getSpecialistEnemies() []const EnemyType {
         comptime var list: []const EnemyType = &.{};
         for (normal_enemies) |normal_enemy_type| {
-            var found = false;
-            for (normal_filler_enemies) |filler| {
-                if (normal_enemy_type != filler) continue;
-                found = true;
-                break;
-            }
-            for (excluded_normal_enemies) |excluded| {
-                if (normal_enemy_type != excluded) continue;
-                found = true;
-                break;
-            }
-
-            if (found) continue;
+            if (isFillerEnemy(normal_enemy_type)) continue;
 
             const add: []const EnemyType = &.{normal_enemy_type};
             list = list ++ add;
@@ -250,32 +300,58 @@ pub const EnemyType = enum {
 
         return list;
     }
+
+    fn isFillerEnemy(comptime enemy_type: EnemyType) bool {
+        for (normal_filler_enemies) |filler| {
+            if (enemy_type == filler) return true;
+        }
+        return false;
+    }
 };
 
-test "makeListByBossRank categories are created correctly" {
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.knight}));
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.bishop}));
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.mini_boss}));
-
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.king}));
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.queen}));
-    try std.testing.expect(std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.boss}));
+comptime {
+    if (!std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.knight})) {
+        @compileError("mini_boss_enemies missing .knight");
+    }
+    if (!std.mem.containsAtLeast(EnemyType, EnemyType.mini_boss_enemies, 1, &.{.bishop})) {
+        @compileError("mini_boss_enemies missing .bishop");
+    }
+    if (!std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.king})) {
+        @compileError("boss_enemies missing .king");
+    }
+    if (!std.mem.containsAtLeast(EnemyType, EnemyType.boss_enemies, 1, &.{.queen})) {
+        @compileError("boss_enemies missing .queen");
+    }
 }
 
-test "normal wave roles and categorization" {
+test "EnemyType metadata, labels, display names, and orb drop ranges" {
     for (EnemyType.normal_specialist_enemies) |enemy_type| {
         try std.testing.expect(enemy_type.normalWaveRule() != null);
-        const role = enemy_type.normalWaveRole().?;
-        try std.testing.expect(role == .specialist);
+        try std.testing.expectEqual(@as(?EnemyType.NormalFillerRule, null), enemy_type.normalFillerRule());
     }
 
     for (EnemyType.normal_filler_enemies) |enemy_type| {
         try std.testing.expect(enemy_type.normalFillerRule() != null);
-        const role = enemy_type.normalWaveRole().?;
-        try std.testing.expect(role == .filler);
+        try std.testing.expectEqual(@as(?EnemyType.NormalWaveRule, null), enemy_type.normalWaveRule());
     }
 
-    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.dummy.normalWaveRole());
-    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.knight.normalWaveRole());
-    try std.testing.expectEqual(@as(?EnemyType.NormalWaveRole, null), EnemyType.king.normalWaveRole());
+    try std.testing.expectEqualStrings("ALL", EnemyType.label(null));
+    try std.testing.expectEqualStrings("MINI-BOSS", EnemyType.label(.mini_boss));
+    try std.testing.expectEqualStrings("The King", EnemyType.king.displayName());
+    try std.testing.expectEqualStrings("The Queen", EnemyType.queen.displayName());
+    try std.testing.expectEqualStrings("Mini-Boss", EnemyType.mini_boss.displayName());
+    try std.testing.expectEqual(@as(u8, 25), EnemyType.queen.orbDropRange().min_count);
+    try std.testing.expectEqual(@as(u8, 35), EnemyType.queen.orbDropRange().max_count);
+}
+
+test "EnemyType takeFromCategoryNotSelf samples uniformly across all non-self entries" {
+    var saw_knight = false;
+    var saw_bishop = false;
+    for (0..64) |_| {
+        const picked = EnemyType.mini_boss.takeFromCategoryNotSelf(EnemyType.mini_boss_enemies);
+        try std.testing.expect(picked != .mini_boss);
+        if (picked == .knight) saw_knight = true;
+        if (picked == .bishop) saw_bishop = true;
+    }
+    try std.testing.expect(saw_knight and saw_bishop);
 }

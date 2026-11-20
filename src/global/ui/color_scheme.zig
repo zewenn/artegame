@@ -27,8 +27,6 @@ pub const surface_elevated: clay.Color = ui.color(20, 22, 28, 220);
 pub const surface_danger_inset: clay.Color = ui.color(24, 18, 24, 200);
 /// Status pill background color.
 pub const status_pill_background: clay.Color = ui.color(24, 28, 38, 180);
-/// Main menu high score badge background color.
-pub const stats_badge_background: clay.Color = ui.color(16, 20, 28, 220);
 /// Main menu high score stats text color.
 pub const stats_badge_text: clay.Color = ui.color(238, 230, 234, 255);
 
@@ -92,10 +90,6 @@ pub const accent_gold_bright: clay.Color = ui.color(255, 215, 100, 255);
 pub const accent_gold_border: clay.Color = ui.color(240, 200, 100, 200);
 /// Cyan accent color for experience stats.
 pub const accent_cyan: clay.Color = ui.color(100, 200, 255, 255);
-/// Cyan border color for stats badges.
-pub const accent_cyan_border: clay.Color = ui.color(100, 200, 255, 120);
-/// Cyan text color for stats badges.
-pub const accent_cyan_text: clay.Color = ui.color(140, 215, 255, 230);
 /// Crimson accent color for game over title.
 pub const accent_crimson: clay.Color = ui.color(240, 70, 75, 255);
 /// Crimson stat value color for enemies defeated.
@@ -154,29 +148,14 @@ pub const hud_badge_background: clay.Color = ui.color(16, 18, 24, 230);
 pub const hud_translucent_background: clay.Color = ui.color(23, 21, 22, 196);
 /// HUD player bar container background color.
 pub const hud_bar_trough: clay.Color = ui.color(50, 50, 50, 255);
-/// HUD player bar trough RGBA color.
-pub const hud_bar_trough_rgba: lm.Color = .init(55, 51, 52, 255);
-/// HUD player health bar fill RGBA color.
-pub const hud_health_fill_rgba: lm.Color = .init(178, 82, 102, 255);
-/// HUD player stamina bar fill RGBA color.
-pub const hud_stamina_fill_rgba: lm.Color = .init(192, 144, 169, 255);
+/// HUD player bar inner trough color.
+pub const hud_bar_trough_fill: clay.Color = ui.color(55, 51, 52, 255);
+/// HUD player health bar fill color.
+pub const hud_health_fill: clay.Color = ui.color(178, 82, 102, 255);
+/// HUD player stamina bar fill color.
+pub const hud_stamina_fill: clay.Color = ui.color(192, 144, 169, 255);
 /// World interaction prompt background color.
 pub const prompt_background: clay.Color = ui.color(23, 21, 22, 196);
-/// World interaction prompt border color.
-pub const prompt_border: clay.Color = ui.color(80, 160, 255, 220);
-
-/// Normal boon rarity color.
-pub const rarity_normal: clay.Color = ui.color(180, 190, 200, 255);
-/// Rare boon rarity color.
-pub const rarity_rare: clay.Color = ui.color(65, 160, 255, 255);
-/// Epic boon rarity color.
-pub const rarity_epic: clay.Color = ui.color(180, 85, 255, 255);
-/// Legendary boon rarity color.
-pub const rarity_legendary: clay.Color = ui.color(255, 195, 45, 255);
-/// Mythic boon rarity color.
-pub const rarity_mythic: clay.Color = ui.color(255, 60, 100, 255);
-/// Cosmic boon rarity color.
-pub const rarity_cosmic: clay.Color = ui.color(45, 240, 225, 255);
 
 /// Mini-boss rank accent RGBA color.
 pub const boss_mini_accent_rgba: lm.Color = .{ .r = 240, .g = 195, .b = 80, .a = 255 };
@@ -195,16 +174,19 @@ pub const boss_health_fill: clay.Color = ui.color(225, 28, 48, 255);
 /// Boss health bar quarter-phase divider color.
 pub const boss_phase_divider: clay.Color = ui.color(40, 16, 22, 180);
 
+/// Mapping of boon rarity tiers to their semantic UI colors.
+pub const rarity_colors: std.EnumArray(Boon.Rarity, clay.Color) = .init(.{
+    .normal = ui.color(180, 190, 200, 255),
+    .rare = ui.color(65, 160, 255, 255),
+    .epic = ui.color(180, 85, 255, 255),
+    .legendary = ui.color(255, 195, 45, 255),
+    .mythic = ui.color(255, 60, 100, 255),
+    .cosmic = ui.color(45, 240, 225, 255),
+});
+
 /// Returns the semantic UI color corresponding to a boon rarity tier.
 pub fn rarityColor(rarity: Boon.Rarity) clay.Color {
-    return switch (rarity) {
-        .normal => rarity_normal,
-        .rare => rarity_rare,
-        .epic => rarity_epic,
-        .legendary => rarity_legendary,
-        .mythic => rarity_mythic,
-        .cosmic => rarity_cosmic,
-    };
+    return rarity_colors.get(rarity);
 }
 
 /// Converts an RGBA color struct into a Clay UI color with a custom alpha channel.

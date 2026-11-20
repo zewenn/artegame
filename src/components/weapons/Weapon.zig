@@ -17,7 +17,7 @@ pub const SerializedAttack = struct {
     speed: f32 = 330,
     size_x: f32 = 64,
     size_y: f32 = 64,
-    passtrough: bool = false,
+    passthrough: bool = false,
     is_crit: bool = false,
     damage_type: Stats.DamageType = .physical,
     damage: f32 = 1,
@@ -28,45 +28,32 @@ pub const SerializedAttack = struct {
     onhit_strength: f32 = 0,
     override_sprite: ?[]const u8 = null,
 
-    pub fn fromAttack(att: Attack) SerializedAttack {
-        const opt = att.projectile_options;
-        return .{
-            .shooting_degrees = att.shooting_degrees,
-            .lifetime = opt.lifetime,
-            .speed = opt.speed,
-            .size_x = opt.size.x,
-            .size_y = opt.size.y,
-            .passtrough = opt.passtrough,
-            .is_crit = opt.is_crit,
-            .damage_type = opt.damage_type,
-            .damage = opt.damage,
-            .knockback_strength = opt.knockback_strength,
-            .knockback_duration = opt.knockback_duration,
-            .onhit_effect = opt.onhit_effect,
-            .onhit_duration = opt.onhit_duration,
-            .onhit_strength = opt.onhit_strength,
-            .override_sprite = opt.override_sprite,
+    pub fn fromAttack(attack: Attack) SerializedAttack {
+        var serialized = SerializedAttack{
+            .shooting_degrees = attack.shooting_degrees,
+            .size_x = attack.projectile_options.size.x,
+            .size_y = attack.projectile_options.size.y,
         };
+        inline for (@typeInfo(SerializedAttack).@"struct".field_names) |field_name| {
+            if (@hasField(ProjectileOptions, field_name)) {
+                @field(serialized, field_name) = @field(attack.projectile_options, field_name);
+            }
+        }
+        return serialized;
     }
 
     pub fn toAttack(self: SerializedAttack) Attack {
-        var opt = ProjectileOptions{};
-        opt.lifetime = self.lifetime;
-        opt.speed = self.speed;
-        opt.size = .init(self.size_x, self.size_y);
-        opt.passtrough = self.passtrough;
-        opt.is_crit = self.is_crit;
-        opt.damage_type = self.damage_type;
-        opt.damage = self.damage;
-        opt.knockback_strength = self.knockback_strength;
-        opt.knockback_duration = self.knockback_duration;
-        opt.onhit_effect = self.onhit_effect;
-        opt.onhit_duration = self.onhit_duration;
-        opt.onhit_strength = self.onhit_strength;
-        opt.override_sprite = self.override_sprite;
+        var projectile_options = ProjectileOptions{
+            .size = .init(self.size_x, self.size_y),
+        };
+        inline for (@typeInfo(SerializedAttack).@"struct".field_names) |field_name| {
+            if (@hasField(ProjectileOptions, field_name)) {
+                @field(projectile_options, field_name) = @field(self, field_name);
+            }
+        }
         return .{
             .shooting_degrees = self.shooting_degrees,
-            .projectile_options = opt,
+            .projectile_options = projectile_options,
         };
     }
 };
@@ -86,6 +73,16 @@ pub const WeaponType = enum {
     wide,
 };
 
+const path_migrations = std.StaticStringMap([]const u8).initComptime(.{
+    .{ "weapons/gloves_0.png", "weapons/gloves/gloves_0.png" },
+    .{ "weapons/gloves_1.png", "weapons/gloves/gloves_1.png" },
+    .{ "weapons/plates_0.png", "weapons/plates/plates_0.png" },
+    .{ "weapons/plates_1.png", "weapons/plates/plates_1.png" },
+    .{ "weapons/weight_plate.png", "weapons/plates/plates_0.png" },
+    .{ "weapons/plates/weight_plate.png", "weapons/plates/plates_0.png" },
+    .{ "ui/empty_icon.png", "ui/icons/empty_icon.png" },
+});
+
 const Self = @This();
 
 id: []const u8,
@@ -99,8 +96,8 @@ sprite_right: []const u8 = "ui/icons/empty_icon.png",
 
 type: WeaponType = .close,
 
-pub fn jsonStringify(self: @This(), jw: anytype) !void {
-    const sw = SerializedWeapon{
+pub fn jsonStringify(self: @This(), json_writer: anytype) !void {
+    const serialized_weapon = SerializedWeapon{
         .id = self.id,
         .type = self.type,
         .sprite_left = self.sprite_left,
@@ -109,29 +106,23 @@ pub fn jsonStringify(self: @This(), jw: anytype) !void {
         .heavy_attack = SerializedAttack.fromAttack(self.heavy_attack),
         .dash_attack = SerializedAttack.fromAttack(self.dash_attack),
     };
-    try jw.write(sw);
+    try json_writer.write(serialized_weapon);
 }
 
 pub fn migratePath(path: []const u8) []const u8 {
-    if (std.mem.eql(u8, path, "weapons/gloves_0.png")) return "weapons/gloves/gloves_0.png";
-    if (std.mem.eql(u8, path, "weapons/gloves_1.png")) return "weapons/gloves/gloves_1.png";
-    if (std.mem.eql(u8, path, "weapons/plates_0.png")) return "weapons/plates/plates_0.png";
-    if (std.mem.eql(u8, path, "weapons/plates_1.png")) return "weapons/plates/plates_1.png";
-    if (std.mem.eql(u8, path, "weapons/weight_plate.png")) return "weapons/plates/weight_plate.png";
-    if (std.mem.eql(u8, path, "ui/empty_icon.png")) return "ui/icons/empty_icon.png";
-    return path;
+    return path_migrations.get(path) orelse path;
 }
 
 pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.json.ParseOptions) !@This() {
-    const sw = try std.json.innerParse(SerializedWeapon, allocator, source, options);
+    const serialized_weapon = try std.json.innerParse(SerializedWeapon, allocator, source, options);
     return @This(){
-        .id = sw.id,
-        .type = sw.type,
-        .sprite_left = migratePath(sw.sprite_left),
-        .sprite_right = migratePath(sw.sprite_right),
-        .light_attack = sw.light_attack.toAttack(),
-        .heavy_attack = sw.heavy_attack.toAttack(),
-        .dash_attack = sw.dash_attack.toAttack(),
+        .id = serialized_weapon.id,
+        .type = serialized_weapon.type,
+        .sprite_left = migratePath(serialized_weapon.sprite_left),
+        .sprite_right = migratePath(serialized_weapon.sprite_right),
+        .light_attack = serialized_weapon.light_attack.toAttack(),
+        .heavy_attack = serialized_weapon.heavy_attack.toAttack(),
+        .dash_attack = serialized_weapon.dash_attack.toAttack(),
     };
 }
 
@@ -142,9 +133,9 @@ pub fn doAttack(
     target: lm.Vector2,
     shooter_stats: Stats,
 ) !void {
-    const diff = target.subtract(position);
-    const angle = switch (diff.length() > 0.001) {
-        true => std.math.atan2(diff.y, diff.x),
+    const target_offset = target.subtract(position);
+    const angle = switch (target_offset.length() > 0.001) {
+        true => std.math.atan2(target_offset.y, target_offset.x),
         false => 0.0,
     };
 
@@ -153,6 +144,9 @@ pub fn doAttack(
         const target_vector = lm.Vec2(1, 0).rotate(new_angle);
 
         var options = attack.projectile_options;
+        const is_rolled_crit = shooter_stats.current.crit_chance > 0 and
+            lm.randFloat(f32, 0, 1) <= shooter_stats.current.crit_chance;
+        options.is_crit = options.is_crit or is_rolled_crit;
         options.attack_kind = attack_kind;
         options.start_position = position;
         options.target_position = target_vector.add(position);
@@ -180,7 +174,7 @@ pub fn dashAttack(self: *Self, position: lm.Vector2, target: lm.Vector2, shooter
 
 test "Weapon serialization and deserialization roundtrip" {
     const testing = std.testing;
-    const alloc = testing.allocator;
+    const allocator = testing.allocator;
 
     const original = Self{
         .id = "TestGoliath",
@@ -192,17 +186,17 @@ test "Weapon serialization and deserialization roundtrip" {
             .projectile_options = .{
                 .damage = 42.5,
                 .speed = 500,
-                .passtrough = true,
+                .passthrough = true,
                 .knockback_strength = 2.5,
             },
         },
     };
 
-    const weapons_arr: [2]?Self = [_]?Self{ original, null };
-    const json_str = try std.fmt.allocPrint(alloc, "{f}", .{std.json.fmt(weapons_arr, .{})});
-    defer alloc.free(json_str);
+    const weapons_array: [2]?Self = [_]?Self{ original, null };
+    const json_string = try std.fmt.allocPrint(allocator, "{f}", .{std.json.fmt(weapons_array, .{})});
+    defer allocator.free(json_string);
 
-    var parsed = try std.json.parseFromSlice([2]?Self, alloc, json_str, .{ .ignore_unknown_fields = true });
+    var parsed = try std.json.parseFromSlice([2]?Self, allocator, json_string, .{ .ignore_unknown_fields = true });
     defer parsed.deinit();
 
     const loaded = parsed.value[0].?;
@@ -210,10 +204,16 @@ test "Weapon serialization and deserialization roundtrip" {
     try testing.expectEqual(WeaponType.wide, loaded.type);
     try testing.expectEqual(@as(f32, 42.5), loaded.light_attack.projectile_options.damage);
     try testing.expectEqual(@as(f32, 500), loaded.light_attack.projectile_options.speed);
-    try testing.expect(loaded.light_attack.projectile_options.passtrough);
+    try testing.expect(loaded.light_attack.projectile_options.passthrough);
     try testing.expectEqual(@as(f32, 2.5), loaded.light_attack.projectile_options.knockback_strength);
     try testing.expectEqual(@as(usize, 3), loaded.light_attack.shooting_degrees.len);
     try testing.expectEqual(@as(f32, -5), loaded.light_attack.shooting_degrees[0]);
     try testing.expect(parsed.value[1] == null);
 }
 
+test "Weapon migratePath maps legacy paths and preserves current paths" {
+    try std.testing.expectEqualStrings("weapons/plates/plates_0.png", migratePath("weapons/plates/weight_plate.png"));
+    try std.testing.expectEqualStrings("weapons/plates/plates_0.png", migratePath("weapons/weight_plate.png"));
+    try std.testing.expectEqualStrings("weapons/gloves/gloves_0.png", migratePath("weapons/gloves_0.png"));
+    try std.testing.expectEqualStrings("weapons/plates/plates_1.png", migratePath("weapons/plates/plates_1.png"));
+}

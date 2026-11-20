@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../../components/Stats.zig");
@@ -67,14 +66,14 @@ pub const elite_animations = [_]lm.Animation{
     }),
 };
 
-fn onHasteEnable(s: *Stats) void {
-    s.current.movement_speed *= 1.4;
-    s.current.attack_speed *= 1.4;
+fn onHasteEnable(stats: *Stats) void {
+    stats.current.movement_speed *= 1.4;
+    stats.current.attack_speed *= 1.4;
 }
 
-fn onHasteDisable(s: *Stats) void {
-    s.current.movement_speed /= 1.4;
-    s.current.attack_speed /= 1.4;
+fn onHasteDisable(stats: *Stats) void {
+    stats.current.movement_speed /= 1.4;
+    stats.current.attack_speed /= 1.4;
 }
 
 pub const elite_abilities = [_]Ability{

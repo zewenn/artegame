@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
@@ -29,10 +28,21 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
 pub fn Update(self: *Self) void {
     if (lm.time.paused()) return;
 
-    const delta_time_seconds = lm.time.deltaTime();
+    const delta_seconds = lm.time.deltaTime();
     self.maintainInfiniteHealth();
-    self.updateHitFlash(delta_time_seconds);
-    self.updateWobble(delta_time_seconds);
+    self.updateHitFlash(delta_seconds);
+    self.updateWobble(delta_seconds);
+}
+
+pub fn onHit(
+    self: *Self,
+    attack_kind: Projectile.AttackKind,
+    hit_position: lm.Vector2,
+) void {
+    self.maintainInfiniteHealth();
+    self.triggerVisualFeedback();
+    triggerAudioFeedback(hit_position);
+    TutorialManager.notifyDummyHit(attack_kind);
 }
 
 fn maintainInfiniteHealth(self: *Self) void {
@@ -42,22 +52,22 @@ fn maintainInfiniteHealth(self: *Self) void {
     }
 }
 
-fn updateHitFlash(self: *Self, delta_time_seconds: f32) void {
+fn updateHitFlash(self: *Self, delta_seconds: f32) void {
     const renderer = self.renderer orelse return;
     if (self.flash_timer_seconds <= 0.0) return;
 
-    self.flash_timer_seconds -= delta_time_seconds;
+    self.flash_timer_seconds -= delta_seconds;
     if (self.flash_timer_seconds <= 0.0) {
         self.flash_timer_seconds = 0.0;
         renderer.tint = lm.Color{ .r = 255, .g = 255, .b = 255, .a = 255 };
     }
 }
 
-fn updateWobble(self: *Self, delta_time_seconds: f32) void {
+fn updateWobble(self: *Self, delta_seconds: f32) void {
     const transform = self.transform orelse return;
     if (self.wobble_timer_seconds <= 0.0) return;
 
-    self.wobble_timer_seconds -= delta_time_seconds;
+    self.wobble_timer_seconds -= delta_seconds;
     if (self.wobble_timer_seconds <= 0.0) {
         self.wobble_timer_seconds = 0.0;
         transform.scale = BASE_SCALE_PIXELS;
@@ -69,19 +79,6 @@ fn updateWobble(self: *Self, delta_time_seconds: f32) void {
         BASE_SCALE_PIXELS.x + (HIT_SCALE_PIXELS.x - BASE_SCALE_PIXELS.x) * progress,
         BASE_SCALE_PIXELS.y + (HIT_SCALE_PIXELS.y - BASE_SCALE_PIXELS.y) * progress,
     );
-}
-
-pub fn onHit(
-    self: *Self,
-    attack_kind: Projectile.AttackKind,
-    damage_dealt: f32,
-    hit_position: lm.Vector2,
-) void {
-    _ = damage_dealt;
-    self.maintainInfiniteHealth();
-    self.triggerVisualFeedback();
-    self.triggerAudioFeedback(hit_position);
-    TutorialManager.notifyDummyHit(attack_kind);
 }
 
 fn triggerVisualFeedback(self: *Self) void {
@@ -96,8 +93,7 @@ fn triggerVisualFeedback(self: *Self) void {
     }
 }
 
-fn triggerAudioFeedback(self: *Self, hit_position: lm.Vector2) void {
-    _ = self;
+fn triggerAudioFeedback(hit_position: lm.Vector2) void {
     var listener_position = hit_position;
     if (lm.getEntity(.{ .id = "player" })) |player| {
         if (player.getComponent(lm.Transform)) |player_transform| {

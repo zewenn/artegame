@@ -1,10 +1,9 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../components/Stats.zig");
 const StatusOverlays = @import("../components/effects/StatusOverlays.zig");
 const Dashing = @import("../components/Dashing.zig");
-const Hands = @import("../components/Weapons/Hands.zig");
+const Hands = @import("../components/weapons/Hands.zig");
 
 const player = @import("../components/player/export.zig");
 

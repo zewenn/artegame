@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../../components/Stats.zig");
@@ -47,7 +46,7 @@ pub const queen_abilities = [_]Ability{
         },
         .custom_action = queenCastBondOfLife,
         .windup_animation = "windup-ranged",
-        .release_animation = "attack-ranged",
+        .release_animation = "fire-ranged",
         .winddown_animation = "winddown-ranged",
     },
 
@@ -60,7 +59,6 @@ pub const queen_abilities = [_]Ability{
         .conditions = .{
             .target_has_effect = .byType(.bond_of_life),
         },
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/heavy.png",
             .is_channeled = true,
@@ -77,7 +75,7 @@ pub const queen_abilities = [_]Ability{
             .on_hit_callback = CombatReactions.queenBondOfLifeEarlyCancel,
             .sfx_path = "audio/sfx/punch.mp3",
         },
-        .release_animation = "attack-ranged",
+        .release_animation = "fire-ranged",
     },
 
     Ability{
@@ -89,7 +87,6 @@ pub const queen_abilities = [_]Ability{
         .conditions = .{
             .target_has_effect = .byType(.bond_of_life),
         },
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/light.png",
             .wave_count = 3,
@@ -104,7 +101,7 @@ pub const queen_abilities = [_]Ability{
             .sfx_path = "audio/sfx/punch.mp3",
         },
         .windup_animation = "windup-ranged",
-        .release_animation = "attack-ranged",
+        .release_animation = "fire-ranged",
         .winddown_animation = "winddown-ranged",
     },
 
@@ -128,7 +125,7 @@ pub const queen_abilities = [_]Ability{
             .sfx_path = "audio/sfx/punch.mp3",
         },
         .windup_animation = "windup-ranged",
-        .release_animation = "attack-ranged",
+        .release_animation = "fire-ranged",
         .winddown_animation = "winddown-ranged",
     },
 };
@@ -150,7 +147,7 @@ const queen_fallback = Ability{
         .sfx_path = "audio/sfx/punch.mp3",
     },
     .windup_animation = "windup-ranged",
-    .release_animation = "attack-ranged",
+    .release_animation = "fire-ranged",
     .winddown_animation = "winddown-ranged",
 };
 

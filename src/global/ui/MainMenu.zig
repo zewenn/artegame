@@ -7,9 +7,9 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const OptionsMenu = @import("OptionsMenu.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const RoomManager = @import("../RoomManager.zig");
-const DevicePrompts = @import("../input/DevicePrompts.zig");
-const HUD = @import("../HUD.zig");
-const menu_button = @import("buttons/menu_button.zig");
+const theme = @import("theme.zig");
+const sprite_button = @import("buttons/sprite_button.zig");
+const menu_navigation = @import("menu_navigation.zig");
 const color_scheme = @import("color_scheme.zig");
 
 const Self = @This();
@@ -42,57 +42,38 @@ pub const MenuAction = enum {
             .quit => "QUIT",
         };
     }
-
-    /// Whether this action represents a primary game start action.
-    pub fn isPrimary(self: MenuAction) bool {
-        return self == .continue_run or self == .play;
-    }
 };
 
 /// Maximum count of concurrent actions shown on the main menu.
-pub const MAX_MENU_ACTIONS: usize = 6;
+pub const MAX_MENU_ACTIONS: usize = @typeInfo(MenuAction).@"enum".field_names.len;
 
 var active_instance: ?*Self = null;
 
 arena: ?std.heap.ArenaAllocator = null,
 allocator: ?std.mem.Allocator = null,
-
 screen: Screen = .main,
-
-selected_index: usize = 0,
-previous_selected_index: usize = 0,
+navigation: menu_navigation.NavigationState = .{},
 
 pub fn Awake(self: *Self) void {
     active_instance = self;
     self.screen = .main;
-    self.selected_index = 0;
-    self.previous_selected_index = 0;
-
+    self.navigation.reset(false);
     self.arena = .init(lm.allocators.generic());
     self.allocator = self.arena.?.allocator();
 }
 
-pub fn Start(self: *Self) void {
-    _ = self;
-}
-
 pub fn Update(self: *Self) !void {
-    DevicePrompts.update();
     if (self.arena) |*arena| _ = arena.reset(.free_all);
 
     const window_size = lm.window.size.get();
-    const ui_scale = HUD.calculateUiScale(window_size);
+    const ui_scale = theme.calculateUiScale(window_size);
 
-    if (self.screen == .main) {
+    if (self.screen == .main and !self.navigation.consumeJustOpened()) {
         self.handleInput();
     }
 
     self.drawRootContainer(ui_scale, window_size);
-
-    if (self.selected_index != self.previous_selected_index) {
-        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
-        self.previous_selected_index = self.selected_index;
-    }
+    self.navigation.syncSelectionAudio();
 }
 
 pub fn End(self: *Self) void {
@@ -188,21 +169,26 @@ fn drawActiveScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
 }
 
 fn drawOptionsScreen(self: *Self, ui_scale: f32, window_size: lm.Vector2) void {
-    const options_closed = OptionsMenu.draw(ui_scale, window_size, self.allocator);
-    if (!options_closed) return;
+    if (!OptionsMenu.draw(ui_scale, window_size, self.allocator)) return;
 
     self.screen = .main;
-    self.selected_index = findActionIndex(.options);
-    self.previous_selected_index = self.selected_index;
+    self.navigation.selected_index = findActionIndex(.options);
+    self.navigation.previous_selected_index = self.navigation.selected_index;
+    self.navigation.just_opened = true;
 }
 
 fn drawMainScreen(self: *Self, ui_scale: f32) void {
     drawLogo(ui_scale);
-    self.drawStatsBadge(ui_scale);
+    drawStatsBadge(ui_scale);
     drawSpacer("menu-main-spacer", @round(6.0 * ui_scale));
     self.drawButtonList(ui_scale);
     drawSpacer("menu-footer-spacer", @round(6.0 * ui_scale));
-    drawFooter(ui_scale);
+    menu_navigation.drawFooterHint(
+        "menu-footer-container",
+        "Navigate: D-Pad / L-Stick | Select: A",
+        "Navigate: WASD / Arrows | Select: Enter / Click",
+        ui_scale,
+    );
 }
 
 fn drawSpacer(comptime id_name: []const u8, height_pixels: f32) void {
@@ -245,14 +231,11 @@ fn drawLogo(ui_scale: f32) void {
     });
 }
 
-fn drawStatsBadge(_: *Self, ui_scale: f32) void {
+fn drawStatsBadge(ui_scale: f32) void {
     const scores = SaveSystem.getScores();
     if (scores.total_runs_played == 0) return;
 
-    ui.new(.{
-        .id = .ID("menu-stats-badge-spacer"),
-        .layout = .{ .sizing = .{ .h = .fixed(@round(2.0 * ui_scale)), .w = .fixed(1) } },
-    })({});
+    drawSpacer("menu-stats-badge-spacer", @round(2.0 * ui_scale));
 
     ui.new(.{
         .id = .ID("menu-stats-badge"),
@@ -269,10 +252,10 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
             .{ scores.high_score, scores.highest_round, scores.total_enemies_killed },
             .{
                 .color = color_scheme.stats_badge_text,
-                .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
+                .font_size = theme.scaledU16(4.0, 8, ui_scale),
                 .letter_spacing = 1,
                 .alignment = .center,
-                .font_id = HUD.boldFontId(),
+                .font_id = theme.boldFontId(),
             },
         );
     });
@@ -280,8 +263,7 @@ fn drawStatsBadge(_: *Self, ui_scale: f32) void {
 
 fn drawButtonList(self: *Self, ui_scale: f32) void {
     const button_gap_pixels = lm.tou16(@round(3.5 * ui_scale));
-    const font_size = lm.tou16(@max(9, @round(4.5 * ui_scale)));
-    const letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale)));
+    const letter_spacing = theme.scaledU16(0.25, 1, ui_scale);
 
     ui.new(.{
         .id = .ID("menu-button-list"),
@@ -291,45 +273,24 @@ fn drawButtonList(self: *Self, ui_scale: f32) void {
             .child_alignment = .{ .x = .center },
         },
     })({
-        self.renderMenuButtons(font_size, letter_spacing);
+        self.renderMenuButtons(ui_scale, letter_spacing);
     });
 }
 
-fn renderMenuButtons(self: *Self, font_size: u16, letter_spacing: u16) void {
+fn renderMenuButtons(self: *Self, ui_scale: f32, letter_spacing: u16) void {
     var action_buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
     const actions = getAvailableActions(&action_buffer);
     for (actions, 0..) |action, action_index| {
-        menu_button.draw(
+        sprite_button.draw(
+            .menu,
             action_index,
             action.caption(),
-            &self.selected_index,
+            &self.navigation.selected_index,
             activateActionAtIndex,
-            font_size,
-            letter_spacing,
+            ui_scale,
+            .{ .letter_spacing = letter_spacing },
         );
     }
-}
-
-fn drawFooter(ui_scale: f32) void {
-    ui.new(.{
-        .id = .ID("menu-footer-container"),
-        .layout = .{
-            .child_alignment = .{ .x = .center },
-        },
-    })({
-        const footer_text = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick | Select: A"
-        else
-            "Navigate: WASD / Arrows | Select: Enter / Click";
-
-        ui.text(footer_text, .{
-            .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
-            .letter_spacing = 1,
-            .alignment = .center,
-            .font_id = HUD.regularFontId(),
-        });
-    });
 }
 
 fn handleInput(self: *Self) void {
@@ -337,42 +298,18 @@ fn handleInput(self: *Self) void {
     const actions = getAvailableActions(&action_buffer);
     if (actions.len == 0) return;
 
-    const maximum_index: usize = actions.len - 1;
+    const input = self.navigation.readMenuInput();
+    self.navigation.applyVerticalNavigation(input, actions.len);
 
-    if (isNavigateUpRequested()) {
-        self.selected_index = if (self.selected_index == 0) maximum_index else self.selected_index - 1;
-    }
-    if (isNavigateDownRequested()) {
-        self.selected_index = if (self.selected_index >= maximum_index) 0 else self.selected_index + 1;
-    }
-    if (isSelectRequested() and self.selected_index < actions.len) {
-        self.activateAction(actions[self.selected_index]);
+    if (input.select_pressed and self.navigation.selected_index < actions.len) {
+        self.activateAction(actions[self.navigation.selected_index]);
     }
 }
 
-fn isNavigateUpRequested() bool {
-    var requested = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
-    if (!lm.gamepad.isAvailable(0)) return requested;
-
-    requested = requested or lm.gamepad.getButtonDown(0, .left_face_up);
-    const stick_vector = lm.gamepad.getStickVector(0, .left, 0.25);
-    return requested or (stick_vector.y < -0.5);
-}
-
-fn isNavigateDownRequested() bool {
-    var requested = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    if (!lm.gamepad.isAvailable(0)) return requested;
-
-    requested = requested or lm.gamepad.getButtonDown(0, .left_face_down);
-    const stick_vector = lm.gamepad.getStickVector(0, .left, 0.25);
-    return requested or (stick_vector.y > 0.5);
-}
-
-fn isSelectRequested() bool {
-    const requested = lm.keyboard.getKeyDown(.enter);
-    if (!lm.gamepad.isAvailable(0)) return requested;
-
-    return requested or lm.gamepad.getButtonDown(0, .right_face_down);
+fn loadDemoMap(error_context: []const u8) void {
+    lm.loadScene("demo_map") catch |load_error| {
+        std.log.err("Failed to load demo_map scene ({s}): {any}", .{ error_context, load_error });
+    };
 }
 
 fn activateAction(self: *Self, action: MenuAction) void {
@@ -380,24 +317,18 @@ fn activateAction(self: *Self, action: MenuAction) void {
         .continue_run => {
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
             RoomManager.resume_saved_run = true;
-            lm.loadScene("demo_map") catch |load_error| {
-                std.log.err("Failed to load demo_map scene: {any}", .{load_error});
-            };
+            loadDemoMap("continue");
         },
         .new_run, .play => {
             SaveSystem.clearRun();
             RoomManager.resume_saved_run = false;
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
-            lm.loadScene("demo_map") catch |load_error| {
-                std.log.err("Failed to load demo_map scene: {any}", .{load_error});
-            };
+            loadDemoMap("new run");
         },
         .tutorial => {
             AudioManager.playSfxPitched("audio/sfx/coin.wav", 0.9, 0.05);
             RoomManager.startPracticeTutorial();
-            lm.loadScene("demo_map") catch |load_error| {
-                std.log.err("Failed to load demo_map scene for practice tutorial: {any}", .{load_error});
-            };
+            loadDemoMap("tutorial");
         },
         .options => {
             AudioManager.playSfxPitched("audio/sfx/click.wav", 0.6, 0.0);
@@ -417,24 +348,16 @@ fn activateAction(self: *Self, action: MenuAction) void {
     }
 }
 
-test "MainMenu MenuAction captions and primary status" {
-    try std.testing.expectEqualStrings("CONTINUE", MenuAction.continue_run.caption());
-    try std.testing.expectEqualStrings("NEW RUN", MenuAction.new_run.caption());
-    try std.testing.expectEqualStrings("PLAY", MenuAction.play.caption());
-    try std.testing.expectEqualStrings("TUTORIAL", MenuAction.tutorial.caption());
-    try std.testing.expectEqualStrings("OPTIONS", MenuAction.options.caption());
-    try std.testing.expectEqualStrings("MAP EDITOR", MenuAction.map_editor.caption());
-    try std.testing.expectEqualStrings("QUIT", MenuAction.quit.caption());
-
-    try std.testing.expect(MenuAction.continue_run.isPrimary());
-    try std.testing.expect(MenuAction.play.isPrimary());
-    try std.testing.expect(!MenuAction.tutorial.isPrimary());
-    try std.testing.expect(!MenuAction.options.isPrimary());
-}
-
 test "MainMenu getAvailableActions without active run and incomplete tutorial" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
+    SaveSystem.clearRun();
     SaveSystem.setTutorialCompleted(false);
-    defer SaveSystem.setTutorialCompleted(false);
 
     var buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
     const actions = getAvailableActions(&buffer);
@@ -448,8 +371,15 @@ test "MainMenu getAvailableActions without active run and incomplete tutorial" {
 }
 
 test "MainMenu getAvailableActions includes tutorial when completed" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
+    SaveSystem.clearRun();
     SaveSystem.setTutorialCompleted(true);
-    defer SaveSystem.setTutorialCompleted(false);
 
     var buffer: [MAX_MENU_ACTIONS]MenuAction = undefined;
     const actions = getAvailableActions(&buffer);

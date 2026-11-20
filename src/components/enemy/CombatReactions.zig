@@ -1,8 +1,6 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
-const Attack = @import("Attack.zig");
 const BondOfLife = @import("BondOfLife.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const projectiles = @import("../../prefabs/Projectile.zig");
@@ -27,8 +25,4 @@ pub fn queenBondOfLifeEarlyCancel(hit: HitInfo) void {
 pub fn queenBondOfLifeSniperOnHit(hit: HitInfo) void {
     _ = hit;
     _ = BondOfLife.instance.popOnHit(2.0);
-}
-
-pub fn queenBondOfLifeOnMiss() void {
-    _ = BondOfLife.instance.expireOnMiss();
 }

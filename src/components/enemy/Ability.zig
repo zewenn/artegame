@@ -6,7 +6,6 @@ const Effect = @import("../effects/Effect.zig");
 const Dashing = @import("../Dashing.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 const projectiles = @import("../../prefabs/Projectile.zig");
-const ProjectileOptions = projectiles.Options;
 
 pub const OnHitEffect = projectiles.OnHitEffect;
 
@@ -27,9 +26,7 @@ pub const AbilityCondition = struct {
     health_above_pct: ?f32 = null,
     target_has_effect: ?Stats.EffectTarget = null,
     target_lacks_effect: ?Stats.EffectTarget = null,
-    self_has_effect: ?Stats.EffectTarget = null,
     self_lacks_effect: ?Stats.EffectTarget = null,
-    random_chance: ?f32 = null,
 };
 
 pub const ProjectileProfile = struct {
@@ -39,7 +36,7 @@ pub const ProjectileProfile = struct {
     speed: f32 = 350,
     lifetime: f32 = 1.0,
     size: lm.Vector2 = .init(48, 48),
-    passtrough: bool = false,
+    passthrough: bool = false,
     is_crit: bool = false,
     onhit_effect: ?OnHitEffect = null,
     onhit_duration: f32 = 0,
@@ -56,7 +53,6 @@ pub const ProjectileProfile = struct {
     is_healing: bool = false,
     heal_amount: f32 = 0,
 
-    pull_strength: f32 = 0,
     pull_speed: ?f32 = null,
     pull_duration: f32 = 0,
 
@@ -64,7 +60,6 @@ pub const ProjectileProfile = struct {
 
     wave_count: u32 = 1,
     wave_interval: f32 = 0.15,
-    wave_angle_offset: f32 = 0,
 
     is_channeled: bool = false,
     channel_duration: f32 = 5.0,
@@ -80,7 +75,7 @@ pub const SpellProfile = struct {
 };
 
 pub const MobilityProfile = struct {
-    direction: enum { towards_target, away_from_target } = .towards_target,
+    direction: enum { towards_target } = .towards_target,
     sfx_path: ?[]const u8 = null,
 };
 
@@ -93,7 +88,6 @@ pub const CustomActionFn = *const fn (
 ) anyerror!void;
 
 const Self = @This();
-pub const Ability = Self;
 
 id: []const u8,
 execution_type: ExecutionType = .projectile,
@@ -111,84 +105,88 @@ custom_action: ?CustomActionFn = null,
 windup_animation: ?[]const u8 = null,
 release_animation: ?[]const u8 = null,
 winddown_animation: ?[]const u8 = null,
-root_movement_during_action: bool = true,
 
+/// Advances the ability cooldown timer by `delta_seconds`.
 pub fn updateCooldown(self: *Self, delta_seconds: f32) void {
     if (self.cooldown_remaining > 0) {
         self.cooldown_remaining = @max(0, self.cooldown_remaining - delta_seconds);
     }
 }
 
+/// Evaluates whether cooldown, range, health, and effect conditions permit executing this ability.
 pub fn canExecute(
     self: *const Self,
     enemy_stats: Stats,
     player_stats: ?Stats,
-    distance: f32,
+    distance_pixels: f32,
 ) bool {
     if (self.cooldown_remaining > 0) return false;
-    if (distance < self.min_range or distance > self.max_range) return false;
+    if (distance_pixels < self.min_range or distance_pixels > self.max_range) return false;
+    if (!self.matchesSelfConditions(enemy_stats)) return false;
 
-    const enemy_health_percentage = switch (enemy_stats.max.health > 0) {
-        true => enemy_stats.current.health / enemy_stats.max.health,
-        false => 0,
-    };
+    if (player_stats) |target_stats| {
+        if (!self.matchesTargetConditions(target_stats)) return false;
+    }
+
+    return true;
+}
+
+fn matchesSelfConditions(self: *const Self, enemy_stats: Stats) bool {
+    const enemy_health_fraction = if (enemy_stats.max.health > 0)
+        enemy_stats.current.health / enemy_stats.max.health
+    else
+        0;
 
     if (self.conditions.health_below_pct) |threshold| {
-        if (enemy_health_percentage > threshold) return false;
+        if (enemy_health_fraction > threshold) return false;
     }
 
     if (self.conditions.health_above_pct) |threshold| {
-        if (enemy_health_percentage < threshold) return false;
-    }
-
-    if (self.conditions.self_has_effect) |effect_target| {
-        if (!enemy_stats.hasEffect(effect_target)) return false;
+        if (enemy_health_fraction < threshold) return false;
     }
 
     if (self.conditions.self_lacks_effect) |effect_target| {
         if (enemy_stats.hasEffect(effect_target)) return false;
     }
 
-    has_or_lacks_effect: {
-        const stats = player_stats orelse break :has_or_lacks_effect;
-        if (self.conditions.target_has_effect) |effect| return stats.hasEffect(effect);
-        if (self.conditions.target_lacks_effect) |effect| return !stats.hasEffect(effect);
+    return true;
+}
+
+fn matchesTargetConditions(self: *const Self, target_stats: Stats) bool {
+    if (self.conditions.target_has_effect) |effect_target| {
+        if (!target_stats.hasEffect(effect_target)) return false;
     }
 
-    if (self.conditions.random_chance) |chance| {
-        if (lm.randFloat(f32, 0, 1) > chance) return false;
+    if (self.conditions.target_lacks_effect) |effect_target| {
+        if (target_stats.hasEffect(effect_target)) return false;
     }
 
     return true;
 }
 
+/// Emits one projectile spread wave for the configured projectile profile.
 pub fn fireProjectileWave(
     self: *const Self,
     enemy_entity: *lm.Entity,
     enemy_transform: *lm.Transform,
     enemy_stats: *Stats,
     player_transform: *lm.Transform,
-    player_stats: ?*Stats,
-    wave_index: u32,
     angle_override_degrees: ?f32,
 ) !void {
-    _ = player_stats;
     const profile = self.projectile_profile orelse return;
     const start_position = lm.vec3ToVec2(enemy_transform.position);
     const player_position = lm.vec3ToVec2(player_transform.position);
 
-    const base_angle_rad: f32 = if (angle_override_degrees) |override_degrees|
+    const base_angle_radians: f32 = if (angle_override_degrees) |override_degrees|
         std.math.degreesToRadians(override_degrees)
     else switch (profile.aim_mode) {
         .towards_player => std.math.atan2(player_position.y - start_position.y, player_position.x - start_position.x),
         .absolute_world => std.math.degreesToRadians(profile.base_angle),
     };
 
-    const wave_offset_rad = std.math.degreesToRadians(profile.wave_angle_offset * @as(f32, @floatFromInt(wave_index)));
-
     for (profile.spread_angles) |degree_offset| {
-        const angle = base_angle_rad + wave_offset_rad + std.math.degreesToRadians(degree_offset);
-        const target_direction = lm.Vec2(std.math.cos(angle), std.math.sin(angle));
+        const angle_radians = base_angle_radians + std.math.degreesToRadians(degree_offset);
+        const target_direction = lm.Vec2(std.math.cos(angle_radians), std.math.sin(angle_radians));
         const target_position = start_position.add(target_direction.multiply(.init(100, 100)));
 
         try projectiles.emit(.{
@@ -204,14 +202,13 @@ pub fn fireProjectileWave(
             .size = profile.size,
             .damage = profile.damage,
             .damage_type = profile.damage_type,
-            .passtrough = profile.passtrough,
+            .passthrough = profile.passthrough,
             .override_sprite = profile.sprite,
             .onhit_effect = profile.onhit_effect,
             .onhit_duration = profile.onhit_duration,
             .onhit_strength = profile.onhit_strength,
             .knockback_strength = profile.knockback_strength,
             .knockback_duration = profile.knockback_duration,
-            .pull_strength = profile.pull_strength,
             .pull_speed = profile.pull_speed,
             .pull_duration = profile.pull_duration,
             .caster_position = start_position,
@@ -225,6 +222,7 @@ pub fn fireProjectileWave(
     }
 }
 
+/// Executes a single-shot ability action according to its execution type.
 pub fn execute(
     self: *const Self,
     enemy_entity: *lm.Entity,
@@ -237,33 +235,24 @@ pub fn execute(
     const player_position = lm.vec3ToVec2(player_transform.position);
 
     switch (self.execution_type) {
-        .projectile => {
-            try self.fireProjectileWave(
+        .projectile => try self.fireProjectileWave(
+            enemy_entity,
+            enemy_transform,
+            enemy_stats,
+            player_transform,
+            null,
+        ),
+        .spell => self.executeSpell(enemy_stats, player_stats, start_position, player_position),
+        .mobility => self.executeMobility(enemy_entity, start_position, player_position),
+        .custom => {
+            const action_function = self.custom_action orelse return;
+            try action_function(
                 enemy_entity,
                 enemy_transform,
                 enemy_stats,
                 player_transform,
                 player_stats,
-                0,
-                null,
             );
-        },
-        .spell => {
-            self.executeSpell(enemy_stats, player_stats, start_position, player_position);
-        },
-        .mobility => {
-            self.executeMobility(enemy_entity, start_position, player_position);
-        },
-        .custom => {
-            if (self.custom_action) |action_function| {
-                try action_function(
-                    enemy_entity,
-                    enemy_transform,
-                    enemy_stats,
-                    player_transform,
-                    player_stats,
-                );
-            }
         },
     }
 }
@@ -276,16 +265,13 @@ fn executeSpell(
     player_position: lm.Vector2,
 ) void {
     const profile = self.spell_profile orelse return;
+    const maybe_target_stats: ?*Stats = switch (profile.target_type) {
+        .self => enemy_stats,
+        .target => player_stats,
+    };
 
-    switch (profile.target_type) {
-        .self => {
-            if (profile.effect) |effect| enemy_stats.addEffect(effect);
-        },
-        .target => {
-            if (player_stats) |stats| {
-                if (profile.effect) |effect| stats.addEffect(effect);
-            }
-        },
+    if (maybe_target_stats) |target_stats| {
+        if (profile.effect) |effect| target_stats.addEffect(effect);
     }
 
     if (profile.sfx_path) |sfx_path| {
@@ -301,10 +287,7 @@ fn executeMobility(
 ) void {
     const profile = self.mobility_profile orelse MobilityProfile{};
     if (enemy_entity.getComponent(Dashing)) |dashing| {
-        var dash_direction = player_position.subtract(start_position).normalize();
-        if (profile.direction == .away_from_target) {
-            dash_direction = dash_direction.negate();
-        }
+        const dash_direction = player_position.subtract(start_position).normalize();
         dashing.apply(dash_direction);
     }
 
@@ -328,9 +311,7 @@ test "Ability range and cooldown condition checks" {
     };
 
     try std.testing.expect(ability.canExecute(enemy_stats, null, 250));
-
     try std.testing.expect(!ability.canExecute(enemy_stats, null, 50));
-
     try std.testing.expect(!ability.canExecute(enemy_stats, null, 500));
 
     ability.cooldown_remaining = 1.5;
@@ -380,15 +361,28 @@ test "Ability target effect conditions (target_has_effect, target_lacks_effect)"
         },
     };
 
+    const combined = Self{
+        .id = "combined",
+        .conditions = .{
+            .target_has_effect = .{ .effect_type = .root },
+            .target_lacks_effect = .{ .effect_type = .stun },
+        },
+    };
+
     const enemy_stats = Stats{ .max = .{ .health = 100 }, .current = .{ .health = 100 } };
     var player_stats = Stats.init(.player, .{});
     defer player_stats.deinit();
 
     try std.testing.expect(!sniper.canExecute(enemy_stats, player_stats, 200));
     try std.testing.expect(trap.canExecute(enemy_stats, player_stats, 200));
+    try std.testing.expect(!combined.canExecute(enemy_stats, player_stats, 200));
 
     player_stats.applyRoot(2.0);
 
     try std.testing.expect(sniper.canExecute(enemy_stats, player_stats, 200));
     try std.testing.expect(!trap.canExecute(enemy_stats, player_stats, 200));
+    try std.testing.expect(combined.canExecute(enemy_stats, player_stats, 200));
+
+    player_stats.applyStun(2.0);
+    try std.testing.expect(!combined.canExecute(enemy_stats, player_stats, 200));
 }

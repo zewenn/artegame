@@ -1,11 +1,11 @@
 const std = @import("std");
-const lm = @import("loom");
 
 const Stats = @import("../../components/Stats.zig");
 const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("Boon.zig");
 const boons_module = @import("boons.zig");
 
+/// Grouping of related boons presented as a door reward category.
 pub const Self = @This();
 
 id: []const u8,
@@ -14,32 +14,19 @@ description: []const u8,
 icon: []const u8,
 boons: []const Boon,
 
-pub fn isAvailableForPlayer(self: Self, stats: Stats, attack: Attack) bool {
+/// Returns whether at least one boon in this category can be offered to the player.
+pub fn isAvailableForPlayer(self: Self, stats: *const Stats, attack: *const Attack) bool {
     for (self.boons) |boon| {
         if (boon.isAvailable(stats, attack)) return true;
     }
     return false;
 }
 
-pub fn countAvailableBoons(self: Self, stats: Stats, attack: Attack) usize {
-    var count: usize = 0;
-    for (self.boons) |boon| {
-        if (boon.isAvailable(stats, attack)) count += 1;
-    }
-    return count;
-}
-
-pub fn equals(self: Self, other: Self) bool {
-    return std.mem.eql(u8, self.id, other.id);
-}
-
-pub const eql = equals;
-
 pub const plates_width_speed: Self = .{
     .id = "plates_width_speed",
     .name = "Plate Size & Speed",
     .description = "Projectile width and velocity upgrades for Weight Plate attacks",
-    .icon = "weapons/plates/weight_plate.png",
+    .icon = "weapons/plates/plates_0.png",
     .boons = boons_module.plates_width_speed_boons,
 };
 
@@ -91,16 +78,36 @@ pub const vitality: Self = .{
     .boons = boons_module.vitality_boons,
 };
 
-pub const all_categories = [_]Self{
-    plates_width_speed,
-    plates_damage,
-    gloves_width_speed,
-    gloves_damage,
-    new_supplements,
-    supplement_upgrades,
-    vitality,
-};
+fn countCategoryDeclarations() usize {
+    var count: usize = 0;
+    for (@typeInfo(@This()).@"struct".decl_names) |declaration_name| {
+        if (std.mem.eql(u8, declaration_name, "all_categories")) continue;
+        if (std.mem.eql(u8, declaration_name, "Self")) continue;
+        const declaration_value = @field(@This(), declaration_name);
+        if (@TypeOf(declaration_value) == Self) count += 1;
+    }
+    return count;
+}
 
+fn collectAllCategories() [countCategoryDeclarations()]Self {
+    var categories: [countCategoryDeclarations()]Self = undefined;
+    var category_index: usize = 0;
+    for (@typeInfo(@This()).@"struct".decl_names) |declaration_name| {
+        if (std.mem.eql(u8, declaration_name, "all_categories")) continue;
+        if (std.mem.eql(u8, declaration_name, "Self")) continue;
+        const declaration_value = @field(@This(), declaration_name);
+        if (@TypeOf(declaration_value) == Self) {
+            categories[category_index] = declaration_value;
+            category_index += 1;
+        }
+    }
+    return categories;
+}
+
+/// Array of every boon category declared in this module.
+pub const all_categories = collectAllCategories();
+
+/// Looks up a boon category by its unique string identifier.
 pub fn getCategoryById(category_id: []const u8) ?Self {
     for (all_categories) |category| {
         if (std.mem.eql(u8, category.id, category_id)) return category;
@@ -108,6 +115,7 @@ pub fn getCategoryById(category_id: []const u8) ?Self {
     return null;
 }
 
+/// Fills `destination_buffer` with categories eligible for the given player state and returns the populated slice.
 pub fn selectEligibleCategories(
     stats: Stats,
     attack: Attack,
@@ -116,7 +124,7 @@ pub fn selectEligibleCategories(
     var eligible_count: usize = 0;
     for (all_categories) |category| {
         if (eligible_count >= destination_buffer.len) break;
-        if (category.isAvailableForPlayer(stats, attack)) {
+        if (category.isAvailableForPlayer(&stats, &attack)) {
             destination_buffer[eligible_count] = category;
             eligible_count += 1;
         }
@@ -124,57 +132,48 @@ pub fn selectEligibleCategories(
     return destination_buffer[0..eligible_count];
 }
 
-pub fn getRandomCategoryForPlayer(stats: Stats, attack: Attack) ?Self {
-    var eligible_buffer: [all_categories.len]Self = undefined;
-    const eligible_categories = selectEligibleCategories(stats, attack, &eligible_buffer);
-    if (eligible_categories.len == 0) return null;
-    const chosen_index = lm.random.intRangeLessThan(usize, 0, eligible_categories.len);
-    return eligible_categories[chosen_index];
+fn validateCategoryPair(comptime first_category: Self, comptime second_category: Self) void {
+    if (std.mem.eql(u8, first_category.id, second_category.id)) {
+        @compileError("Duplicate category id: " ++ first_category.id);
+    }
+    if (std.mem.eql(u8, first_category.name, second_category.name)) {
+        @compileError("Duplicate category name: " ++ first_category.name);
+    }
 }
 
-test "all categories have unique IDs and non-empty metadata" {
-    for (all_categories, 0..) |first_category, outer_index| {
-        try std.testing.expect(first_category.id.len > 0);
-        try std.testing.expect(first_category.name.len > 0);
-        try std.testing.expect(first_category.description.len > 0);
-        try std.testing.expect(first_category.icon.len > 0);
-        try std.testing.expect(first_category.boons.len > 0);
-
-        for (all_categories[outer_index + 1 ..]) |second_category| {
-            try std.testing.expect(!std.mem.eql(u8, first_category.id, second_category.id));
-            try std.testing.expect(!std.mem.eql(u8, first_category.name, second_category.name));
-            try std.testing.expect(!first_category.equals(second_category));
-            try std.testing.expect(!first_category.eql(second_category));
+fn validateAllCategories(comptime categories: []const Self) void {
+    for (categories, 0..) |first_category, outer_index| {
+        if (first_category.id.len == 0) @compileError("Category id must not be empty");
+        if (first_category.name.len == 0) @compileError("Category name must not be empty");
+        if (first_category.description.len == 0) @compileError("Category description must not be empty");
+        if (first_category.icon.len == 0) @compileError("Category icon must not be empty");
+        if (first_category.boons.len == 0) @compileError("Category boons must not be empty");
+        for (categories[outer_index + 1 ..]) |second_category| {
+            validateCategoryPair(first_category, second_category);
         }
     }
 }
 
-test "BoonCategory lookup by ID" {
-    try std.testing.expect(getCategoryById("plates_width_speed") != null);
-    try std.testing.expect(getCategoryById("plates_damage") != null);
-    try std.testing.expect(getCategoryById("gloves_width_speed") != null);
-    try std.testing.expect(getCategoryById("gloves_damage") != null);
-    try std.testing.expect(getCategoryById("new_supplements") != null);
-    try std.testing.expect(getCategoryById("supplement_upgrades") != null);
-    try std.testing.expect(getCategoryById("vitality") != null);
-    try std.testing.expect(getCategoryById("unknown_category") == null);
+comptime {
+    @setEvalBranchQuota(10_000);
+    validateAllCategories(&all_categories);
 }
 
 test "BoonCategory eligibility respects player equipment" {
     const stats = Stats{ .team = .player };
     var attack = Attack{};
 
-    try std.testing.expect(plates_damage.isAvailableForPlayer(stats, attack));
-    try std.testing.expect(gloves_damage.isAvailableForPlayer(stats, attack));
+    try std.testing.expect(plates_damage.isAvailableForPlayer(&stats, &attack));
+    try std.testing.expect(gloves_damage.isAvailableForPlayer(&stats, &attack));
 
     attack.equipped_weapons[1] = null;
-    try std.testing.expect(!plates_damage.isAvailableForPlayer(stats, attack));
-    try std.testing.expect(!plates_width_speed.isAvailableForPlayer(stats, attack));
-    try std.testing.expect(gloves_damage.isAvailableForPlayer(stats, attack));
+    try std.testing.expect(!plates_damage.isAvailableForPlayer(&stats, &attack));
+    try std.testing.expect(!plates_width_speed.isAvailableForPlayer(&stats, &attack));
+    try std.testing.expect(gloves_damage.isAvailableForPlayer(&stats, &attack));
 
     attack.equipped_weapons[0] = null;
-    try std.testing.expect(!gloves_damage.isAvailableForPlayer(stats, attack));
-    try std.testing.expect(!gloves_width_speed.isAvailableForPlayer(stats, attack));
+    try std.testing.expect(!gloves_damage.isAvailableForPlayer(&stats, &attack));
+    try std.testing.expect(!gloves_width_speed.isAvailableForPlayer(&stats, &attack));
 
-    try std.testing.expect(vitality.isAvailableForPlayer(stats, attack));
+    try std.testing.expect(vitality.isAvailableForPlayer(&stats, &attack));
 }

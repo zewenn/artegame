@@ -7,8 +7,8 @@ const Stats = @import("../Stats.zig");
 const Effect = @import("../effects/Effect.zig");
 const EffectType = Effect.EffectType;
 const EffectVisualRegistry = @import("../effects/EffectVisual.zig").EffectVisualRegistry;
-const GameOverMenu = @import("../../global/ui/GameOverMenu.zig");
-const PauseMenu = @import("../../global/ui/PauseMenu.zig");
+const HUD = @import("../../global/HUD.zig");
+const RoomManager = @import("../../global/RoomManager.zig");
 
 const Self = @This();
 
@@ -74,9 +74,7 @@ pub fn End(self: *Self) void {
 }
 
 pub fn shouldRender() bool {
-    if (GameOverMenu.isShowing()) return false;
-    if (PauseMenu.isShowing()) return false;
-    return true;
+    return !HUD.isModalOpen();
 }
 
 fn renderStatusBadges(ui_id: u32, stats: *Stats) void {
@@ -168,19 +166,29 @@ fn releaseId(ui_id: u32) void {
     }
 }
 
-test "OverheadUI shouldRender suppresses when GameOverMenu or PauseMenu is showing" {
-    GameOverMenu.hide();
-    PauseMenu.hide();
+test "OverheadUI shouldRender suppresses when a modal menu is showing" {
+    RoomManager.startPracticeTutorial();
+    defer {
+        HUD.GameOverMenu.hide();
+        HUD.PauseMenu.hide();
+        HUD.BoonMenu.hide();
+        lm.time.proceed();
+        RoomManager.endPracticeTutorial();
+    }
+
+    HUD.GameOverMenu.hide();
+    HUD.PauseMenu.hide();
+    HUD.BoonMenu.hide();
     try std.testing.expect(shouldRender());
 
-    GameOverMenu.show(.{});
+    HUD.GameOverMenu.show(.{});
     try std.testing.expect(!shouldRender());
-    GameOverMenu.hide();
+    HUD.GameOverMenu.hide();
     try std.testing.expect(shouldRender());
 
-    PauseMenu.show();
+    HUD.PauseMenu.show();
     try std.testing.expect(!shouldRender());
-    PauseMenu.hide();
+    HUD.PauseMenu.hide();
     try std.testing.expect(shouldRender());
 }
 
@@ -207,7 +215,7 @@ test "OverheadUI collectUniqueBadgeIcons respects buffer capacity limit" {
         .{ .id = "slow", .effect_type = .slow },
         .{ .id = "root", .effect_type = .root },
         .{ .id = "stun", .effect_type = .stun },
-        .{ .id = "sleep", .effect_type = .sleep },
+        .{ .id = "custom_badge", .effect_type = .custom, .visual = .{ .icon = "ui/icons/custom_icon.png" } },
         .{ .id = "regen", .effect_type = .regen },
         .{ .id = "haste", .effect_type = .haste },
         .{ .id = "goliath", .effect_type = .goliath },

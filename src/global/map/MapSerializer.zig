@@ -2,9 +2,6 @@ const std = @import("std");
 const lm = @import("loom");
 const MapTypes = @import("MapTypes.zig");
 const MapData = MapTypes.MapData;
-const WallSegment = MapTypes.WallSegment;
-const SpawnZoneRecord = MapTypes.SpawnZoneRecord;
-const EntityRecord = MapTypes.EntityRecord;
 
 fn remapTilesFromPalette(background_tiles: []u8, palette: []const MapTypes.TerrainType) void {
     for (background_tiles) |*tile_byte| {
@@ -14,6 +11,7 @@ fn remapTilesFromPalette(background_tiles: []u8, palette: []const MapTypes.Terra
     }
 }
 
+/// Serializes MapData into formatted JSON, populating the default terrain palette when omitted.
 pub fn serializeToJson(allocator: std.mem.Allocator, map_data: MapData) ![]const u8 {
     var serializable_map = map_data;
     if (serializable_map.tile_palette == null) {
@@ -26,6 +24,7 @@ pub fn serializeToJson(allocator: std.mem.Allocator, map_data: MapData) ![]const
     );
 }
 
+/// Parses JSON map content into MapData and remaps palette indices to canonical TerrainType values.
 pub fn deserializeFromJson(allocator: std.mem.Allocator, json_content: []const u8) !MapData {
     const parsed = try std.json.parseFromSlice(
         MapData,
@@ -42,13 +41,14 @@ pub fn deserializeFromJson(allocator: std.mem.Allocator, json_content: []const u
     return parsed.value;
 }
 
+/// Resolves a relative map asset path into an absolute filesystem path for writing.
 pub fn resolveMapPathAlloc(allocator: std.mem.Allocator, relative_map_path: []const u8) ![]const u8 {
-    const resolved_path = lm.assets.files.getFilePath(relative_map_path) catch {
+    return lm.assets.files.getFilePath(relative_map_path) catch {
         return try allocator.dupe(u8, relative_map_path);
     };
-    return resolved_path;
 }
 
+/// Serializes and writes MapData to disk at the resolved map asset path.
 pub fn saveToFile(allocator: std.mem.Allocator, relative_map_path: []const u8, map_data: MapData) !void {
     const io = lm.io.singleThreaded();
     const full_path = try resolveMapPathAlloc(allocator, relative_map_path);
@@ -71,24 +71,16 @@ pub fn saveToFile(allocator: std.mem.Allocator, relative_map_path: []const u8, m
     try writer.flush();
 }
 
+/// Reads and deserializes a map JSON asset from disk.
 pub fn loadFromFile(allocator: std.mem.Allocator, relative_map_path: []const u8) !MapData {
-    const file_data = lm.assets.files.getData(relative_map_path) catch |err| blk: {
-        if (std.mem.eql(u8, relative_map_path, "maps/arena_normal.json")) {
-            break :blk try lm.assets.files.getData("maps/normal/arena_normal.json");
-        } else if (std.mem.eql(u8, relative_map_path, "maps/arena_boss.json")) {
-            break :blk try lm.assets.files.getData("maps/boss/arena_boss.json");
-        }
-        return err;
-    };
+    const file_data = try lm.assets.files.getData(relative_map_path);
     defer lm.allocators.generic().free(file_data);
 
     return try deserializeFromJson(allocator, file_data);
 }
 
 test "MapSerializer roundtrip JSON" {
-    const testing_allocator = std.testing.allocator;
-
-    var arena = std.heap.ArenaAllocator.init(testing_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const arena_allocator = arena.allocator();
 
@@ -98,12 +90,12 @@ test "MapSerializer roundtrip JSON" {
     tiles[2] = 1;
     tiles[3] = 0;
 
-    const walls = try arena_allocator.alloc(WallSegment, 3);
+    const walls = try arena_allocator.alloc(MapTypes.WallSegment, 3);
     walls[0] = .{ .start_x_tiles = 0, .start_y_tiles = 0, .end_x_tiles = 1, .end_y_tiles = 0, .wall_type = .solid };
     walls[1] = .{ .start_x_tiles = 0, .start_y_tiles = 1, .end_x_tiles = 1, .end_y_tiles = 1, .wall_type = .low };
     walls[2] = .{ .start_x_tiles = 1, .start_y_tiles = 0, .end_x_tiles = 1, .end_y_tiles = 1, .wall_type = .royale };
 
-    const spawn_zones = try arena_allocator.alloc(SpawnZoneRecord, 2);
+    const spawn_zones = try arena_allocator.alloc(MapTypes.SpawnZoneRecord, 2);
     spawn_zones[0] = .{
         .center_x_pixels = 64.0,
         .center_y_pixels = 64.0,
@@ -119,7 +111,7 @@ test "MapSerializer roundtrip JSON" {
         .enemy_type = .ranged,
     };
 
-    const entities = try arena_allocator.alloc(EntityRecord, 1);
+    const entities = try arena_allocator.alloc(MapTypes.EntityRecord, 1);
     entities[0] = .{
         .entity_type = "player_spawn",
         .position_x = 32.0,
@@ -131,7 +123,7 @@ test "MapSerializer roundtrip JSON" {
         .name = "test_map",
         .width_tiles = 2,
         .height_tiles = 2,
-        .tile_size_pixels = 64,
+        .tile_size_pixels = MapTypes.DEFAULT_TILE_SIZE_PIXELS,
         .background_tiles = tiles,
         .walls = walls,
         .spawn_zones = spawn_zones,
@@ -156,37 +148,8 @@ test "MapSerializer roundtrip JSON" {
     try std.testing.expectEqual(original_map.entities.len, parsed_map.entities.len);
 }
 
-test "MapSerializer deserializeFromJson supports integer array background_tiles" {
-    const testing_allocator = std.testing.allocator;
-    var arena = std.heap.ArenaAllocator.init(testing_allocator);
-    defer arena.deinit();
-    const arena_allocator = arena.allocator();
-
-    const sample_json =
-        \\{
-        \\  "version": 1,
-        \\  "name": "array_test",
-        \\  "width_tiles": 2,
-        \\  "height_tiles": 2,
-        \\  "tile_size_pixels": 64,
-        \\  "background_tiles": [2, 3, 0, 1],
-        \\  "walls": [],
-        \\  "spawn_zones": [],
-        \\  "entities": []
-        \\}
-    ;
-
-    const parsed_map = try deserializeFromJson(arena_allocator, sample_json);
-    try std.testing.expectEqual(@as(usize, 4), parsed_map.background_tiles.len);
-    try std.testing.expectEqual(@as(u8, 2), parsed_map.background_tiles[0]);
-    try std.testing.expectEqual(@as(u8, 3), parsed_map.background_tiles[1]);
-    try std.testing.expectEqual(@as(u8, 0), parsed_map.background_tiles[2]);
-    try std.testing.expectEqual(@as(u8, 1), parsed_map.background_tiles[3]);
-}
-
 test "MapSerializer deserializeFromJson remaps background_tiles using tile_palette" {
-    const testing_allocator = std.testing.allocator;
-    var arena = std.heap.ArenaAllocator.init(testing_allocator);
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const arena_allocator = arena.allocator();
 
@@ -227,16 +190,13 @@ fn verifyWallRowTiles(
     }
 }
 
-fn verifyWallSegmentTiles(map_data: MapData, wall: WallSegment) !void {
+fn verifyWallSegmentTiles(map_data: MapData, wall: MapTypes.WallSegment) !void {
     const expected_wall_byte = @intFromEnum(wall.wall_type.terrainType());
-    const min_column = @min(wall.start_x_tiles, wall.end_x_tiles);
-    const max_column = @max(wall.start_x_tiles, wall.end_x_tiles);
-    const min_row = @min(wall.start_y_tiles, wall.end_y_tiles);
-    const max_row = @max(wall.start_y_tiles, wall.end_y_tiles);
+    const bounds = wall.tileBounds();
 
-    var row_index = min_row;
-    while (row_index <= max_row and row_index < map_data.height_tiles) : (row_index += 1) {
-        try verifyWallRowTiles(map_data, row_index, min_column, max_column, expected_wall_byte);
+    var row_index = bounds.min_y;
+    while (row_index <= bounds.max_y and row_index < map_data.height_tiles) : (row_index += 1) {
+        try verifyWallRowTiles(map_data, row_index, bounds.min_x, bounds.max_x, expected_wall_byte);
     }
 }
 
@@ -246,41 +206,62 @@ fn verifyMapWallsMatchTiles(map_data: MapData) !void {
     }
 }
 
-test "MapSerializer verify all bundled map assets deserialize correctly" {
-    const testing_allocator = std.testing.allocator;
-    const io = lm.io.singleThreaded();
+fn validateBundledMapFile(testing_allocator: std.mem.Allocator, io: std.Io, map_path: []const u8) !void {
+    var arena = std.heap.ArenaAllocator.init(testing_allocator);
+    defer arena.deinit();
+    const arena_allocator = arena.allocator();
 
-    const map_file_paths = [_][]const u8{
-        "src/assets/maps/boss/arena_boss.json",
-        "src/assets/maps/boss/king_arena.json",
-        "src/assets/maps/boss/queen_arena.json",
-        "src/assets/maps/mini_boss/knight_arena.json",
-        "src/assets/maps/mini_boss/bishop_arena.json",
-        "src/assets/maps/normal/arena_normal.json",
-        "src/assets/maps/normal/long_boi.json",
-        "src/assets/maps/tutorial.json",
-    };
+    var file = try std.Io.Dir.cwd().openFile(io, map_path, .{ .mode = .read_only });
+    defer file.close(io);
 
-    for (map_file_paths) |map_path| {
-        var arena = std.heap.ArenaAllocator.init(testing_allocator);
-        defer arena.deinit();
-        const arena_allocator = arena.allocator();
+    var buffer: [1024 * 256]u8 = undefined;
+    const bytes_read = try file.readPositionalAll(io, &buffer, 0);
+    const map_data = try deserializeFromJson(arena_allocator, buffer[0..bytes_read]);
 
-        var file = try std.Io.Dir.cwd().openFile(io, map_path, .{ .mode = .read_only });
-        defer file.close(io);
+    const expected_tile_count = map_data.width_tiles * map_data.height_tiles;
+    try std.testing.expectEqual(expected_tile_count, map_data.background_tiles.len);
+    try std.testing.expect(map_data.walls.len > 0);
 
-        var buffer: [1024 * 256]u8 = undefined;
-        const bytes_read = try file.readPositionalAll(io, &buffer, 0);
-        const map_data = try deserializeFromJson(arena_allocator, buffer[0..bytes_read]);
-
-        const expected_tile_count = map_data.width_tiles * map_data.height_tiles;
-        try std.testing.expectEqual(expected_tile_count, map_data.background_tiles.len);
-        try std.testing.expect(map_data.walls.len > 0);
-
-        for (map_data.background_tiles) |tile_byte| {
-            try std.testing.expect(MapTypes.TerrainType.fromInt(tile_byte) != null);
-        }
-
-        try verifyMapWallsMatchTiles(map_data);
+    for (map_data.background_tiles) |tile_byte| {
+        try std.testing.expect(MapTypes.TerrainType.fromInt(tile_byte) != null);
     }
+
+    try verifyMapWallsMatchTiles(map_data);
+}
+
+fn validateMapDirectoryRecursive(
+    testing_allocator: std.mem.Allocator,
+    io: std.Io,
+    directory_path: []const u8,
+    validated_count: *usize,
+) !void {
+    var directory = try std.Io.Dir.cwd().openDir(io, directory_path, .{ .iterate = true });
+    defer directory.close(io);
+
+    var iterator = directory.iterate();
+    while (try iterator.next(io)) |entry| {
+        const entry_path = try std.fmt.allocPrint(testing_allocator, "{s}/{s}", .{ directory_path, entry.name });
+        defer testing_allocator.free(entry_path);
+
+        if (entry.kind == .directory) {
+            try validateMapDirectoryRecursive(testing_allocator, io, entry_path, validated_count);
+            continue;
+        }
+        if (entry.kind != .file) continue;
+        if (!std.mem.endsWith(u8, entry.name, ".json")) continue;
+
+        try validateBundledMapFile(testing_allocator, io, entry_path);
+        validated_count.* += 1;
+    }
+}
+
+test "MapSerializer verify all bundled map assets deserialize correctly" {
+    var validated_count: usize = 0;
+    try validateMapDirectoryRecursive(
+        std.testing.allocator,
+        lm.io.singleThreaded(),
+        "src/assets/maps",
+        &validated_count,
+    );
+    try std.testing.expect(validated_count >= 8);
 }

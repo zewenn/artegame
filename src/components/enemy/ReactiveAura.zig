@@ -4,7 +4,6 @@ const lm = @import("loom");
 const Stats = @import("../Stats.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
-const EffectVisualRegistry = @import("../effects/EffectVisual.zig").EffectVisualRegistry;
 
 const Self = @This();
 
@@ -24,49 +23,33 @@ pub const OnDeathRetaliation = struct {
 is_active: bool = false,
 active_duration_seconds: f32 = 0.0,
 active_timer_seconds: f32 = 0.0,
-cooldown_seconds: f32 = 0.0,
-cooldown_remaining_seconds: f32 = 0.0,
 
 reactive_effect_texture: ?*lm.Texture = null,
 
 apply_effect_on_hit: ?ReactiveEffect = null,
-reflect_damage_percent: f32 = 0.0,
 on_death_retaliation: ?OnDeathRetaliation = null,
 
-stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
-    self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
 
-    self.reactive_effect_texture = lm.assets.texture.get("effects/reactive_root.png", &.{ 64, 64 });
+    if (self.apply_effect_on_hit != null) {
+        self.reactive_effect_texture = lm.assets.texture.get("effects/reactive_root.png", &.{ 64, 64 });
+    }
 }
 
 pub fn Update(self: *Self) !void {
     if (lm.time.paused()) return;
 
-    const delta_time_seconds = lm.time.deltaTime();
-
-    if (self.is_active and self.active_duration_seconds > 0.0) {
-        self.active_timer_seconds -= delta_time_seconds;
-        if (self.active_timer_seconds <= 0.0) {
-            self.is_active = false;
-            self.active_timer_seconds = 0.0;
-            self.cooldown_remaining_seconds = self.cooldown_seconds;
-        }
-    } else if (!self.is_active and self.cooldown_remaining_seconds > 0.0) {
-        self.cooldown_remaining_seconds -= delta_time_seconds;
-        if (self.cooldown_remaining_seconds < 0.0) {
-            self.cooldown_remaining_seconds = 0.0;
-        }
-    }
+    const delta_seconds = lm.time.deltaTime();
+    self.updateShieldTimer(delta_seconds);
 
     if (!self.is_active or self.apply_effect_on_hit == null) return;
 
     const transform = self.transform orelse return;
     const texture = self.reactive_effect_texture orelse return;
-    const y_offset_pixels = (transform.scale.y - 64) / 2 + 8;
+    const vertical_offset_pixels = (transform.scale.y - 64) / 2 + 8;
 
     try lm.display.addRenderer(.{
         .renderer = .{ .texture = .{
@@ -74,7 +57,7 @@ pub fn Update(self: *Self) !void {
             .transform = .{
                 .position = lm.Vec3(
                     transform.position.x,
-                    transform.position.y - y_offset_pixels,
+                    transform.position.y - vertical_offset_pixels,
                     10,
                 ),
             },
@@ -86,7 +69,20 @@ pub fn Update(self: *Self) !void {
 }
 
 pub fn End(self: *Self) void {
-    if (self.reactive_effect_texture) |texture| lm.assets.texture.releasePtr(texture);
+    if (self.reactive_effect_texture) |texture| {
+        lm.assets.texture.releasePtr(texture);
+        self.reactive_effect_texture = null;
+    }
+}
+
+fn updateShieldTimer(self: *Self, delta_seconds: f32) void {
+    if (!self.is_active or self.active_duration_seconds <= 0.0) return;
+
+    self.active_timer_seconds -= delta_seconds;
+    if (self.active_timer_seconds <= 0.0) {
+        self.is_active = false;
+        self.active_timer_seconds = 0.0;
+    }
 }
 
 pub fn activateShield(self: *Self, duration_seconds: f32) void {
@@ -95,43 +91,30 @@ pub fn activateShield(self: *Self, duration_seconds: f32) void {
     self.active_timer_seconds = duration_seconds;
 }
 
-pub fn deactivateShield(self: *Self) void {
-    self.is_active = false;
-    self.active_timer_seconds = 0.0;
-    self.cooldown_remaining_seconds = self.cooldown_seconds;
-}
-
 pub fn onHitByAttacker(
     self: *Self,
     defender_entity: *lm.Entity,
     attacker_entity: *lm.Entity,
-    damage_dealt: f32,
 ) void {
     if (!self.is_active) return;
 
+    const reactive_effect = self.apply_effect_on_hit orelse return;
     const attacker_stats = attacker_entity.getComponent(Stats) orelse return;
 
-    if (self.apply_effect_on_hit) |reactive_effect| {
-        switch (reactive_effect.effect_type) {
-            .root => attacker_stats.applyRoot(reactive_effect.duration_seconds),
-            .slow => attacker_stats.applySlow(reactive_effect.strength, reactive_effect.duration_seconds),
-            .stun => attacker_stats.applyStun(reactive_effect.duration_seconds),
-            .stasis => attacker_stats.applyStasis(reactive_effect.duration_seconds),
-            else => attacker_stats.addEffect(.{
-                .id = "reactive_effect",
-                .effect_type = reactive_effect.effect_type,
-                .duration = reactive_effect.duration_seconds,
-                .value = reactive_effect.strength,
-            }),
-        }
-
-        playReactiveHitSound(defender_entity, attacker_entity);
+    switch (reactive_effect.effect_type) {
+        .root => attacker_stats.applyRoot(reactive_effect.duration_seconds),
+        .slow => attacker_stats.applySlow(reactive_effect.strength, reactive_effect.duration_seconds),
+        .stun => attacker_stats.applyStun(reactive_effect.duration_seconds),
+        .stasis => attacker_stats.applyStasis(reactive_effect.duration_seconds),
+        else => attacker_stats.addEffect(.{
+            .id = "reactive_effect",
+            .effect_type = reactive_effect.effect_type,
+            .duration = reactive_effect.duration_seconds,
+            .value = reactive_effect.strength,
+        }),
     }
 
-    if (self.reflect_damage_percent > 0.0 and damage_dealt > 0.0) {
-        const reflected_damage = damage_dealt * self.reflect_damage_percent;
-        attacker_stats.current.health = @max(0.0, attacker_stats.current.health - reflected_damage);
-    }
+    playReactiveHitSound(defender_entity, attacker_entity);
 }
 
 fn playReactiveHitSound(defender_entity: *lm.Entity, attacker_entity: *lm.Entity) void {
@@ -143,6 +126,35 @@ fn playReactiveHitSound(defender_entity: *lm.Entity, attacker_entity: *lm.Entity
         defender_position;
 
     SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", defender_position, listener_position, 700.0, 0.6, 0.1);
+}
+
+fn deathRetaliationOnEnable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "even_in_death_buff" }) orelse return;
+    const physical_delta = stats.current.physical_damage * effect.value;
+    const magic_delta = stats.current.magic_damage * effect.secondary_value;
+
+    effect.value = physical_delta;
+    effect.secondary_value = magic_delta;
+    stats.current.physical_damage += physical_delta;
+    stats.current.magic_damage += magic_delta;
+}
+
+fn deathRetaliationOnDisable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "even_in_death_buff" }) orelse return;
+    stats.current.physical_damage = @max(0.0, stats.current.physical_damage - effect.value);
+    stats.current.magic_damage = @max(0.0, stats.current.magic_damage - effect.secondary_value);
+}
+
+fn applyDeathRetaliationBuffToAlly(enemy_stats: *Stats, retaliation: OnDeathRetaliation) void {
+    enemy_stats.addEffect(.{
+        .id = "even_in_death_buff",
+        .effect_type = .custom,
+        .duration = retaliation.buff_duration_seconds,
+        .value = retaliation.ally_physical_damage_buff_percent,
+        .secondary_value = retaliation.ally_magic_damage_buff_percent,
+        .on_enable = deathRetaliationOnEnable,
+        .on_disable = deathRetaliationOnDisable,
+    });
 }
 
 pub fn executeDeathRetaliation(self: *Self) void {
@@ -158,28 +170,7 @@ pub fn executeDeathRetaliation(self: *Self) void {
     for (room_manager.spawner.active_enemies.items()) |enemy_uuid| {
         const enemy_entity = lm.getEntity(.{ .uuid = enemy_uuid }) orelse continue;
         const enemy_stats = enemy_entity.getComponent(Stats) orelse continue;
-
-        const CustomBuff = struct {
-            pub fn onEnable(stats: *Stats) void {
-                stats.current.physical_damage *= 1.15;
-                stats.current.magic_damage = if (stats.current.magic_damage > 0)
-                    stats.current.magic_damage * 1.10
-                else
-                    10.0;
-            }
-            pub fn onDisable(stats: *Stats) void {
-                stats.current.physical_damage /= 1.15;
-                stats.current.magic_damage /= 1.10;
-            }
-        };
-
-        enemy_stats.addEffect(.{
-            .id = "even_in_death_buff",
-            .effect_type = .custom,
-            .duration = retaliation.buff_duration_seconds,
-            .on_enable = CustomBuff.onEnable,
-            .on_disable = CustomBuff.onDisable,
-        });
+        applyDeathRetaliationBuffToAlly(enemy_stats, retaliation);
     }
 }
 
@@ -205,8 +196,7 @@ test "ReactiveAura apply_effect_on_hit with root and stun" {
 
     try std.testing.expect(!attacker_stats.isRooted());
 
-    aura.onHitByAttacker(&defender_entity, &attacker_entity, 20.0);
-
+    aura.onHitByAttacker(&defender_entity, &attacker_entity);
     try std.testing.expect(attacker_stats.isRooted());
 
     aura.apply_effect_on_hit = .{
@@ -216,29 +206,42 @@ test "ReactiveAura apply_effect_on_hit with root and stun" {
 
     try std.testing.expect(!attacker_stats.isStunned());
 
-    aura.onHitByAttacker(&defender_entity, &attacker_entity, 20.0);
-
+    aura.onHitByAttacker(&defender_entity, &attacker_entity);
     try std.testing.expect(attacker_stats.isStunned());
 }
 
-test "ReactiveAura damage reflection" {
-    var defender_entity = lm.Entity.init(std.testing.allocator, "defender");
-    defer defender_entity.deinit();
+test "ReactiveAura death retaliation honors configured percentages and restores exact deltas" {
+    var physical_ally = Stats.init(.enemy, .{
+        .physical_damage = 100.0,
+        .magic_damage = 0.0,
+    });
+    defer physical_ally.deinit();
 
-    var attacker_entity = lm.Entity.init(std.testing.allocator, "attacker");
-    defer attacker_entity.deinit();
+    var hybrid_ally = Stats.init(.enemy, .{
+        .physical_damage = 40.0,
+        .magic_damage = 50.0,
+    });
+    defer hybrid_ally.deinit();
 
-    try attacker_entity.addComponent(Stats.init(.player, .{ .health = 100.0 }));
-    try attacker_entity.addPreparedComponents(false);
-
-    const attacker_stats = attacker_entity.getComponent(Stats).?;
-
-    var aura = Self{
-        .is_active = true,
-        .reflect_damage_percent = 0.50,
+    const retaliation = OnDeathRetaliation{
+        .ally_physical_damage_buff_percent = 0.25,
+        .ally_magic_damage_buff_percent = 0.20,
+        .buff_duration_seconds = 10.0,
     };
 
-    aura.onHitByAttacker(&defender_entity, &attacker_entity, 40.0);
+    applyDeathRetaliationBuffToAlly(&physical_ally, retaliation);
+    try std.testing.expectApproxEqAbs(@as(f32, 125.0), physical_ally.current.physical_damage, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 0.0), physical_ally.current.magic_damage, 0.001);
 
-    try std.testing.expectEqual(@as(f32, 80.0), attacker_stats.current.health);
+    physical_ally.tickEffects(10.0);
+    try std.testing.expectApproxEqAbs(@as(f32, 100.0), physical_ally.current.physical_damage, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 0.0), physical_ally.current.magic_damage, 0.001);
+
+    applyDeathRetaliationBuffToAlly(&hybrid_ally, retaliation);
+    try std.testing.expectApproxEqAbs(@as(f32, 50.0), hybrid_ally.current.physical_damage, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 60.0), hybrid_ally.current.magic_damage, 0.001);
+
+    hybrid_ally.tickEffects(10.0);
+    try std.testing.expectApproxEqAbs(@as(f32, 40.0), hybrid_ally.current.physical_damage, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f32, 50.0), hybrid_ally.current.magic_damage, 0.001);
 }

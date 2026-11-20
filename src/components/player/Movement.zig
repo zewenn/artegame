@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
@@ -7,7 +6,9 @@ const AudioManager = @import("../../global/audio/AudioManager.zig");
 
 const Self = @This();
 
-footstep_timer: f32 = 0,
+const FOOTSTEP_INTERVAL_SECONDS: f32 = 0.35;
+
+footstep_timer_seconds: f32 = 0,
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 dashing: ?*Dashing = null,
@@ -33,57 +34,65 @@ pub fn Update(self: *Self) !void {
 
     if (dashing.isDashing() or !stats.canMove()) return;
 
-    var move_vector = lm.Vec2(0, 0);
+    const move_vector = readMoveVector();
 
-    if (lm.keyboard.getKey(.w)) {
-        move_vector.y -= 1;
-    }
-    if (lm.keyboard.getKey(.s)) {
-        move_vector.y += 1;
-    }
-    if (lm.keyboard.getKey(.a)) {
-        move_vector.x -= 1;
-    }
-    if (lm.keyboard.getKey(.d)) {
-        move_vector.x += 1;
-    }
-
-    const gamepad = lm.gamepad.getStickVector(0, .left, 0.1);
-    if (gamepad.length() != 0) move_vector = gamepad;
-
-    if (lm.keyboard.getKeyDown(.space) or
-        lm.gamepad.getButtonDown(0, .right_face_down) or
-        lm.gamepad.getButtonDown(0, .left_trigger_1))
-    {
+    if (isDashRequested()) {
         dashing.apply(move_vector);
         return;
     }
 
-    if (move_vector.length() > 0) animation: {
-        self.footstep_timer -= lm.time.deltaTime();
-        if (self.footstep_timer <= 0) {
-            AudioManager.playSfxPitched("audio/sfx/walking.mp3", 0.45, 0.15);
-            self.footstep_timer = 0.35;
-        }
+    try self.updateWalkAnimationAndAudio(animator, move_vector);
 
-        if (move_vector.x <= 0) {
-            animator.stop("walk-right");
-            try animator.play("walk-left");
+    const speed = stats.current.movement_speed;
+    const displacement_pixels = move_vector
+        .normalize()
+        .multiply(lm.time.deltaTimeVector2())
+        .multiply(.init(speed, speed));
 
-            break :animation;
-        }
+    transform.position = transform.position.add(lm.vec2ToVec3(displacement_pixels));
+}
 
-        animator.stop("walk-left");
-        try animator.play("walk-right");
-    } else {
-        self.footstep_timer = 0.0;
-        lm.audio.stop("audio/sfx/walking.mp3");
+fn readMoveVector() lm.Vector2 {
+    var move_vector = lm.Vec2(0, 0);
+
+    if (lm.keyboard.getKey(.w)) move_vector.y -= 1;
+    if (lm.keyboard.getKey(.s)) move_vector.y += 1;
+    if (lm.keyboard.getKey(.a)) move_vector.x -= 1;
+    if (lm.keyboard.getKey(.d)) move_vector.x += 1;
+
+    const gamepad_stick = lm.gamepad.getStickVector(0, .left, 0.1);
+    if (gamepad_stick.length() != 0) {
+        return gamepad_stick;
     }
 
-    transform.position = transform.position.add(lm.vec2ToVec3(
-        move_vector
-            .normalize()
-            .multiply(lm.time.deltaTimeVector2())
-            .multiply(.init(stats.current.movement_speed, stats.current.movement_speed)),
-    ));
+    return move_vector;
+}
+
+fn isDashRequested() bool {
+    return lm.keyboard.getKeyDown(.space) or
+        lm.gamepad.getButtonDown(0, .right_face_down) or
+        lm.gamepad.getButtonDown(0, .left_trigger_1);
+}
+
+fn updateWalkAnimationAndAudio(self: *Self, animator: *lm.Animator, move_vector: lm.Vector2) !void {
+    if (move_vector.length() <= 0) {
+        self.footstep_timer_seconds = 0.0;
+        lm.audio.stop("audio/sfx/walking.mp3");
+        return;
+    }
+
+    self.footstep_timer_seconds -= lm.time.deltaTime();
+    if (self.footstep_timer_seconds <= 0) {
+        AudioManager.playSfxPitched("audio/sfx/walking.mp3", 0.45, 0.15);
+        self.footstep_timer_seconds = FOOTSTEP_INTERVAL_SECONDS;
+    }
+
+    if (move_vector.x <= 0) {
+        animator.stop("walk-right");
+        try animator.play("walk-left");
+        return;
+    }
+
+    animator.stop("walk-left");
+    try animator.play("walk-right");
 }

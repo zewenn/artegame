@@ -19,8 +19,48 @@ pub const TutorialStep = enum {
     heavy_attack,
     dash_attack,
     exit_door,
-    completed,
 };
+
+const StepConfig = struct {
+    title: []const u8,
+    prompt_action: ?DevicePrompts.PromptAction = null,
+    expected_attack_kind: ?Projectile.AttackKind = null,
+    next_step: ?TutorialStep = null,
+};
+
+const step_configs = std.EnumArray(TutorialStep, StepConfig).init(.{
+    .move = .{
+        .title = "Movement",
+        .next_step = .dash,
+    },
+    .dash = .{
+        .title = "Dash",
+        .prompt_action = .dash,
+        .next_step = .light_attack,
+    },
+    .light_attack = .{
+        .title = "Light Attack",
+        .prompt_action = .attack_primary,
+        .expected_attack_kind = .light,
+        .next_step = .heavy_attack,
+    },
+    .heavy_attack = .{
+        .title = "Heavy Attack",
+        .prompt_action = .attack_secondary,
+        .expected_attack_kind = .heavy,
+        .next_step = .dash_attack,
+    },
+    .dash_attack = .{
+        .title = "Dash Attack",
+        .prompt_action = .attack_primary,
+        .expected_attack_kind = .dash,
+        .next_step = .exit_door,
+    },
+    .exit_door = .{
+        .title = "Enter Arena",
+        .prompt_action = .interact,
+    },
+});
 
 const MIN_MOVEMENT_DISTANCE_PIXELS: f32 = 120.0;
 
@@ -30,6 +70,7 @@ step: TutorialStep = .move,
 accumulated_movement_pixels: f32 = 0.0,
 previous_player_position: ?lm.Vector2 = null,
 has_opened_door: bool = false,
+objective_description_buffer: [128]u8 = undefined,
 
 pub fn Awake(self: *Self) !void {
     global_instance = self;
@@ -38,43 +79,22 @@ pub fn Awake(self: *Self) !void {
 
 pub fn Start(self: *Self) void {
     if (!isTutorialActive()) return;
-    self.lockExitDoor();
+    self.setExitDoorsUnlocked(false);
     self.refreshObjectives();
 }
 
 pub fn Update(self: *Self) !void {
     if (!isTutorialActive()) return;
-    if (self.step == .completed) return;
 
     const player = lm.getEntity(.{ .id = "player" }) orelse return;
     const transform = player.getComponent(lm.Transform) orelse return;
     const player_position = lm.vec3ToVec2(transform.position);
 
     switch (self.step) {
-        .move => {
-            if (self.previous_player_position) |previous_position| {
-                const distance = player_position.subtract(previous_position).length();
-                self.accumulated_movement_pixels += distance;
-                if (self.accumulated_movement_pixels >= MIN_MOVEMENT_DISTANCE_PIXELS) {
-                    self.advanceStep(.dash);
-                }
-            }
-            self.previous_player_position = player_position;
-        },
-        .dash => {
-            if (player.getComponent(Dashing)) |dashing| {
-                if (dashing.isDashing()) {
-                    self.advanceStep(.light_attack);
-                }
-            }
-        },
+        .move => self.updateMovementStep(player_position),
+        .dash => self.updateDashStep(player),
         .light_attack, .heavy_attack, .dash_attack => {},
-        .exit_door => {
-            if (!self.has_opened_door) {
-                self.unlockExitDoor();
-            }
-        },
-        .completed => {},
+        .exit_door => if (!self.has_opened_door) self.setExitDoorsUnlocked(true),
     }
 }
 
@@ -107,24 +127,14 @@ pub fn notifyDummyHit(attack_kind: Projectile.AttackKind) void {
 }
 
 pub fn handleDummyHit(self: *Self, attack_kind: Projectile.AttackKind) void {
-    switch (self.step) {
-        .light_attack => {
-            if (attack_kind == .light) {
-                self.advanceStep(.heavy_attack);
-            }
-        },
-        .heavy_attack => {
-            if (attack_kind == .heavy) {
-                self.advanceStep(.dash_attack);
-            }
-        },
-        .dash_attack => {
-            if (attack_kind == .dash) {
-                self.advanceStep(.exit_door);
-                self.unlockExitDoor();
-            }
-        },
-        else => {},
+    const config = step_configs.get(self.step);
+    const expected_attack_kind = config.expected_attack_kind orelse return;
+    if (attack_kind != expected_attack_kind) return;
+
+    const next_step = config.next_step orelse return;
+    self.advanceStep(next_step);
+    if (next_step == .exit_door) {
+        self.setExitDoorsUnlocked(true);
     }
 }
 
@@ -137,77 +147,87 @@ pub fn advanceStep(self: *Self, next_step: TutorialStep) void {
 pub fn refreshObjectives(self: *Self) void {
     const player = lm.getEntity(.{ .id = "player" }) orelse return;
     const objectives = player.getComponent(Objectives) orelse return;
+    const config = step_configs.get(self.step);
     const is_gamepad = DevicePrompts.isGamepad();
 
-    switch (self.step) {
-        .move => _ = objectives.setSingleObjective(
-            "Movement",
-            if (is_gamepad) "Use Left Stick to move" else "Use W, A, S, D to move",
-        ) catch {},
-        .dash => _ = objectives.setSingleObjective(
-            "Dash",
-            if (is_gamepad) "Press A to Dash" else "Press Space to Dash",
-        ) catch {},
-        .light_attack => _ = objectives.setSingleObjective(
-            "Light Attack",
-            if (is_gamepad) "Press RT to strike the Training Dummy" else "Left Click to strike the Training Dummy",
-        ) catch {},
-        .heavy_attack => _ = objectives.setSingleObjective(
-            "Heavy Attack",
-            if (is_gamepad) "Press LT for a heavy strike" else "Right Click for a heavy strike",
-        ) catch {},
-        .dash_attack => _ = objectives.setSingleObjective(
-            "Dash Attack",
-            if (is_gamepad) "Dash and press RT together" else "Dash and Left Click together",
-        ) catch {},
-        .exit_door => {
-            const is_practice = RoomManager.isPracticeTutorialMode();
-            const title = if (is_practice) "Exit Tutorial" else "Enter Arena";
-            const description = if (is_practice)
-                (if (is_gamepad) "Press A at the Exit Door to return to Main Menu" else "Press F at the Exit Door to return to Main Menu")
-            else
-                (if (is_gamepad) "Press A at the Exit Door to begin Room 1" else "Press F at the Exit Door to begin Room 1");
-            _ = objectives.setSingleObjective(title, description) catch {};
-        },
-        .completed => {
-            const is_practice = RoomManager.isPracticeTutorialMode();
-            const description = if (is_practice) "Returning to Main Menu" else "Entering Room 1";
-            _ = objectives.setSingleObjective("Tutorial Complete", description) catch {};
-        },
-    }
+    const title = if (self.step == .exit_door and RoomManager.isPracticeTutorialMode())
+        "Exit Tutorial"
+    else
+        config.title;
+    const description = self.formatStepDescription(config, is_gamepad);
+    _ = objectives.setSingleObjective(title, description) catch {};
 }
 
-pub fn lockExitDoor(self: *Self) void {
-    _ = self;
+pub fn setExitDoorsUnlocked(self: *Self, unlocked: bool) void {
+    if (unlocked) {
+        self.has_opened_door = true;
+        if (RoomManager.get()) |room_manager| {
+            room_manager.state = .replenish;
+        }
+    }
+
     const scene = lm.activeScene() orelse return;
     for (scene.entities.items()) |entity| {
-        if (std.mem.startsWith(u8, entity.id, "exit-door")) {
-            if (entity.getComponent(Door)) |door| {
-                door.setOpenState(false);
-            }
-            if (entity.getComponent(Interactable)) |interactable| {
-                interactable.enabled = false;
-            }
+        if (!std.mem.startsWith(u8, entity.id, "exit-door")) continue;
+        if (entity.getComponent(Door)) |door| {
+            door.setOpenState(unlocked);
+        }
+        if (entity.getComponent(Interactable)) |interactable| {
+            interactable.enabled = unlocked;
         }
     }
 }
 
-pub fn unlockExitDoor(self: *Self) void {
-    self.has_opened_door = true;
-    if (RoomManager.get()) |room_manager| {
-        room_manager.state = .replenish;
-    }
-    const scene = lm.activeScene() orelse return;
-    for (scene.entities.items()) |entity| {
-        if (std.mem.startsWith(u8, entity.id, "exit-door")) {
-            if (entity.getComponent(Door)) |door| {
-                door.setOpenState(true);
-            }
-            if (entity.getComponent(Interactable)) |interactable| {
-                interactable.enabled = true;
-            }
+fn updateMovementStep(self: *Self, player_position: lm.Vector2) void {
+    if (self.previous_player_position) |previous_position| {
+        const distance_pixels = player_position.subtract(previous_position).length();
+        self.accumulated_movement_pixels += distance_pixels;
+        if (self.accumulated_movement_pixels >= MIN_MOVEMENT_DISTANCE_PIXELS) {
+            self.advanceStep(.dash);
         }
     }
+    self.previous_player_position = player_position;
+}
+
+fn updateDashStep(self: *Self, player: *lm.Entity) void {
+    const dashing = player.getComponent(Dashing) orelse return;
+    if (dashing.isDashing()) {
+        self.advanceStep(.light_attack);
+    }
+}
+
+fn formatStepDescription(self: *Self, config: StepConfig, is_gamepad: bool) []const u8 {
+    return switch (self.step) {
+        .move => if (is_gamepad) "Use Left Stick to move" else "Use W, A, S, D to move",
+        .dash => self.formatSinglePrompt("Press {s} to Dash", config.prompt_action.?),
+        .light_attack => self.formatSinglePrompt("Press {s} to strike the Training Dummy", config.prompt_action.?),
+        .heavy_attack => self.formatSinglePrompt("Press {s} for a heavy strike", config.prompt_action.?),
+        .dash_attack => self.formatDualPrompt(
+            "Press {s} and {s} together",
+            .dash,
+            config.prompt_action.?,
+        ),
+        .exit_door => if (RoomManager.isPracticeTutorialMode())
+            self.formatSinglePrompt("Press {s} at the Exit Door to return to Main Menu", config.prompt_action.?)
+        else
+            self.formatSinglePrompt("Press {s} at the Exit Door to begin Room 1", config.prompt_action.?),
+    };
+}
+
+fn formatSinglePrompt(self: *Self, comptime format_string: []const u8, action: DevicePrompts.PromptAction) []const u8 {
+    const label = DevicePrompts.getActionPrompt(action).label;
+    return std.fmt.bufPrint(&self.objective_description_buffer, format_string, .{label}) catch label;
+}
+
+fn formatDualPrompt(
+    self: *Self,
+    comptime format_string: []const u8,
+    first_action: DevicePrompts.PromptAction,
+    second_action: DevicePrompts.PromptAction,
+) []const u8 {
+    const first_label = DevicePrompts.getActionPrompt(first_action).label;
+    const second_label = DevicePrompts.getActionPrompt(second_action).label;
+    return std.fmt.bufPrint(&self.objective_description_buffer, format_string, .{ first_label, second_label }) catch first_label;
 }
 
 test "TutorialManager step progression and dummy hit handling" {

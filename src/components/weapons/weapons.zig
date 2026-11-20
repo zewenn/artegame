@@ -32,7 +32,7 @@ pub const fists: Weapon = .{
             .damage = 0.534,
             .speed = 1200,
             .size = .init(128, 64),
-            .passtrough = true,
+            .passthrough = true,
         },
     },
 
@@ -48,7 +48,7 @@ pub const goliath: Weapon = .{
         .shooting_degrees = &.{ 0, 10, -10 },
         .projectile_options = .{
             .damage = 0.4,
-            .passtrough = true,
+            .passthrough = true,
             .size = .init(96, 64),
             .lifetime = 0.45,
             .speed = 450,
@@ -71,7 +71,7 @@ pub const goliath: Weapon = .{
         .projectile_options = .{
             .size = .init(96, 64),
             .damage = 0.225,
-            .passtrough = true,
+            .passthrough = true,
             .onhit_effect = .slow,
             .onhit_duration = 1,
             .onhit_strength = 80,

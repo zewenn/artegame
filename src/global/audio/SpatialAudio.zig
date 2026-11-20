@@ -10,9 +10,9 @@ pub const SpatialParams = struct {
 pub fn calculateSpatialParams(source_position: lm.Vector2, listener_position: lm.Vector2, max_distance_pixels: f32) ?SpatialParams {
     if (max_distance_pixels <= 0.0) return null;
 
-    const delta_x = source_position.x - listener_position.x;
-    const delta_y = source_position.y - listener_position.y;
-    const distance_pixels = std.math.hypot(delta_x, delta_y);
+    const delta_x_pixels = source_position.x - listener_position.x;
+    const delta_y_pixels = source_position.y - listener_position.y;
+    const distance_pixels = std.math.hypot(delta_x_pixels, delta_y_pixels);
 
     if (distance_pixels >= max_distance_pixels) return null;
 
@@ -20,22 +20,12 @@ pub fn calculateSpatialParams(source_position: lm.Vector2, listener_position: lm
     const falloff = (1.0 - normalized_distance) * (1.0 - normalized_distance);
 
     const pan_span_pixels = @max(1.0, max_distance_pixels * 0.5);
-    const pan = std.math.clamp(delta_x / pan_span_pixels, -1.0, 1.0);
+    const pan = std.math.clamp(delta_x_pixels / pan_span_pixels, -1.0, 1.0);
 
     return SpatialParams{
         .falloff = falloff,
         .pan = pan,
     };
-}
-
-pub fn playSpatial(
-    path: []const u8,
-    source_position: lm.Vector2,
-    listener_position: lm.Vector2,
-    max_distance_pixels: f32,
-    base_volume: f32,
-) void {
-    playSpatialPitched(path, source_position, listener_position, max_distance_pixels, base_volume, 0.0);
 }
 
 pub fn playSpatialPitched(

@@ -4,20 +4,32 @@ const Attack = @import("../../components/player/Attack.zig");
 
 const Self = @This();
 
+fn capitalizeTagName(comptime tag_name: []const u8) []const u8 {
+    const capitalized = comptime capitalized_block: {
+        var buffer: [tag_name.len]u8 = tag_name[0..tag_name.len].*;
+        if (buffer.len > 0) {
+            buffer[0] = std.ascii.toUpper(buffer[0]);
+        }
+        break :capitalized_block buffer;
+    };
+    return &capitalized;
+}
+
+/// High-level category of upgrade granted by a boon.
 pub const BoonType = enum {
     spell,
     stat,
     weapon,
 
+    /// Returns the capitalized display label for this boon type.
     pub fn toString(self: BoonType) []const u8 {
         return switch (self) {
-            .spell => "Spell",
-            .stat => "Stat",
-            .weapon => "Weapon",
+            inline else => |tag| capitalizeTagName(@tagName(tag)),
         };
     }
 };
 
+/// Rarity tier controlling boon cost and visual styling.
 pub const Rarity = enum {
     normal,
     rare,
@@ -26,6 +38,7 @@ pub const Rarity = enum {
     mythic,
     cosmic,
 
+    /// Returns the experience cost required to purchase a boon of this rarity.
     pub fn cost(self: Rarity) usize {
         return switch (self) {
             .normal => 10,
@@ -37,17 +50,14 @@ pub const Rarity = enum {
         };
     }
 
+    /// Returns the capitalized display label for this rarity tier.
     pub fn toString(self: Rarity) []const u8 {
         return switch (self) {
-            .normal => "Normal",
-            .rare => "Rare",
-            .epic => "Epic",
-            .legendary => "Legendary",
-            .mythic => "Mythic",
-            .cosmic => "Cosmic",
+            inline else => |tag| capitalizeTagName(@tagName(tag)),
         };
     }
 
+    /// Returns the HUD sprite asset path corresponding to this rarity tier.
     pub fn spritePath(self: Rarity) []const u8 {
         return switch (self) {
             inline else => |tag| "ui/hud/boon_tiers/" ++ @tagName(tag) ++ ".png",
@@ -63,60 +73,40 @@ rarity: Rarity,
 boon_type: BoonType,
 
 callback: *const fn (stats: *Stats, attack: ?*Attack) void,
-condition: ?*const fn (stats: Stats, attack: Attack) bool = null,
+condition: ?*const fn (stats: *const Stats, attack: *const Attack) bool = null,
 
+/// Applies this boon's upgrade effect to the given player stats and attack components.
 pub fn applyTo(self: Self, to_stats: *Stats, to_attack: ?*Attack) void {
     @call(.auto, self.callback, .{ to_stats, to_attack });
 }
 
-pub fn isAvailable(self: Self, stats: Stats, attack: Attack) bool {
-    if (self.condition) |cond| {
-        return cond(stats, attack);
+/// Returns whether this boon is eligible to be offered for the given player state.
+pub fn isAvailable(self: Self, stats: *const Stats, attack: *const Attack) bool {
+    if (self.condition) |availability_condition| {
+        return availability_condition(stats, attack);
     }
     return true;
 }
 
+/// Returns the purchase cost of this boon in experience points.
 pub fn cost(self: Self) usize {
     return self.rarity.cost();
 }
 
-pub fn eql(self: Self, other: Self) bool {
+/// Returns whether two boons share the same unique identifier.
+pub fn equals(self: Self, other: Self) bool {
     return std.mem.eql(u8, self.id, other.id);
 }
 
-test "Boon equality by unique id" {
-    const dummy_cb = struct {
-        fn cb(_: *Stats, _: ?*Attack) void {}
-    }.cb;
+test "BoonType and Rarity toString capitalize tag names" {
+    try std.testing.expectEqualStrings("Spell", BoonType.spell.toString());
+    try std.testing.expectEqualStrings("Stat", BoonType.stat.toString());
+    try std.testing.expectEqualStrings("Weapon", BoonType.weapon.toString());
 
-    const b1: Self = .{
-        .id = "boon_1",
-        .name = "Boon One",
-        .description = "Desc",
-        .icon = "icon.png",
-        .rarity = .normal,
-        .boon_type = .stat,
-        .callback = dummy_cb,
-    };
-    const b2: Self = .{
-        .id = "boon_1",
-        .name = "Boon One Modified",
-        .description = "Different Desc",
-        .icon = "icon2.png",
-        .rarity = .rare,
-        .boon_type = .stat,
-        .callback = dummy_cb,
-    };
-    const b3: Self = .{
-        .id = "boon_2",
-        .name = "Boon One",
-        .description = "Desc",
-        .icon = "icon.png",
-        .rarity = .normal,
-        .boon_type = .stat,
-        .callback = dummy_cb,
-    };
-
-    try std.testing.expect(b1.eql(b2));
-    try std.testing.expect(!b1.eql(b3));
+    try std.testing.expectEqualStrings("Normal", Rarity.normal.toString());
+    try std.testing.expectEqualStrings("Rare", Rarity.rare.toString());
+    try std.testing.expectEqualStrings("Epic", Rarity.epic.toString());
+    try std.testing.expectEqualStrings("Legendary", Rarity.legendary.toString());
+    try std.testing.expectEqualStrings("Mythic", Rarity.mythic.toString());
+    try std.testing.expectEqualStrings("Cosmic", Rarity.cosmic.toString());
 }

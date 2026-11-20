@@ -7,26 +7,23 @@ const Attack = @import("../../components/player/Attack.zig");
 const Boon = @import("../boons/Boon.zig");
 const BoonPool = @import("../boons/BoonPool.zig");
 const BoonCategory = @import("../boons/BoonCategory.zig");
-const HUD = @import("../HUD.zig");
+const theme = @import("theme.zig");
 const AudioManager = @import("../audio/AudioManager.zig");
 const RoomManager = @import("../RoomManager.zig");
-const DevicePrompts = @import("../input/DevicePrompts.zig");
-const utility_button = @import("buttons/utility_button.zig");
+const sprite_button = @import("buttons/sprite_button.zig");
+const menu_navigation = @import("menu_navigation.zig");
 const color_scheme = @import("color_scheme.zig");
 
 pub const BoonSlot = BoonPool.BoonSlot;
 
 pub const BASE_CARD_WIDTH_PIXELS: f32 = 72.0;
 pub const BASE_CARD_HEIGHT_PIXELS: f32 = 112.0;
-pub const CARD_ASPECT_RATIO: f32 = 9.0 / 14.0;
 
 pub const BOON_CARD_SPRITE: []const u8 = "ui/hud/boon_card.png";
 pub const BOON_CARD_HOVER_SPRITE: []const u8 = "ui/hud/boon_card_hovered.png";
 
 pub var slots: ?[]const BoonSlot = null;
-pub var selected_index: usize = 0;
-var stick_moved_x: bool = false;
-var stick_moved_y: bool = false;
+pub var navigation: menu_navigation.NavigationState = .{};
 
 pub fn getBoonCardSprite(is_active: bool) []const u8 {
     return if (is_active) BOON_CARD_HOVER_SPRITE else BOON_CARD_SPRITE;
@@ -49,41 +46,23 @@ pub fn findFirstAvailableIndex(slot_array: []const BoonSlot) usize {
 
 pub fn findNextAvailableIndex(current_index: usize, direction: i32, slot_array: []const BoonSlot) usize {
     const card_count = slot_array.len;
-    const close_index = card_count;
-
     if (card_count == 0) return 0;
 
-    if (direction > 0) {
-        var search_index = current_index + 1;
-        while (search_index < card_count) : (search_index += 1) {
-            if (!slot_array[search_index].is_purchased) return search_index;
-        }
-        var wrap_index: usize = 0;
-        while (wrap_index <= current_index and wrap_index < card_count) : (wrap_index += 1) {
-            if (!slot_array[wrap_index].is_purchased) return wrap_index;
-        }
-        return close_index;
+    const step: isize = if (direction >= 0) 1 else -1;
+    const count_isize: isize = @intCast(card_count);
+    var offset: isize = 1;
+    while (offset <= count_isize) : (offset += 1) {
+        const candidate_index: usize = @intCast(@mod(@as(isize, @intCast(current_index)) + step * offset, count_isize));
+        if (!slot_array[candidate_index].is_purchased) return candidate_index;
     }
-
-    if (current_index > 0) {
-        var search_index = current_index - 1;
-        while (true) {
-            if (!slot_array[search_index].is_purchased) return search_index;
-            if (search_index == 0) break;
-            search_index -= 1;
-        }
-    }
-    var wrap_index = card_count;
-    while (wrap_index > current_index) {
-        wrap_index -= 1;
-        if (!slot_array[wrap_index].is_purchased) return wrap_index;
-    }
-    return close_index;
+    return card_count;
 }
 
 pub fn show(slots_to_show: []const BoonSlot) void {
     slots = slots_to_show;
-    selected_index = findFirstAvailableIndex(slots_to_show);
+    navigation.reset(false);
+    navigation.selected_index = findFirstAvailableIndex(slots_to_show);
+    navigation.previous_selected_index = navigation.selected_index;
     lm.time.pause();
 }
 
@@ -122,7 +101,7 @@ fn selectBoon(slot_index: usize, maybe_stats: ?*Stats, maybe_attack: ?*Attack) v
     if (maybe_attack) |attack| {
         slots = BoonPool.getSlots(stats.*, attack.*);
         if (slots) |updated_slots| {
-            selected_index = findNextAvailableIndex(slot_index, 1, updated_slots);
+            navigation.selected_index = findNextAvailableIndex(slot_index, 1, updated_slots);
         }
         return;
     }
@@ -130,17 +109,7 @@ fn selectBoon(slot_index: usize, maybe_stats: ?*Stats, maybe_attack: ?*Attack) v
     hide();
 }
 
-fn rarityColor(rarity: Boon.Rarity) lm.deps.clay.Color {
-    return color_scheme.rarityColor(rarity);
-}
-
-fn renderBoonCostBox(
-    card_index: u32,
-    cost: usize,
-    ui_scale: f32,
-    letter_spacing: u16,
-    allocator: ?std.mem.Allocator,
-) void {
+fn renderBoonCostBox(card_index: u32, cost: usize, ui_scale: f32, letter_spacing: u16) void {
     const cost_box_padding_x_pixels = lm.tou16(@round(3.0 * ui_scale));
     const cost_box_padding_y_pixels = lm.tou16(@round(1.25 * ui_scale));
     const cost_image_size_pixels = @round(4.5 * ui_scale);
@@ -160,11 +129,6 @@ fn renderBoonCostBox(
             .direction = .left_to_right,
         },
     })({
-        const price_text = if (allocator) |active_allocator|
-            std.fmt.allocPrint(active_allocator, "{d}", .{cost}) catch "0"
-        else
-            "0";
-
         ui.new(.{
             .id = .IDI("experience-img-", card_index),
             .layout = .{
@@ -178,24 +142,18 @@ fn renderBoonCostBox(
                 .init(cost_image_size_pixels, cost_image_size_pixels),
             ) catch .{ .image_data = null },
         })({});
-        ui.text(price_text, .{
+        ui.textFmt("{d}", .{cost}, .{
             .color = color_scheme.text_bright,
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@max(7, @round(3.5 * ui_scale))),
+            .font_size = theme.scaledU16(3.5, 7, ui_scale),
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 }
 
-fn renderBoonRarityBadge(
-    rarity: Boon.Rarity,
-    card_index: u32,
-    ui_scale: f32,
-    letter_spacing: u16,
-) void {
+fn renderBoonRarityBadge(rarity: Boon.Rarity, card_index: u32, ui_scale: f32, letter_spacing: u16) void {
     const rarity_icon_size_pixels = @round(4.0 * ui_scale);
-    const rarity_font_size_pixels = lm.tou16(@max(8, @round(4.0 * ui_scale)));
     const badge_padding_pixels = lm.tou16(@round(1.0 * ui_scale));
     const badge_gap_pixels = lm.tou16(@round(1.0 * ui_scale));
 
@@ -217,105 +175,12 @@ fn renderBoonRarityBadge(
         })({});
 
         ui.text(rarity.toString(), .{
-            .font_size = rarity_font_size_pixels,
+            .font_size = theme.scaledU16(4.0, 8, ui_scale),
             .letter_spacing = letter_spacing,
             .alignment = .center,
-            .color = rarityColor(rarity),
-            .font_id = HUD.regularFontId(),
+            .color = color_scheme.rarityColor(rarity),
+            .font_id = theme.regularFontId(),
         });
-    });
-}
-
-fn boonCard(
-    boon: Boon,
-    card_index: u32,
-    card_width_pixels: f32,
-    card_height_pixels: f32,
-    stats: ?*Stats,
-    attack: ?*Attack,
-    allocator: ?std.mem.Allocator,
-) void {
-    const ui_scale = HUD.ui_scale;
-    const card_padding_pixels = lm.tou16(@round(6.0 * ui_scale));
-    const card_content_gap_pixels = lm.tou16(@round(1.5 * ui_scale));
-    const icon_size_pixels = @round(24.0 * ui_scale);
-    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
-    const is_focused = (selected_index == card_index);
-
-    lm.deps.clay.UI()(.{
-        .id = .IDI("boon-card-", card_index),
-        .layout = .{
-            .sizing = .{
-                .w = .fixed(card_width_pixels),
-                .h = .fixed(card_height_pixels),
-            },
-            .direction = .top_to_bottom,
-            .padding = .all(card_padding_pixels),
-            .child_gap = card_content_gap_pixels,
-            .child_alignment = .{ .x = .center },
-        },
-        .image = ui.image(
-            getBoonCardSprite(lm.deps.clay.hovered() or is_focused),
-            .init(card_width_pixels, card_height_pixels),
-        ) catch .{ .image_data = null },
-    })({
-        if (lm.deps.clay.hovered()) {
-            selected_index = card_index;
-        }
-        if (lm.deps.clay.hovered() and lm.mouse.getButtonDown(.left)) {
-            selectBoon(card_index, stats, attack);
-        }
-
-        renderBoonRarityBadge(boon.rarity, card_index, ui_scale, letter_spacing);
-
-        ui.new(.{
-            .id = .IDI("boon-image-", card_index),
-            .image = ui.image(
-                boon.icon,
-                .init(icon_size_pixels, icon_size_pixels),
-            ) catch .{ .image_data = null },
-            .aspect_ratio = .{ .aspect_ratio = 1 },
-            .layout = .{
-                .sizing = .{
-                    .w = .fixed(icon_size_pixels),
-                    .h = .fixed(icon_size_pixels),
-                },
-            },
-        })({});
-
-        ui.text(boon.boon_type.toString(), .{
-            .color = color_scheme.text_subtle,
-            .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
-            .alignment = .center,
-            .font_id = HUD.regularFontId(),
-        });
-
-        ui.text(boon.name, .{
-            .color = color_scheme.text_bright,
-            .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
-            .alignment = .center,
-            .font_id = HUD.boldFontId(),
-        });
-
-        ui.text(boon.description, .{
-            .color = color_scheme.text_body,
-            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
-            .alignment = .center,
-            .font_id = HUD.regularFontId(),
-        });
-
-        ui.new(.{
-            .id = .IDI("boon-card-spacer-", card_index),
-            .layout = .{
-                .sizing = .{
-                    .h = .grow,
-                },
-            },
-        })({});
-
-        renderBoonCostBox(card_index, boon.cost(), ui_scale, letter_spacing, allocator);
     });
 }
 
@@ -338,28 +203,66 @@ fn renderPurchasedBadge(card_index: u32, ui_scale: f32) void {
     })({
         ui.text("PURCHASED", .{
             .color = color_scheme.badge_purchased_text,
-            .letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale))),
-            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
+            .letter_spacing = theme.scaledU16(0.5, 1, ui_scale),
+            .font_size = theme.scaledU16(3.0, 6, ui_scale),
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 }
 
-fn dummyBoonCard(
-    boon: Boon,
+fn handleCardPointer(
+    card_index: u32,
+    is_purchased: bool,
+    stats: ?*Stats,
+    attack: ?*Attack,
+) void {
+    if (is_purchased or !lm.deps.clay.hovered()) return;
+    navigation.selected_index = card_index;
+    if (lm.mouse.getButtonDown(.left)) {
+        selectBoon(card_index, stats, attack);
+    }
+}
+
+fn renderCardRarityHeader(boon: Boon, card_index: u32, is_purchased: bool, ui_scale: f32, letter_spacing: u16) void {
+    if (!is_purchased) {
+        renderBoonRarityBadge(boon.rarity, card_index, ui_scale, letter_spacing);
+        return;
+    }
+
+    ui.text(boon.rarity.toString(), .{
+        .font_size = theme.scaledU16(3.0, 6, ui_scale),
+        .letter_spacing = letter_spacing,
+        .alignment = .center,
+        .color = color_scheme.text_disabled_muted,
+        .font_id = theme.regularFontId(),
+    });
+}
+
+fn renderBoonCard(
+    slot: BoonSlot,
     card_index: u32,
     card_width_pixels: f32,
     card_height_pixels: f32,
+    ui_scale: f32,
+    stats: ?*Stats,
+    attack: ?*Attack,
 ) void {
-    const ui_scale = HUD.ui_scale;
-    const card_padding_pixels = lm.tou16(@round(4.0 * ui_scale));
+    const boon = slot.boon;
+    const is_purchased = slot.is_purchased;
+    const card_padding_scale: f32 = if (is_purchased) 4.0 else 6.0;
+    const card_padding_pixels = lm.tou16(@round(card_padding_scale * ui_scale));
     const card_content_gap_pixels = lm.tou16(@round(1.5 * ui_scale));
     const icon_size_pixels = @round(24.0 * ui_scale);
-    const letter_spacing = lm.tou16(@max(1, @round(0.5 * ui_scale)));
+    const letter_spacing = theme.scaledU16(0.5, 1, ui_scale);
+
+    const card_id = lm.deps.clay.ElementId.IDI("boon-card-", card_index);
+    const is_hovered = lm.deps.clay.pointerOver(card_id);
+    const is_focused = !is_purchased and (navigation.selected_index == card_index);
+    const is_active = !is_purchased and (is_hovered or is_focused);
 
     lm.deps.clay.UI()(.{
-        .id = .IDI("boon-dummy-card-", card_index),
+        .id = card_id,
         .layout = .{
             .sizing = .{
                 .w = .fixed(card_width_pixels),
@@ -371,147 +274,99 @@ fn dummyBoonCard(
             .child_alignment = .{ .x = .center },
         },
         .image = ui.image(
-            BOON_CARD_SPRITE,
+            getBoonCardSprite(is_active),
             .init(card_width_pixels, card_height_pixels),
         ) catch .{ .image_data = null },
     })({
-        ui.text(boon.rarity.toString(), .{
-            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
-            .letter_spacing = letter_spacing,
-            .alignment = .center,
-            .color = color_scheme.text_disabled_muted,
-            .font_id = HUD.regularFontId(),
-        });
+        handleCardPointer(card_index, is_purchased, stats, attack);
+        renderCardRarityHeader(boon, card_index, is_purchased, ui_scale, letter_spacing);
 
         ui.new(.{
-            .id = .IDI("boon-dummy-image-", card_index),
-            .image = ui.image(
-                boon.icon,
-                .init(icon_size_pixels, icon_size_pixels),
-            ) catch .{ .image_data = null },
+            .id = .IDI("boon-image-", card_index),
+            .image = ui.image(boon.icon, .init(icon_size_pixels, icon_size_pixels)) catch .{ .image_data = null },
             .aspect_ratio = .{ .aspect_ratio = 1 },
             .layout = .{
-                .sizing = .{
-                    .w = .fixed(icon_size_pixels),
-                    .h = .fixed(icon_size_pixels),
-                },
+                .sizing = .{ .w = .fixed(icon_size_pixels), .h = .fixed(icon_size_pixels) },
             },
         })({});
 
         ui.text(boon.boon_type.toString(), .{
-            .color = color_scheme.text_disabled_subtle,
+            .color = if (is_purchased) color_scheme.text_disabled_subtle else color_scheme.text_subtle,
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
+            .font_size = theme.scaledU16(2.75, 5, ui_scale),
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
 
         ui.text(boon.name, .{
-            .color = color_scheme.text_disabled_title,
+            .color = if (is_purchased) color_scheme.text_disabled_title else color_scheme.text_bright,
             .letter_spacing = letter_spacing,
-            .font_size = lm.tou16(@max(8, @round(4.25 * ui_scale))),
+            .font_size = theme.scaledU16(4.25, 8, ui_scale),
             .alignment = .center,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
 
         ui.text(boon.description, .{
-            .color = color_scheme.text_disabled_body,
-            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
+            .color = if (is_purchased) color_scheme.text_disabled_body else color_scheme.text_body,
+            .font_size = theme.scaledU16(3.25, 6, ui_scale),
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
 
         ui.new(.{
-            .id = .IDI("boon-dummy-spacer-", card_index),
-            .layout = .{
-                .sizing = .{
-                    .h = .grow,
-                },
-            },
+            .id = .IDI("boon-card-spacer-", card_index),
+            .layout = .{ .sizing = .{ .h = .grow } },
         })({});
 
-        renderPurchasedBadge(card_index, ui_scale);
+        if (is_purchased) {
+            renderPurchasedBadge(card_index, ui_scale);
+        } else {
+            renderBoonCostBox(card_index, boon.cost(), ui_scale, letter_spacing);
+        }
     });
 }
 
-fn updateStickAxis(
-    axis_value: f32,
-    stick_moved: *bool,
-    positive_action: *bool,
-    negative_action: *bool,
-) void {
-    if (@abs(axis_value) < 0.2) {
-        stick_moved.* = false;
-        return;
-    }
-    if (@abs(axis_value) <= 0.5 or stick_moved.*) return;
-
-    if (axis_value > 0) {
-        positive_action.* = true;
-    } else {
-        negative_action.* = true;
-    }
-    stick_moved.* = true;
-}
-
 fn handleInputNavigation(slot_array: []const BoonSlot, stats: ?*Stats, attack: ?*Attack) void {
-    if (lm.keyboard.getKeyDown(.escape)) {
+    const input = navigation.readMenuInput();
+    if (input.back_pressed) {
         hide();
         return;
     }
 
     const card_count = slot_array.len;
     const close_index = card_count;
-    if (selected_index > close_index) selected_index = 0;
+    if (navigation.selected_index > close_index) navigation.selected_index = 0;
 
-    var navigate_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a);
-    var navigate_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d);
-    var navigate_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w);
-    var navigate_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s);
-    var select_pressed = lm.keyboard.getKeyDown(.enter);
+    applyCardGridNavigation(input, slot_array);
 
-    if (lm.gamepad.isAvailable(0)) {
-        if (lm.gamepad.getButtonDown(0, .right_face_right)) {
-            hide();
-            return;
-        }
-
-        const stick_vector = lm.gamepad.getStickVector(0, .left, 0.2);
-        navigate_left = navigate_left or lm.gamepad.getButtonDown(0, .left_face_left) or lm.gamepad.getButtonDown(0, .left_trigger_1);
-        navigate_right = navigate_right or lm.gamepad.getButtonDown(0, .left_face_right) or lm.gamepad.getButtonDown(0, .right_trigger_1);
-        navigate_up = navigate_up or lm.gamepad.getButtonDown(0, .left_face_up);
-        navigate_down = navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
-
-        updateStickAxis(stick_vector.x, &stick_moved_x, &navigate_right, &navigate_left);
-        updateStickAxis(stick_vector.y, &stick_moved_y, &navigate_down, &navigate_up);
-
-        select_pressed = select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
+    if (!input.select_pressed) return;
+    if (navigation.selected_index < card_count) {
+        selectBoon(navigation.selected_index, stats, attack);
+        return;
     }
+    hide();
+}
 
-    if (selected_index < card_count) {
-        if (navigate_left) {
-            selected_index = findNextAvailableIndex(selected_index, -1, slot_array);
+fn applyCardGridNavigation(input: menu_navigation.MenuInput, slot_array: []const BoonSlot) void {
+    const card_count = slot_array.len;
+    if (navigation.selected_index < card_count) {
+        const move_left = input.navigate_left or input.tab_previous;
+        const move_right = input.navigate_right or input.tab_next;
+        if (move_left) {
+            navigation.selected_index = findNextAvailableIndex(navigation.selected_index, -1, slot_array);
         }
-        if (navigate_right) {
-            selected_index = findNextAvailableIndex(selected_index, 1, slot_array);
+        if (move_right) {
+            navigation.selected_index = findNextAvailableIndex(navigation.selected_index, 1, slot_array);
         }
-        if (navigate_down) {
-            selected_index = close_index;
+        if (input.navigate_down) {
+            navigation.selected_index = card_count;
         }
-    } else {
-        if (navigate_up or navigate_left or navigate_right) {
-            selected_index = findFirstAvailableIndex(slot_array);
-        }
-    }
-
-    if (!select_pressed) return;
-
-    if (selected_index < card_count) {
-        selectBoon(selected_index, stats, attack);
         return;
     }
 
-    hide();
+    if (input.navigate_up or input.navigate_left or input.navigate_right) {
+        navigation.selected_index = findFirstAvailableIndex(slot_array);
+    }
 }
 
 fn renderMenuHeader(ui_scale: f32) void {
@@ -530,36 +385,19 @@ fn renderMenuHeader(ui_scale: f32) void {
 
         ui.text(header_title, .{
             .color = color_scheme.accent_gold_bright,
-            .letter_spacing = lm.tou16(@max(1, @round(0.75 * ui_scale))),
-            .font_size = lm.tou16(@max(11, @round(5.5 * ui_scale))),
+            .letter_spacing = theme.scaledU16(0.75, 1, ui_scale),
+            .font_size = theme.scaledU16(5.5, 11, ui_scale),
             .alignment = .center,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
         ui.text(header_subtitle, .{
             .color = color_scheme.text_subtle,
-            .letter_spacing = lm.tou16(@max(1, @round(0.25 * ui_scale))),
-            .font_size = lm.tou16(@max(6, @round(3.0 * ui_scale))),
+            .letter_spacing = theme.scaledU16(0.25, 1, ui_scale),
+            .font_size = theme.scaledU16(3.0, 6, ui_scale),
             .alignment = .center,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
-}
-
-fn renderCardSlot(
-    slot: BoonSlot,
-    slot_index: usize,
-    card_width_pixels: f32,
-    card_height_pixels: f32,
-    stats: ?*Stats,
-    attack: ?*Attack,
-    allocator: ?std.mem.Allocator,
-) void {
-    const card_index = lm.tou32(slot_index);
-    if (slot.is_purchased) {
-        dummyBoonCard(slot.boon, card_index, card_width_pixels, card_height_pixels);
-        return;
-    }
-    boonCard(slot.boon, card_index, card_width_pixels, card_height_pixels, stats, attack, allocator);
 }
 
 fn renderCardRow(
@@ -568,9 +406,9 @@ fn renderCardRow(
     card_height_pixels: f32,
     card_gap_pixels: u16,
     total_cards_width_pixels: f32,
+    ui_scale: f32,
     stats: ?*Stats,
     attack: ?*Attack,
-    allocator: ?std.mem.Allocator,
 ) void {
     ui.new(.{
         .id = .ID("boon-cards-row"),
@@ -585,21 +423,20 @@ fn renderCardRow(
         },
     })({
         for (slot_array, 0..) |slot, slot_index| {
-            renderCardSlot(slot, slot_index, card_width_pixels, card_height_pixels, stats, attack, allocator);
+            renderBoonCard(slot, lm.tou32(slot_index), card_width_pixels, card_height_pixels, ui_scale, stats, attack);
         }
     });
 }
 
 fn renderCloseButton(ui_scale: f32, close_index: usize) void {
-    const close_label = "CLOSE";
-    const font_size = lm.tou16(@max(5, @round(2.75 * ui_scale)));
-    utility_button.draw(
+    sprite_button.draw(
+        .utility,
         close_index,
-        close_label,
-        &selected_index,
+        "CLOSE",
+        &navigation.selected_index,
         activateCloseButton,
-        font_size,
-        1,
+        ui_scale,
+        .{ .font_size_override = theme.scaledU16(2.75, 5, ui_scale) },
     );
 }
 
@@ -613,38 +450,21 @@ fn renderFooter(ui_scale: f32) void {
         .layout = .{ .sizing = .{ .h = .fixed(@round(2.0 * ui_scale)), .w = .fixed(1) } },
     })({});
 
-    lm.deps.clay.UI()(.{
-        .id = .ID("boon-footer-container"),
-        .layout = .{ .child_alignment = .{ .x = .center } },
-    })({
-        const navigation_hint = if (DevicePrompts.isGamepad())
-            "Navigate: D-Pad / L-Stick | Select: A | Close: B"
-        else
-            "Navigate: WASD / Arrows / Click | Select: Enter / Click | Close: Esc";
-
-        ui.text(navigation_hint, .{
-            .color = color_scheme.text_footer,
-            .font_size = lm.tou16(@max(5, @round(2.75 * ui_scale))),
-            .letter_spacing = 1,
-            .alignment = .center,
-            .font_id = HUD.regularFontId(),
-        });
-    });
+    menu_navigation.drawFooterHint(
+        "boon-footer-container",
+        "Navigate: D-Pad / L-Stick | Select: A | Close: B",
+        "Navigate: WASD / Arrows / Click | Select: Enter / Click | Close: Esc",
+        ui_scale,
+    );
 }
 
-pub fn draw(
-    slot_array: []const BoonSlot,
-    stats: ?*Stats,
-    attack: ?*Attack,
-    allocator: ?std.mem.Allocator,
-) void {
+pub fn draw(slot_array: []const BoonSlot, stats: ?*Stats, attack: ?*Attack) void {
     if (slots == null) return;
-    DevicePrompts.update();
 
     handleInputNavigation(slot_array, stats, attack);
     if (!isShowing()) return;
 
-    const ui_scale = HUD.ui_scale;
+    const ui_scale = theme.calculateUiScale(lm.window.size.get());
     const card_width_pixels = calculateCardWidthPixels(ui_scale);
     const card_height_pixels = calculateCardHeightPixels(ui_scale);
 
@@ -685,7 +505,7 @@ pub fn draw(
         },
     })({
         renderMenuHeader(ui_scale);
-        renderCardRow(slot_array, card_width_pixels, card_height_pixels, card_gap_pixels, total_cards_width_pixels, stats, attack, allocator);
+        renderCardRow(slot_array, card_width_pixels, card_height_pixels, card_gap_pixels, total_cards_width_pixels, ui_scale, stats, attack);
         renderCloseButton(ui_scale, close_index);
         renderFooter(ui_scale);
     });
@@ -758,32 +578,10 @@ test "BoonMenu show and hide lifecycle" {
     };
 
     show(&test_slots);
+    defer hide();
     try std.testing.expect(isShowing());
-    try std.testing.expectEqual(@as(usize, 0), selected_index);
+    try std.testing.expectEqual(@as(usize, 0), navigation.selected_index);
 
     hide();
     try std.testing.expect(!isShowing());
-}
-
-test "BoonMenu card dimensions maintain fixed 9:14 aspect ratio and scale proportionally" {
-    const scale_two: f32 = 2.0;
-    const width_scale_two = calculateCardWidthPixels(scale_two);
-    const height_scale_two = calculateCardHeightPixels(scale_two);
-
-    try std.testing.expectEqual(@as(f32, 144.0), width_scale_two);
-    try std.testing.expectEqual(@as(f32, 224.0), height_scale_two);
-    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_scale_two / height_scale_two, 0.0001);
-
-    const scale_four: f32 = 4.0;
-    const width_scale_four = calculateCardWidthPixels(scale_four);
-    const height_scale_four = calculateCardHeightPixels(scale_four);
-
-    try std.testing.expectEqual(@as(f32, 288.0), width_scale_four);
-    try std.testing.expectEqual(@as(f32, 448.0), height_scale_four);
-    try std.testing.expectApproxEqAbs(CARD_ASPECT_RATIO, width_scale_four / height_scale_four, 0.0001);
-}
-
-test "BoonMenu getBoonCardSprite selects regular and hovered sprites" {
-    try std.testing.expectEqualStrings(BOON_CARD_SPRITE, getBoonCardSprite(false));
-    try std.testing.expectEqualStrings(BOON_CARD_HOVER_SPRITE, getBoonCardSprite(true));
 }

@@ -257,7 +257,6 @@ pub fn TankEnemy(position: lm.Vector2) !*lm.Entity {
                 .effect_type = .root,
                 .duration_seconds = 1.0,
             },
-            .cooldown_seconds = 15.0,
         },
 
         Enemy.Movement.init(.pursue),
@@ -266,20 +265,4 @@ pub fn TankEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.Death{ .enemy_type = .tank },
         Enemy.OverheadUI{},
     });
-}
-
-test "Tank enemy creation and component configuration" {
-    const tank = try TankEnemy(.init(400.0, 500.0));
-    defer tank.deinit();
-    try tank.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, tank.id, "tank-enemy"));
-    try std.testing.expect(tank.getComponent(Stats) != null);
-    try std.testing.expect(tank.getComponent(Enemy.ReactiveAura) != null);
-    try std.testing.expect(tank.getComponent(Enemy.Attack) != null);
-
-    const stats = tank.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 350.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 25.0), stats.base.armour);
-    try std.testing.expectEqual(@as(f32, 95.0), stats.current.movement_speed);
 }

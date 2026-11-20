@@ -7,8 +7,9 @@ const AudioManager = @import("../audio/AudioManager.zig");
 const SaveSystem = @import("../save/SaveSystem.zig");
 const DevicePrompts = @import("../input/DevicePrompts.zig");
 const ControlScheme = @import("../input/ControlScheme.zig");
-const HUD = @import("../HUD.zig");
-const utility_button = @import("buttons/utility_button.zig");
+const theme = @import("theme.zig");
+const sprite_button = @import("buttons/sprite_button.zig");
+const menu_navigation = @import("menu_navigation.zig");
 const color_scheme = @import("color_scheme.zig");
 
 /// Tabs available in the options menu.
@@ -16,6 +17,15 @@ pub const OptionsTab = enum {
     audio,
     display,
     controls,
+
+    /// Display label rendered on the tab button.
+    pub fn caption(self: OptionsTab) []const u8 {
+        return switch (self) {
+            .audio => "AUDIO",
+            .display => "DISPLAY",
+            .controls => "CONTROLS",
+        };
+    }
 };
 
 /// Volume channels adjustable in the audio tab.
@@ -23,65 +33,101 @@ pub const VolumeType = enum {
     master,
     music,
     sfx,
+
+    /// Display label rendered on the audio slider row.
+    pub fn label(self: VolumeType) []const u8 {
+        return switch (self) {
+            .master => "Master Volume",
+            .music => "Music Volume",
+            .sfx => "SFX Volume",
+        };
+    }
+
+    /// Current normalized [0, 1] volume value from AudioManager.
+    pub fn value(self: VolumeType) f32 {
+        return switch (self) {
+            .master => AudioManager.master_volume,
+            .music => AudioManager.music_volume,
+            .sfx => AudioManager.sfx_volume,
+        };
+    }
 };
 
-/// Currently active options tab.
-pub var options_tab: OptionsTab = .audio;
+pub const TAB_COUNT: usize = @typeInfo(OptionsTab).@"enum".field_names.len;
+pub const VOLUME_COUNT: usize = @typeInfo(VolumeType).@"enum".field_names.len;
+pub const MUTE_ROW_INDEX: usize = VOLUME_COUNT;
+pub const AUDIO_BACK_INDEX: usize = VOLUME_COUNT + 1;
 
 /// Element ID index offset for tab bar buttons to avoid collision with row indices.
 pub const TAB_BUTTON_INDEX_OFFSET: usize = 100;
 
-/// Currently selected row index within the active tab.
-pub var selected_index: usize = 0;
+/// Currently active options tab.
+pub var options_tab: OptionsTab = .audio;
 
-/// Previously selected row index used to trigger audio feedback on selection changes.
-pub var previous_selected_index: usize = 0;
+/// Shared navigation selection, stick latching, and open-guard state.
+pub var navigation: menu_navigation.NavigationState = .{};
 
-var stick_moved_x: bool = false;
-var stick_moved_y: bool = false;
-var just_opened: bool = false;
 var back_button_clicked: bool = false;
 
-const NavigationInputState = struct {
-    navigate_up: bool,
-    navigate_down: bool,
-    navigate_left: bool,
-    navigate_right: bool,
-    select_pressed: bool,
-    back_pressed: bool,
-    tab_previous: bool,
-    tab_next: bool,
+const ToggleRowSpec = struct {
+    row_id: []const u8,
+    row_index: usize,
+    label_id: []const u8,
+    label_text: []const u8,
+    label_width_pixels: f32,
+    button_caption: []const u8,
+    action: sprite_button.ActionFn,
+    font_size_override: ?u16 = null,
+    letter_spacing: u16 = 1,
 };
 
-const ControlBinding = struct {
-    action: []const u8,
-    keyboard_and_mouse: []const u8,
-    gamepad: []const u8,
+const ControlRowSpec = struct {
+    action_name: []const u8,
+    prompt_action: ?DevicePrompts.PromptAction = null,
+    static_keyboard_and_mouse: []const u8 = "",
+    static_keyboard_only: []const u8 = "",
+    static_gamepad: []const u8 = "",
+};
+
+const control_row_specs = [_]ControlRowSpec{
+    .{
+        .action_name = "Move",
+        .static_keyboard_and_mouse = "W, A, S, D",
+        .static_keyboard_only = "W, A, S, D",
+        .static_gamepad = "Left Stick",
+    },
+    .{
+        .action_name = "Aim / Look",
+        .static_keyboard_and_mouse = "Mouse Cursor",
+        .static_keyboard_only = "Arrow Keys (8-Way)",
+        .static_gamepad = "Right Stick",
+    },
+    .{ .action_name = "Light Attack", .prompt_action = .attack_primary },
+    .{ .action_name = "Heavy Attack", .prompt_action = .attack_secondary },
+    .{ .action_name = "Dash", .prompt_action = .dash },
+    .{ .action_name = "Cast Spell 1", .prompt_action = .spell_0 },
+    .{ .action_name = "Cast Spell 2", .prompt_action = .spell_1 },
+    .{ .action_name = "Switch Weapon", .prompt_action = .switch_weapon },
+    .{ .action_name = "Interact", .prompt_action = .interact },
+    .{ .action_name = "Pause / Menu", .prompt_action = .pause },
 };
 
 /// Resets the options menu state to default audio tab and zero selection.
 pub fn reset() void {
     options_tab = .audio;
-    selected_index = 0;
-    previous_selected_index = 0;
-    stick_moved_x = false;
-    stick_moved_y = false;
-    just_opened = true;
+    navigation.reset(true);
 }
 
 /// Draws the options menu panel, processes user input, and returns true if the menu was requested to close.
 pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocator) bool {
+    _ = allocator;
     back_button_clicked = false;
 
-    const should_exit = if (just_opened) should_exit: {
-        just_opened = false;
-        break :should_exit false;
-    } else handleInput();
+    const should_exit = if (navigation.consumeJustOpened()) false else handleInput();
 
     const panel_width_pixels = @min(window_size.x - 48, @round(170.0 * ui_scale));
     const panel_height_pixels = @min(window_size.y - 48, @round(130.0 * ui_scale));
     const panel_padding_pixels = lm.tou16(@round(5.0 * ui_scale));
-    const title_font_size = lm.tou16(@max(10, @round(5.0 * ui_scale)));
 
     ui.new(.{
         .id = .ID("shared-options-panel"),
@@ -102,22 +148,13 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
             .width = .outside(1),
         },
     })({
-        drawTitle(title_font_size);
+        drawTitle(theme.scaledU16(5.0, 10, ui_scale));
         drawOptionsTabs(ui_scale);
-
-        switch (options_tab) {
-            .audio => drawAudioTab(panel_width_pixels, ui_scale, allocator),
-            .display => drawDisplayTab(panel_width_pixels, ui_scale),
-            .controls => drawControlsTab(panel_width_pixels, ui_scale),
-        }
-
+        drawActiveTabContent(panel_width_pixels, ui_scale);
         drawBackButton(ui_scale);
     });
 
-    if (selected_index != previous_selected_index) {
-        AudioManager.playSfxPitched("audio/sfx/click.wav", 0.35, 0.1);
-        previous_selected_index = selected_index;
-    }
+    navigation.syncSelectionAudio();
 
     if (should_exit or back_button_clicked) {
         AudioManager.playSfxPitched("audio/sfx/click.wav", 0.5, 0.0);
@@ -125,6 +162,14 @@ pub fn draw(ui_scale: f32, window_size: lm.Vector2, allocator: ?std.mem.Allocato
     }
 
     return false;
+}
+
+fn drawActiveTabContent(panel_width_pixels: f32, ui_scale: f32) void {
+    switch (options_tab) {
+        .audio => drawAudioTab(panel_width_pixels, ui_scale),
+        .display => drawDisplayTab(panel_width_pixels, ui_scale),
+        .controls => drawControlsTab(panel_width_pixels, ui_scale),
+    }
 }
 
 fn drawTitle(title_font_size: u16) void {
@@ -137,16 +182,15 @@ fn drawTitle(title_font_size: u16) void {
             .font_size = title_font_size,
             .letter_spacing = 2,
             .alignment = .center,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
 
 fn drawOptionsTabs(ui_scale: f32) void {
-    const tab_font_size = lm.tou16(@max(6, @round(3.25 * ui_scale)));
-    const is_gamepad = DevicePrompts.isGamepad();
-    const previous_hint = if (is_gamepad) "LB" else "Q";
-    const next_hint = if (is_gamepad) "RB" else "E";
+    const tab_font_size = theme.scaledU16(3.25, 6, ui_scale);
+    const previous_hint = DevicePrompts.getActionPrompt(.tab_prev).label;
+    const next_hint = DevicePrompts.getActionPrompt(.tab_next).label;
 
     ui.new(.{
         .id = .ID("opt-tabs-bar"),
@@ -158,32 +202,18 @@ fn drawOptionsTabs(ui_scale: f32) void {
     })({
         drawTabHintBadge("opt-tab-hint-left", previous_hint, ui_scale);
 
-        var active_tab_button_index: usize = TAB_BUTTON_INDEX_OFFSET + @backingInt(options_tab);
-
-        utility_button.draw(
-            TAB_BUTTON_INDEX_OFFSET + @backingInt(OptionsTab.audio),
-            "AUDIO",
-            &active_tab_button_index,
-            activateTabButton,
-            tab_font_size,
-            1,
-        );
-        utility_button.draw(
-            TAB_BUTTON_INDEX_OFFSET + @backingInt(OptionsTab.display),
-            "DISPLAY",
-            &active_tab_button_index,
-            activateTabButton,
-            tab_font_size,
-            1,
-        );
-        utility_button.draw(
-            TAB_BUTTON_INDEX_OFFSET + @backingInt(OptionsTab.controls),
-            "CONTROLS",
-            &active_tab_button_index,
-            activateTabButton,
-            tab_font_size,
-            1,
-        );
+        var active_tab_button_index: usize = TAB_BUTTON_INDEX_OFFSET + @intFromEnum(options_tab);
+        inline for (std.enums.values(OptionsTab)) |tab| {
+            sprite_button.draw(
+                .utility,
+                TAB_BUTTON_INDEX_OFFSET + @intFromEnum(tab),
+                tab.caption(),
+                &active_tab_button_index,
+                activateTabButton,
+                ui_scale,
+                .{ .font_size_override = tab_font_size },
+            );
+        }
 
         drawTabHintBadge("opt-tab-hint-right", next_hint, ui_scale);
     });
@@ -192,7 +222,7 @@ fn drawOptionsTabs(ui_scale: f32) void {
 fn activateTabButton(button_index: usize) void {
     if (button_index < TAB_BUTTON_INDEX_OFFSET) return;
     const tab_index = button_index - TAB_BUTTON_INDEX_OFFSET;
-    const tabs = [_]OptionsTab{ .audio, .display, .controls };
+    const tabs = std.enums.values(OptionsTab);
     if (tab_index >= tabs.len) return;
     setTab(tabs[tab_index]);
 }
@@ -203,8 +233,8 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
         .id = .ID(identifier_string),
         .layout = .{
             .padding = .axes(
-                lm.tou16(@max(1, @round(0.75 * ui_scale))),
-                lm.tou16(@max(2, @round(1.5 * ui_scale))),
+                theme.scaledU16(0.75, 1, ui_scale),
+                theme.scaledU16(1.5, 2, ui_scale),
             ),
             .child_alignment = .{ .x = .center, .y = .center },
         },
@@ -217,14 +247,14 @@ fn drawTabHintBadge(identifier_string: []const u8, hint: []const u8, ui_scale: f
     })({
         ui.text(hint, .{
             .color = color_scheme.badge_text,
-            .font_size = lm.tou16(@max(5, @round(2.5 * ui_scale))),
+            .font_size = theme.scaledU16(2.5, 5, ui_scale),
             .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
 
-fn drawAudioTab(panel_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allocator) void {
+fn drawAudioTab(panel_width_pixels: f32, ui_scale: f32) void {
     const content_width_pixels = panel_width_pixels - @round(12.0 * ui_scale);
     const row_height_pixels = @round(10.5 * ui_scale);
 
@@ -237,37 +267,42 @@ fn drawAudioTab(panel_width_pixels: f32, ui_scale: f32, allocator: ?std.mem.Allo
             .child_alignment = .{ .x = .center },
         },
     })({
-        drawVolumeRow(0, .master, "Master Volume", AudioManager.master_volume, content_width_pixels, row_height_pixels, ui_scale, allocator);
-        drawVolumeRow(1, .music, "Music Volume", AudioManager.music_volume, content_width_pixels, row_height_pixels, ui_scale, allocator);
-        drawVolumeRow(2, .sfx, "SFX Volume", AudioManager.sfx_volume, content_width_pixels, row_height_pixels, ui_scale, allocator);
-        drawMuteRow(3, content_width_pixels, row_height_pixels, ui_scale);
+        inline for (std.enums.values(VolumeType)) |volume_type| {
+            drawVolumeRow(@intFromEnum(volume_type), volume_type, content_width_pixels, row_height_pixels, ui_scale);
+        }
+
+        drawToggleRow(.{
+            .row_id = "opt-mute-row",
+            .row_index = MUTE_ROW_INDEX,
+            .label_id = "opt-mute-label-wrap",
+            .label_text = "Mute All Audio",
+            .label_width_pixels = @round(45.0 * ui_scale),
+            .button_caption = if (AudioManager.mute) "MUTED" else "UNMUTED",
+            .action = activateMuteButton,
+            .font_size_override = theme.scaledU16(2.5, 5, ui_scale),
+        }, content_width_pixels, row_height_pixels, ui_scale);
     });
 }
 
 fn drawVolumeRow(
     index: usize,
-    kind: VolumeType,
-    label: []const u8,
-    value: f32,
+    volume_type: VolumeType,
     row_width_pixels: f32,
     row_height_pixels: f32,
     ui_scale: f32,
-    allocator: ?std.mem.Allocator,
 ) void {
-    const is_selected = (selected_index == index);
+    const is_selected = (navigation.selected_index == index);
+    const value = volume_type.value();
     const percentage = @as(u32, @intFromFloat(@round(value * 100.0)));
-    const button_size_pixels = @round(HUD.UTILITY_BUTTON_BASE_H * ui_scale);
+    const button_size_pixels = @round(theme.UTILITY_BUTTON_BASE_HEIGHT * ui_scale);
     const bar_total_width_pixels = @round(40.0 * ui_scale);
     const bar_height_pixels = @round(2.5 * ui_scale);
     const gap_width_pixels = @round(2.5 * ui_scale);
-
-    const percentage_text = if (allocator) |current_allocator|
-        std.fmt.allocPrint(current_allocator, "{d}%", .{percentage}) catch "0%"
-    else
-        "0%";
+    const row_id = clay.ElementId.IDI("opt-vol-row-", @intCast(index));
+    const is_highlighted = clay.pointerOver(row_id) or is_selected;
 
     clay.UI()(.{
-        .id = .IDI("opt-vol-row-", @intCast(index)),
+        .id = row_id,
         .layout = .{
             .sizing = .{
                 .w = .fixed(row_width_pixels),
@@ -280,28 +315,28 @@ fn drawVolumeRow(
                 lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
-        .background_color = if (clay.hovered() or is_selected)
+        .background_color = if (is_highlighted)
             color_scheme.row_selected_warm_background
         else
             color_scheme.row_dark_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
-            .color = if (clay.hovered() or is_selected)
+            .color = if (is_highlighted)
                 color_scheme.accent_gold_border
             else
                 color_scheme.row_idle_border,
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
+            .width = .outside(if (is_highlighted) 2 else 1),
         },
     })({
-        if (clay.hovered()) selected_index = index;
+        if (clay.hovered()) navigation.selected_index = index;
 
-        drawVolumeLabel(index, label, is_selected, ui_scale);
-        drawVolumeStepButton(index, kind, -0.05, "-", button_size_pixels, ui_scale, "opt-vol-dec-");
+        drawVolumeLabel(index, volume_type.label(), is_selected, ui_scale);
+        drawVolumeStepButton(index, volume_type, -0.05, "-", button_size_pixels, ui_scale, "opt-vol-dec-");
         drawVolumeGap("opt-vol-gap-1-", index, gap_width_pixels);
         drawVolumeProgressBar(index, value, is_selected, bar_total_width_pixels, bar_height_pixels, ui_scale);
         drawVolumeGap("opt-vol-gap-2-", index, gap_width_pixels);
-        drawVolumeStepButton(index, kind, 0.05, "+", button_size_pixels, ui_scale, "opt-vol-inc-");
-        drawVolumePercentage(index, percentage_text, is_selected, ui_scale);
+        drawVolumeStepButton(index, volume_type, 0.05, "+", button_size_pixels, ui_scale, "opt-vol-inc-");
+        drawVolumePercentage(index, percentage, is_selected, ui_scale);
     });
 }
 
@@ -312,16 +347,16 @@ fn drawVolumeLabel(index: usize, label: []const u8, is_selected: bool, ui_scale:
     })({
         ui.text(label, .{
             .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
-            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
+            .font_size = theme.scaledU16(3.25, 6, ui_scale),
             .letter_spacing = 1,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 }
 
 fn drawVolumeStepButton(
     index: usize,
-    kind: VolumeType,
+    volume_type: VolumeType,
     delta: f32,
     symbol: []const u8,
     button_size_pixels: f32,
@@ -336,17 +371,17 @@ fn drawVolumeStepButton(
             .sizing = .{ .w = .fixed(button_size_pixels), .h = .fixed(button_size_pixels) },
             .child_alignment = .{ .x = .center, .y = .center },
         },
-        .background_color = if (clay.hovered() or is_hovered) color_scheme.step_button_hovered_background else color_scheme.step_button_idle_background,
+        .background_color = if (is_hovered) color_scheme.step_button_hovered_background else color_scheme.step_button_idle_background,
     })({
         if ((clay.hovered() or is_hovered) and lm.mouse.getButtonDown(.left)) {
-            selected_index = index;
-            adjustVolume(kind, delta);
+            navigation.selected_index = index;
+            adjustVolume(volume_type, delta);
         }
         ui.text(symbol, .{
             .color = color_scheme.text_bright,
-            .font_size = lm.tou16(@max(8, @round(4.0 * ui_scale))),
+            .font_size = theme.scaledU16(4.0, 8, ui_scale),
             .alignment = .center,
-            .font_id = HUD.boldFontId(),
+            .font_id = theme.boldFontId(),
         });
     });
 }
@@ -381,12 +416,7 @@ fn drawVolumeProgressBar(
     });
 }
 
-fn drawVolumeBarFill(
-    index: usize,
-    filled_width_pixels: f32,
-    is_selected: bool,
-    ui_scale: f32,
-) void {
+fn drawVolumeBarFill(index: usize, filled_width_pixels: f32, is_selected: bool, ui_scale: f32) void {
     if (filled_width_pixels <= 0.5) return;
 
     const fill_color = if (AudioManager.mute)
@@ -404,12 +434,7 @@ fn drawVolumeBarFill(
     })({});
 }
 
-fn drawVolumePercentage(
-    index: usize,
-    percentage_text: []const u8,
-    is_selected: bool,
-    ui_scale: f32,
-) void {
+fn drawVolumePercentage(index: usize, percentage: u32, is_selected: bool, ui_scale: f32) void {
     ui.new(.{
         .id = .IDI("opt-vol-pct-", @intCast(index)),
         .layout = .{
@@ -417,21 +442,27 @@ fn drawVolumePercentage(
             .child_alignment = .{ .x = .right, .y = .center },
         },
     })({
-        ui.text(percentage_text, .{
+        ui.textFmt("{d}%", .{percentage}, .{
             .color = if (is_selected) color_scheme.accent_gold else color_scheme.text_secondary,
-            .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
+            .font_size = theme.scaledU16(3.25, 6, ui_scale),
             .alignment = .right,
-            .font_id = HUD.regularFontId(),
+            .font_id = theme.regularFontId(),
         });
     });
 }
 
-fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_scale: f32) void {
-    const is_selected = (selected_index == index);
-    const is_muted = AudioManager.mute;
+fn drawToggleRow(
+    spec: ToggleRowSpec,
+    row_width_pixels: f32,
+    row_height_pixels: f32,
+    ui_scale: f32,
+) void {
+    const is_selected = (navigation.selected_index == spec.row_index);
+    const row_id = clay.ElementId.ID(spec.row_id);
+    const is_highlighted = clay.pointerOver(row_id) or is_selected;
 
     clay.UI()(.{
-        .id = .IDI("opt-mute-row-", @intCast(index)),
+        .id = row_id,
         .layout = .{
             .sizing = .{
                 .w = .fixed(row_width_pixels),
@@ -444,38 +475,47 @@ fn drawMuteRow(index: usize, row_width_pixels: f32, row_height_pixels: f32, ui_s
                 lm.tou16(@round(4.0 * ui_scale)),
             ),
         },
-        .background_color = if (clay.hovered() or is_selected)
+        .background_color = if (is_highlighted)
             color_scheme.row_selected_background
         else
             color_scheme.row_idle_background,
         .corner_radius = .all(1.5 * ui_scale),
         .border = .{
-            .color = if (clay.hovered() or is_selected)
+            .color = if (is_highlighted)
                 color_scheme.accent_gold_border
             else
                 color_scheme.row_idle_border,
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
+            .width = .outside(if (is_highlighted) 2 else 1),
         },
     })({
         if (clay.hovered()) {
-            selected_index = index;
+            navigation.selected_index = spec.row_index;
         }
 
         ui.new(.{
-            .id = .ID("opt-mute-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(45.0 * ui_scale)) } },
+            .id = .ID(spec.label_id),
+            .layout = .{ .sizing = .{ .w = .fixed(spec.label_width_pixels) } },
         })({
-            ui.text("Mute All Audio", .{
+            ui.text(spec.label_text, .{
                 .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
-                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
+                .font_size = theme.scaledU16(3.25, 6, ui_scale),
                 .letter_spacing = 1,
-                .font_id = HUD.regularFontId(),
+                .font_id = theme.regularFontId(),
             });
         });
 
-        const mute_caption = if (is_muted) "MUTED" else "UNMUTED";
-        const badge_font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
-        utility_button.draw(index, mute_caption, &selected_index, activateMuteButton, badge_font_size, 1);
+        sprite_button.draw(
+            .utility,
+            spec.row_index,
+            spec.button_caption,
+            &navigation.selected_index,
+            spec.action,
+            ui_scale,
+            .{
+                .font_size_override = spec.font_size_override,
+                .letter_spacing = spec.letter_spacing,
+            },
+        );
     });
 }
 
@@ -496,60 +536,16 @@ fn drawDisplayTab(panel_width_pixels: f32, ui_scale: f32) void {
             .child_alignment = .{ .x = .center },
         },
     })({
-        drawFullscreenRow(content_width_pixels, row_height_pixels, ui_scale);
-    });
-}
-
-fn drawFullscreenRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale: f32) void {
-    const is_selected = (selected_index == 0);
-    const is_fullscreen = lm.window.fullscreen.get();
-
-    clay.UI()(.{
-        .id = .ID("opt-fullscreen-row"),
-        .layout = .{
-            .sizing = .{
-                .w = .fixed(content_width_pixels),
-                .h = .fixed(row_height_pixels),
-            },
-            .direction = .left_to_right,
-            .child_alignment = .{ .y = .center },
-            .padding = .axes(
-                lm.tou16(@round(1.0 * ui_scale)),
-                lm.tou16(@round(4.0 * ui_scale)),
-            ),
-        },
-        .background_color = if (clay.hovered() or is_selected)
-            color_scheme.row_selected_background
-        else
-            color_scheme.row_idle_background,
-        .corner_radius = .all(1.5 * ui_scale),
-        .border = .{
-            .color = if (clay.hovered() or is_selected)
-                color_scheme.accent_gold_border
-            else
-                color_scheme.row_idle_border,
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
-        },
-    })({
-        if (clay.hovered()) {
-            selected_index = 0;
-        }
-
-        ui.new(.{
-            .id = .ID("opt-fullscreen-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
-        })({
-            ui.text("Display Mode", .{
-                .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
-                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
-                .letter_spacing = 1,
-                .font_id = HUD.regularFontId(),
-            });
-        });
-
-        const fullscreen_caption = if (is_fullscreen) "FULLSCREEN" else "WINDOWED";
-        const badge_font_size = lm.tou16(@max(5, @round(2.5 * ui_scale)));
-        utility_button.draw(0, fullscreen_caption, &selected_index, activateFullscreenButton, badge_font_size, 1);
+        drawToggleRow(.{
+            .row_id = "opt-fullscreen-row",
+            .row_index = 0,
+            .label_id = "opt-fullscreen-label-wrap",
+            .label_text = "Display Mode",
+            .label_width_pixels = @round(55.0 * ui_scale),
+            .button_caption = if (lm.window.fullscreen.get()) "FULLSCREEN" else "WINDOWED",
+            .action = activateFullscreenButton,
+            .font_size_override = theme.scaledU16(2.5, 5, ui_scale),
+        }, content_width_pixels, row_height_pixels, ui_scale);
     });
 }
 
@@ -559,24 +555,10 @@ fn activateFullscreenButton(_: usize) void {
 
 fn drawControlsTab(panel_width_pixels: f32, ui_scale: f32) void {
     const content_width_pixels = panel_width_pixels - @round(12.0 * ui_scale);
-    const header_font_size = lm.tou16(@max(6, @round(3.0 * ui_scale)));
-    const row_font_size = lm.tou16(@max(6, @round(3.0 * ui_scale)));
+    const row_font_size = theme.scaledU16(3.0, 6, ui_scale);
     const row_height_pixels = @round(9.0 * ui_scale);
     const is_gamepad = DevicePrompts.isGamepad();
     const active_scheme = ControlScheme.getControlScheme();
-    const is_keyboard_only = (active_scheme == .keyboard_only);
-
-    const bindings = [_]ControlBinding{
-        .{ .action = "Move", .keyboard_and_mouse = "W, A, S, D", .gamepad = "Left Stick" },
-        .{ .action = "Aim / Look", .keyboard_and_mouse = if (is_keyboard_only) "Arrow Keys (8-Way)" else "Mouse Cursor", .gamepad = "Right Stick" },
-        .{ .action = "Light Attack", .keyboard_and_mouse = if (is_keyboard_only) "Arrow Keys" else "Left Mouse Button", .gamepad = "Right Trigger (RT)" },
-        .{ .action = "Heavy Attack", .keyboard_and_mouse = if (is_keyboard_only) "Shift + Arrow Keys" else "Right Mouse Button", .gamepad = "Left Trigger (LT)" },
-        .{ .action = "Dash", .keyboard_and_mouse = "Spacebar", .gamepad = "A Button (South)" },
-        .{ .action = "Cast Spell 1", .keyboard_and_mouse = "Q Key", .gamepad = "Left Bumper (LB)" },
-        .{ .action = "Cast Spell 2", .keyboard_and_mouse = "E Key", .gamepad = "Right Bumper (RB)" },
-        .{ .action = "Interact", .keyboard_and_mouse = "F Key", .gamepad = "X Button (West)" },
-        .{ .action = "Pause / Menu", .keyboard_and_mouse = "Escape", .gamepad = "Start / Options" },
-    };
 
     ui.new(.{
         .id = .ID("opt-controls-content"),
@@ -586,64 +568,23 @@ fn drawControlsTab(panel_width_pixels: f32, ui_scale: f32) void {
             .child_gap = lm.tou16(@round(0.75 * ui_scale)),
         },
     })({
-        drawControlSchemeRow(content_width_pixels, row_height_pixels, ui_scale);
-        drawControlsTableHeader(content_width_pixels, header_font_size, ui_scale);
+        drawToggleRow(.{
+            .row_id = "opt-scheme-row",
+            .row_index = 0,
+            .label_id = "opt-scheme-label-wrap",
+            .label_text = "Control Scheme",
+            .label_width_pixels = @round(55.0 * ui_scale),
+            .button_caption = active_scheme.displayName(),
+            .action = activateControlSchemeButton,
+            .font_size_override = theme.scaledU16(2.0, 4, ui_scale),
+            .letter_spacing = 0,
+        }, content_width_pixels, row_height_pixels, ui_scale);
 
-        for (bindings, 0..) |binding, binding_index| {
-            drawControlBindingRow(binding, binding_index, content_width_pixels, row_font_size, is_gamepad, ui_scale);
+        drawControlsTableHeader(content_width_pixels, row_font_size, ui_scale);
+
+        inline for (control_row_specs, 0..) |row_spec, binding_index| {
+            drawControlBindingRow(row_spec, binding_index, content_width_pixels, row_font_size, is_gamepad, ui_scale);
         }
-    });
-}
-
-fn drawControlSchemeRow(content_width_pixels: f32, row_height_pixels: f32, ui_scale: f32) void {
-    const active_scheme = ControlScheme.getControlScheme();
-    const is_selected = (selected_index == 0);
-
-    clay.UI()(.{
-        .id = .ID("opt-scheme-row"),
-        .layout = .{
-            .sizing = .{
-                .w = .fixed(content_width_pixels),
-                .h = .fixed(row_height_pixels),
-            },
-            .direction = .left_to_right,
-            .child_alignment = .{ .y = .center },
-            .padding = .axes(
-                lm.tou16(@round(1.0 * ui_scale)),
-                lm.tou16(@round(4.0 * ui_scale)),
-            ),
-        },
-        .background_color = if (clay.hovered() or is_selected)
-            color_scheme.row_selected_background
-        else
-            color_scheme.row_idle_background,
-        .corner_radius = .all(1.5 * ui_scale),
-        .border = .{
-            .color = if (clay.hovered() or is_selected)
-                color_scheme.accent_gold_border
-            else
-                color_scheme.row_idle_border,
-            .width = .outside(if (clay.hovered() or is_selected) 2 else 1),
-        },
-    })({
-        if (clay.hovered()) {
-            selected_index = 0;
-        }
-
-        ui.new(.{
-            .id = .ID("opt-scheme-label-wrap"),
-            .layout = .{ .sizing = .{ .w = .fixed(@round(55.0 * ui_scale)) } },
-        })({
-            ui.text("Control Scheme", .{
-                .color = if (is_selected) color_scheme.text_highlight_gold else color_scheme.text_primary,
-                .font_size = lm.tou16(@max(6, @round(3.25 * ui_scale))),
-                .letter_spacing = 1,
-                .font_id = HUD.regularFontId(),
-            });
-        });
-
-        const badge_font_size = lm.tou16(@max(4, @round(2.0 * ui_scale)));
-        utility_button.draw(0, active_scheme.displayName(), &selected_index, activateControlSchemeButton, badge_font_size, 0);
     });
 }
 
@@ -667,62 +608,38 @@ fn drawControlsTableHeader(content_width_pixels: f32, header_font_size: u16, ui_
         .background_color = color_scheme.table_header_background,
         .corner_radius = .all(1.0 * ui_scale),
     })({
-        drawControlsHeaderCell("opt-table-header-1", @round(40.0 * ui_scale), "ACTION", color_scheme.accent_gold, header_font_size);
+        drawTableCell(.ID("opt-table-header-1"), @round(40.0 * ui_scale), "ACTION", color_scheme.accent_gold, header_font_size, true);
 
         const keyboard_and_mouse_header = if (!is_gamepad)
             (if (is_keyboard_only) "KEYBOARD ONLY (ACTIVE)" else "KEYBOARD & MOUSE (ACTIVE)")
         else
             active_scheme.displayName();
         const keyboard_color = if (!is_gamepad) color_scheme.text_active_device else color_scheme.text_muted;
-        drawControlsHeaderCell("opt-table-header-2", @round(47.5 * ui_scale), keyboard_and_mouse_header, keyboard_color, header_font_size);
+        drawTableCell(.ID("opt-table-header-2"), @round(47.5 * ui_scale), keyboard_and_mouse_header, keyboard_color, header_font_size, true);
 
         const gamepad_header = if (is_gamepad) "CONTROLLER (ACTIVE)" else "CONTROLLER";
         const gamepad_color = if (is_gamepad) color_scheme.text_active_device else color_scheme.text_muted;
-        drawControlsHeaderGrowCell("opt-table-header-3", gamepad_header, gamepad_color, header_font_size);
+        drawTableCell(.ID("opt-table-header-3"), null, gamepad_header, gamepad_color, header_font_size, true);
     });
 }
 
-fn drawControlsHeaderCell(
-    identifier_string: []const u8,
-    width_pixels: f32,
-    header_text: []const u8,
-    text_color: clay.Color,
-    font_size: u16,
-) void {
-    ui.new(.{
-        .id = .ID(identifier_string),
-        .layout = .{ .sizing = .{ .w = .fixed(width_pixels) } },
-    })({
-        ui.text(header_text, .{
-            .color = text_color,
-            .font_size = font_size,
-            .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
-        });
-    });
-}
+fn resolveControlCellLabels(row_spec: ControlRowSpec) struct { keyboard_and_mouse: []const u8, gamepad: []const u8 } {
+    if (row_spec.prompt_action) |prompt_action| {
+        return .{
+            .keyboard_and_mouse = DevicePrompts.getDeviceActionPrompt(.keyboard_mouse, prompt_action).label,
+            .gamepad = DevicePrompts.getDeviceActionPrompt(.gamepad, prompt_action).label,
+        };
+    }
 
-fn drawControlsHeaderGrowCell(
-    identifier_string: []const u8,
-    header_text: []const u8,
-    text_color: clay.Color,
-    font_size: u16,
-) void {
-    ui.new(.{
-        .id = .ID(identifier_string),
-        .layout = .{ .sizing = .{ .w = .grow } },
-    })({
-        ui.text(header_text, .{
-            .color = text_color,
-            .font_size = font_size,
-            .letter_spacing = 1,
-            .font_id = HUD.boldFontId(),
-        });
-    });
+    const is_keyboard_only = (ControlScheme.getControlScheme() == .keyboard_only);
+    return .{
+        .keyboard_and_mouse = if (is_keyboard_only) row_spec.static_keyboard_only else row_spec.static_keyboard_and_mouse,
+        .gamepad = row_spec.static_gamepad,
+    };
 }
 
 fn drawControlBindingRow(
-    binding: ControlBinding,
+    row_spec: ControlRowSpec,
     binding_index: usize,
     content_width_pixels: f32,
     row_font_size: u16,
@@ -731,6 +648,7 @@ fn drawControlBindingRow(
 ) void {
     const is_even = (binding_index % 2 == 0);
     const background = if (is_even) color_scheme.table_row_even_background else color_scheme.table_row_odd_background;
+    const labels = resolveControlCellLabels(row_spec);
 
     ui.new(.{
         .id = .IDI("opt-control-row-", @intCast(binding_index)),
@@ -742,60 +660,52 @@ fn drawControlBindingRow(
         },
         .background_color = background,
     })({
-        drawBindingCell("opt-cell-action-", binding_index, @round(40.0 * ui_scale), binding.action, color_scheme.text_primary, row_font_size);
+        drawTableCell(.IDI("opt-cell-action-", @intCast(binding_index)), @round(40.0 * ui_scale), row_spec.action_name, color_scheme.text_primary, row_font_size, false);
 
         const keyboard_color = if (!is_gamepad) color_scheme.text_active_binding else color_scheme.text_dim;
-        drawBindingCell("opt-cell-kbm-", binding_index, @round(47.5 * ui_scale), binding.keyboard_and_mouse, keyboard_color, row_font_size);
+        drawTableCell(.IDI("opt-cell-kbm-", @intCast(binding_index)), @round(47.5 * ui_scale), labels.keyboard_and_mouse, keyboard_color, row_font_size, false);
 
         const gamepad_color = if (is_gamepad) color_scheme.text_active_binding else color_scheme.text_dim;
-        drawBindingGrowCell("opt-cell-pad-", binding_index, binding.gamepad, gamepad_color, row_font_size);
+        drawTableCell(.IDI("opt-cell-pad-", @intCast(binding_index)), null, labels.gamepad, gamepad_color, row_font_size, false);
     });
 }
 
-fn drawBindingCell(
-    identifier_prefix: []const u8,
-    binding_index: usize,
-    width_pixels: f32,
+fn drawTableCell(
+    element_id: clay.ElementId,
+    width_pixels: ?f32,
     cell_text: []const u8,
     text_color: clay.Color,
     font_size: u16,
+    is_bold: bool,
 ) void {
+    const sizing_width: clay.SizingAxis = if (width_pixels) |fixed_width|
+        .fixed(fixed_width)
+    else
+        .grow;
+
     ui.new(.{
-        .id = clay.ElementId.IDI(identifier_prefix, @intCast(binding_index)),
-        .layout = .{ .sizing = .{ .w = .fixed(width_pixels) } },
+        .id = element_id,
+        .layout = .{ .sizing = .{ .w = sizing_width } },
     })({
         ui.text(cell_text, .{
             .color = text_color,
             .font_size = font_size,
-            .font_id = HUD.regularFontId(),
-        });
-    });
-}
-
-fn drawBindingGrowCell(
-    identifier_prefix: []const u8,
-    binding_index: usize,
-    cell_text: []const u8,
-    text_color: clay.Color,
-    font_size: u16,
-) void {
-    ui.new(.{
-        .id = clay.ElementId.IDI(identifier_prefix, @intCast(binding_index)),
-        .layout = .{ .sizing = .{ .w = .grow } },
-    })({
-        ui.text(cell_text, .{
-            .color = text_color,
-            .font_size = font_size,
-            .font_id = HUD.regularFontId(),
+            .letter_spacing = if (is_bold) 1 else 0,
+            .font_id = theme.getFontId(is_bold),
         });
     });
 }
 
 fn drawBackButton(ui_scale: f32) void {
-    const back_index = getBackIndex();
-    const back_label = if (DevicePrompts.isGamepad()) "BACK" else "BACK";
-    const font_size = lm.tou16(@max(5, @round(2.75 * ui_scale)));
-    utility_button.draw(back_index, back_label, &selected_index, activateBackButton, font_size, 1);
+    sprite_button.draw(
+        .utility,
+        getBackIndex(),
+        "BACK",
+        &navigation.selected_index,
+        activateBackButton,
+        ui_scale,
+        .{ .font_size_override = theme.scaledU16(2.75, 5, ui_scale) },
+    );
 }
 
 fn activateBackButton(_: usize) void {
@@ -803,161 +713,69 @@ fn activateBackButton(_: usize) void {
 }
 
 fn handleInput() bool {
-    const input_state = readNavigationState();
-    if (input_state.back_pressed) {
-        return true;
-    }
-
-    if (handleTabInput(input_state)) {
-        return false;
-    }
+    const input = navigation.readMenuInput();
+    if (input.back_pressed) return true;
+    if (handleTabInput(input)) return false;
 
     const back_index = getBackIndex();
-    updateVerticalSelection(input_state.navigate_up, input_state.navigate_down, back_index);
+    navigation.applyVerticalNavigation(input, back_index + 1);
 
     return switch (options_tab) {
-        .audio => handleAudioTabAction(input_state, back_index),
-        .display => handleDisplayTabAction(input_state, back_index),
-        .controls => handleControlsTabAction(input_state, back_index),
+        .audio => handleAudioTabAction(input, back_index),
+        .display => handleSingleToggleTabAction(input, back_index, toggleFullscreenMode),
+        .controls => handleSingleToggleTabAction(input, back_index, toggleControlScheme),
     };
 }
 
-fn readNavigationState() NavigationInputState {
-    DevicePrompts.update();
-
-    var state: NavigationInputState = .{
-        .navigate_up = lm.keyboard.getKeyDown(.up) or lm.keyboard.getKeyDown(.w),
-        .navigate_down = lm.keyboard.getKeyDown(.down) or lm.keyboard.getKeyDown(.s),
-        .navigate_left = lm.keyboard.getKeyDown(.left) or lm.keyboard.getKeyDown(.a),
-        .navigate_right = lm.keyboard.getKeyDown(.right) or lm.keyboard.getKeyDown(.d),
-        .select_pressed = lm.keyboard.getKeyDown(.enter),
-        .back_pressed = lm.keyboard.getKeyDown(.escape),
-        .tab_previous = lm.keyboard.getKeyDown(.q),
-        .tab_next = lm.keyboard.getKeyDown(.e) or lm.keyboard.getKeyDown(.tab),
-    };
-
-    if (!lm.gamepad.isAvailable(0)) {
-        return state;
-    }
-
-    applyGamepadInput(&state);
-    return state;
-}
-
-fn applyGamepadInput(state: *NavigationInputState) void {
-    state.navigate_up = state.navigate_up or lm.gamepad.getButtonDown(0, .left_face_up);
-    state.navigate_down = state.navigate_down or lm.gamepad.getButtonDown(0, .left_face_down);
-    state.navigate_left = state.navigate_left or lm.gamepad.getButtonDown(0, .left_face_left);
-    state.navigate_right = state.navigate_right or lm.gamepad.getButtonDown(0, .left_face_right);
-    state.select_pressed = state.select_pressed or lm.gamepad.getButtonDown(0, .right_face_down);
-    state.back_pressed = state.back_pressed or lm.gamepad.getButtonDown(0, .right_face_right) or
-        lm.gamepad.getButtonDown(0, .middle_right) or lm.gamepad.getButtonDown(0, .middle);
-    state.tab_previous = state.tab_previous or lm.gamepad.getButtonDown(0, .left_trigger_1);
-    state.tab_next = state.tab_next or lm.gamepad.getButtonDown(0, .right_trigger_1);
-
-    const stick = lm.gamepad.getStickVector(0, .left, 0.25);
-    applyGamepadStickY(stick.y, &state.navigate_up, &state.navigate_down);
-    applyGamepadStickX(stick.x, &state.navigate_left, &state.navigate_right);
-}
-
-fn applyGamepadStickY(stick_y: f32, navigate_up: *bool, navigate_down: *bool) void {
-    if (@abs(stick_y) <= 0.5) {
-        stick_moved_y = false;
-        return;
-    }
-    if (stick_moved_y) return;
-
-    if (stick_y < -0.5) navigate_up.* = true;
-    if (stick_y > 0.5) navigate_down.* = true;
-    stick_moved_y = true;
-}
-
-fn applyGamepadStickX(stick_x: f32, navigate_left: *bool, navigate_right: *bool) void {
-    if (@abs(stick_x) <= 0.5) {
-        stick_moved_x = false;
-        return;
-    }
-    if (stick_moved_x) return;
-
-    if (stick_x < -0.5) navigate_left.* = true;
-    if (stick_x > 0.5) navigate_right.* = true;
-    stick_moved_x = true;
-}
-
-fn handleTabInput(state: NavigationInputState) bool {
-    if (state.tab_previous) {
+fn handleTabInput(input: menu_navigation.MenuInput) bool {
+    if (input.tab_previous) {
         cycleTab(-1);
         return true;
     }
-    if (state.tab_next) {
+    if (input.tab_next) {
         cycleTab(1);
         return true;
     }
     return false;
 }
 
-fn updateVerticalSelection(navigate_up: bool, navigate_down: bool, back_index: usize) void {
-    if (navigate_up) {
-        selected_index = if (selected_index == 0) back_index else selected_index - 1;
-    }
-    if (navigate_down) {
-        selected_index = if (selected_index >= back_index) 0 else selected_index + 1;
-    }
-}
+fn handleAudioTabAction(input: menu_navigation.MenuInput, back_index: usize) bool {
+    if (input.navigate_left) adjustSelectedAudioVolume(-0.05);
+    if (input.navigate_right) adjustSelectedAudioVolume(0.05);
+    if (!input.select_pressed) return false;
 
-fn handleAudioTabAction(state: NavigationInputState, back_index: usize) bool {
-    if (state.navigate_left) {
-        adjustSelectedAudioVolume(-0.05);
+    if (navigation.selected_index == MUTE_ROW_INDEX) {
+        toggleMuteAudio();
+        return false;
     }
-    if (state.navigate_right) {
-        adjustSelectedAudioVolume(0.05);
-    }
-    if (state.select_pressed) {
-        if (selected_index == 3) {
-            toggleMuteAudio();
-        } else if (selected_index == back_index) {
-            return true;
-        }
-    }
-    return false;
+    return navigation.selected_index == back_index;
 }
 
 fn adjustSelectedAudioVolume(delta: f32) void {
-    switch (selected_index) {
-        0 => adjustVolume(.master, delta),
-        1 => adjustVolume(.music, delta),
-        2 => adjustVolume(.sfx, delta),
-        3 => toggleMuteAudio(),
-        else => {},
+    inline for (std.enums.values(VolumeType)) |volume_type| {
+        if (navigation.selected_index == @intFromEnum(volume_type)) {
+            adjustVolume(volume_type, delta);
+            return;
+        }
+    }
+    if (navigation.selected_index == MUTE_ROW_INDEX) {
+        toggleMuteAudio();
     }
 }
 
-fn handleDisplayTabAction(state: NavigationInputState, back_index: usize) bool {
-    const is_action_pressed = state.navigate_left or state.navigate_right or state.select_pressed;
+fn handleSingleToggleTabAction(
+    input: menu_navigation.MenuInput,
+    back_index: usize,
+    toggle_callback: *const fn () void,
+) bool {
+    const is_action_pressed = input.navigate_left or input.navigate_right or input.select_pressed;
     if (!is_action_pressed) return false;
 
-    if (selected_index == 0) {
-        toggleFullscreenMode();
+    if (navigation.selected_index == 0) {
+        toggle_callback();
         return false;
     }
-    if (selected_index == back_index) {
-        return true;
-    }
-    return false;
-}
-
-fn handleControlsTabAction(state: NavigationInputState, back_index: usize) bool {
-    const is_action_pressed = state.navigate_left or state.navigate_right or state.select_pressed;
-    if (!is_action_pressed) return false;
-
-    if (selected_index == 0) {
-        toggleControlScheme();
-        return false;
-    }
-    if (selected_index == back_index) {
-        return true;
-    }
-    return false;
+    return navigation.selected_index == back_index;
 }
 
 /// Sets the current active tab and resets row selection.
@@ -966,24 +784,23 @@ pub fn setTab(tab: OptionsTab) void {
 
     AudioManager.playSfxPitched("audio/sfx/click.wav", 0.45, 0.05);
     options_tab = tab;
-    selected_index = 0;
-    previous_selected_index = 0;
+    navigation.selected_index = 0;
+    navigation.previous_selected_index = 0;
 }
 
 /// Cycles the current tab forward or backward by delta.
 pub fn cycleTab(delta: i32) void {
-    const current = @as(i32, @intCast(@backingInt(options_tab)));
-    const tab_count: i32 = 3;
-    const next_value = @mod(current + delta, tab_count);
-    setTab(@fromBackingInt(@intCast(@as(usize, @intCast(next_value)))));
+    const current = @as(i32, @intCast(@intFromEnum(options_tab)));
+    const next_value = @mod(current + delta, @as(i32, @intCast(TAB_COUNT)));
+    const tabs = std.enums.values(OptionsTab);
+    setTab(tabs[@intCast(next_value)]);
 }
 
 /// Returns the index of the back button for the currently active tab.
 pub fn getBackIndex() usize {
     return switch (options_tab) {
-        .audio => 4,
-        .display => 1,
-        .controls => 1,
+        .audio => AUDIO_BACK_INDEX,
+        .display, .controls => 1,
     };
 }
 
@@ -1053,6 +870,15 @@ test "OptionsMenu tab cycling and back index resolution" {
 }
 
 test "OptionsMenu toggleControlScheme cycles scheme and updates SaveSystem" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    const previous_scheme = ControlScheme.getControlScheme();
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        ControlScheme.setControlScheme(previous_scheme);
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
     ControlScheme.setControlScheme(.keyboard_and_mouse);
     toggleControlScheme();
     try std.testing.expectEqual(ControlScheme.ControlScheme.keyboard_only, ControlScheme.getControlScheme());
@@ -1061,12 +887,43 @@ test "OptionsMenu toggleControlScheme cycles scheme and updates SaveSystem" {
 }
 
 test "OptionsMenu volume clamping bounds" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    const previous_master = AudioManager.master_volume;
+    const previous_music = AudioManager.music_volume;
+    const previous_sfx = AudioManager.sfx_volume;
+    const previous_mute = AudioManager.mute;
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        AudioManager.setMasterVolume(previous_master);
+        AudioManager.setMusicVolume(previous_music);
+        AudioManager.setSfxVolume(previous_sfx);
+        AudioManager.setMute(previous_mute);
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
     AudioManager.setMasterVolume(0.95);
     adjustVolume(.master, 0.1);
     try std.testing.expectApproxEqAbs(@as(f32, 1.0), AudioManager.master_volume, 0.001);
 
     adjustVolume(.master, -1.5);
     try std.testing.expectApproxEqAbs(@as(f32, 0.0), AudioManager.master_volume, 0.001);
+}
 
-    AudioManager.setMasterVolume(1.0);
+test "OptionsMenu control rows resolve live DevicePrompts labels" {
+    DevicePrompts.reset();
+    ControlScheme.reset();
+    defer {
+        DevicePrompts.reset();
+        ControlScheme.reset();
+    }
+
+    ControlScheme.setControlSchemeForTest(.keyboard_and_mouse);
+    const spell_zero_labels = resolveControlCellLabels(.{ .action_name = "Cast Spell 1", .prompt_action = .spell_0 });
+    try std.testing.expectEqualStrings("Q", spell_zero_labels.keyboard_and_mouse);
+    try std.testing.expectEqualStrings("X", spell_zero_labels.gamepad);
+
+    const interact_labels = resolveControlCellLabels(.{ .action_name = "Interact", .prompt_action = .interact });
+    try std.testing.expectEqualStrings("F", interact_labels.keyboard_and_mouse);
+    try std.testing.expectEqualStrings("A", interact_labels.gamepad);
 }

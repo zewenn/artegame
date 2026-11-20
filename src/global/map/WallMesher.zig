@@ -2,14 +2,16 @@ const std = @import("std");
 const lm = @import("loom");
 const MapTypes = @import("MapTypes.zig");
 const WallSegment = MapTypes.WallSegment;
-pub const WallType = MapTypes.WallType;
-pub const Wall = MapTypes.Wall;
+const WallType = MapTypes.WallType;
+const Wall = MapTypes.Wall;
 
+/// Physics collider specification generated from merged rectangular wall segments.
 pub const WallCollider = struct {
     center_position: lm.Vector2,
     scale: lm.Vector2,
     wall_type: WallType = .solid,
 
+    /// Instantiates a static collider entity for this wall segment.
     pub fn createEntity(self: WallCollider, identifier: []const u8) !*lm.Entity {
         return try lm.makeEntity(identifier, .{
             lm.Transform{
@@ -100,6 +102,59 @@ fn markRectangleVisited(
     }
 }
 
+fn tryExpandWallSegment(
+    background_tiles: []const u8,
+    visited_tiles: []bool,
+    width_tiles: u32,
+    height_tiles: u32,
+    column_index: u32,
+    row_index: u32,
+) ?WallSegment {
+    const tile_index = row_index * width_tiles + column_index;
+    if (visited_tiles[tile_index]) return null;
+
+    const terrain_byte = background_tiles[tile_index];
+    const terrain_type = MapTypes.TerrainType.fromInt(terrain_byte) orelse {
+        visited_tiles[tile_index] = true;
+        return null;
+    };
+    const wall_type = terrain_type.toWallType() orelse {
+        visited_tiles[tile_index] = true;
+        return null;
+    };
+
+    const max_column = findHorizontalWallSpan(
+        background_tiles,
+        visited_tiles,
+        width_tiles,
+        column_index,
+        row_index,
+        terrain_byte,
+    );
+
+    const max_row = findVerticalWallExpansion(
+        background_tiles,
+        visited_tiles,
+        width_tiles,
+        height_tiles,
+        column_index,
+        max_column,
+        row_index,
+        terrain_byte,
+    );
+
+    markRectangleVisited(visited_tiles, width_tiles, column_index, max_column, row_index, max_row);
+
+    return WallSegment{
+        .start_x_tiles = column_index,
+        .start_y_tiles = row_index,
+        .end_x_tiles = max_column,
+        .end_y_tiles = max_row,
+        .wall_type = wall_type,
+    };
+}
+
+/// Greedily merges contiguous wall tiles of the same type into rectangular WallSegments.
 pub fn generateSegmentsFromTiles(
     allocator: std.mem.Allocator,
     background_tiles: []const u8,
@@ -122,54 +177,22 @@ pub fn generateSegmentsFromTiles(
         const row_index: u32 = @intCast(row_index_usize);
         for (0..width_tiles) |column_index_usize| {
             const column_index: u32 = @intCast(column_index_usize);
-            const tile_index = row_index * width_tiles + column_index;
-            if (visited_tiles[tile_index]) continue;
-
-            const terrain_byte = background_tiles[tile_index];
-            const terrain_type = MapTypes.TerrainType.fromInt(terrain_byte) orelse {
-                visited_tiles[tile_index] = true;
-                continue;
-            };
-            const wall_type = terrain_type.toWallType() orelse {
-                visited_tiles[tile_index] = true;
-                continue;
-            };
-
-            const max_column = findHorizontalWallSpan(
-                background_tiles,
-                visited_tiles,
-                width_tiles,
-                column_index,
-                row_index,
-                terrain_byte,
-            );
-
-            const max_row = findVerticalWallExpansion(
+            const segment = tryExpandWallSegment(
                 background_tiles,
                 visited_tiles,
                 width_tiles,
                 height_tiles,
                 column_index,
-                max_column,
                 row_index,
-                terrain_byte,
-            );
-
-            markRectangleVisited(visited_tiles, width_tiles, column_index, max_column, row_index, max_row);
-
-            try segments.append(WallSegment{
-                .start_x_tiles = column_index,
-                .start_y_tiles = row_index,
-                .end_x_tiles = max_column,
-                .end_y_tiles = max_row,
-                .wall_type = wall_type,
-            });
+            ) orelse continue;
+            try segments.append(segment);
         }
     }
 
     return try allocator.dupe(WallSegment, segments.items());
 }
 
+/// Generates physics WallColliders directly from a flat tile grid.
 pub fn meshGridFromTiles(
     allocator: std.mem.Allocator,
     background_tiles: []const u8,
@@ -183,50 +206,7 @@ pub fn meshGridFromTiles(
     return try meshSegments(allocator, segments, tile_size_pixels);
 }
 
-pub const wall_collider_vertical_offset_pixels: f32 = 0;
-
-pub fn meshGridHorizontally(
-    allocator: std.mem.Allocator,
-    wall_grid: []const bool,
-    width_tiles: u32,
-    height_tiles: u32,
-    tile_size_pixels: f32,
-) ![]WallCollider {
-    var colliders = lm.List(WallCollider).init(allocator);
-    defer colliders.deinit();
-
-    for (0..height_tiles) |row_index| {
-        var column_index: u32 = 0;
-        while (column_index < width_tiles) {
-            const current_grid_index = row_index * width_tiles + column_index;
-            if (!wall_grid[current_grid_index]) {
-                column_index += 1;
-                continue;
-            }
-
-            const start_column = column_index;
-            while (column_index < width_tiles) : (column_index += 1) {
-                const next_grid_index = row_index * width_tiles + column_index;
-                if (!wall_grid[next_grid_index]) break;
-            }
-
-            const run_length_tiles = column_index - start_column;
-            const width_pixels = @as(f32, @floatFromInt(run_length_tiles)) * tile_size_pixels;
-            const height_pixels = tile_size_pixels;
-
-            const center_x = (@as(f32, @floatFromInt(start_column)) * tile_size_pixels) + (width_pixels / 2.0);
-            const center_y = (@as(f32, @floatFromInt(row_index)) * tile_size_pixels) + (height_pixels / 2.0) + wall_collider_vertical_offset_pixels;
-
-            try colliders.append(WallCollider{
-                .center_position = lm.Vec2(center_x, center_y),
-                .scale = lm.Vec2(width_pixels, height_pixels),
-            });
-        }
-    }
-
-    return try allocator.dupe(WallCollider, colliders.items());
-}
-
+/// Converts rectangular WallSegments into world-space WallColliders.
 pub fn meshSegments(
     allocator: std.mem.Allocator,
     segments: []const WallSegment,
@@ -236,48 +216,24 @@ pub fn meshSegments(
     defer colliders.deinit();
 
     for (segments) |segment| {
-        const min_column = @min(segment.start_x_tiles, segment.end_x_tiles);
-        const max_column = @max(segment.start_x_tiles, segment.end_x_tiles);
-        const min_row = @min(segment.start_y_tiles, segment.end_y_tiles);
-        const max_row = @max(segment.start_y_tiles, segment.end_y_tiles);
-
-        const run_columns = max_column - min_column + 1;
-        const run_rows = max_row - min_row + 1;
+        const bounds = segment.tileBounds();
+        const run_columns = bounds.max_x - bounds.min_x + 1;
+        const run_rows = bounds.max_y - bounds.min_y + 1;
 
         const width_pixels = @as(f32, @floatFromInt(run_columns)) * tile_size_pixels;
         const height_pixels = @as(f32, @floatFromInt(run_rows)) * tile_size_pixels;
 
-        const center_x = (@as(f32, @floatFromInt(min_column)) * tile_size_pixels) + (width_pixels / 2.0);
-        const center_y = (@as(f32, @floatFromInt(min_row)) * tile_size_pixels) + (height_pixels / 2.0) + wall_collider_vertical_offset_pixels;
+        const center_x_pixels = (@as(f32, @floatFromInt(bounds.min_x)) * tile_size_pixels) + (width_pixels / 2.0);
+        const center_y_pixels = (@as(f32, @floatFromInt(bounds.min_y)) * tile_size_pixels) + (height_pixels / 2.0);
 
         try colliders.append(WallCollider{
-            .center_position = lm.Vec2(center_x, center_y),
+            .center_position = lm.Vec2(center_x_pixels, center_y_pixels),
             .scale = lm.Vec2(width_pixels, height_pixels),
             .wall_type = segment.wall_type,
         });
     }
 
     return try allocator.dupe(WallCollider, colliders.items());
-}
-
-test "WallMesher meshGridHorizontally single run" {
-    const testing_allocator = std.testing.allocator;
-    const width: u32 = 4;
-    const height: u32 = 2;
-
-    const grid = [_]bool{
-        true,  true,  true,  false,
-        false, false, false, false,
-    };
-
-    const colliders = try meshGridHorizontally(testing_allocator, &grid, width, height, 64.0);
-    defer testing_allocator.free(colliders);
-
-    try std.testing.expectEqual(@as(usize, 1), colliders.len);
-    try std.testing.expectEqual(@as(f32, 192.0), colliders[0].scale.x);
-    try std.testing.expectEqual(@as(f32, 64.0), colliders[0].scale.y);
-    try std.testing.expectEqual(@as(f32, 96.0), colliders[0].center_position.x);
-    try std.testing.expectEqual(@as(f32, 32.0), colliders[0].center_position.y);
 }
 
 test "WallMesher meshSegments horizontal and vertical" {
@@ -303,19 +259,19 @@ test "WallMesher meshSegments horizontal and vertical" {
 
 test "WallMesher generateSegmentsFromTiles 2D block merge" {
     const testing_allocator = std.testing.allocator;
-    const width: u32 = 4;
-    const height: u32 = 4;
+    const width_tiles: u32 = 4;
+    const height_tiles: u32 = 4;
 
     const wall_top_byte: u8 = @intFromEnum(MapTypes.TerrainType.wall_top);
     const wall_low_top_byte: u8 = @intFromEnum(MapTypes.TerrainType.wall_low_top);
     const tiles = [_]u8{
-        0, 0, 0, 0,
-        0, wall_top_byte, wall_top_byte, 0,
-        0, wall_top_byte, wall_top_byte, 0,
+        0,                 0,                 0, 0,
+        0,                 wall_top_byte,     wall_top_byte, 0,
+        0,                 wall_top_byte,     wall_top_byte, 0,
         wall_low_top_byte, wall_low_top_byte, 0, 0,
     };
 
-    const segments = try generateSegmentsFromTiles(testing_allocator, &tiles, width, height);
+    const segments = try generateSegmentsFromTiles(testing_allocator, &tiles, width_tiles, height_tiles);
     defer testing_allocator.free(segments);
 
     try std.testing.expectEqual(@as(usize, 2), segments.len);

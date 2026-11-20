@@ -14,14 +14,16 @@ baked_texture: ?rl.Texture = null,
 is_baked: bool = false,
 width_tiles: u32 = 0,
 height_tiles: u32 = 0,
-tile_size_pixels: f32 = 64.0,
+tile_size_pixels: f32 = @floatFromInt(MapTypes.DEFAULT_TILE_SIZE_PIXELS),
 map_width_pixels: f32 = 0,
 map_height_pixels: f32 = 0,
 
+/// Creates an unconfigured MapRenderer instance.
 pub fn init() Self {
     return Self{};
 }
 
+/// Releases any allocated GPU textures and resets baked state.
 pub fn deinit(self: *Self) void {
     if (self.baked_texture) |texture| {
         texture.unload();
@@ -35,32 +37,23 @@ pub fn deinit(self: *Self) void {
     self.is_baked = false;
 }
 
+/// Allocates or resizes offscreen render targets to match the given map dimensions.
 pub fn configureDimensions(self: *Self, width_tiles: u32, height_tiles: u32, tile_size_pixels: f32) !void {
     const target_width_pixels = @as(f32, @floatFromInt(width_tiles)) * tile_size_pixels;
     const target_height_pixels = @as(f32, @floatFromInt(height_tiles)) * tile_size_pixels;
 
-    if (self.render_texture != null and
+    const matches_existing = self.render_texture != null and
         self.width_tiles == width_tiles and
         self.height_tiles == height_tiles and
-        self.tile_size_pixels == tile_size_pixels)
-    {
-        return;
-    }
+        self.tile_size_pixels == tile_size_pixels;
+    if (matches_existing) return;
 
-    if (self.baked_texture) |texture| {
-        texture.unload();
-        self.baked_texture = null;
-    }
+    self.deinit();
 
-    if (self.render_texture) |*texture| {
-        texture.unload();
-        self.render_texture = null;
-    }
+    const width_integer_pixels: i32 = @intFromFloat(target_width_pixels);
+    const height_integer_pixels: i32 = @intFromFloat(target_height_pixels);
 
-    const width_integer: i32 = @intFromFloat(target_width_pixels);
-    const height_integer: i32 = @intFromFloat(target_height_pixels);
-
-    self.render_texture = try rl.RenderTexture.init(width_integer, height_integer);
+    self.render_texture = try rl.RenderTexture.init(width_integer_pixels, height_integer_pixels);
     self.width_tiles = width_tiles;
     self.height_tiles = height_tiles;
     self.tile_size_pixels = tile_size_pixels;
@@ -69,6 +62,7 @@ pub fn configureDimensions(self: *Self, width_tiles: u32, height_tiles: u32, til
     self.is_baked = false;
 }
 
+/// Bakes dual-grid terrain layers and wall side sprites into a single upright texture.
 pub fn bake(self: *Self, background_tiles: []const u8) !void {
     const target_texture = &(self.render_texture orelse return error.RenderTextureNotConfigured);
 
@@ -80,7 +74,8 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
 
     for (0..TerrainType.count) |layer_index| {
         const terrain_type = TerrainType.fromInt(layer_index) orelse continue;
-        const active_terrain_texture = lm.assets.texture.get(terrain_type.assetPath(), &.{ 64, 64 }) orelse continue;
+        const tile_size = MapTypes.DEFAULT_TILE_SIZE_PIXELS;
+        const active_terrain_texture = lm.assets.texture.get(terrain_type.assetPath(), &.{ tile_size, tile_size }) orelse continue;
 
         self.bakeTerrainLayer(
             background_tiles,
@@ -95,6 +90,7 @@ pub fn bake(self: *Self, background_tiles: []const u8) !void {
 
     target_texture.end();
 
+    // Loom's TextureRenderer samples with positive source height, so flip the OpenGL FBO image once on bake.
     var image = try rl.loadImageFromTexture(target_texture.texture);
     defer image.unload();
     image.flipVertical();
@@ -115,7 +111,7 @@ fn bakeTerrainLayer(
     quad_height_count: u32,
     active_terrain_texture: *const lm.Texture,
 ) void {
-    var layer_scores: [TerrainType.count]usize = undefined;
+    var layer_masks: [TerrainType.count]u4 = undefined;
 
     for (0..quad_height_count) |row_index| {
         for (0..quad_width_count) |column_index| {
@@ -124,12 +120,12 @@ fn bakeTerrainLayer(
             const south_west = background_tiles[(row_index + 1) * self.width_tiles + column_index];
             const south_east = background_tiles[(row_index + 1) * self.width_tiles + (column_index + 1)];
 
-            DualGridMesher.calculateQuadScores(north_west, north_east, south_west, south_east, &layer_scores);
+            DualGridMesher.calculateQuadScores(north_west, north_east, south_west, south_east, &layer_masks);
 
-            const score = layer_scores[layer_index];
-            if (score == 0) continue;
+            const corner_mask = layer_masks[layer_index];
+            if (corner_mask == 0) continue;
 
-            const sheet_coordinate = DualGridMesher.scoreToSheetCoordinate(score) orelse continue;
+            const sheet_coordinate = DualGridMesher.scoreToSheetCoordinate(corner_mask) orelse continue;
             const source_rectangle = sheet_coordinate.sourceRectangle();
 
             const destination_x_pixels = @as(f32, @floatFromInt(column_index)) * self.tile_size_pixels;
@@ -225,10 +221,12 @@ fn isWallBlockBottom(
     return next_terrain != current_terrain;
 }
 
+/// Returns the baked map texture formatted for Loom's TextureRenderer.
 pub fn getTexture(self: *Self) ?rl.Texture {
     return self.baked_texture;
 }
 
+/// Draws the baked render target directly in world space for the map editor canvas.
 pub fn drawDirect(self: *Self, world_position: lm.Vector2) void {
     const active_texture = &(self.render_texture orelse return);
     if (!self.is_baked) return;
@@ -240,10 +238,10 @@ pub fn drawDirect(self: *Self, world_position: lm.Vector2) void {
         -@as(f32, @floatFromInt(active_texture.texture.height)),
     );
 
-    const half_tile = self.tile_size_pixels * 0.5;
+    const half_tile_pixels = self.tile_size_pixels * 0.5;
     const destination_rectangle = lm.Rect(
-        world_position.x + half_tile,
-        world_position.y + half_tile,
+        world_position.x + half_tile_pixels,
+        world_position.y + half_tile_pixels,
         self.map_width_pixels,
         self.map_height_pixels,
     );

@@ -1,7 +1,5 @@
-const std = @import("std");
 const lm = @import("loom");
 
-const Stats = @import("../../components/Stats.zig");
 const ExperienceOrbComponent = @import("../../components/items/ExperienceOrb.zig");
 
 var experience_orb_count: u32 = 0;

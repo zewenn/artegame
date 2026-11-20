@@ -1,61 +1,24 @@
 const std = @import("std");
 const lm = @import("loom");
 
-const ui = lm.ui;
-const TIMER = 0.1;
-
 const Stats = @import("../Stats.zig");
 const Attack = @import("../player/Attack.zig");
 const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
 const ReactiveAura = @import("ReactiveAura.zig");
-const RoundSpawner = @import("../../global/spawner/RoundSpawner.zig");
+const EnemyType = @import("EnemyType.zig").EnemyType;
 
 const Self = @This();
 
 stats: ?*Stats = null,
-player_stats: ?*Stats = null,
 player_attack: ?*Attack = null,
-enemy_type: RoundSpawner.EnemyType = .melee,
+enemy_type: EnemyType = .melee,
 
 pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     if (lm.getEntity(.{ .id = "player" })) |player| {
-        self.player_stats = player.getComponent(Stats);
         self.player_attack = player.getComponent(Attack);
-    }
-
-    if (self.enemy_type == .melee) {
-        if (std.mem.startsWith(u8, entity.id, "ranged")) {
-            self.enemy_type = .ranged;
-        } else if (std.mem.startsWith(u8, entity.id, "elite")) {
-            self.enemy_type = .elite;
-        } else if (std.mem.startsWith(u8, entity.id, "shaman")) {
-            self.enemy_type = .shaman;
-        } else if (std.mem.startsWith(u8, entity.id, "magician")) {
-            self.enemy_type = .magician;
-        } else if (std.mem.startsWith(u8, entity.id, "lifeliner")) {
-            self.enemy_type = .lifeliner;
-        } else if (std.mem.startsWith(u8, entity.id, "angler")) {
-            self.enemy_type = .angler;
-        } else if (std.mem.startsWith(u8, entity.id, "tank")) {
-            self.enemy_type = .tank;
-        } else if (std.mem.startsWith(u8, entity.id, "dummy")) {
-            self.enemy_type = .dummy;
-        } else if (std.mem.startsWith(u8, entity.id, "knight")) {
-            self.enemy_type = .knight;
-        } else if (std.mem.startsWith(u8, entity.id, "bishop")) {
-            self.enemy_type = .bishop;
-        } else if (std.mem.startsWith(u8, entity.id, "mini-boss")) {
-            self.enemy_type = .mini_boss;
-        } else if (std.mem.startsWith(u8, entity.id, "boss")) {
-            self.enemy_type = .boss;
-        } else if (std.mem.startsWith(u8, entity.id, "king")) {
-            self.enemy_type = .king;
-        } else if (std.mem.startsWith(u8, entity.id, "queen")) {
-            self.enemy_type = .queen;
-        }
     }
 }
 
@@ -63,56 +26,59 @@ pub fn Update(self: *Self, entity: *lm.Entity) !void {
     if (lm.time.paused()) return;
 
     const stats: *Stats = try lm.ensureComponent(self.stats);
-
     if (stats.current.health > 0) return;
 
-    const enemy_position: lm.Vector2 = if (entity.getComponent(lm.Transform)) |transform|
-        lm.vec3ToVec2(transform.position)
-    else
-        .init(0, 0);
-
-    var listener_position = enemy_position;
-    player_listener: {
-        const player = lm.getEntity(.{ .id = "player" }) orelse break :player_listener;
-        const player_transform = player.getComponent(lm.Transform) orelse break :player_listener;
-        listener_position = lm.vec3ToVec2(player_transform.position);
-    }
+    const enemy_position = getEntityPosition(entity);
+    const listener_position = getPlayerListenerPosition(enemy_position);
 
     SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", enemy_position, listener_position, 800.0, 0.75, 0.15);
 
-    const orb_count: u8 = switch (self.enemy_type) {
-        .dummy => 1,
-        .melee, .ranged, .angler => lm.random.intRangeAtMostBiased(u8, 1, 3),
-        .shaman, .magician, .lifeliner, .tank => lm.random.intRangeAtMostBiased(u8, 2, 4),
-        .elite => lm.random.intRangeAtMostBiased(u8, 3, 6),
-        .knight, .bishop, .mini_boss => lm.random.intRangeAtMostBiased(u8, 8, 12),
-        .boss, .king, .queen => lm.random.intRangeAtMostBiased(u8, 25, 35),
-    };
-    for (0..orb_count) |_| {
-        const angle = lm.randFloat(f32, 0, std.math.pi * 2);
-        const scatter_speed = lm.randFloat(f32, 100, 220);
-        const initial_velocity = lm.Vec2(
-            std.math.cos(angle) * scatter_speed,
-            std.math.sin(angle) * scatter_speed,
-        );
-        const orb = try prefabs.items.ExperienceOrb(enemy_position, 1, initial_velocity);
-        try lm.summoning.entity(orb);
-    }
-
-    if (self.player_attack) |player_attack| {
-        player_attack.reduceSpellCooldowns(1.0);
-    } else if (lm.getEntity(.{ .id = "player" })) |player| {
-        if (player.getComponent(Attack)) |attack| {
-            attack.reduceSpellCooldowns(1.0);
-            self.player_attack = attack;
-        }
-    }
+    try self.spawnExperienceOrbs(enemy_position);
+    self.reducePlayerSpellCooldowns();
 
     if (entity.getComponent(ReactiveAura)) |reactive_aura| {
         reactive_aura.executeDeathRetaliation();
     }
 
     RoomManager.removeDefeatedEnemy(entity.uuid, enemy_position, self.enemy_type);
-
     lm.removeEntity(.{ .uuid = entity.uuid });
+}
+
+fn spawnExperienceOrbs(self: *const Self, enemy_position: lm.Vector2) !void {
+    const orb_range = self.enemy_type.orbDropRange();
+    const orb_count = lm.random.intRangeAtMostBiased(u8, orb_range.min_count, orb_range.max_count);
+
+    for (0..orb_count) |_| {
+        const angle_radians = lm.randFloat(f32, 0, std.math.pi * 2);
+        const scatter_speed_pixels_per_second = lm.randFloat(f32, 100, 220);
+        const initial_velocity = lm.Vec2(
+            std.math.cos(angle_radians) * scatter_speed_pixels_per_second,
+            std.math.sin(angle_radians) * scatter_speed_pixels_per_second,
+        );
+        const orb = try prefabs.items.ExperienceOrb(enemy_position, 1, initial_velocity);
+        try lm.summoning.entity(orb);
+    }
+}
+
+fn reducePlayerSpellCooldowns(self: *Self) void {
+    if (self.player_attack) |player_attack| {
+        player_attack.reduceSpellCooldowns(1.0);
+        return;
+    }
+
+    const player = lm.getEntity(.{ .id = "player" }) orelse return;
+    const attack = player.getComponent(Attack) orelse return;
+    attack.reduceSpellCooldowns(1.0);
+    self.player_attack = attack;
+}
+
+fn getEntityPosition(entity: *lm.Entity) lm.Vector2 {
+    const transform = entity.getComponent(lm.Transform) orelse return .init(0, 0);
+    return lm.vec3ToVec2(transform.position);
+}
+
+fn getPlayerListenerPosition(fallback_position: lm.Vector2) lm.Vector2 {
+    const player = lm.getEntity(.{ .id = "player" }) orelse return fallback_position;
+    const player_transform = player.getComponent(lm.Transform) orelse return fallback_position;
+    return lm.vec3ToVec2(player_transform.position);
 }

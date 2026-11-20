@@ -36,14 +36,14 @@ pub const root: Spell = Spell{
     .id = "Root",
     .cooldown = 3,
     .slot = .right,
-    .icon = "ui/icons/sleep_icon.png",
+    .icon = "ui/icons/root_icon.png",
     .cast_fn = struct {
         pub fn callback(target: *lm.Entity, level: u32) !void {
             const transform = target.getComponent(lm.Transform) orelse return;
 
-            for (@as([]const f32, &.{ -180, -45, -90, -135, 0, 45, 90, 135 })) |value| {
+            for (@as([]const f32, &.{ -180, -45, -90, -135, 0, 45, 90, 135 })) |angle_degrees| {
                 const target_position = lm.Vec2(1, 0)
-                    .rotate(std.math.degreesToRadians(value))
+                    .rotate(std.math.degreesToRadians(angle_degrees))
                     .add(lm.vec3ToVec2(transform.position));
 
                 try projectiles.emit(.{
@@ -51,7 +51,7 @@ pub const root: Spell = Spell{
                     .size = .init(128, 64),
                     .onhit_effect = if (level < 10) .root else .stun,
                     .onhit_duration = if (level < 10) lm.tof32(level + 1) else lm.tof32((level) + 1) - 9.5,
-                    .passtrough = true,
+                    .passthrough = true,
                     .damage = 0,
                     .target_position = target_position,
                     .start_position = lm.vec3ToVec2(transform.position),
@@ -138,17 +138,19 @@ pub const haste: Spell = Spell{
 };
 
 pub fn getById(id: []const u8) ?Spell {
-    if (std.ascii.eqlIgnoreCase(id, "Heal")) return heal;
-    if (std.ascii.eqlIgnoreCase(id, "Root")) return root;
-    if (std.ascii.eqlIgnoreCase(id, "Goliath")) return goliath;
-    if (std.ascii.eqlIgnoreCase(id, "Haste")) return haste;
+    inline for (@typeInfo(@This()).@"struct".decl_names) |decl_name| {
+        const value = @field(@This(), decl_name);
+        if (@TypeOf(value) == Spell and std.ascii.eqlIgnoreCase(id, value.id)) {
+            return value;
+        }
+    }
     return null;
 }
 
-test "spells getById resolves known spells" {
-    try std.testing.expect(getById("Heal") != null);
-    try std.testing.expect(getById("Root") != null);
-    try std.testing.expect(getById("Goliath") != null);
-    try std.testing.expect(getById("Haste") != null);
+test "spells getById resolves known spells case-insensitively" {
+    try std.testing.expectEqualStrings("Heal", getById("heal").?.id);
+    try std.testing.expectEqualStrings("Root", getById("ROOT").?.id);
+    try std.testing.expectEqualStrings("Goliath", getById("gOlIaTh").?.id);
+    try std.testing.expectEqualStrings("Haste", getById("haste").?.id);
     try std.testing.expect(getById("Unknown") == null);
 }

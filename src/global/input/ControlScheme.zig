@@ -1,4 +1,3 @@
-const std = @import("std");
 const lm = @import("loom");
 
 /// Defines the input control scheme used for player aiming and attack mechanics.

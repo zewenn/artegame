@@ -127,15 +127,23 @@ fn updateCombatMovement(
         .kite_strafe => {
             self.move_vector = self.calculateKiteStrafeVector(distance_pixels, enemy_position, player_position, delta_seconds, 1.8, 3.2);
         },
-        .hybrid => {
-            const has_haste = stats.hasEffect(.{ .effect_type = .haste });
-            if (has_haste or distance_pixels < 80) {
-                self.move_vector = player_position.subtract(enemy_position).normalize();
-                return;
-            }
-            self.move_vector = self.calculateKiteStrafeVector(distance_pixels, enemy_position, player_position, delta_seconds, 1.5, 2.8);
-        },
+        .hybrid => self.move_vector = self.calculateHybridCombatVector(distance_pixels, enemy_position, player_position, stats, delta_seconds),
     }
+}
+
+fn calculateHybridCombatVector(
+    self: *Self,
+    distance_pixels: f32,
+    enemy_position: lm.Vector2,
+    player_position: lm.Vector2,
+    stats: *const Stats,
+    delta_seconds: f32,
+) lm.Vector2 {
+    const has_haste = stats.hasEffect(.{ .effect_type = .haste });
+    if (has_haste or distance_pixels < 80) {
+        return player_position.subtract(enemy_position).normalize();
+    }
+    return self.calculateKiteStrafeVector(distance_pixels, enemy_position, player_position, delta_seconds, 1.5, 2.8);
 }
 
 fn calculateKiteStrafeVector(

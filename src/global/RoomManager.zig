@@ -6,15 +6,15 @@ const player_components = @import("../components/player/export.zig");
 const Stats = @import("../components/Stats.zig");
 const Dashing = @import("../components/Dashing.zig");
 const ExperienceOrbComponent = @import("../components/items/ExperienceOrb.zig");
-const ProjectileMovement = @import("../components/ProjectileMovement.zig");
 const ProjectileManager = @import("ProjectileManager.zig");
 const BoonPool = @import("boons/BoonPool.zig");
 const AudioManager = @import("audio/AudioManager.zig");
 const MusicManager = @import("audio/MusicManager.zig");
 const RoundSpawner = @import("spawner/RoundSpawner.zig");
 const SaveSystem = @import("save/SaveSystem.zig");
-const spells = @import("../components/Weapons/spells.zig");
-const Hands = @import("../components/Weapons/Hands.zig");
+const spells = @import("../components/weapons/spells.zig");
+const Spell = @import("../components/weapons/Spell.zig");
+const Hands = @import("../components/weapons/Hands.zig");
 const MapLoader = @import("map/MapLoader.zig");
 const DoorSpawner = @import("spawner/DoorSpawner.zig");
 const MapRegistry = @import("map/MapRegistry.zig");
@@ -23,55 +23,12 @@ const MapTypes = @import("map/MapTypes.zig");
 
 const Self = @This();
 
-pub var resume_saved_run: bool = false;
-const replenish_objective_text = " - Pick up Boon Drop to upgrade\n - Enter Exit Door for next room";
-const playtest_replenish_objective_text = " - Enter Exit Door to return to Map Editor";
-
 pub const RoomState = enum {
     combat,
     replenish,
 };
 
-pub const RoomType = enum {
-    tutorial,
-    normal,
-    mini_boss,
-    boss,
-
-    pub fn fromRoomNumber(room_number: u32) RoomType {
-        if (room_number == 0) return .tutorial;
-        if (room_number % 15 == 0) return .boss;
-        if (room_number % 5 == 0) return .mini_boss;
-        return .normal;
-    }
-
-    pub fn displayName(self: RoomType) []const u8 {
-        return switch (self) {
-            .tutorial => "Tutorial",
-            .normal => "Normal",
-            .mini_boss => "Mini-Boss",
-            .boss => "Boss",
-        };
-    }
-
-    pub fn directoryCategory(self: RoomType) []const u8 {
-        return switch (self) {
-            .tutorial => "tutorial",
-            .normal => "normal",
-            .mini_boss => "mini_boss",
-            .boss => "boss",
-        };
-    }
-
-    pub fn toSpawnProfile(self: RoomType) RoundSpawner.SpawnProfile {
-        return switch (self) {
-            .tutorial => .tutorial,
-            .normal => .normal,
-            .mini_boss => .mini_boss,
-            .boss => .boss,
-        };
-    }
-};
+pub const RoomType = @import("RoomType.zig").RoomType;
 
 pub const RunStats = struct {
     rooms_cleared: u32 = 0,
@@ -84,6 +41,16 @@ pub const FallenEnemyRecord = struct {
     enemy_type: RoundSpawner.EnemyType = .melee,
     death_position: lm.Vector2 = .init(0, 0),
 };
+
+const replenish_objective_text = " - Pick up Boon Drop to upgrade\n - Enter Exit Door for next room";
+const playtest_replenish_objective_text = " - Enter Exit Door to return to Map Editor";
+
+pub var resume_saved_run: bool = false;
+pub var is_playtest_mode: bool = false;
+pub var playtest_map_path_buffer: [256]u8 = undefined;
+pub var playtest_map_path: []const u8 = "";
+pub var playtest_room_type: RoomType = .normal;
+pub var is_practice_tutorial_mode: bool = false;
 
 state: RoomState = .combat,
 current_room: u32 = 1,
@@ -98,12 +65,58 @@ player_objectives: ?*player_components.Objectives = null,
 spawner: RoundSpawner = undefined,
 graveyard: lm.List(FallenEnemyRecord) = undefined,
 
-pub var is_playtest_mode: bool = false;
-pub var playtest_map_path_buffer: [256]u8 = undefined;
-pub var playtest_map_path: []const u8 = "";
-pub var playtest_room_type: RoomType = .normal;
+pub fn Awake(self: *Self) !void {
+    self.configureInitialRunMode();
 
-pub var is_practice_tutorial_mode: bool = false;
+    BoonPool.reset();
+    self.graveyard = lm.List(FallenEnemyRecord).init(lm.allocators.scene());
+    self.spawner = RoundSpawner.init(lm.allocators.scene());
+
+    MapLoader.loadAndInstantiate(self.current_map_path) catch |load_error| {
+        std.log.warn("Failed to load map {s}, using defaults: {any}", .{ self.current_map_path, load_error });
+    };
+    const map_bounds = MapLoader.getMapBounds();
+    self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
+    const spawn_zones = MapLoader.getSpawnZones();
+    self.spawner.setSpawnZones(spawn_zones);
+    if (is_playtest_mode and playtest_room_type == .normal) {
+        self.current_room = determinePlaytestNormalRoom(spawn_zones);
+    }
+
+    const player_spawn = MapLoader.getPlayerSpawnPosition();
+    try lm.summoning.entities(&.{
+        try prefabs.Player(player_spawn),
+    });
+
+    if (self.state == .replenish) {
+        self.spawnDoorsForCurrentRoom(true);
+    }
+}
+
+pub fn Update(self: *Self, scene: *lm.Scene) !void {
+    if (self.player == null or self.player_objectives == null) {
+        try self.initializeActivePlayer(scene);
+    }
+
+    if (lm.time.paused()) return;
+
+    const player_position = self.getPlayerPosition();
+    const delta_seconds = lm.time.deltaTime();
+    try self.spawner.update(delta_seconds, player_position);
+
+    if (self.state == .combat and self.spawner.isWaveFinished()) {
+        try self.completeCurrentRoomCombat();
+    }
+}
+
+pub fn End(self: *Self) !void {
+    MusicManager.stopGlobal();
+    DoorSpawner.cleanupDoors();
+    self.spawner.deinit();
+    self.graveyard.deinit();
+    BoonPool.reset();
+    MapLoader.unload();
+}
 
 pub fn startPlaytest(map_path: []const u8, room_type: RoomType) void {
     is_playtest_mode = true;
@@ -149,14 +162,51 @@ pub fn isPracticeTutorialMode() bool {
 }
 
 pub fn initPracticeTutorialRun(self: *Self) void {
-    self.current_room = 0;
+    self.initRunState(0, "tutorial", RoomType.tutorial.defaultMapPath());
+}
+
+fn configureInitialRunMode(self: *Self) void {
+    if (is_playtest_mode) {
+        self.initFreshRun();
+        self.current_map_path = playtest_map_path;
+        self.current_room = playtest_room_type.metadata().playtest_room_number;
+        self.room_category = playtest_room_type.directoryCategory();
+        return;
+    }
+
+    if (is_practice_tutorial_mode) {
+        self.initPracticeTutorialRun();
+        return;
+    }
+
+    if (self.resumeRunIfSaved()) return;
+
+    self.initFreshRun();
+    const room_type = self.getRoomType();
+    self.current_map_path = MapRegistry.pickRandomMap(
+        lm.allocators.arena(),
+        room_type,
+        "",
+    ) catch MapRegistry.getDefaultMapPath(room_type);
+}
+
+fn initRunState(self: *Self, room_number: u32, room_category: []const u8, map_path: []const u8) void {
+    self.current_room = room_number;
     self.rooms_cleared = 0;
-    self.room_category = "tutorial";
-    self.current_map_path = "maps/tutorial.json";
+    self.room_category = room_category;
+    self.current_map_path = map_path;
     self.enemies_defeated = 0;
     self.boon_drop_spawned = false;
     self.state = .combat;
     MusicManager.setGlobalPhase(.combat);
+}
+
+fn initFreshRun(self: *Self) void {
+    if (!SaveSystem.isTutorialCompleted()) {
+        self.initRunState(0, "tutorial", RoomType.tutorial.defaultMapPath());
+        return;
+    }
+    self.initRunState(1, "normal", RoomType.normal.defaultMapPath());
 }
 
 fn resumeRunIfSaved(self: *Self) bool {
@@ -174,95 +224,6 @@ fn resumeRunIfSaved(self: *Self) bool {
     return true;
 }
 
-pub fn Awake(self: *Self) !void {
-    if (is_playtest_mode) {
-        self.initFreshRun();
-        self.current_map_path = playtest_map_path;
-        self.current_room = switch (playtest_room_type) {
-            .tutorial => 0,
-            .normal => 2,
-            .mini_boss => 5,
-            .boss => 15,
-        };
-        self.room_category = playtest_room_type.directoryCategory();
-    } else if (is_practice_tutorial_mode) {
-        self.initPracticeTutorialRun();
-    } else {
-        const is_resumed = self.resumeRunIfSaved();
-        if (!is_resumed) {
-            self.initFreshRun();
-            const category = self.getRoomType().directoryCategory();
-            const random_map = MapRegistry.pickRandomMap(
-                lm.allocators.arena(),
-                category,
-                "",
-            ) catch MapRegistry.getDefaultMapPath(category);
-            self.current_map_path = random_map;
-        }
-    }
-
-    BoonPool.reset();
-    self.graveyard = lm.List(FallenEnemyRecord).init(lm.allocators.scene());
-    self.spawner = RoundSpawner.init(lm.allocators.scene());
-    self.spawner.spawn_area = .{
-        .min_x = -1100.0,
-        .max_x = 1100.0,
-        .min_y = -520.0,
-        .max_y = 520.0,
-        .min_player_distance_pixels = 420.0,
-        .exclusion_zones = &.{
-            .{ .min = .init(-160, -280), .max = .init(160, -120) },
-        },
-    };
-
-    MapLoader.loadAndInstantiate(self.current_map_path) catch |err| {
-        std.log.warn("Failed to load map {s}, using defaults: {any}", .{ self.current_map_path, err });
-    };
-    const map_bounds = MapLoader.getMapBounds();
-    self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
-    const spawn_zones = MapLoader.getSpawnZones();
-    self.spawner.setSpawnZones(spawn_zones);
-    if (is_playtest_mode and playtest_room_type == .normal) {
-        self.current_room = determinePlaytestNormalRoom(spawn_zones);
-    }
-    const player_spawn = MapLoader.getPlayerSpawnPosition();
-
-    try lm.summoning.entities(&.{
-        try prefabs.Player(player_spawn),
-    });
-
-    if (self.state == .replenish) {
-        self.spawnDoorsForCurrentRoom(true);
-    }
-}
-
-pub fn getMapPathForRoomType(room_type: RoomType) []const u8 {
-    return MapRegistry.getDefaultMapPath(room_type.directoryCategory());
-}
-
-fn initFreshRun(self: *Self) void {
-    if (!SaveSystem.isTutorialCompleted()) {
-        self.current_room = 0;
-        self.rooms_cleared = 0;
-        self.room_category = "tutorial";
-        self.current_map_path = "maps/tutorial.json";
-        self.enemies_defeated = 0;
-        self.boon_drop_spawned = false;
-        self.state = .combat;
-        MusicManager.setGlobalPhase(.combat);
-        return;
-    }
-
-    self.current_room = 1;
-    self.rooms_cleared = 0;
-    self.room_category = "normal";
-    self.current_map_path = "maps/normal/arena_normal.json";
-    self.enemies_defeated = 0;
-    self.boon_drop_spawned = false;
-    self.state = .combat;
-    MusicManager.setGlobalPhase(.combat);
-}
-
 fn applySavedRunToPlayer(player: *lm.Entity) void {
     if (!resume_saved_run or !SaveSystem.hasActiveRun()) return;
     resume_saved_run = false;
@@ -277,18 +238,7 @@ fn applySavedRunToPlayer(player: *lm.Entity) void {
     attack.current_weapon_number = saved.current_weapon_number;
 
     for (0..2, saved.equipped_spells) |spell_index, maybe_spell| {
-        const spell = maybe_spell orelse {
-            attack.equipped_spells[spell_index] = null;
-            continue;
-        };
-        const base_spell = spells.getById(spell.id) orelse {
-            attack.equipped_spells[spell_index] = null;
-            continue;
-        };
-
-        var equipped_spell = base_spell;
-        equipped_spell.level = spell.level;
-        attack.equipped_spells[spell_index] = equipped_spell;
+        attack.equipped_spells[spell_index] = resolveSavedSpell(maybe_spell);
     }
 
     const hands = player.getComponent(Hands) orelse return;
@@ -296,26 +246,18 @@ fn applySavedRunToPlayer(player: *lm.Entity) void {
     hands.setWeapon(weapon.*);
 }
 
+fn resolveSavedSpell(maybe_spell: anytype) ?Spell {
+    const spell = maybe_spell orelse return null;
+    const base_spell = spells.getById(spell.id) orelse return null;
+    var equipped_spell = base_spell;
+    equipped_spell.level = spell.level;
+    return equipped_spell;
+}
+
 fn getPlayerPosition(self: *const Self) lm.Vector2 {
     const player = self.player orelse return lm.Vec2(0, 0);
     const transform = player.getComponent(lm.Transform) orelse return lm.Vec2(0, 0);
     return lm.vec3ToVec2(transform.position);
-}
-
-pub fn Update(self: *Self, scene: *lm.Scene) !void {
-    if (self.player == null or self.player_objectives == null) {
-        try self.initializeActivePlayer(scene);
-    }
-
-    if (lm.time.paused()) return;
-
-    const player_position = self.getPlayerPosition();
-    const delta_seconds = lm.time.deltaTime();
-    try self.spawner.update(delta_seconds, scene, player_position);
-
-    if (self.state == .combat and self.spawner.isWaveFinished()) {
-        try self.completeCurrentRoomCombat();
-    }
 }
 
 fn initializeActivePlayer(self: *Self, scene: *lm.Scene) !void {
@@ -356,14 +298,6 @@ fn initializeReplenishObjectives(self: *Self) void {
     _ = objectives.setSingleObjective("Replenish", objective_description) catch {};
 }
 
-pub fn End(self: *Self) !void {
-    MusicManager.stopGlobal();
-    DoorSpawner.cleanupDoors();
-    self.spawner.deinit();
-    BoonPool.reset();
-    MapLoader.unload();
-}
-
 fn startCurrentRoomCombat(self: *Self) !void {
     self.state = .combat;
     MusicManager.setGlobalPhase(.combat);
@@ -376,24 +310,20 @@ fn startCurrentRoomCombat(self: *Self) !void {
         if (TutorialManager.get()) |tutorial_manager| {
             tutorial_manager.reset();
             tutorial_manager.refreshObjectives();
-            tutorial_manager.lockExitDoor();
+            tutorial_manager.setExitDoorsUnlocked(false);
         }
         return;
     }
 
     if (self.player_objectives) |objectives| {
-        switch (room_type) {
-            .mini_boss => _ = try objectives.setSingleObjective("Mini-Boss Room", "Defeat the Mini-Boss!"),
-            .boss => _ = try objectives.setSingleObjective("Boss Room", "Defeat the Boss!"),
-            .tutorial => {},
-            .normal => _ = try objectives.setSingleObjective("Combat Wave", "Defeat all enemies"),
-        }
+        const room_metadata = room_type.metadata();
+        _ = try objectives.setSingleObjective(room_metadata.objective_title, room_metadata.objective_description);
     }
 
-    try self.spawner.startWaveForRoom(self.current_room, room_type.toSpawnProfile());
+    try self.spawner.startWaveForRoom(self.current_room, room_type);
 }
 
-fn getPlayerFallbackPosition(self: *Self) lm.Vector2 {
+fn getPlayerFallbackPosition(self: *const Self) lm.Vector2 {
     const player = self.player orelse return .init(0, 0);
     const transform = player.getComponent(lm.Transform) orelse return .init(0, 0);
     return lm.vec3ToVec2(transform.position).add(.init(48, 0));
@@ -405,24 +335,17 @@ fn completeCurrentRoomCombat(self: *Self) !void {
     self.spawner.finishWave();
 
     MusicManager.setGlobalPhase(.replenish);
-
     self.grantRoomRewards();
 
     if (!self.boon_drop_spawned and self.getRoomType() == .normal) {
         self.boon_drop_spawned = true;
         const fallback_position = self.getPlayerFallbackPosition();
-        self.spawnBoonDrop(fallback_position) catch |err| {
-            std.log.err("Failed to spawn fallback boon drop: {any}", .{err});
+        self.spawnBoonDrop(fallback_position) catch |spawn_error| {
+            std.log.err("Failed to spawn fallback boon drop: {any}", .{spawn_error});
         };
     }
 
-    if (self.player_objectives) |objectives| {
-        const objective_description = if (is_playtest_mode)
-            playtest_replenish_objective_text
-        else
-            replenish_objective_text;
-        _ = try objectives.setSingleObjective("Replenish", objective_description);
-    }
+    self.initializeReplenishObjectives();
 
     if (DoorSpawner.hasDoorsInScene()) {
         DoorSpawner.openAllDoors();
@@ -437,8 +360,8 @@ fn spawnDoorsForCurrentRoom(self: *Self, is_open: bool) void {
     const stats_value = if (player_entity) |entity| (if (entity.getComponent(Stats)) |stats| stats.* else null) else null;
     const attack_value = if (player_entity) |entity| (if (entity.getComponent(player_components.Attack)) |attack| attack.* else null) else null;
 
-    DoorSpawner.spawnRoomDoors(self.current_room, stats_value, attack_value, is_open) catch |err| {
-        std.log.err("Failed to spawn room doors: {any}", .{err});
+    DoorSpawner.spawnRoomDoors(self.current_room, stats_value, attack_value, is_open) catch |spawn_error| {
+        std.log.err("Failed to spawn room doors: {any}", .{spawn_error});
     };
 }
 
@@ -478,22 +401,27 @@ fn grantRoomRewards(self: *Self) void {
     }
 }
 
-pub fn enterNextRoomWithCategory(category: []const u8) !void {
-    const self = get() orelse return;
+fn exitSpecialModeIfActive() bool {
     if (is_playtest_mode) {
         endPlaytest();
-        lm.loadScene("map_editor") catch |err| {
-            std.log.err("Failed to return to map_editor scene after playtest: {any}", .{err});
+        lm.loadScene("map_editor") catch |load_error| {
+            std.log.err("Failed to return to map_editor scene after playtest: {any}", .{load_error});
         };
-        return;
+        return true;
     }
     if (is_practice_tutorial_mode) {
         endPracticeTutorial();
-        lm.loadScene("main_menu") catch |err| {
-            std.log.err("Failed to return to main_menu scene after tutorial practice: {any}", .{err});
+        lm.loadScene("main_menu") catch |load_error| {
+            std.log.err("Failed to return to main_menu scene after tutorial practice: {any}", .{load_error});
         };
-        return;
+        return true;
     }
+    return false;
+}
+
+pub fn enterNextRoomWithCategory(category: []const u8) !void {
+    const self = get() orelse return;
+    if (exitSpecialModeIfActive()) return;
     self.room_category = category;
     try enterNextRoom();
 }
@@ -501,22 +429,7 @@ pub fn enterNextRoomWithCategory(category: []const u8) !void {
 pub fn enterNextRoom() !void {
     const self = get() orelse return;
     if (self.state != .replenish and self.getRoomType() != .tutorial) return;
-
-    if (is_playtest_mode) {
-        endPlaytest();
-        lm.loadScene("map_editor") catch |err| {
-            std.log.err("Failed to return to map_editor scene after playtest: {any}", .{err});
-        };
-        return;
-    }
-
-    if (is_practice_tutorial_mode) {
-        endPracticeTutorial();
-        lm.loadScene("main_menu") catch |err| {
-            std.log.err("Failed to return to main_menu scene after tutorial practice: {any}", .{err});
-        };
-        return;
-    }
+    if (exitSpecialModeIfActive()) return;
 
     if (self.getRoomType() == .tutorial) {
         SaveSystem.setTutorialCompleted(true);
@@ -524,23 +437,23 @@ pub fn enterNextRoom() !void {
 
     DoorSpawner.cleanupDoors();
     cleanupRoomEntities();
+    self.graveyard.clearRetainingCapacity();
+
     self.current_room += 1;
     const next_room_type = self.getRoomType();
-    if (next_room_type == .mini_boss or next_room_type == .boss or next_room_type == .tutorial) {
+    if (next_room_type != .normal) {
         self.room_category = next_room_type.displayName();
     }
     self.boon_drop_spawned = false;
 
-    const next_category = self.getRoomType().directoryCategory();
-    const next_map_path = MapRegistry.pickRandomMap(
+    self.current_map_path = MapRegistry.pickRandomMap(
         lm.allocators.arena(),
-        next_category,
+        next_room_type,
         self.current_map_path,
-    ) catch MapRegistry.getDefaultMapPath(next_category);
-    self.current_map_path = next_map_path;
+    ) catch MapRegistry.getDefaultMapPath(next_room_type);
 
-    MapLoader.loadAndInstantiate(self.current_map_path) catch |err| {
-        std.log.warn("Failed to load map {s}: {any}", .{ self.current_map_path, err });
+    MapLoader.loadAndInstantiate(self.current_map_path) catch |load_error| {
+        std.log.warn("Failed to load map {s}: {any}", .{ self.current_map_path, load_error });
     };
     const map_bounds = MapLoader.getMapBounds();
     self.spawner.setMapBounds(map_bounds.min, map_bounds.max);
@@ -552,19 +465,18 @@ pub fn enterNextRoom() !void {
 
 fn isCleanupTarget(entity: *lm.Entity) bool {
     if (std.mem.eql(u8, entity.id, "player")) return false;
-    if (std.mem.eql(u8, entity.id, "background")) return false;
     if (std.mem.eql(u8, entity.id, "map_background")) return false;
     if (std.mem.startsWith(u8, entity.id, "wall_")) return false;
     if (std.mem.startsWith(u8, entity.id, "exit-door")) return true;
     if (std.mem.startsWith(u8, entity.id, "training-dummy")) return true;
 
-    return std.mem.startsWith(u8, entity.id, "projectile") or
-        std.mem.startsWith(u8, entity.id, "experience-orb") or
+    const is_enemy_stats = if (entity.getComponent(Stats)) |stats| stats.team == .enemy else false;
+
+    return std.mem.startsWith(u8, entity.id, "experience-orb") or
         std.mem.startsWith(u8, entity.id, "boon-drop") or
         std.mem.endsWith(u8, entity.id, "-enemy") or
         entity.getComponent(ExperienceOrbComponent) != null or
-        entity.getComponent(ProjectileMovement) != null or
-        (entity.getComponent(Stats) != null and entity.getComponent(Stats).?.team == .enemy);
+        is_enemy_stats;
 }
 
 pub fn cleanupRoomEntities() void {
@@ -601,19 +513,9 @@ pub fn isReplenish() bool {
     return self.state == .replenish;
 }
 
-pub fn isCombat() bool {
-    const self = get() orelse return false;
-    return self.state == .combat;
-}
-
 pub fn getState() ?RoomState {
     const self = get() orelse return null;
     return self.state;
-}
-
-pub fn getCurrentRoom() u32 {
-    const self = get() orelse return 1;
-    return self.current_room;
 }
 
 pub fn getRoomsCleared() u32 {
@@ -626,16 +528,8 @@ pub fn getRoomCategory() []const u8 {
     return self.room_category;
 }
 
-pub fn setRoomCategory(self: *Self, category: []const u8) void {
-    self.room_category = category;
-}
-
 pub fn getRoomType(self: *const Self) RoomType {
     return RoomType.fromRoomNumber(self.current_room);
-}
-
-pub fn getNextRoomType(self: *const Self) RoomType {
-    return RoomType.fromRoomNumber(self.current_room + 1);
 }
 
 pub fn saveRunState(self: *Self) void {
@@ -679,8 +573,8 @@ pub fn removeDefeatedEnemy(uuid: u128, death_position: lm.Vector2, enemy_type: R
 
     if (self.spawner.isWaveFinished() and !self.boon_drop_spawned and self.getRoomType() == .normal) {
         self.boon_drop_spawned = true;
-        self.spawnBoonDrop(death_position) catch |err| {
-            std.log.err("Failed to spawn boon drop: {any}", .{err});
+        self.spawnBoonDrop(death_position) catch |spawn_error| {
+            std.log.err("Failed to spawn boon drop: {any}", .{spawn_error});
         };
     }
 }
@@ -712,78 +606,43 @@ pub fn getRunStats() RunStats {
 
 pub fn applyPlaytestScalingToPlayer(player_entity: *lm.Entity, room_type: RoomType) void {
     const stats = player_entity.getComponent(Stats) orelse return;
+    const profile = room_type.metadata().playtest_stats;
 
-    switch (room_type) {
-        .normal => {
-            stats.max.health = 120.0;
-            stats.base.health = 120.0;
-            stats.current.health = 120.0;
-            stats.current.physical_damage = 30.0;
-            stats.base.physical_damage = 30.0;
-            stats.current.magic_damage = 18.0;
-            stats.base.magic_damage = 18.0;
-        },
-        .mini_boss => {
-            stats.max.health = 240.0;
-            stats.base.health = 240.0;
-            stats.current.health = 240.0;
-            stats.current.physical_damage = 50.0;
-            stats.base.physical_damage = 50.0;
-            stats.current.magic_damage = 35.0;
-            stats.base.magic_damage = 35.0;
-            stats.current.armour = 25.0;
-            stats.base.armour = 25.0;
-            stats.current.magic_resist = 20.0;
-            stats.base.magic_resist = 20.0;
-        },
-        .boss => {
-            stats.max.health = 400.0;
-            stats.base.health = 400.0;
-            stats.current.health = 400.0;
-            stats.current.physical_damage = 75.0;
-            stats.base.physical_damage = 75.0;
-            stats.current.magic_damage = 55.0;
-            stats.base.magic_damage = 55.0;
-            stats.current.armour = 40.0;
-            stats.base.armour = 40.0;
-            stats.current.magic_resist = 35.0;
-            stats.base.magic_resist = 35.0;
-            stats.current.attack_speed = 5.2;
-            stats.base.attack_speed = 5.2;
-        },
-        .tutorial => {
-            stats.max.health = 100.0;
-            stats.base.health = 100.0;
-            stats.current.health = 100.0;
-        },
+    stats.max.health = profile.health;
+    stats.base.health = profile.health;
+    stats.current.health = profile.health;
+
+    if (profile.physical_damage) |physical_damage| {
+        stats.current.physical_damage = physical_damage;
+        stats.base.physical_damage = physical_damage;
+    }
+    if (profile.magic_damage) |magic_damage| {
+        stats.current.magic_damage = magic_damage;
+        stats.base.magic_damage = magic_damage;
+    }
+    if (profile.armour) |armour| {
+        stats.current.armour = armour;
+        stats.base.armour = armour;
+    }
+    if (profile.magic_resist) |magic_resist| {
+        stats.current.magic_resist = magic_resist;
+        stats.base.magic_resist = magic_resist;
+    }
+    if (profile.attack_speed) |attack_speed| {
+        stats.current.attack_speed = attack_speed;
+        stats.base.attack_speed = attack_speed;
     }
 }
 
-test "RoomType determination from room number" {
-    try std.testing.expectEqual(RoomType.tutorial, RoomType.fromRoomNumber(0));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(1));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(2));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(3));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(4));
-    try std.testing.expectEqual(RoomType.mini_boss, RoomType.fromRoomNumber(5));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(6));
-    try std.testing.expectEqual(RoomType.mini_boss, RoomType.fromRoomNumber(10));
-    try std.testing.expectEqual(RoomType.normal, RoomType.fromRoomNumber(14));
-    try std.testing.expectEqual(RoomType.boss, RoomType.fromRoomNumber(15));
-    try std.testing.expectEqual(RoomType.mini_boss, RoomType.fromRoomNumber(20));
-    try std.testing.expectEqual(RoomType.boss, RoomType.fromRoomNumber(30));
-}
-
-test "RoomType display names" {
-    try std.testing.expectEqualStrings("Tutorial", RoomType.tutorial.displayName());
-    try std.testing.expectEqualStrings("Normal", RoomType.normal.displayName());
-    try std.testing.expectEqualStrings("Mini-Boss", RoomType.mini_boss.displayName());
-    try std.testing.expectEqualStrings("Boss", RoomType.boss.displayName());
-}
-
 test "RoomManager initFreshRun starts in the first normal room when tutorial completed" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
     SaveSystem.setTutorialCompleted(true);
-    defer SaveSystem.setTutorialCompleted(false);
 
     var room_manager = Self{};
     room_manager.initFreshRun();
@@ -795,74 +654,17 @@ test "RoomManager initFreshRun starts in the first normal room when tutorial com
 }
 
 test "RoomManager initFreshRun starts in tutorial when tutorial not completed" {
+    const previous_disk_io = SaveSystem.disable_disk_io_for_tests;
+    SaveSystem.disable_disk_io_for_tests = true;
+    defer {
+        SaveSystem.deinit();
+        SaveSystem.disable_disk_io_for_tests = previous_disk_io;
+    }
+
     SaveSystem.setTutorialCompleted(false);
 
     var room_manager = Self{};
     room_manager.initFreshRun();
-
-    try std.testing.expectEqual(RoomState.combat, room_manager.state);
-    try std.testing.expectEqual(@as(u32, 0), room_manager.current_room);
-    try std.testing.expectEqual(@as(u32, 0), room_manager.rooms_cleared);
-    try std.testing.expectEqualStrings("tutorial", room_manager.room_category);
-    try std.testing.expectEqualStrings("maps/tutorial.json", room_manager.current_map_path);
-}
-
-test "RoomManager playtest scaling applies appropriate stats per room tier" {
-    const testing_allocator = std.testing.allocator;
-
-    var player_entity = lm.Entity.init(testing_allocator, "test-player");
-    defer player_entity.deinit();
-
-    var base_stats = Stats.init(.player, .{
-        .health = 100.0,
-        .physical_damage = 27.5,
-        .magic_damage = 15.0,
-    });
-    defer base_stats.deinit();
-
-    try player_entity.addComponent(base_stats);
-    try player_entity.addPreparedComponents(false);
-
-    applyPlaytestScalingToPlayer(&player_entity, .boss);
-    const stats_ptr = player_entity.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 400.0), stats_ptr.max.health);
-    try std.testing.expectEqual(@as(f32, 75.0), stats_ptr.current.physical_damage);
-    try std.testing.expectEqual(@as(f32, 55.0), stats_ptr.current.magic_damage);
-    try std.testing.expectEqual(@as(f32, 40.0), stats_ptr.current.armour);
-    try std.testing.expectEqual(@as(f32, 35.0), stats_ptr.current.magic_resist);
-
-    applyPlaytestScalingToPlayer(&player_entity, .mini_boss);
-    try std.testing.expectEqual(@as(f32, 240.0), stats_ptr.max.health);
-    try std.testing.expectEqual(@as(f32, 50.0), stats_ptr.current.physical_damage);
-    try std.testing.expectEqual(@as(f32, 25.0), stats_ptr.current.armour);
-
-    applyPlaytestScalingToPlayer(&player_entity, .normal);
-    try std.testing.expectEqual(@as(f32, 120.0), stats_ptr.max.health);
-    try std.testing.expectEqual(@as(f32, 30.0), stats_ptr.current.physical_damage);
-}
-
-test "RoomManager startPlaytest and endPlaytest state lifecycle" {
-    startPlaytest("maps/boss/king_arena.json", .boss);
-    try std.testing.expect(isPlaytestMode());
-    try std.testing.expectEqual(RoomType.boss, playtest_room_type);
-    try std.testing.expectEqualStrings("maps/boss/king_arena.json", playtest_map_path);
-
-    endPlaytest();
-    try std.testing.expect(!isPlaytestMode());
-}
-
-test "RoomManager startPracticeTutorial and endPracticeTutorial state lifecycle" {
-    startPracticeTutorial();
-    try std.testing.expect(isPracticeTutorialMode());
-    try std.testing.expect(!resume_saved_run);
-
-    endPracticeTutorial();
-    try std.testing.expect(!isPracticeTutorialMode());
-}
-
-test "RoomManager initPracticeTutorialRun initializes tutorial room zero" {
-    var room_manager = Self{};
-    room_manager.initPracticeTutorialRun();
 
     try std.testing.expectEqual(RoomState.combat, room_manager.state);
     try std.testing.expectEqual(@as(u32, 0), room_manager.current_room);

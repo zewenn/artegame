@@ -15,9 +15,6 @@ const rl = if (builtin.is_test) struct {
     pub fn updateMusicStream(_: Music) void {}
     pub fn stopMusicStream(_: Music) void {}
     pub fn setMusicVolume(_: Music, _: f32) void {}
-    pub fn isMusicStreamPlaying(_: Music) bool {
-        return false;
-    }
 } else lm.deps.rl;
 
 const Self = @This();
@@ -26,6 +23,20 @@ pub const Phase = enum {
     stopped,
     replenish,
     combat,
+};
+
+const MusicChannel = struct {
+    stream: ?rl.Music = null,
+    volume: f32 = 0.0,
+
+    pub fn stopAndUnload(self: *MusicChannel) void {
+        if (self.stream) |stream| {
+            rl.stopMusicStream(stream);
+            rl.unloadMusicStream(stream);
+        }
+        self.stream = null;
+        self.volume = 0.0;
+    }
 };
 
 pub const ambient_track = "audio/music/ambient.mp3";
@@ -37,17 +48,44 @@ pub const fight_tracks = [_][]const u8{
 };
 
 current_phase: Phase = .stopped,
-current_track_path: ?[]const u8 = null,
-outgoing_track_path: ?[]const u8 = null,
-
-current_music: ?rl.Music = null,
-outgoing_music: ?rl.Music = null,
-
-current_volume: f32 = 0.0,
-outgoing_volume: f32 = 0.0,
+current: MusicChannel = .{},
+outgoing: MusicChannel = .{},
 fade_duration_seconds: f32 = 1.5,
-
 fight_track_index: usize = 0,
+
+pub fn Awake(self: *Self) void {
+    self.setPhase(.replenish);
+}
+
+pub fn Update(self: *Self) void {
+    const delta_seconds = lm.time.deltaTime();
+    self.updateOutgoingChannel(delta_seconds);
+    self.updateCurrentChannel(delta_seconds);
+}
+
+pub fn End(self: *Self) void {
+    self.stop();
+}
+
+fn updateOutgoingChannel(self: *Self, delta_seconds: f32) void {
+    const outgoing_stream = self.outgoing.stream orelse return;
+    self.outgoing.volume = @max(0.0, self.outgoing.volume - (delta_seconds / self.fade_duration_seconds));
+
+    if (self.outgoing.volume <= 0.001) {
+        self.outgoing.stopAndUnload();
+        return;
+    }
+
+    rl.setMusicVolume(outgoing_stream, AudioManager.effectiveMusic(self.outgoing.volume));
+    rl.updateMusicStream(outgoing_stream);
+}
+
+fn updateCurrentChannel(self: *Self, delta_seconds: f32) void {
+    const current_stream = self.current.stream orelse return;
+    self.current.volume = @min(1.0, self.current.volume + (delta_seconds / self.fade_duration_seconds));
+    rl.setMusicVolume(current_stream, AudioManager.effectiveMusic(self.current.volume));
+    rl.updateMusicStream(current_stream);
+}
 
 pub fn get() ?*Self {
     const scene = lm.activeScene() orelse return null;
@@ -62,43 +100,16 @@ pub fn stopGlobal() void {
     if (get()) |music_manager| music_manager.stop();
 }
 
-pub fn Awake(self: *Self) void {
-    self.setPhase(.replenish);
-}
-
-pub fn Update(self: *Self) void {
-    const delta_seconds = lm.time.deltaTime();
-
-    if (self.outgoing_music) |out| {
-        self.outgoing_volume = @max(0.0, self.outgoing_volume - (delta_seconds / self.fade_duration_seconds));
-        if (self.outgoing_volume <= 0.001) {
-            rl.stopMusicStream(out);
-            rl.unloadMusicStream(out);
-            self.outgoing_music = null;
-            self.outgoing_track_path = null;
-            self.outgoing_volume = 0.0;
-        } else {
-            rl.setMusicVolume(out, AudioManager.effectiveMusic(self.outgoing_volume));
-            rl.updateMusicStream(out);
-        }
-    }
-
-    if (self.current_music) |curr| {
-        self.current_volume = @min(1.0, self.current_volume + (delta_seconds / self.fade_duration_seconds));
-        rl.setMusicVolume(curr, AudioManager.effectiveMusic(self.current_volume));
-        rl.updateMusicStream(curr);
-    }
-}
-
-pub fn End(self: *Self) void {
-    self.stop();
-}
-
 pub fn setPhase(self: *Self, phase: Phase) void {
     if (phase == self.current_phase) return;
     self.current_phase = phase;
 
-    const next_track: ?[]const u8 = switch (phase) {
+    const next_track = self.selectTrackForPhase(phase);
+    self.transitionTo(next_track);
+}
+
+fn selectTrackForPhase(self: *Self, phase: Phase) ?[]const u8 {
+    return switch (phase) {
         .stopped => null,
         .replenish => ambient_track,
         .combat => blk: {
@@ -107,84 +118,61 @@ pub fn setPhase(self: *Self, phase: Phase) void {
             break :blk track;
         },
     };
-
-    self.transitionTo(next_track);
 }
 
 fn transitionTo(self: *Self, next_track: ?[]const u8) void {
-    if (self.outgoing_music) |out| {
-        rl.stopMusicStream(out);
-        rl.unloadMusicStream(out);
-        self.outgoing_music = null;
-        self.outgoing_track_path = null;
+    self.outgoing.stopAndUnload();
+
+    if (self.current.stream != null) {
+        self.outgoing = self.current;
     }
 
-    if (self.current_music) |curr| {
-        self.outgoing_music = curr;
-        self.outgoing_track_path = self.current_track_path;
-        self.outgoing_volume = self.current_volume;
-    }
+    self.current = .{};
 
-    self.current_music = null;
-    self.current_track_path = next_track;
-    self.current_volume = 0.0;
+    const track_path = next_track orelse return;
+    const full_path = lm.assets.files.getFilePath(track_path) catch return;
+    defer lm.allocators.generic().free(full_path);
 
-    if (next_track) |track_path| {
-        const full_path = lm.assets.files.getFilePath(track_path) catch return;
-        defer lm.allocators.generic().free(full_path);
+    const sentinel_path = lm.allocators.generic().dupeSentinel(u8, full_path, 0) catch return;
+    defer lm.allocators.generic().free(sentinel_path);
 
-        const path_z = lm.allocators.generic().dupeSentinel(u8, full_path, 0) catch return;
-        defer lm.allocators.generic().free(path_z);
-
-        var music = rl.loadMusicStream(path_z) catch return;
-        music.looping = true;
-        rl.setMusicVolume(music, AudioManager.effectiveMusic(0.001));
-        rl.playMusicStream(music);
-        self.current_music = music;
-    }
+    var music = rl.loadMusicStream(sentinel_path) catch return;
+    music.looping = true;
+    rl.setMusicVolume(music, AudioManager.effectiveMusic(0.001));
+    rl.playMusicStream(music);
+    self.current.stream = music;
 }
 
 pub fn stop(self: *Self) void {
-    if (self.outgoing_music) |out| {
-        rl.stopMusicStream(out);
-        rl.unloadMusicStream(out);
-        self.outgoing_music = null;
-        self.outgoing_track_path = null;
-        self.outgoing_volume = 0.0;
-    }
-
-    if (self.current_music) |curr| {
-        rl.stopMusicStream(curr);
-        rl.unloadMusicStream(curr);
-        self.current_music = null;
-        self.current_track_path = null;
-        self.current_volume = 0.0;
-    }
-
+    self.outgoing.stopAndUnload();
+    self.current.stopAndUnload();
     self.current_phase = .stopped;
 }
 
-test "MusicManager phase selection and transition logic" {
+test "MusicManager phase selection and channel cleanup" {
     var music_manager = Self{};
     try std.testing.expectEqual(Phase.stopped, music_manager.current_phase);
 
+    try std.testing.expect(music_manager.selectTrackForPhase(.stopped) == null);
+    try std.testing.expectEqualStrings(ambient_track, music_manager.selectTrackForPhase(.replenish).?);
+    try std.testing.expectEqualStrings(fight_tracks[0], music_manager.selectTrackForPhase(.combat).?);
+    try std.testing.expectEqualStrings(fight_tracks[1], music_manager.selectTrackForPhase(.combat).?);
+
+    music_manager.fight_track_index = 0;
     music_manager.setPhase(.replenish);
     try std.testing.expectEqual(Phase.replenish, music_manager.current_phase);
-    try std.testing.expect(music_manager.current_track_path != null);
-    try std.testing.expectEqualStrings(ambient_track, music_manager.current_track_path.?);
 
+    music_manager.current = .{ .stream = .{}, .volume = 0.75 };
     music_manager.setPhase(.combat);
     try std.testing.expectEqual(Phase.combat, music_manager.current_phase);
-    try std.testing.expect(music_manager.outgoing_track_path != null);
-    try std.testing.expectEqualStrings(ambient_track, music_manager.outgoing_track_path.?);
-    try std.testing.expect(music_manager.current_track_path != null);
-    try std.testing.expect(std.mem.startsWith(u8, music_manager.current_track_path.?, "audio/music/fight_"));
+    try std.testing.expectEqual(@as(usize, 1), music_manager.fight_track_index);
+    try std.testing.expect(music_manager.outgoing.stream != null);
+    try std.testing.expectApproxEqAbs(@as(f32, 0.75), music_manager.outgoing.volume, 0.001);
 
     music_manager.End();
     try std.testing.expectEqual(Phase.stopped, music_manager.current_phase);
-    try std.testing.expect(music_manager.current_music == null);
-    try std.testing.expect(music_manager.outgoing_music == null);
-    try std.testing.expect(music_manager.current_track_path == null);
-    try std.testing.expect(music_manager.outgoing_track_path == null);
+    try std.testing.expect(music_manager.current.stream == null);
+    try std.testing.expect(music_manager.outgoing.stream == null);
+    try std.testing.expectEqual(@as(f32, 0.0), music_manager.current.volume);
+    try std.testing.expectEqual(@as(f32, 0.0), music_manager.outgoing.volume);
 }
-

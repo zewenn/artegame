@@ -3,17 +3,14 @@ const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
 const Attack = @import("Attack.zig");
-const Movement = @import("Movement.zig");
+const EnemyType = @import("EnemyType.zig").EnemyType;
 const RoomManager = @import("../../global/RoomManager.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
-const KnightPrefab = @import("../../prefabs/enemies/Knight.zig").KnightEnemy;
-const BishopPrefab = @import("../../prefabs/enemies/Bishop.zig").BishopEnemy;
-const MeleePrefab = @import("../../prefabs/enemies/Melee.zig").MeleeEnemy;
-const RangedPrefab = @import("../../prefabs/enemies/Ranged.zig").RangedEnemy;
-const ElitePrefab = @import("../../prefabs/enemies/Elite.zig").EliteEnemy;
-const TankPrefab = @import("../../prefabs/enemies/Tank.zig").TankEnemy;
 
 const Self = @This();
+
+const KING_WEAKEN_DURATION_SECONDS: f32 = 4.0;
+const KING_WEAKEN_DEFENSE_MULTIPLIER: f32 = 0.5;
 
 pub const KingPhase = enum {
     initial_combat,
@@ -24,21 +21,11 @@ pub const KingPhase = enum {
     enraged_combat,
 };
 
-pub const WeakenState = enum {
-    ready,
-    weakened,
-};
-
 phase: KingPhase = .initial_combat,
-weaken_state: WeakenState = .ready,
-weaken_timer_seconds: f32 = 0.0,
-weaken_prior_armour: f32 = 0.0,
-weaken_prior_magic_resist: f32 = 0.0,
 
 stats: ?*Stats = null,
 transform: ?*lm.Transform = null,
 attack: ?*Attack = null,
-movement: ?*Movement = null,
 
 tracked_minion_uuids: lm.List(u128) = undefined,
 is_initialized: bool = false,
@@ -47,7 +34,6 @@ pub fn Awake(self: *Self, entity: *lm.Entity) !void {
     self.stats = try entity.pullComponent(Stats);
     self.transform = try entity.pullComponent(lm.Transform);
     self.attack = entity.getComponent(Attack);
-    self.movement = entity.getComponent(Movement);
 
     self.tracked_minion_uuids = .init(lm.allocators.scene());
     self.is_initialized = true;
@@ -60,13 +46,10 @@ pub fn Update(self: *Self) !void {
     const transform: *lm.Transform = try lm.ensureComponent(self.transform);
     if (stats.current.health <= 0.0) return;
 
-    const delta_seconds = lm.time.deltaTime();
-    self.updateWeakenTimer(delta_seconds);
-
     const center_position = lm.vec3ToVec2(transform.position);
     const health_fraction = stats.current.health / stats.max.health;
 
-    try self.processPhaseProgression(center_position, health_fraction);
+    try self.processPhaseProgression(stats, center_position, health_fraction);
 }
 
 pub fn End(self: *Self) void {
@@ -76,37 +59,14 @@ pub fn End(self: *Self) void {
     }
 }
 
-fn updateWeakenTimer(self: *Self, delta_seconds: f32) void {
-    if (self.weaken_state != .weakened) return;
-
-    self.weaken_timer_seconds -= delta_seconds;
-    if (self.weaken_timer_seconds <= 0.0) {
-        self.endWeaken();
-    }
-}
-
-fn processPhaseProgression(self: *Self, center_position: lm.Vector2, health_fraction: f32) !void {
+fn processPhaseProgression(self: *Self, stats: *const Stats, center_position: lm.Vector2, health_fraction: f32) !void {
     switch (self.phase) {
-        .initial_combat => {
-            if (health_fraction <= 0.80) {
-                try self.triggerMiniBossSummon(center_position);
-            }
-        },
-        .mini_boss_summon => {
-            self.checkTrackedMinionsDefeated(.mini_boss_weaken);
-        },
-        .mini_boss_weaken => {
-            if (self.weaken_state == .ready and health_fraction <= 0.60) {
-                try self.triggerNormalMinionSummon(center_position);
-            }
-        },
-        .normal_minion_summon => {
-            self.checkTrackedMinionsDefeated(.normal_minion_weaken);
-        },
-        .normal_minion_weaken => {
-            if (self.weaken_state == .ready and health_fraction <= 0.50) {
-                self.phase = .enraged_combat;
-            }
+        .initial_combat => if (health_fraction <= 0.80) try self.triggerMiniBossSummon(center_position),
+        .mini_boss_summon => self.checkTrackedMinionsDefeated(.mini_boss_weaken),
+        .mini_boss_weaken => if (!stats.isWeakened() and health_fraction <= 0.60) try self.triggerNormalMinionSummon(center_position),
+        .normal_minion_summon => self.checkTrackedMinionsDefeated(.normal_minion_weaken),
+        .normal_minion_weaken => if (!stats.isWeakened() and health_fraction <= 0.50) {
+            self.phase = .enraged_combat;
         },
         .enraged_combat => {},
     }
@@ -119,26 +79,38 @@ fn checkTrackedMinionsDefeated(self: *Self, next_phase: KingPhase) void {
     if (self.stats) |stats| stats.removeStasis();
 
     self.phase = next_phase;
-    self.startWeaken(4.0);
+    self.startWeaken(KING_WEAKEN_DURATION_SECONDS);
 }
 
 fn cleanDefeatedMinions(self: *Self) void {
-    const len = self.tracked_minion_uuids.len();
-    for (1..len + 1) |j| {
-        const minion_index = len - j;
+    self.cleanDefeatedMinionsWithLookup(findSceneEntity);
+}
+
+fn findSceneEntity(entity_uuid: u128) ?*lm.Entity {
+    return lm.getEntity(.byUUID(entity_uuid));
+}
+
+fn cleanDefeatedMinionsWithLookup(
+    self: *Self,
+    lookup_entity: *const fn (u128) ?*lm.Entity,
+) void {
+    const minion_count = self.tracked_minion_uuids.len();
+    for (1..minion_count + 1) |step| {
+        const minion_index = minion_count - step;
         const minion_uuid = self.tracked_minion_uuids.items()[minion_index];
-        const minion_entity = lm.getEntity(.byUUID(minion_uuid));
 
-        const is_alive = check_alive: {
-            const entity = minion_entity orelse break :check_alive false;
-            const stats = entity.getComponent(Stats) orelse break :check_alive false;
-
-            break :check_alive stats.current.health > 0.0;
-        };
-
-        if (is_alive) return;
+        if (isMinionAliveWithLookup(minion_uuid, lookup_entity)) continue;
         _ = self.tracked_minion_uuids.swapRemove(minion_index);
     }
+}
+
+fn isMinionAliveWithLookup(
+    minion_uuid: u128,
+    lookup_entity: *const fn (u128) ?*lm.Entity,
+) bool {
+    const entity = lookup_entity(minion_uuid) orelse return false;
+    const stats = entity.getComponent(Stats) orelse return false;
+    return stats.current.health > 0.0;
 }
 
 fn spawnTrackedMinion(self: *Self, minion_entity: *lm.Entity) !void {
@@ -148,7 +120,10 @@ fn spawnTrackedMinion(self: *Self, minion_entity: *lm.Entity) !void {
 }
 
 fn triggerMiniBossSummon(self: *Self, center_position: lm.Vector2) !void {
-    const MINIBOSS_SPAWN_COUNT: comptime_int = 2;
+    const mini_boss_offsets = [_]lm.Vector2{
+        .init(-200.0, 0.0),
+        .init(200.0, 0.0),
+    };
 
     self.phase = .mini_boss_summon;
     SpatialAudio.playSpatialPitched(
@@ -160,15 +135,9 @@ fn triggerMiniBossSummon(self: *Self, center_position: lm.Vector2) !void {
         0.1,
     );
 
-    for (0..MINIBOSS_SPAWN_COUNT) |_| {
-        const is_knight = lm.random.boolean();
-        const first_minion_position = center_position.add(lm.Vec2(-200, 0));
-        const first_minion = if (is_knight)
-            try KnightPrefab(first_minion_position)
-        else
-            try BishopPrefab(first_minion_position);
-
-        try self.spawnTrackedMinion(first_minion);
+    for (mini_boss_offsets) |offset| {
+        const minion = try EnemyType.mini_boss.spawn(center_position.add(offset));
+        try self.spawnTrackedMinion(minion);
     }
 
     if (self.stats) |stats| stats.applyIndefiniteStasis();
@@ -191,20 +160,20 @@ fn triggerNormalMinionSummon(self: *Self, center_position: lm.Vector2) !void {
     const total_minions_to_spawn = @min(48, 25 + additional_minions);
 
     for (0..total_minions_to_spawn) |minion_index| {
-        const angle = (@as(f32, @floatFromInt(minion_index)) / @as(f32, @floatFromInt(total_minions_to_spawn))) * std.math.pi * 2.0;
+        const angle_radians = (@as(f32, @floatFromInt(minion_index)) / @as(f32, @floatFromInt(total_minions_to_spawn))) * std.math.pi * 2.0;
         const radius_pixels: f32 = 220.0 + @as(f32, @floatFromInt(minion_index % 3)) * 80.0;
         const spawn_offset = lm.Vec2(
-            std.math.cos(angle) * radius_pixels,
-            std.math.sin(angle) * radius_pixels,
+            std.math.cos(angle_radians) * radius_pixels,
+            std.math.sin(angle_radians) * radius_pixels,
         );
         const spawn_position = center_position.add(spawn_offset);
 
-        const minion_choice = minion_index % 5;
-        const minion_entity = switch (minion_choice) {
-            0, 1 => try MeleePrefab(spawn_position),
-            2, 3 => try RangedPrefab(spawn_position),
-            else => try ElitePrefab(spawn_position),
+        const minion_type: EnemyType = switch (minion_index % 5) {
+            0, 1 => .melee,
+            2, 3 => .ranged,
+            else => .elite,
         };
+        const minion_entity = try minion_type.spawn(spawn_position);
         try self.spawnTrackedMinion(minion_entity);
     }
 
@@ -212,17 +181,39 @@ fn triggerNormalMinionSummon(self: *Self, center_position: lm.Vector2) !void {
     if (self.attack) |attack| attack.cancelCurrentAction();
 }
 
+fn kingWeakenOnEnable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "king_weaken" }) orelse return;
+    const armour_reduction = stats.base.armour * KING_WEAKEN_DEFENSE_MULTIPLIER;
+    const magic_resist_reduction = stats.base.magic_resist * KING_WEAKEN_DEFENSE_MULTIPLIER;
+
+    effect.value = armour_reduction;
+    effect.secondary_value = magic_resist_reduction;
+    stats.current.armour = @max(0.0, stats.current.armour - armour_reduction);
+    stats.current.magic_resist = @max(0.0, stats.current.magic_resist - magic_resist_reduction);
+}
+
+fn kingWeakenOnDisable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "king_weaken" }) orelse return;
+    stats.current.armour += effect.value;
+    stats.current.magic_resist += effect.secondary_value;
+}
+
+/// Applies King's weaken effect, halving defenses for the given duration and restoring them on expiration.
+pub fn applyWeakenEffect(stats: *Stats, duration_seconds: f32) void {
+    stats.addEffect(.{
+        .id = "king_weaken",
+        .effect_type = .weaken,
+        .duration = duration_seconds,
+        .on_enable = kingWeakenOnEnable,
+        .on_disable = kingWeakenOnDisable,
+    });
+}
+
 pub fn startWeaken(self: *Self, duration_seconds: f32) void {
-    if (self.weaken_state == .weakened) return;
     const stats = self.stats orelse return;
+    if (stats.isWeakened()) return;
 
-    self.weaken_timer_seconds = duration_seconds;
-    self.weaken_prior_armour = stats.base.armour;
-    self.weaken_prior_magic_resist = stats.base.magic_resist;
-
-    stats.current.armour = self.weaken_prior_armour * 0.5;
-    stats.current.magic_resist = self.weaken_prior_magic_resist * 0.5;
-    stats.applySelfImposedStun(duration_seconds);
+    applyWeakenEffect(stats, duration_seconds);
 
     if (self.transform) |transform| {
         const position = lm.vec3ToVec2(transform.position);
@@ -230,37 +221,84 @@ pub fn startWeaken(self: *Self, duration_seconds: f32) void {
     }
 }
 
-pub fn endWeaken(self: *Self) void {
-    self.weaken_state = .ready;
-    self.weaken_timer_seconds = 0.0;
-
-    const stats = self.stats orelse return;
-    stats.current.armour = self.weaken_prior_armour;
-    stats.current.magic_resist = self.weaken_prior_magic_resist;
-
-    if (self.transform) |transform| {
-        const position = lm.vec3ToVec2(transform.position);
-        SpatialAudio.playSpatialPitched("audio/sfx/pickup.mp3", position, position, 700.0, 0.9, 0.1);
-    }
-}
-
-test "KingMechanics startWeaken halves defenses and endWeaken restores them" {
+test "KingMechanics startWeaken halves defenses and restores them on expiration" {
     var stats = Stats.initUnstoppable(.enemy, .{
         .armour = 80,
         .magic_resist = 60,
     });
+    defer stats.deinit();
+
     var king_mechanics = Self{
         .stats = &stats,
     };
 
     king_mechanics.startWeaken(4.0);
-    try std.testing.expectEqual(WeakenState.weakened, king_mechanics.weaken_state);
+    try std.testing.expect(stats.isWeakened());
+    try std.testing.expect(!stats.canMove());
     try std.testing.expectEqual(@as(f32, 40.0), stats.current.armour);
     try std.testing.expectEqual(@as(f32, 30.0), stats.current.magic_resist);
-    try std.testing.expect(stats.isStunned());
 
-    king_mechanics.endWeaken();
-    try std.testing.expectEqual(WeakenState.ready, king_mechanics.weaken_state);
+    stats.tickEffects(4.0);
+    try std.testing.expect(!stats.isWeakened());
+    try std.testing.expect(stats.canMove());
     try std.testing.expectEqual(@as(f32, 80.0), stats.current.armour);
     try std.testing.expectEqual(@as(f32, 60.0), stats.current.magic_resist);
+}
+
+test "KingMechanics cleanDefeatedMinions removes dead minion while keeping living minion" {
+    const TestLookup = struct {
+        var living: ?*lm.Entity = null;
+        var dead: ?*lm.Entity = null;
+
+        fn find(entity_uuid: u128) ?*lm.Entity {
+            if (living) |entity| {
+                if (entity.uuid == entity_uuid) return entity;
+            }
+            if (dead) |entity| {
+                if (entity.uuid == entity_uuid) return entity;
+            }
+            return null;
+        }
+    };
+
+    var king_mechanics = Self{
+        .tracked_minion_uuids = .init(std.testing.allocator),
+        .is_initialized = true,
+    };
+    defer king_mechanics.End();
+
+    var living_entity = lm.Entity.init(std.testing.allocator, "living_minion");
+    defer living_entity.deinit();
+    var living_stats = Stats.init(.enemy, .{ .health = 100.0 });
+    defer living_stats.deinit();
+    try living_entity.addComponent(living_stats);
+    try living_entity.addPreparedComponents(false);
+
+    var dead_entity = lm.Entity.init(std.testing.allocator, "dead_minion");
+    defer dead_entity.deinit();
+    var dead_stats = Stats.init(.enemy, .{ .health = 0.0 });
+    defer dead_stats.deinit();
+    try dead_entity.addComponent(dead_stats);
+    try dead_entity.addPreparedComponents(false);
+
+    TestLookup.living = &living_entity;
+    TestLookup.dead = &dead_entity;
+    defer {
+        TestLookup.living = null;
+        TestLookup.dead = null;
+    }
+
+    try king_mechanics.tracked_minion_uuids.append(living_entity.uuid);
+    try king_mechanics.tracked_minion_uuids.append(dead_entity.uuid);
+    king_mechanics.cleanDefeatedMinionsWithLookup(TestLookup.find);
+    try std.testing.expectEqual(@as(usize, 1), king_mechanics.tracked_minion_uuids.len());
+    try std.testing.expectEqual(living_entity.uuid, king_mechanics.tracked_minion_uuids.items()[0]);
+
+    king_mechanics.tracked_minion_uuids.clearRetainingCapacity();
+    try king_mechanics.tracked_minion_uuids.append(dead_entity.uuid);
+    try king_mechanics.tracked_minion_uuids.append(living_entity.uuid);
+    try king_mechanics.tracked_minion_uuids.append(999999);
+    king_mechanics.cleanDefeatedMinionsWithLookup(TestLookup.find);
+    try std.testing.expectEqual(@as(usize, 1), king_mechanics.tracked_minion_uuids.len());
+    try std.testing.expectEqual(living_entity.uuid, king_mechanics.tracked_minion_uuids.items()[0]);
 }

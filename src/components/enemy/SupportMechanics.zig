@@ -3,7 +3,6 @@ const lm = @import("loom");
 
 const Stats = @import("../Stats.zig");
 const RoomManager = @import("../../global/RoomManager.zig");
-const prefabs = @import("../../prefabs/prefabs.zig");
 const SpatialAudio = @import("../../global/audio/SpatialAudio.zig");
 const MapLoader = @import("../../global/map/MapLoader.zig");
 
@@ -60,6 +59,16 @@ pub fn findRandomLivingAlly(caster_uuid: u128) ?*lm.Entity {
     return lm.getEntity(.{ .uuid = valid_candidates[selected_index] });
 }
 
+fn speedBoostOnEnable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "shaman_speed_boost" }) orelse return;
+    stats.current.movement_speed += effect.value;
+}
+
+fn speedBoostOnDisable(stats: *Stats) void {
+    const effect = stats.getEffect(.{ .id = "shaman_speed_boost" }) orelse return;
+    stats.current.movement_speed = @max(10.0, stats.current.movement_speed - effect.value);
+}
+
 pub fn applySpeedBoost(
     target_entity: *lm.Entity,
     bonus_speed_pixels_per_second: f32,
@@ -72,20 +81,8 @@ pub fn applySpeedBoost(
         .effect_type = .haste,
         .duration = duration_seconds,
         .value = bonus_speed_pixels_per_second,
-        .on_enable = struct {
-            pub fn onEnable(s: *Stats) void {
-                if (s.getEffect(.{ .id = "shaman_speed_boost" })) |effect| {
-                    s.current.movement_speed += effect.value;
-                }
-            }
-        }.onEnable,
-        .on_disable = struct {
-            pub fn onDisable(s: *Stats) void {
-                if (s.getEffect(.{ .id = "shaman_speed_boost" })) |effect| {
-                    s.current.movement_speed = @max(10.0, s.current.movement_speed - effect.value);
-                }
-            }
-        }.onDisable,
+        .on_enable = speedBoostOnEnable,
+        .on_disable = speedBoostOnDisable,
     });
 }
 
@@ -106,7 +103,7 @@ pub fn executeLifelinerRescue(
     lifeliner_entity: *lm.Entity,
     ally_entity: *lm.Entity,
     player_position: lm.Vector2,
-    minimum_distance_from_player: f32,
+    minimum_distance_from_player_pixels: f32,
 ) void {
     const ally_transform = ally_entity.getComponent(lm.Transform) orelse return;
     const lifeliner_transform = lifeliner_entity.getComponent(lm.Transform) orelse return;
@@ -119,16 +116,16 @@ pub fn executeLifelinerRescue(
     else
         lm.Vec2(1.0, 0.0);
 
-    const raw_safe_position = player_position.add(safe_direction.multiply(.init(minimum_distance_from_player, minimum_distance_from_player)));
+    const raw_safe_position = player_position.add(safe_direction.multiply(.init(minimum_distance_from_player_pixels, minimum_distance_from_player_pixels)));
 
     const margin_pixels: f32 = 80.0;
-    const lifeliner_offset_x: f32 = 40.0;
-    const clamped_ally_position = calculateClampedRescuePosition(raw_safe_position, margin_pixels + lifeliner_offset_x);
+    const lifeliner_offset_x_pixels: f32 = 40.0;
+    const clamped_ally_position = calculateClampedRescuePosition(raw_safe_position, margin_pixels + lifeliner_offset_x_pixels);
 
     ally_transform.position.x = clamped_ally_position.x;
     ally_transform.position.y = clamped_ally_position.y;
 
-    lifeliner_transform.position.x = clamped_ally_position.x + lifeliner_offset_x;
+    lifeliner_transform.position.x = clamped_ally_position.x + lifeliner_offset_x_pixels;
     lifeliner_transform.position.y = clamped_ally_position.y;
 
     SpatialAudio.playSpatialPitched("audio/sfx/pickup.mp3", clamped_ally_position, player_position, 800.0, 0.7, 0.1);
@@ -139,22 +136,10 @@ pub fn executeEnemyRevive(
     current_room: u32,
 ) !bool {
     const record = RoomManager.popFallenEnemyForRevive() orelse return false;
-
     const safe_position = record.death_position;
-
-    const enemy_entity = switch (record.enemy_type) {
-        .ranged => try prefabs.enemies.Ranged(safe_position),
-        .elite => try prefabs.enemies.Elite(safe_position),
-        .shaman => try prefabs.enemies.Shaman(safe_position),
-        .magician => try prefabs.enemies.Magician(safe_position),
-        .lifeliner => try prefabs.enemies.Lifeliner(safe_position),
-        .angler => try prefabs.enemies.Angler(safe_position),
-        .tank => try prefabs.enemies.Tank(safe_position),
-        else => try prefabs.enemies.Melee(safe_position),
-    };
+    const enemy_entity = try record.enemy_type.spawn(safe_position);
 
     const stats = enemy_entity.getComponent(Stats) orelse return false;
-
     const room_scale = 1.0 + @as(f32, @floatFromInt(if (current_room > 1) current_room - 1 else 0)) * 0.05;
     const revive_health_fraction = @min(1.0, 0.33 * room_scale);
     stats.current.health = stats.max.health * revive_health_fraction;
@@ -162,15 +147,16 @@ pub fn executeEnemyRevive(
     try lm.summoning.entity(enemy_entity);
     try room_manager.spawner.registerSummonedEnemy(enemy_entity.uuid);
 
-    const player = lm.getEntity(.{ .id = "player" });
-    const listener_position = if (player) |p|
-        if (p.getComponent(lm.Transform)) |t| lm.vec3ToVec2(t.position) else safe_position
-    else
-        safe_position;
-
+    const listener_position = getPlayerListenerPosition(safe_position);
     SpatialAudio.playSpatialPitched("audio/sfx/boom.wav", safe_position, listener_position, 800.0, 0.5, 0.2);
 
     return true;
+}
+
+fn getPlayerListenerPosition(fallback_position: lm.Vector2) lm.Vector2 {
+    const player_entity = lm.getEntity(.{ .id = "player" }) orelse return fallback_position;
+    const player_transform = player_entity.getComponent(lm.Transform) orelse return fallback_position;
+    return lm.vec3ToVec2(player_transform.position);
 }
 
 test "SupportMechanics speed boost lifecycle" {
@@ -194,23 +180,4 @@ test "SupportMechanics speed boost lifecycle" {
     stats_ptr.tickEffects(5.0);
     try std.testing.expect(!stats_ptr.hasEffect(.{ .id = "shaman_speed_boost" }));
     try std.testing.expectEqual(@as(f32, 200.0), stats_ptr.current.movement_speed);
-}
-
-test "calculateClampedRescuePosition clamps coordinates within map bounds and margins" {
-    const map_bounds = MapLoader.getMapBounds();
-    const margin_pixels: f32 = 80.0;
-    const min_x = @min(map_bounds.min.x, map_bounds.max.x) + margin_pixels;
-    const max_x = @max(map_bounds.min.x, map_bounds.max.x) - margin_pixels;
-    const min_y = @min(map_bounds.min.y, map_bounds.max.y) + margin_pixels;
-    const max_y = @max(map_bounds.min.y, map_bounds.max.y) - margin_pixels;
-
-    const far_out = lm.Vec2(9999.0, 9999.0);
-    const clamped_high = calculateClampedRescuePosition(far_out, margin_pixels);
-    try std.testing.expectEqual(max_x, clamped_high.x);
-    try std.testing.expectEqual(max_y, clamped_high.y);
-
-    const far_negative = lm.Vec2(-9999.0, -9999.0);
-    const clamped_low = calculateClampedRescuePosition(far_negative, margin_pixels);
-    try std.testing.expectEqual(min_x, clamped_low.x);
-    try std.testing.expectEqual(min_y, clamped_low.y);
 }

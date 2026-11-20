@@ -1,7 +1,10 @@
-const lm = @import("loom");
 const std = @import("std");
+const builtin = @import("builtin");
+const lm = @import("loom");
 
-const gbl = @import("global/global.zig");
+const global = @import("global/global.zig");
+const prefabs = @import("prefabs/prefabs.zig");
+const components = @import("components/components.zig");
 
 pub fn main() !void {
     lm.project(.{
@@ -23,7 +26,7 @@ pub fn main() !void {
     })({
         lm.scene("default")({
             lm.globalBehaviours(.{
-                gbl.Setup{},
+                global.Setup{},
             });
 
             lm.cameras(&.{
@@ -39,8 +42,9 @@ pub fn main() !void {
             lm.useMainCamera();
 
             lm.globalBehaviours(.{
-                gbl.MainMenu{},
-                gbl.MusicManager{},
+                global.MainMenu{},
+                global.MusicManager{},
+                global.DevicePrompts{},
             });
         });
 
@@ -48,12 +52,13 @@ pub fn main() !void {
             lm.useMainCamera();
 
             lm.globalBehaviours(.{
-                gbl.ProjectileManager{},
-                gbl.RoomManager{},
-                gbl.TutorialManager{},
-                gbl.HUD{},
-                gbl.MusicManager{},
-                gbl.input.ControlSchemeModule{},
+                global.ProjectileManager{},
+                global.RoomManager{},
+                global.TutorialManager{},
+                global.HUD{},
+                global.MusicManager{},
+                global.DevicePrompts{},
+                global.input.ControlSchemeModule{},
             });
         });
 
@@ -62,56 +67,41 @@ pub fn main() !void {
                 lm.useMainCamera();
 
                 lm.globalBehaviours(.{
-                    gbl.MapEditor{},
+                    global.MapEditor{},
                 });
             });
         }
     });
 }
 
+fn isExternalNamespaceName(comptime declaration_name: []const u8) bool {
+    return std.mem.eql(u8, declaration_name, "lm") or
+        std.mem.eql(u8, declaration_name, "rl") or
+        std.mem.eql(u8, declaration_name, "clay") or
+        std.mem.eql(u8, declaration_name, "std");
+}
+
+fn refProjectModulesRecursive(comptime Namespace: type) void {
+    if (!builtin.is_test) return;
+
+    inline for (comptime std.meta.declarations(Namespace)) |declaration_name| {
+        if (comptime isExternalNamespaceName(declaration_name)) continue;
+
+        const declaration_value = @field(Namespace, declaration_name);
+        if (@TypeOf(declaration_value) != type) continue;
+
+        const type_info = @typeInfo(declaration_value);
+        if (type_info != .@"struct") continue;
+
+        std.testing.refAllDecls(declaration_value);
+        if (type_info.@"struct".field_names.len == 0) {
+            refProjectModulesRecursive(declaration_value);
+        }
+    }
+}
+
 test {
-    _ = @import("global/HUD.zig");
-    _ = @import("global/ui/PlayerStats.zig");
-    _ = @import("global/ui/MainMenu.zig");
-    _ = @import("global/ui/PauseMenu.zig");
-    _ = @import("global/ui/OptionsMenu.zig");
-    _ = @import("global/ui/BoonMenu.zig");
-    _ = @import("global/ui/GameOverMenu.zig");
-    _ = @import("global/ui/BossBar.zig");
-    _ = @import("global/ui/buttons/menu_button.zig");
-    _ = @import("global/ui/buttons/utility_button.zig");
-    _ = @import("global/ui/color_scheme.zig");
-    _ = @import("global/RoomManager.zig");
-    _ = @import("global/boons/BoonPool.zig");
-    _ = @import("components/Weapons/Weapon.zig");
-    _ = @import("components/Weapons/spells.zig");
-    _ = @import("components/Weapons/Spell.zig");
-    _ = @import("global/save/SaveData.zig");
-    _ = @import("global/save/SaveSystem.zig");
-    _ = @import("components/effects/Effect.zig");
-    _ = @import("components/effects/EffectVisual.zig");
-    _ = @import("components/effects/StatusOverlays.zig");
-    _ = @import("components/Stats.zig");
-    _ = @import("global/audio/AudioManager.zig");
-    _ = @import("global/audio/MusicManager.zig");
-    _ = @import("global/audio/SpatialAudio.zig");
-    _ = @import("components/enemy/Ability.zig");
-    _ = @import("components/enemy/OverheadUI.zig");
-    _ = @import("global/spawner/RoundSpawner.zig");
-    _ = @import("global/input/DevicePrompts.zig");
-    _ = @import("global/input/ControlScheme.zig");
-    _ = @import("components/player/Attack.zig");
-    _ = @import("global/ui/PromptBadge.zig");
-    _ = @import("global/map/DualGridMesher.zig");
-    _ = @import("global/map/WallMesher.zig");
-    _ = @import("global/map/MapSerializer.zig");
-    _ = @import("global/map/MapTypes.zig");
-    _ = @import("global/map/MapEditor.zig");
-    _ = @import("global/ProjectileManager.zig");
-    _ = @import("prefabs/Projectile.zig");
-    _ = @import("prefabs/enemies/Shaman.zig");
-    _ = @import("prefabs/enemies/Magician.zig");
-    _ = @import("prefabs/enemies/Lifeliner.zig");
-    _ = @import("prefabs/enemies/Angler.zig");
-    _ = @import("prefabs/enemies/Tank.zig");
+    refProjectModulesRecursive(global);
+    refProjectModulesRecursive(prefabs.modules);
+    refProjectModulesRecursive(components);
 }

@@ -94,6 +94,36 @@
 
 ## Done
 
+### [69#ARC] Codebase structural overhaul: dead code removal, bug fixes, comptime reflection, and test cleanup
+
+  - tags: [architecture, refactor, comptime, dead-code, tests, bugfix]
+  - priority: high
+  - workload: Extreme
+  - steps:
+      - [x] Phase 1: Delete dead files/paths, move BossBar, extract ui/theme and RoomType, normalize weapons dir, and fix 12 audit bugs (incl. DevicePrompts global behaviour)
+      - [x] Phase 2: Replace hardcoded tables/switches with comptime reflection across EnemyType, RoundSpawner, Stats/Effects, Weapons, SaveData, Doors, Tutorial, Audio, Boons, and Map
+      - [x] Phase 3: De-overcomplicate UI menus/buttons, core gameplay/enemy components, and split MapEditor monolith
+      - [x] Phase 4: Replace manual main.zig test list with comptime refAllDeclsRecursive, prune tautological tests, fix impure/broken tests, and verify with zig build and zig build test
+      - [x] User confirmation that codebase structural overhaul works as expected
+    ```md
+    Resolves structural debt identified across all 102 Zig source files: removes dead files and legacy pre-SoA code, fixes 12 live bugs, eliminates dependency cycles, converts hardcoded switches/tables to comptime reflection, splits monoliths (MapEditor, boons, OptionsMenu), and cleans up the test suite with automatic comptime test discovery.
+    ```
+
+### [68#ENE] Rework Knight and King weaken and heal channel mechanics into Ability-cast Effects
+
+  - tags: [enemies, effects, knight, king, refactor]
+  - priority: medium
+  - workload: Normal
+  - steps:
+      - [x] Add .weaken EffectType, EffectVisual default, Stats.isWeakened(), and Attack/Animation weaken guards
+      - [x] Convert Knight weaken and heal channel custom_action callbacks to apply .weaken and visual-less .regen effects and remove KnightMechanics
+      - [x] Convert KingMechanics weaken state to apply and query the .weaken effect
+      - [x] Verify compilation and unit tests with zig build and zig build test
+      - [x] User confirmation that reworked weaken and heal channel effects work as expected
+    ```md
+    Replaces manual weaken and heal channel timers/state machines in KnightMechanics and KingMechanics with status effects (.weaken and visual-less .regen) applied from Ability custom_action callbacks and King phase transitions.
+    ```
+
 ### [67#UIB] Create unified color_scheme in src/global/ui and update UI references
 
   - tags: [ui, colors, palette, refactor]

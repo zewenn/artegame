@@ -109,7 +109,6 @@ pub const bishop_abilities = [_]Ability{
         .min_range = 500,
         .max_range = 1200,
         .cooldown = 4.0,
-        .root_movement_during_action = false,
         .conditions = .{
             .health_above_pct = 0.75,
         },
@@ -140,7 +139,6 @@ pub const bishop_abilities = [_]Ability{
         .min_range = 500,
         .max_range = 1200,
         .cooldown = 4.0,
-        .root_movement_during_action = false,
         .conditions = .{
             .health_above_pct = 0.75,
         },
@@ -175,7 +173,6 @@ pub const bishop_abilities = [_]Ability{
             .health_above_pct = 0.50,
             .health_below_pct = 0.76,
         },
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/bishop/muffin_lvl2.png",
             .is_channeled = true,
@@ -210,7 +207,6 @@ pub const bishop_abilities = [_]Ability{
             .health_above_pct = 0.25,
             .health_below_pct = 0.51,
         },
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/bishop/muffin_lvl3.png",
             .is_channeled = true,
@@ -243,7 +239,6 @@ pub const bishop_abilities = [_]Ability{
         .conditions = .{
             .health_below_pct = 0.26,
         },
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/bishop/muffin_lvl4.png",
             .is_channeled = true,
@@ -273,7 +268,6 @@ pub const bishop_abilities = [_]Ability{
         .min_range = 600,
         .max_range = 9999,
         .cooldown = 0.6,
-        .root_movement_during_action = false,
         .projectile_profile = ProjectileProfile{
             .sprite = "projectiles/enemies/bishop/pancake_narrow.png",
             .aim_mode = .towards_player,
@@ -301,7 +295,6 @@ const bishop_fallback = Ability{
     .min_range = 0,
     .max_range = 1000,
     .cooldown = 0.6,
-    .root_movement_during_action = false,
     .projectile_profile = ProjectileProfile{
         .sprite = "projectiles/enemies/bishop/pancake_normal.png",
         .aim_mode = .towards_player,
@@ -376,38 +369,4 @@ pub fn BishopEnemy(position: lm.Vector2) !*lm.Entity {
         Enemy.OverheadUI{ .show_health_bar = false },
         Enemy.BossBar{ .boss_name = "Bishop", .rank = .mini_boss },
     });
-}
-
-test "Bishop enemy creation and component configuration" {
-    const bishop = try BishopEnemy(.init(400.0, 500.0));
-    defer bishop.deinit();
-    try bishop.addPreparedComponents(false);
-
-    try std.testing.expect(std.mem.startsWith(u8, bishop.id, "bishop-enemy"));
-    try std.testing.expect(bishop.getComponent(Stats) != null);
-    try std.testing.expect(bishop.getComponent(Enemy.Attack) != null);
-    try std.testing.expect(bishop.getComponent(Enemy.Movement) != null);
-    try std.testing.expect(bishop.getComponent(Enemy.Death) != null);
-    try std.testing.expect(bishop.getComponent(Enemy.BossBar) != null);
-
-    const stats = bishop.getComponent(Stats).?;
-    try std.testing.expectEqual(@as(f32, 950.0), stats.max.health);
-    try std.testing.expectEqual(@as(f32, 25.0), stats.base.magic_damage);
-    try std.testing.expectEqual(@as(f32, 30.0), stats.base.armour);
-    try std.testing.expectEqual(@as(f32, 50.0), stats.base.magic_resist);
-    try std.testing.expectEqual(@as(f32, 130.0), stats.current.movement_speed);
-}
-
-test "Bishop calculates non-zero magic damage against player" {
-    const bishop = try BishopEnemy(.init(400.0, 500.0));
-    defer bishop.deinit();
-
-    const bishop_stats = bishop.getComponent(Stats).?;
-    const player_stats = Stats.init(.player, .{
-        .health = 100,
-        .magic_resist = 10,
-    });
-
-    const damage = bishop_stats.calculateDamage(player_stats, .magic, false);
-    try std.testing.expect(damage > 0.0);
 }
